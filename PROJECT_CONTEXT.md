@@ -38,6 +38,7 @@ Table `customers`: `customer_id` (PK), `company_name`, `contact_person`, `email`
 - `/exports/`: Rendered labels and orders for download.
 - **`designPatterns.md`**: Strict rules on how to write PHP endpoints, Javascript fetch APIs, and SQLite Prepared Statements. Read this before coding!
 - **`DEPLOYMENT.md`**: Instructions for setting up the local XAMPP server, enabling SQLite, and configuring PowerShell.
+- **`LICENSE.md`**: MIT License.
 - **Views:**
   - `index.php`: Dashboard & Stats.
   - `labels.php` & `new_label.php`: Warehouse tracker & form to print physical `.odt`.
@@ -55,8 +56,8 @@ Table `customers`: `customer_id` (PK), `company_name`, `contact_person`, `email`
 
 ## 🚀 5. Current Roadmap / Next Steps
 * Update this block manually when a phase is complete so the next AI knows where to start.
-- [ ] **Phase 1: Setup:** Create the folder structure, `includes/db.php`, and initialize SQLite files.
-- [ ] **Phase 2: UI Shell:** Create `assets/css/style.css` and the Sidebar `header.php`.
-- [ ] **Phase 3: Label Engine:** Build `new_label.php` UI, JS toggles, and PowerShell ODt injection.
-- [ ] **Phase 4: CRM:** Build `rolodex.php`.
+- [x] **Phase 1: Setup:** Create the folder structure, `includes/db.php`, and initialize SQLite files.
+- [x] **Phase 2: UI Shell:** Create `assets/css/style.css` and the Sidebar `header.php`.
+- [x] **Phase 3: Label Engine:** Build `new_label.php` UI, JS toggles, and PowerShell ODt injection.
+- [x] **Phase 4: CRM:** Build `rolodex.php`.
 - [ ] **Phase 5: Ordering:** Build `new_order.php` cart, SQLite updates, and `.ots` injection.

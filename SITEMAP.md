@@ -34,9 +34,9 @@ This is the required folder tree for the application. Any new files created by d
 │   └── functions.php       # Core PHP helpers (sanitization, formatting)
 │
 ├── /api/                   # API Endpoints (Returns JSON for JS fetch calls)
-│   ├── labels_api.php      # CREATE/READ/UPDATE/DELETE hardware labels
+│   ├── add_label.php       # CREATE hardware labels
 │   ├── orders_api.php      # Generate Purchase Forms & log orders
-│   └── rolodex_api.php     # Manage customer/lead data
+│   └── add_customer.php    # Manage customer/lead data
 │
 ├── /exports/               # User-generated files (Gitignored)
 │   ├── /labels/            # Where generated .odt files are saved for download

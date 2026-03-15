@@ -63,11 +63,11 @@ This acts as a lightweight CRM (Customer Relationship Management) system. It sto
 Because we strictly avoid massive PHP frameworks and Composer bundles, we do **not** use `PhpSpreadsheet` to generate Excel or OpenDocument files.
 
 **How to generate `.ots` and `.odt` files natively:**
-1. Maintain "Master Template" files (`template.odt`, `template.ots`) in the `/assets/templates/` folder.
+1. Maintain "Master Template" files (`label_template.odt`, `order_template.ots`) in the `/templates/` folder.
 2. An `.odt` or `.ots` file is inherently just a `.zip` archive containing a `content.xml` file.
 3. PHP will calculate strings, generate the final XML output natively (`echo '<text:p>HP Laptop</text:p>'`, etc.), and save this as a `.xml` text file in a temporary folder.
 4. PHP uses `shell_exec()` or `exec()` to call local PowerShell (`powershell.exe`).
 5. The PowerShell script copies the Master Template to the destination folder, treats the copy as a `.zip` file natively using `Compress-Archive -Update`, and injects our newly generated `content.xml` inside it, over-writing the generic dummy text.
 
 ### Example PHP & PowerShell Interaction:
-When an agent builds the `generate_label.php` script, always leverage the existing `update_odt.ps1` script (or build a similar one) that uses native Windows tools to execute this "Template Injection". Do not hallucinate PHP ZipArchives if the extension is disabled over the local network.
+When an agent builds the `api/add_label.php` script, always leverage the existing `templates/scripts/generate_odt.ps1` script (or build a similar one) that uses native Windows tools to execute this "Template Injection". Do not hallucinate PHP ZipArchives if the extension is disabled over the local network.

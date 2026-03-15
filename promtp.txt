@@ -2,7 +2,15 @@ VIBE CHECK & CONTEXT UPDATE:
 
 Please review the codebase changes we made during this session.
 1. Identify any new features added, architecture changes, or bugs fixed.
+1.5 Update all documentation if needed (e.g., DEPLOYMENT.md, ARCHITECTURE.md, etc.).
 2. Identify any new features or next steps we discussed planning.
-3. Update the `PROJECT_CONTEXT.md` file to accurately reflect these changes, specifically updating the database schemas list, file structures, and the Roadmap checklist as needed.
+3. Update the `PROJECT_CONTEXT.md` and `WorkLog.md` file to accurately reflect these changes, specifically updating the database schemas list, file structures, and the Roadmap checklist as needed.
 
 CRITICAL: Do not write any application code right now. Just ensure `PROJECT_CONTEXT.md` remains the single, accurate source of truth so the next AI Agent can pick up exactly where we left off without hallucinating context!
+
+
+------------
+Read `PROJECT_CONTEXT.md` this is what the codebase is about.
+------------
+
+Lets start with Phase 5: The Ordering Engine Please let me know what it is, then ask me again, then we can proceed.

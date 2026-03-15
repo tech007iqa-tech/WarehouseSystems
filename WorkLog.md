@@ -1,4 +1,52 @@
-# Work Log - ODT Label Generator
+# Work Log - IQA Metal Inventory & Label System
+
+## [Current Session] Phase 3 & 4 Execution
+- **Phase 3 Complete (Label Engine):** 
+  - Built `new_label.php` with hardware metrics forms.
+  - Implemented async javascript in `forms.js` for label printing submission.
+  - Architected `add_label.php` API layer connecting to `labels.sqlite` using PDO.
+  - Executed PowerShell template injection hook (`generate_odt.ps1`) for generating the actual `.odt` files natively.
+  - Built `labels.php` warehouse live tracking dashboard.
+- **Phase 4 Complete (CRM / Rolodex):**
+  - Built `new_customer.php` for entering B2B lead info.
+  - Added newCustomer async fetch handler in `forms.js`.
+  - Built `add_customer.php` backend mapping to the `rolodex.sqlite` DB.
+  - Built `rolodex.php` unified lead overview panel.
+- **Next Steps:** Proceed entirely to Phase 5 of the Roadmap (`Ordering Engine`).
+
+---
+
+## [Legacy] Phase 1 & 2 Execution
+- **Phase 1 Complete (Setup):** 
+  - Generated all local folder trees (`/assets`, `/api`, `/db`, etc.).
+  - Built `includes/db.php` initializing PDO connections.
+  - Built `init_db.php` deployment script to generate the 3 SQLite files using the exact schema.
+- **Phase 2 Complete (UI Shell):**
+  - Built `style.css` matching Vibe Code rules (dark mode, grids).
+  - Designed `header.php` containing a sticky Sidebar Nav and global vars.
+  - Built `functions.php` for local server formatting.
+  - Overhauled `index.php` into a fully functioning dynamic dashboard layout.
+- **Next Steps:** Proceed entirely to Phase 3 of the Roadmap (`Label Engine`).
+
+---
+
+## [Legacy] Massive Architecture & Scoping Expansion
+- **Shift in Scope:** Evaluated the codebase and expanded the requirements from a simple `.odt` label generator to a complete B2B Purchase Order & Warehouse tracking system.
+- **Database Architecture:** Formalized a strict 3-database sandboxed approach (`labels.sqlite`, `orders.sqlite`, `rolodex.sqlite`) to track inventory, orders, and customer leads.
+- **Vibe Code Doctrine:** Established the strict rule of *Zero Bloat*: using only Vanilla JS, Native PHP 8, custom CSS roots, and native Windows PowerShell scripting for `.odt` and `.ots` injection (banning Tailwind, node, and Composer packages).
+- **Documentation Generation:** Created the ultimate foundational context pack: 
+  - `PROJECT_CONTEXT.md` (The single Source of Truth master prompt)
+  - `ARCHITECTURE.md` (Schema specs & logic)
+  - `DESIGN_SYSTEM.md` (CSS styling)
+  - `SITEMAP.md` (Directory mappings)
+  - `designPatterns.md` (JS/PHP code patterns)
+  - `ROADMAP.md` (Phase-by-phase build checks)
+  - `DEPLOYMENT.md` (XAMPP installation guide)
+- **Next Steps:** Proceed entirely to Phase 1 of the Roadmap (`Setup & DB Initialization`).
+
+---
+
+## [Legacy Session] ODT Label Generator
 
 ## Project Updates Milestones
   - Create labels for print
