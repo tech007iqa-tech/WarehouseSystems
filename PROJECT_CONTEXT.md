@@ -11,7 +11,10 @@
 - **Frontend:** Vanilla HTML5, Vanilla CSS3, Vanilla JS.
 - **Backend:** PHP 8+ handling API endpoints in `/api/`.
 - **Database:** SQLite3 using PDO (`includes/db.php`). Three separate `.sqlite` files.
-- **File Generation:** Native PowerShell injection of `content.xml` into Master Templates.
+- **File Generation:** Native PowerShell "Structural Surgery" injecting content into original Master Templates.
+- **Native Printing:** Multi-modal support.
+  - **Orders (.ots):** Direct Windows Launching via `api/open_windows_file.php`.
+  - **Labels (.odt):** High-speed Browser-Native printing via `print_label.php` (Zero-storage/HTML-based).
 
 ---
 
@@ -53,17 +56,19 @@
 │   ├── /css/style.css          ← Single global dark-theme stylesheet
 │   └── /js/
 │       ├── forms.js            ← Handles hardware intake
-│       └── labels.js           ← Inventory management logic
+│       ├── labels.js           ← Inventory management logic
+│       └── print_engine.js      ← Global Print Modal & Quantity Logic
 │
 ├── /db/                        ← SQLite3 Databases
 │
 ├── /debug/                     ← Internal Testing & Schema Verification
-│   ├── debug_api_call.php
-│   └── debug_schema.php
+│   ├── verify_doc.ps1          ← ODF Structural Diagnosis Tool
+│   └── inspect_zip.ps1         ← ZIP Manifest/Layout Inspector
 │
 ├── /migrations/                ← Schema Evolution Scripts
 │
 ├── /templates/                 ← ODT/OTS Master Templates
+│   └── /scripts/               ← PowerShell "Structural Surgery" logic
 │
 ├── /exports/                   ← Generated ODT/OTS documents
 │   ├── /labels/                ← Individual printer files
@@ -73,10 +78,12 @@
 ├── /api/                       ← JSON-only endpoints
 │   ├── add_label.php           ← POST: Insert + generate label
 │   ├── reprint_label.php       ← POST: Regenerate ODT
+│   ├── open_windows_file.php   ← Bridge: Launches local files in Windows
 │   └── get_labels.php          ← GET: Inventory Search
 │
 ├── index.php                   ← Dashboard (Live stats & Action-First Search)
 ├── labels.php                  ← Warehouse Inventory Tracker (Searchable Cards)
+├── print_label.php             ← High-Quality Browser-Native Print Page
 └── new_label.php               ← Rapid Intake Profile Form (Sidebar Layout)
 ```
 
@@ -87,13 +94,16 @@
 - **Accent Color:** Safety Green (`#8cc63f`).
 - **Mobile First:** iPhone/Safari optimized via CSS Checkbox Hack (sidebar) and 48px touch targets.
 - **Interactivity:** All forms use `fetch()` APIs; no full-page reloads.
+- **Interactive Printing:** Global Print Config Modal allows page selection and quantity control.
+- **Hybrid Printing Approach:** 
+  - **Browser Direct:** Instant, zero-file labels for rapid warehouse use.
+  - **Windows Launch:** Precise, persistent document generation for official forms.
 
 ---
 
 ## 🚀 5. Roadmap Status
-- [x] **Phase 1-5**: Core infrastructure & Order Engine.
-- [x] **Phase 6**: Warehouse Tracking Revamp & SKU Logic.
-- [x] Phase 6B: Refurbished Tech Sheets (CPU/GPU/Battery Specs).
-- [x] Phase 6C: Warehouse Revamp (Rapid Reprint, CPU Split, API Hardening).
-- [x] **Phase 7: System Settings & Auto-Recovery** — Implemented `Schema Guard` for self-healing databases, `System Health` monitoring on Dashboard, and dedicated `settings.php` for backups and **Deep Integrity Repairs** (Database + Export Folder Structure).
+- [x] **Phase 1-7**: Infrastructure, Ordering, SKU Logic, and System Health.
+- [x] **Phase 7.5: Native Printing Workflow** — Replaced browser downloads with direct Windows launch.
+- [x] **Phase 7.7: ODF Stability & Zero-Storage Print** — Solved LibreOffice "File Corrupt" warnings via Structural XML Surgery and implemented browser-native printing.
 - [ ] Phase 8: Analytics & Reporting (Inventory aging, sales trends).
+- [ ] Phase 9: Thermal Printer Optimization (4x6 Margin-less Templates).

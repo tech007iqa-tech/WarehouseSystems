@@ -263,15 +263,8 @@ function onDeleteClick(e) {
 // ─── REPRINT ─────────────────────────────────────────────────────────────────
 
 function onReprintClick(e) {
-    const btn = e.target.closest('.reprint-btn');
-    const id  = btn.dataset.id;
-    
-    // Instead of raw fetch, open the new global Print Config Modal
-    if (window.openPrintConfig) {
-        window.openPrintConfig(id);
-    } else {
-        alert("Print engine not loaded.");
-    }
+    const id = e.target.closest('.reprint-btn').dataset.id;
+    window.open('print_label.php?id=' + id, '_blank');
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────

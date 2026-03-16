@@ -85,24 +85,29 @@ This acts as a lightweight CRM (Customer Relationship Management) system. It sto
 
 ---
 
-## 5. File Generation (The Injection Process)
-Because we strictly avoid massive PHP frameworks and Composer bundles, we do **not** use `PhpSpreadsheet` to generate Excel or OpenDocument files.
+## 5. Document Generation (Structural Surgery & Printing)
+Because we strictly avoid massive PHP frameworks or Composer bundles, we utilize a native **"Structural Surgery"** approach to generate high-fidelity OpenDocument files (`.odt`, `.ots`).
 
-**How to generate `.ots` and `.odt` files natively:**
-1. Maintain "Master Template" files (`label_template.odt`, `order_template.ots`) in the `/templates/` folder.
-2. An `.odt` or `.ots` file is inherently just a `.zip` archive containing a `content.xml` file.
-3. PHP will calculate strings, generate the final XML output natively (`echo '<text:p>HP Laptop</text:p>'`, etc.), and save this as a `.xml` text file in a temporary folder.
-4. PHP uses `shell_exec()` or `exec()` to call local PowerShell (`powershell.exe`).
-5. The PowerShell script copies the Master Template to the destination folder, treats the copy as a `.zip` file natively using `Compress-Archive -Update`, and injects our newly generated `content.xml` inside it, over-writing the generic dummy text.
+### The Generation Ecosystem:
+1. **Master Templates**: Clean ODF files (`templates/label_template.odt`, `order_template.ots`) serve as the structural backbone.
+2. **Structural XML Surgery**: 
+   - Instead of replacing the entire `content.xml`, the PowerShell engine (`templates/scripts/generate_*.ps1`) extracts the original XML from the template.
+   - It uses **Regex grafting** to inject dynamic data specifically into the `<office:text>` (Writer) or `<office:spreadsheet>` (Calc) containers.
+   - This approach preserves 100% of the original metadata, font face-declarations, and namespaces embedded in the master template.
+3. **Security & ODF Compliance**:
+   - The generation engine surgically deletes the `Configurations2/` directory and `manifest.rdf` entry. These are macro-bearing config files that trigger LibreOffice's "Macros Disabled" or "File Corrupt" warnings on externally generated documents.
+   - The system **rebuilds the `manifest.xml`** from scratch to ensure strict conformance with ODF 1.2 ISO schemas.
 
-### Example PHP & PowerShell Interaction:
-When an agent builds the `api/add_label.php` or `api/reprint_label.php` script, always leverage the existing `templates/scripts/generate_odt.ps1` script (or build a similar one) that uses native Windows tools to execute this "Template Injection". Do not hallucinate PHP ZipArchives if the extension is disabled over the local network.
+### Hybrid Printing Strategy
+The application utilizes two distinct printing workflows based on document type:
+- **Browser-Native (Labels)**: `print_label.php` renders hardware labels directly in HTML/CSS. It maps to exact **3" x 1.74"** dimensions via `@page` rules. This provides instant, zero-storage output (no files written to disk) for rapid warehouse use.
+- **Windows-Native (B2B Orders)**: B2B Purchase Orders are generated as persistent `.ots` files and launched directly in **LibreOffice Calc** via `api/open_windows_file.php`. This allows for native spreadsheet editing and professional printing controls.
 
-### Multi-Page Label Strategy
-To improve B2B presentation, the ODT generation uses a custom XML injection strategy:
-- **Clean Branding**: Internal system IDs are stripped from physical labels.
-- **Page 1 (The Lid)**: Injects strictly the `Brand + Model + Series`.
-- **Page 2 (The Specs)**: Uses `<style:paragraph-properties fo:break-before="page"/>` in the automatic-styles section to force a hard page break. All technical specifications (RAM, CPU Specs, etc.) are pushed to this secondary label area.
+### Technical Implementation:
+- **XML Escaping**: All dynamic strings are sanitized using `htmlspecialchars(..., ENT_XML1)` to ensure valid technical XML.
+- **Resource Lock Guard**: PowerShell logic detects if a file is already open in a separate application and warns the user before attempting an update.
+
+---
 
 ## 6. API Hardening (Path Resolution)
 Because the app runs on local Windows/XAMPP environments, relative paths (`../includes/`) can occasionally fail. All API endpoints in `/api/` now use absolute directory resolution:

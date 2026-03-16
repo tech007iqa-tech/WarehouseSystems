@@ -1,5 +1,43 @@
 # Work Log - IQA Metal Inventory & Label System
 
+## [2026-03-16] ODF Structural Stability & Zero-Storage Printing
+
+### ODF Integrity Solved (The "No Corruption" Fix)
+- **Structural XML Surgery**: Refactored `generate_odt.ps1` and `generate_ots.ps1`. Instead of replacing files, the system now extracts the live `content.xml`, uses Regex to graft new data into the native `<office:text>` or `<office:spreadsheet>` tags, and preserves all original styles and namespaces.
+- **Security Artifact Cleanup**: 
+    - Discovered that LibreOffice's "Corrupt/Macros Disabled" warning was triggered by the presence of `Configurations2/` and `manifest.rdf` in externally generated files.
+    - Scripts now surgically delete these macro-triggering entries and **rebuild `manifest.xml` from scratch** to ensure strict ODF validator compliance.
+- **Pre-Injection Validation**: Added `DOMDocument` validation in PHP documenting APIs; illegal characters or malformed fragments are caught *before* reaching the document engine.
+
+### High-Speed Label Printing (Option A)
+- **Zero-Storage Browser Flow**: Implemented `print_label.php`. This allows technicians to print hardware labels directly from the browser without generating any `.odt` files in the `exports/` folder.
+- **Exact Dimension Rendering**: Used `@page` CSS to map labels to exact **3" x 1.74"** dimensions. 
+- **Auto-Lifecycle**: The print tab auto-triggers `window.print()` and auto-closes after the job is finished or cancelled.
+
+### Workspace Cleanup
+- Permanently cleaned the `/debug/`, `/templates/`, and `/exports/` folders of all legacy artifacts and one-shot test scripts.
+- Retained `debug/verify_doc.ps1` and `debug/inspect_zip.ps1` as the permanent system diagnostic suit.
+
+## [2026-03-16] Native Printing & ODF Structural Stability (Direct Launch)
+
+### Features & Infrastructure
+- **Native Windows Print Bridge**: Created `api/open_windows_file.php`. This endpoint acts as a secure intermediary that allows the browser to trigger a "Direct Launch" of ODT and OTS files in their default Windows applications (LibreOffice Writer/Calc).
+- **Global Print Config Engine**: 
+    - Built `assets/js/print_engine.js` to manage a new, premium print modal.
+    - Technicians can now select specific label pages (Branding/Hardware Specs) and set quantities before generating the file.
+    - Integrated the configuration workflow into `labels.php`, `new_label.php`, and dashboard inventory search.
+- **Order Engine Upgrade**: Modified `orders.php`, `new_order.js`, and `index.php` to replace browser downloads with high-speed "🚀 Open in Windows" buttons for B2B Purchase Orders.
+
+### ODF Integrity Overhaul (Bug Fixes)
+- **Generation Engine v2 (.NET ZipAware)**: 
+    - Completely rewrote `generate_odt.ps1` and `generate_ots.ps1` to replace the unreliable `Compress-Archive` core.
+    - Switched to the **.NET `ZipArchive` Class** to ensure the `mimetype` file remains uncompressed and correctly ordered, meeting strict ISO OpenDocument requirements.
+    - Implemented **Manual Stream Writing** for `content.xml` to prevent the injection of UTF-8 Byte Order Marks (BOM), which previously caused "File Corrupt" warnings.
+- **Schema-Compliant XML Injection**:
+    - **XML Escaping**: Wrapped all hardware metadata in `htmlspecialchars(..., ENT_XML1)` to prevent special characters (likes `&`, `<`) from breaking the technical document structure.
+    - **Namespace Fortification**: Expanded the XML headers in all Document APIs to include 30+ standard ODF namespaces, improving cross-version compatibility.
+    - **Resource Lock Prevention**: Added "File in Use" detection to the PowerShell logic; the system now gracefully warns the user if a label is already open in LibreOffice before attempting an update.
+
 ## [2026-03-15] UX Overhaul & Intuition Upgrade (Mobile Robustness)
 
 ### UI & UX (iPhone First)

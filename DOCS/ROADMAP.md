@@ -50,12 +50,19 @@ This document tracks the high-level progress of the IQA Metal Label & Inventory 
 * [x] **iPhone Optimization**: Implemented CSS Checkbox Hack menu, 48px touch targets, and vertical "card" layouts for warehouse use.
 * [x] **Navigation Polish**: Unified sidebars and sidebar-stacking for better intuition on mobile devices.
 
+## ✅ Phase 7.5: ODF Stability & Hybrid Printing
+* [x] **Native Launch Bridge**: Replaced browser downloads with direct Windows application launching via `api/open_windows_file.php` (Orders).
+* [x] **Zero-Storage Label Printing**: Created `print_label.php` for high-speed, browser-native label output without disk writes.
+* [x] **Document Engine v3 (Structural Surgery)**: Implemented Regex-based XML injection to preserve 100% of master template namespaces and styles.
+* [x] **Security Hardening**: Surgically removed `Configurations2/` and `manifest.rdf` from generated ODF files to eliminate LibreOffice macro warnings.
+* [x] **ODF Manifest Rebuild**: Implemented automatic `manifest.xml` reconstruction in PowerShell scripts for strict ISO schema compliance.
+
 ## 🚀 Phase 8: Analytics & Reporting (Planned)
 * [ ] **Inventory Aging**: Track how long items sit in the warehouse before being sold.
 * [ ] **Sales Trends**: Visualize top customers and most popular hardware models.
-* [ ] **Financials**: Basic revenue tracking per month/quarter.
+* [ ] **Thermal Optimization**: Investigating 4x6 margin-less label templates for thermal printers.
 
 ---
 
-## 🚀 Status: PHASE 7 COMPLETE
-The system is now a robust, "Self-Healing", and mobile-optimized warehouse tool. Phase 8 (Analytics) is the next growth stage.
+## 🚀 Status: PHASE 7.5 COMPLETE
+The system now features a robust, hybrid printing experience: instant browser-native labels and precise, persistent B2B documents. All ODF corruption issues are resolved. Phase 8 (Analytics) is the next focus area.
