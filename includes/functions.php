@@ -58,6 +58,14 @@ function format_currency($amount) {
 }
 
 /**
+ * Convert raw timestamps to readable format for the tables
+ */
+function format_date($timestamp) {
+    if (!$timestamp) return "—";
+    return date("M j, Y", strtotime($timestamp));
+}
+
+/**
  * Ensures critical system folders exist and are writable.
  * Used during 'Deep Integrity Repair' or initialization.
  */
