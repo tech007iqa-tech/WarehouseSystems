@@ -16,7 +16,7 @@ try {
     <p>Enter specifications to record hardware and generate a physical `.odt` label.</p>
 </div>
 
-<div style="display: grid; grid-template-columns: 1fr 300px; gap: var(--spacing); align-items: start;">
+<div class="sidebar-layout">
     
     <!-- MAIN FORM COLUMN -->
     <div class="panel" style="position: relative;">

@@ -12,9 +12,9 @@ CRITICAL: Do not write any application code right now. Just ensure `PROJECT_CONT
 ------------
 Read `PROJECT_CONTEXT.md` this is what the codebase is about.
 ------------
-Phase 7: ⚙️ System Settings
+Phase 7: ⚙️ System Settings Ideas.
 
-Please let me know what it is, then ask me again, then we can proceed.
+Please let me know what it could be, then ask me again, then we can proceed.
 ------------
 ------------
 ------------

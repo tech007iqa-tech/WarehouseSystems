@@ -31,76 +31,74 @@ try {
 }
 ?>
 
-<div class="panel">
-    <h1>Dashboard Overview</h1>
-    <p>Welcome to the IQA Metal internal label & inventory tracking system.</p>
+<div class="panel" style="margin-bottom: 30px;">
+    <h1 style="font-size: 1.5rem; margin-bottom: 5px;">Worker Dashboard</h1>
+    <p style="color: var(--text-secondary); font-size: 0.9rem;">Quick tools for inventory intake and location tracking.</p>
 
     <?php if ($health['status'] === 'Critical'): ?>
-        <div style="background: rgba(220,53,69,0.1); border: 2px solid var(--btn-danger-bg); padding: 15px; border-radius: 8px; margin-top: 20px;">
-            <h3 style="color: var(--btn-danger-bg); margin: 0 0 10px 0;">🔴 Critical System Error</h3>
-            <p style="margin: 0; font-weight: bold; font-size: 0.9rem;">
-                The system has detected a problem with the database files:
+        <div style="background: rgba(220,53,69,0.05); border: 2px solid #ef4444; padding: 15px; border-radius: 12px; margin-top: 15px;">
+            <h3 style="color: #ef4444; margin: 0 0 5px 0; font-size: 1rem;">🔴 System Alert</h3>
+            <p style="margin: 0; font-weight: 600; font-size: 0.85rem; color: var(--text-main);">
+                Database issues detected. Contact Admin or check Settings.
             </p>
-            <ul style="margin: 10px 0; font-size: 0.85rem; color: var(--text-secondary);">
-                <?php foreach ($health['alerts'] as $alert): ?>
-                    <li><?= htmlspecialchars($alert) ?></li>
-                <?php endforeach; ?>
-            </ul>
         </div>
     <?php endif; ?>
 </div>
 
-<div class="form-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 30px;">
-    <!-- Stat Box 1: Hardware -->
-    <div class="panel text-center" style="border-top: 4px solid var(--accent-color);">
-        <h3 style="color: var(--text-secondary); font-size: 1rem; text-transform: uppercase;">In Warehouse</h3>
-        <p style="font-size: 2.5rem; font-weight: bold; margin: 10px 0;"><?= $total_inventory ?></p>
-        <a href="labels.php" class="btn btn-primary" style="font-size: 0.8rem; padding: 6px 12px;">View Stock</a>
-    </div>
-
-    <!-- Stat Box 2: Finances -->
-    <div class="panel text-center" style="border-top: 4px solid var(--btn-success-bg);">
-        <h3 style="color: var(--text-secondary); font-size: 1rem; text-transform: uppercase;">Total Sales</h3>
-        <p style="font-size: 2.5rem; font-weight: bold; margin: 10px 0;"><?= $total_sales ?></p>
-        <a href="orders.php" class="btn btn-primary" style="font-size: 0.8rem; padding: 6px 12px;">View Orders</a>
-    </div>
-
-    <!-- Stat Box 3: Leads -->
-    <div class="panel text-center" style="border-top: 4px solid #f39c12;">
-        <h3 style="color: var(--text-secondary); font-size: 1rem; text-transform: uppercase;">Active CRM</h3>
-        <p style="font-size: 2.5rem; font-weight: bold; margin: 10px 0;"><?= $total_leads ?></p>
-        <a href="rolodex.php" class="btn btn-primary" style="font-size: 0.8rem; padding: 6px 12px;">View Contacts</a>
-    </div>
-</div>
-
-<div class="form-grid">
-    <!-- Quick Search Widget -->
-    <div class="panel">
-        <h2>🔍 Quick Locate</h2>
-        <p style="margin-bottom: 15px; font-size: 0.9rem;">Scan a physical label barcode or type an ID to find a laptop's exact location.</p>
+<!-- PHASE 1: ACTION TOOLS (PRIMARY) -->
+<div class="action-grid" style="margin-bottom: 25px;">
+    <!-- Search Widget -->
+    <div class="panel" style="border-left: 5px solid var(--accent-color);">
+        <h2 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.3rem;">🔍</span> Quick Locate
+        </h2>
+        <p style="margin-bottom: 15px; font-size: 0.85rem; color: var(--text-secondary);">Find a laptop's location by ID or Brand.</p>
         <form id="quickSearchForm" class="flex-between">
-            <input type="text" id="quickSearchId" placeholder="Search ID, Brand, Model, Spec…" required style="margin-right: 10px;">
-            <button type="submit" class="btn btn-primary">Find</button>
+            <input type="text" id="quickSearchId" placeholder="ID, Brand, Model..." required style="flex: 1; margin-right: 10px;">
+            <button type="submit" class="btn btn-primary" style="padding: 0 25px;">Find</button>
         </form>
         <div id="quickSearchResult" style="margin-top: 15px;"></div>
     </div>
     
     <!-- Action Widget -->
-    <div class="panel">
-        <h2>⚡ Quick Actions</h2>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            <a href="new_label.php" class="btn btn-success" 
-               style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding: 18px; font-weight: 600;">
-                <span style="font-size: 1.4rem;">🏷️</span> 
-                <span>Print New Hardware Label (.odt)</span>
+    <div class="panel" style="border-left: 5px solid var(--text-main);">
+        <h2 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.3rem;">⚡</span> Quick Actions
+        </h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+            <a href="new_label.php" class="btn btn-success" style="flex-direction: column; height: auto; padding: 15px; font-size: 0.85rem;">
+                <span style="font-size: 1.5rem; margin-bottom: 5px;">🏷️</span>
+                <span>New Label</span>
             </a>
-            
-            <a href="new_order.php" class="btn btn-primary" 
-               style="display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding: 18px; font-weight: 600;">
-                <span style="font-size: 1.4rem;">🛒</span>
-                <span>Basket Items into Purchase Form (.ots)</span>
+            <a href="new_order.php" class="btn btn-primary" style="flex-direction: column; height: auto; padding: 15px; font-size: 0.85rem; background: var(--text-main);">
+                <span style="font-size: 1.5rem; margin-bottom: 5px;">🛒</span>
+                <span>B2B Form</span>
             </a>
         </div>
+    </div>
+</div>
+
+<!-- PHASE 2: SYSTEM STATS (SECONDARY) -->
+<div class="stat-grid" style="margin-bottom: 30px;">
+    <!-- Hardware -->
+    <div class="panel text-center" style="display: flex; flex-direction: column; justify-content: center; padding: 15px;">
+        <span style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: var(--text-secondary);">Warehouse</span>
+        <p style="font-size: 1.8rem; font-weight: 800; margin: 5px 0;"><?= $total_inventory ?></p>
+        <a href="labels.php" style="font-size: 0.75rem; font-weight: 700; color: var(--accent-color);">View All ➔</a>
+    </div>
+
+    <!-- Finances -->
+    <div class="panel text-center" style="display: flex; flex-direction: column; justify-content: center; padding: 15px;">
+        <span style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: var(--text-secondary);">Sales</span>
+        <p style="font-size: 1.8rem; font-weight: 800; margin: 5px 0;"><?= $total_sales ?></p>
+        <a href="orders.php" style="font-size: 0.75rem; font-weight: 700; color: var(--accent-color);">View All ➔</a>
+    </div>
+
+    <!-- CRM -->
+    <div class="panel text-center" style="display: flex; flex-direction: column; justify-content: center; padding: 15px;">
+        <span style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: var(--text-secondary);">Leads</span>
+        <p style="font-size: 1.8rem; font-weight: 800; margin: 5px 0;"><?= $total_leads ?></p>
+        <a href="rolodex.php" style="font-size: 0.75rem; font-weight: 700; color: var(--accent-color);">View All ➔</a>
     </div>
 </div>
 
