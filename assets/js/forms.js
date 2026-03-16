@@ -250,4 +250,59 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    /* --- PHONE NUMBER FORMATTING (+1 (XXX) XXX-XXXX) --- */
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+            const input = e.target.value;
+            // Clean digits only
+            let digits = input.replace(/\D/g, '');
+            
+            // If the user starts with a '+' that isn't +1, assume international and stop formatting
+            if (input.startsWith('+') && !input.startsWith('+1')) {
+                // Just keep it as + and digits
+                e.target.value = '+' + digits;
+                return;
+            }
+
+            // Support defaulting to +1 if not provided or starting with '1'
+            if (digits.length > 0 && digits[0] !== '1') {
+                digits = '1' + digits;
+            }
+
+            let formatted = "";
+            if (digits.length > 0) {
+                // Country Code
+                formatted = "+" + digits.substring(0, 1);
+                
+                // Area Code
+                if (digits.length > 1) {
+                    formatted += " (" + digits.substring(1, 4);
+                }
+                
+                // Prefix
+                if (digits.length > 4) {
+                    formatted += ") " + digits.substring(4, 7);
+                }
+                
+                // Line Number
+                if (digits.length > 7) {
+                    formatted += "-" + digits.substring(7, 11);
+                }
+            }
+
+            // Only update if the value changed to avoid cursor issues in some browsers
+            if (e.target.value !== formatted) {
+                e.target.value = formatted;
+            }
+        });
+
+        // Auto-fill +1 when clicking an empty field to guide the user
+        phoneInput.addEventListener('focus', (e) => {
+            if (!e.target.value) {
+                e.target.value = '+1 ';
+            }
+        });
+    }
+
 });
