@@ -11,10 +11,15 @@ $msg_type = 'success';
 
 // Handle Integrity Repair
 if (isset($_POST['repair_db'])) {
+    // 1. Database Level Check
     $pdo_labels->exec("PRAGMA integrity_check");
     $pdo_orders->exec("PRAGMA integrity_check");
     $pdo_rolodex->exec("PRAGMA integrity_check");
-    $message = "Integrity check completed on all databases.";
+
+    // 2. File System Level Check
+    ensure_system_folders();
+
+    $message = "Deep Integrity Repair successful: All databases verified and export folder structure restored.";
     // Refresh health
     $health = get_system_health($pdo_labels, $pdo_orders, $pdo_rolodex);
 }

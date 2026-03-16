@@ -1,5 +1,20 @@
 # Work Log - IQA Metal Inventory & Label System
 
+## [2026-03-15] UX Overhaul & Intuition Upgrade (Mobile Robustness)
+
+### UI & UX (iPhone First)
+- **Robust Navigation Engine**: Implemented a CSS-only hamburger menu using the "Checkbox Hack". This ensures zero JavaScript dependencies for core navigation on iPhone/Safari.
+- **Action-First Dashboard**: Restructured `index.php` to place high-frequency actions (Quick Locate & Quick Intake) above system statistics, reducing need for scrolling in the warehouse.
+- **Searchable Inventory Cards**: Transformed the horizontal inventory table into vertical, labeled cards for mobile users. Each data point (CPU, Location, Specs) is clearly identified for rapid scanning.
+- **Sidebar Stacking**: Updated `new_label.php` to move the "Recently Added" sidebar to the bottom of the page on mobile devices to maximize vertical form space.
+- **Touch-Friendly Standard**: Enforced a minimum 48px height on all buttons and inputs (Apple Human Interface Guidelines) to ensure reliability for technicians wearing gloves or working on the move.
+- **Safe Area Support**: Added `env(safe-area-inset-top)` support to ensure headers and menus are never obscured by the iPhone notch.
+
+### System Stability (File System Integrity)
+- **Folder Correction Engine**: Enhanced "Deep Integrity Repair" to automatically verify and recreate the entire export folder structure (`exports/labels`, `exports/orders`, etc.).
+- **Proactive Directory Check**: Hardened `api/add_label.php` and `api/reprint_label.php` to verify directory existence before ODT generation, preventing path resolution crashes.
+- **Security Hardening**: Auto-injects `.htaccess` into the `exports/` directory to block directory indexing and protect B2B data.
+
 ## [2026-03-15] Phase 7 — System Fortification & Auto-Recovery
 
 ### Features & Reliability

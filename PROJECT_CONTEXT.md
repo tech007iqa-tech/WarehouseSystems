@@ -65,21 +65,27 @@
 │
 ├── /templates/                 ← ODT/OTS Master Templates
 │
+├── /exports/                   ← Generated ODT/OTS documents
+│   ├── /labels/                ← Individual printer files
+│   ├── /orders/                ← Customer B2B Forms
+│   └── .htaccess               ← Security: Block direct directory browsing
+│
 ├── /api/                       ← JSON-only endpoints
 │   ├── add_label.php           ← POST: Insert + generate label
 │   ├── reprint_label.php       ← POST: Regenerate ODT
 │   └── get_labels.php          ← GET: Inventory Search
 │
-├── index.php                   ← Dashboard (Live stats & Search)
-├── labels.php                  ← Warehouse Inventory Tracker
-└── new_label.php               ← Rapid Intake Profile Form
+├── index.php                   ← Dashboard (Live stats & Action-First Search)
+├── labels.php                  ← Warehouse Inventory Tracker (Searchable Cards)
+└── new_label.php               ← Rapid Intake Profile Form (Sidebar Layout)
 ```
 
 ---
 
 ## 🎨 4. Design System / UI Vibe
-- **Theme:** Light mode (Professional/Clean). Background `#ffffff`, panels `#f4f6f8`.
+- **Theme:** Robust Light Mode (High Contrast). Background `#fdfdfd`, panels `#ffffff`.
 - **Accent Color:** Safety Green (`#8cc63f`).
+- **Mobile First:** iPhone/Safari optimized via CSS Checkbox Hack (sidebar) and 48px touch targets.
 - **Interactivity:** All forms use `fetch()` APIs; no full-page reloads.
 
 ---
@@ -89,5 +95,5 @@
 - [x] **Phase 6**: Warehouse Tracking Revamp & SKU Logic.
 - [x] Phase 6B: Refurbished Tech Sheets (CPU/GPU/Battery Specs).
 - [x] Phase 6C: Warehouse Revamp (Rapid Reprint, CPU Split, API Hardening).
-- [x] **Phase 7: System Settings & Auto-Recovery** — Implemented `Schema Guard` for self-healing databases, `System Health` monitoring on Dashboard, and dedicated `settings.php` for backups and integrity repairs.
+- [x] **Phase 7: System Settings & Auto-Recovery** — Implemented `Schema Guard` for self-healing databases, `System Health` monitoring on Dashboard, and dedicated `settings.php` for backups and **Deep Integrity Repairs** (Database + Export Folder Structure).
 - [ ] Phase 8: Analytics & Reporting (Inventory aging, sales trends).

@@ -131,3 +131,21 @@ The API layer (`api/add_label.php`) and frontend (`assets/js/forms.js`) work tog
 1. **Technical Fingerprinting**: When adding hardware, the system scans for exact matches in Brand, Model, Series, CPU Specs, RAM, and Storage.
 2. **Contextual Reuse**: If a match is found in the same warehouse location, the system reuses the existing ID and refreshes the ODT label instead of creating a redundant record.
 3. **Technician Notification**: The UI provides a high-transparency confirmation whenever a profile is reused rather than created fresh.
+## 9. Robust UX Patterns (Mobile-First)
+To ensure the application is usable in a warehouse environment (gloves, moving equipment, small screens), we adhere to several robust design patterns:
+
+### CSS Checkbox Hack (Menu)
+Instead of relying on JavaScript for the mobile hamburger menu which can fail in low-memory states or high-latency environments, we use a hidden `<input type="checkbox">` and the sibling selector (`~`) to toggle sidebar visibility. This ensures the UI remains interactive even if scripts are blocked or fail to load.
+
+### Table-to-Card Transformation
+On screens smaller than 900px, standard data tables use a CSS transformation:
+1. `display: none` is applied to the `<thead>`.
+2. `display: block` is applied to `<tr>` and `<td>`.
+3. `data-label` attributes on `<td>` elements are injected via CSS `content: attr(data-label)` to create labels for the vertical card layout.
+
+## 10. File System Integrity
+The system treats the folder structure as part of its "state". The `ensure_system_folders()` function in `includes/functions.php` is responsible for:
+- Creating missing export directories (`exports/labels`, `exports/orders`).
+- Setting up the `db/backups` directory.
+- Injecting security `.htaccess` files to prevent directory indexing and protect sensitive B2B documents.
+- Resolving absolute paths for the PowerShell engine to ensure ODT generation succeeds across different local environments.

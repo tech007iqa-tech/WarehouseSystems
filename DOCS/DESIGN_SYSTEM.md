@@ -12,30 +12,23 @@ You can see these initialized in `index.php`. All new CSS written must use these
 
 ```css
 :root {
-    /* Typography */
-    --font-main: Arial, sans-serif;
-    
-    /* Colors - Light Theme Default */
-    --text-main: #333333;
-    --text-secondary: #666666;
-    --link-color: #007bff;
+    /* Architecture */
+    --sidebar-width: 260px;
+    --header-height: 64px;
+    --btn-height: 48px;          /* iPhone Human Interface Standard */
+
+    /* Colors - Robust Light Theme */
+    --bg-page: #fdfdfd;          /* Reduced glare white */
+    --bg-panel: #ffffff;
+    --text-main: #0f172a;        /* Deep slate for legibility */
+    --text-secondary: #475569;
+    --accent-color: #8cc63f;     /* Safety Green */
+    --border-color: #e2e8f0;     /* Sharper borders */
     
     /* Layout & Spacing */
-    --spacing: 20px;
-    --border-radius: 8px;
-    
-    /* Backgrounds & Panels */
-    --bg-page: #f8f9fa;
-    --bg-panel: #ffffff;
-    --border-color: #e0e0e0;
-
-    /* Actions */
-    --btn-primary-bg: #007bff;
-    --btn-primary-text: #ffffff;
-    --btn-success-bg: #28a745;
-    --btn-success-text: #ffffff;
-    --btn-danger-bg: #dc3545;
-    --btn-danger-text: #ffffff;
+    --spacing: 16px;
+    --border-radius-lg: 12px;
+    --border-radius-md: 8px;
 }
 ```
 
@@ -88,13 +81,17 @@ input[type="text"]:focus, select:focus {
 }
 ```
 
-### Buttons
-Buttons should feel tactile and clearly indicate their action type:
-* **Primary Actions** (e.g., "Search", "Next"): Use `--btn-primary-bg`.
-* **Positive/Creation Actions** (e.g., "Generate Label", "Add Laptop"): Use `--btn-success-bg`.
-* **Destructive Actions** (e.g., "Delete", "Remove"): Use `--btn-danger-bg`.
+### Buttons & Touch Targets
+Buttons should feel tactile and adhere to the **iPhone 48px Rule**:
+- **Min-Height:** All actionable elements must be at least `48px` tall.
+- **Primary Actions**: Use `--text-main` background (Slate).
+- **Positive Actions**: Use `--accent-color` (Safety Green).
+- **Destructive Actions**: Use `#ef4444` (Red).
 
-All buttons should have a quick `transition: background 0.2s` for a smooth hover effect.
+All buttons should have a `scale(0.98)` active state for tactile feedback and a smooth transition.
+
+### iPhone Safe Areas
+Always use `env(safe-area-inset-top)` and `env(safe-area-inset-bottom)` for fixed headers or bottom bars to ensure they aren't obscured by the physical notch or home indicator.
 
 ---
 

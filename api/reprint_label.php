@@ -67,8 +67,11 @@ try {
     $temp_xml_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'reprint_' . time() . '.xml';
     file_put_contents($temp_xml_path, $xml_content);
 
+    $export_dir = __DIR__ . '/../exports/labels/';
+    if (!is_dir($export_dir)) mkdir($export_dir, 0777, true);
+
     $final_odt_name = "Label_Reprint_" . $id . "_" . preg_replace('/[^a-zA-Z0-9]/', '', $brand . $model) . ".odt";
-    $final_odt_path = realpath(__DIR__ . '/../exports/labels/') . DIRECTORY_SEPARATOR . $final_odt_name;
+    $final_odt_path = realpath($export_dir) . DIRECTORY_SEPARATOR . $final_odt_name;
     
     $master_template = realpath(__DIR__ . '/../templates/label_template.odt');
     $ps_script = realpath(__DIR__ . '/../templates/scripts/generate_odt.ps1');

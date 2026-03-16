@@ -58,9 +58,24 @@ function format_currency($amount) {
 }
 
 /**
- * Convert raw timestamps to readable format for the tables
+ * Ensures critical system folders exist and are writable.
+ * Used during 'Deep Integrity Repair' or initialization.
  */
-function format_date($timestamp) {
-    return date("M j, Y", strtotime($timestamp));
+function ensure_system_folders() {
+    $base = __DIR__ . '/../';
+    $folders = ['exports', 'exports/labels', 'exports/orders', 'db/backups', 'fileBackups'];
+    
+    foreach ($folders as $f) {
+        $path = $base . $f;
+        if (!is_dir($path)) {
+            mkdir($path, 0777, true);
+        }
+    }
+
+    // Add a basic .htaccess to the exports folder to prevent directory browsing
+    $htaccess = $base . 'exports/.htaccess';
+    if (!file_exists($htaccess)) {
+        file_put_contents($htaccess, "Options -Indexes\n<Files \"*.php\">\n    Order allow,deny\n    Deny from all\n</Files>");
+    }
 }
 ?>
