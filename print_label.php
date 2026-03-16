@@ -152,10 +152,10 @@ $gen_display = $cpu_gen ?: 'Gen Unknown';
             font-weight: 800;
         }
 
-        /* ── The actual label — exact 3" × 1.74" ── */
+        /* ── The actual label — exact 2" × 1" ── */
         .label {
-            width: 3in;
-            height: 1.7402in;
+            width: 2in;
+            height: 1in;
             overflow: hidden;
             border: 1px solid #d0d0d0;
             border-radius: 4px;
@@ -164,30 +164,31 @@ $gen_display = $cpu_gen ?: 'Gen Unknown';
             justify-content: center;
             align-items: center;
             text-align: center;
-            padding: 0.1in 0.1in;
+            padding: 0.05in;
             background: #fff;
             position: relative;
         }
 
         /* Label A — Branding */
         .label-a .brand-name {
-            font-size: 22pt;
+            font-size: 16pt;
             font-weight: 700;
-            line-height: 1.15;
+            line-height: 1.1;
             color: #111;
-            word-break: break-word;
+            word-wrap: break-word;
         }
 
         /* Label B — Specs */
         .label-b .spec-line {
-            font-size: 10pt;
-            line-height: 1.45;
+            font-size: 7.5pt;
+            line-height: 1.25;
             color: #111;
             width: 100%;
             text-align: center;
+            word-wrap: break-word;
         }
         .label-b .spec-line.head {
-            font-size: 11pt;
+            font-size: 8.5pt;
             font-weight: 700;
             margin-bottom: 2pt;
         }
@@ -201,25 +202,33 @@ $gen_display = $cpu_gen ?: 'Gen Unknown';
                 margin: 0 !important;
                 display: block !important;
             }
-            .toolbar, .label-tag, .label-card-outer {
+            .toolbar, .label-tag {
                 display: none !important;
             }
+            .label-card-outer {
+                display: block !important;
+                background: none !important;
+                box-shadow: none !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
             .preview-wrap {
-                display: block;
+                display: block !important;
+                gap: 0 !important;
             }
 
             /* Each label gets its own physical page */
             @page {
-                size: 3in 1.7402in landscape;
+                size: 2in 1in landscape;
                 margin: 0;
             }
 
             .label {
-                width: 3in;
-                height: 1.7402in;
+                width: 2in;
+                height: 1in;
                 border: none !important;
                 border-radius: 0 !important;
-                padding: 0.1in 0.1in;
+                padding: 0.05in;
                 page-break-after: always;
                 page-break-inside: avoid;
                 box-shadow: none !important;

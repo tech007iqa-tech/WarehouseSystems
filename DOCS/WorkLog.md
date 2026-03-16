@@ -13,6 +13,7 @@
 - **Zero-Storage Browser Flow**: Implemented `print_label.php`. This allows technicians to print hardware labels directly from the browser without generating any `.odt` files in the `exports/` folder.
 - **Exact Dimension Rendering**: Used `@page` CSS to map labels to exact **3" x 1.74"** dimensions. 
 - **Auto-Lifecycle**: The print tab auto-triggers `window.print()` and auto-closes after the job is finished or cancelled.
+- **Bug Fix (Blank Print)**: Corrected a CSS inheritance issue in `print_label.php` where labels were inadvertently hidden in print mode due to parent visibility rules.
 
 ### Workspace Cleanup
 - Permanently cleaned the `/debug/`, `/templates/`, and `/exports/` folders of all legacy artifacts and one-shot test scripts.
