@@ -110,6 +110,12 @@ try {
                                             style="font-size:0.75rem; min-height: 38px; padding: 0 12px; background:var(--bg-page); border:1px solid var(--border-color); color:var(--text-main);">
                                         🖨️ Print
                                     </button>
+                                    <button class="btn open-label-btn" 
+                                            data-id="<?= (int)$item['id'] ?>" 
+                                            title="Open Folder/File"
+                                            style="font-size:0.75rem; min-height: 38px; padding: 0 12px; background:var(--bg-page); border:1px solid var(--border-color); color:var(--text-main);">
+                                        📂 Open
+                                    </button>
                                     <button class="btn edit-btn"
                                             data-id="<?= (int)$item['id'] ?>"
                                             style="font-size:0.75rem; min-height: 38px; padding: 0 12px; background:var(--bg-page); border:1px solid var(--border-color); color:var(--text-main);">

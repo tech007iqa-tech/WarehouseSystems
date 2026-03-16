@@ -82,6 +82,8 @@ function buildRow(item) {
         <td style="white-space:nowrap;">
             <button class="btn reprint-btn" data-id="${item.id}" title="Reprint Label"
                     style="font-size:0.75rem;padding:5px 8px;background:var(--bg-page);border:1px solid var(--border-color);color:var(--text-main);margin-right:4px;">🖨️ Print</button>
+            <button class="btn open-label-btn" data-id="${item.id}" title="Open Folder/File"
+                    style="font-size:0.75rem;padding:5px 8px;background:var(--bg-page);border:1px solid var(--border-color);color:var(--text-main);margin-right:4px;">📂 Open</button>
             <button class="btn edit-btn" data-id="${item.id}"
                     style="font-size:0.75rem;padding:5px 8px;background:var(--bg-page);border:1px solid var(--border-color);color:var(--text-main);margin-right:4px;">✏️ Edit</button>
             <button class="btn btn-danger delete-btn" data-id="${item.id}"
@@ -110,6 +112,10 @@ function attachRowListeners() {
     document.querySelectorAll('.reprint-btn').forEach(btn => {
         btn.removeEventListener('click', onReprintClick);
         btn.addEventListener('click', onReprintClick);
+    });
+    document.querySelectorAll('.open-label-btn').forEach(btn => {
+        btn.removeEventListener('click', onOpenClick);
+        btn.addEventListener('click', onOpenClick);
     });
 }
 
@@ -265,6 +271,38 @@ function onDeleteClick(e) {
 function onReprintClick(e) {
     const id = e.target.closest('.reprint-btn').dataset.id;
     window.open('print_label.php?id=' + id, '_blank');
+}
+
+function onOpenClick(e) {
+    const btn = e.target.closest('.open-label-btn');
+    const id = btn.dataset.id;
+    const originalText = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '⏳…';
+
+    const formData = new FormData();
+    formData.append('id', id);
+    formData.append('mode', 'open');
+    // Default print settings for the auto-generated ODT
+    formData.append('qty', 1);
+    formData.append('print_a', 1);
+    formData.append('print_b', 1);
+
+    fetch('api/reprint_label.php', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(json => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            if (!json.success) {
+                alert('Launch failed: ' + (json.error || 'Unknown error'));
+            }
+        })
+        .catch(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            alert('Network error — file could not be launched.');
+        });
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────

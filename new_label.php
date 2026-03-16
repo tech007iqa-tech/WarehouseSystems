@@ -148,7 +148,7 @@ try {
             <p id="successMsg" style="color:var(--text-secondary); margin-bottom:30px;"></p>
             
             <div style="display:flex; gap:15px; flex-wrap:wrap; justify-content:center;">
-                <button id="btnAgain" class="btn btn-primary" style="padding:12px 20px;">🔄 Print Another (Same Profile)</button>
+                <button id="btnAgain" class="btn btn-primary" style="padding:12px 20px;">🔄 Open a New Copy</button>
                 <button id="btnReset" class="btn btn-success" style="padding:12px 20px;">✨ Add New Hardware</button>
                 <a href="labels.php" class="btn" style="padding:12px 20px; background:var(--bg-page); border:1px solid var(--border-color); color:var(--text-main);">📦 Go to Inventory</a>
             </div>
