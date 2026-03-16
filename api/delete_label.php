@@ -1,0 +1,41 @@
+<?php
+// api/delete_label.php
+// POST id= : Permanently deletes a hardware item from labels.sqlite.
+// Blocks deletion if the item has been Sold (linked to an order).
+header('Content-Type: application/json');
+require_once '../includes/db.php';
+require_once '../includes/functions.php';
+
+try {
+    $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
+    if ($id <= 0) {
+        throw new Exception('A valid item ID is required.');
+    }
+
+    // Fetch item to verify existence and check status
+    $stmt_check = $pdo_labels->prepare("SELECT id, status, brand, model FROM items WHERE id = :id");
+    $stmt_check->execute([':id' => $id]);
+    $item = $stmt_check->fetch(PDO::FETCH_ASSOC);
+
+    if (!$item) {
+        throw new Exception('Item #' . $id . ' not found.');
+    }
+
+    // Block deletion of sold items to preserve order history integrity
+    if ($item['status'] === 'Sold') {
+        throw new Exception('Cannot delete a Sold item. It is linked to a purchase order. Change its status first if needed.');
+    }
+
+    $stmt = $pdo_labels->prepare("DELETE FROM items WHERE id = :id");
+    $stmt->execute([':id' => $id]);
+
+    send_json_response(true, [
+        'deleted_id' => $id,
+        'message'    => 'Item #' . str_pad($id, 5, '0', STR_PAD_LEFT)
+                      . ' (' . $item['brand'] . ' ' . $item['model'] . ') has been removed.'
+    ]);
+
+} catch (Exception $e) {
+    send_json_response(false, null, $e->getMessage());
+}
+?>

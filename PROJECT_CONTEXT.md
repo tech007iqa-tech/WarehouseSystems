@@ -6,58 +6,88 @@
 
 ## 🏗️ 1. Project Overview & Tech Stack
 **App:** IQA Metal Inventory, Label Printer & Purchase Order System.
-**Goal:** Track physical hardware, print `.odt` labels for them, and basket them into `.ots` Purchase Forms for B2B customers.
+**Goal:** Track physical hardware, print `.odt` labels, and basket them into `.ots` Purchase Forms.
 **Tech Stack:**
-- **Frontend:** Vanilla HTML5, Vanilla CSS3 (Custom variables, Flex/Grid), Vanilla JS (ES6+ `fetch()` APIs).
-- **Backend:** PHP 8+ handling routing and API endpoints in `/api/`.
-- **Database:** SQLite3 using PDO (`includes/db.php`).
-- **Strict Rule:** NO `node_modules`, NO Tailwind, NO Bootstrap, NO Composer packages.
-- **File Generation:** Do not use `PhpSpreadsheet` or zip extensions. Generate raw `content.xml` arrays in PHP, save them as `.xml`, and use native Windows PowerShell (`Compress-Archive -Update`) to securely inject the `.xml` natively into empty `.odt` and `.ots` MS template files.
+- **Frontend:** Vanilla HTML5, Vanilla CSS3, Vanilla JS.
+- **Backend:** PHP 8+ handling API endpoints in `/api/`.
+- **Database:** SQLite3 using PDO (`includes/db.php`). Three separate `.sqlite` files.
+- **File Generation:** Native PowerShell injection of `content.xml` into Master Templates.
 
 ---
 
 ## 🗄️ 2. Database Architecture (3 Separate SQLite Files)
 
-### A. `labels.sqlite` (The Hardware/Inventory)
-Table `items`: `id` (PK), `type` ('Laptop'), `brand`, `model`, `series`, `cpu_gen`, `cpu_details`, `ram`, `storage`, `battery` (BOOL), `bios_state`, `description` (Condition), `status` ('In Warehouse', 'Sold'), `warehouse_location`, `order_id` (FK to orders), `created_at`.
-
-### B. `orders.sqlite` (The Purchase Forms)
-Table `purchase_orders`: `order_number` (PK), `customer_id` (FK to rolodex), `order_date`, `total_qty`, `total_price`, `document_path` (Path to generated `.ots`).
-
-### C. `rolodex.sqlite` (The CRM / Leads)
-Table `customers`: `customer_id` (PK), `company_name`, `contact_person`, `email`, `phone`, `lead_status`, `notes`, `created_at`.
+### A. `labels.sqlite` — Hardware Label Master
+| Column | Type | Notes |
+|---|---|---|
+| `id` | INTEGER PK AUTOINCREMENT | Master Template ID (Hidden in UI) |
+| `brand` | TEXT NOT NULL | e.g. `'HP'` |
+| `model` | TEXT NOT NULL | e.g. `'EliteBook'` |
+| `series` | TEXT | e.g. `'840 G3'` |
+| `cpu_gen` | TEXT | e.g. `'11th Gen'` |
+| `cpu_specs` | TEXT | Processor name e.g. `'i7-11850H'` |
+| `cpu_cores` | TEXT | Physical Core count |
+| `cpu_speed` | TEXT | Clock speed e.g. `'2.40GHz'` |
+| `cpu_details` | TEXT | DEPRECATED (Legacy tech info) |
+| `ram` | TEXT | Memory capacity |
+| `storage` | TEXT | Drive capacity |
+| `battery` | BOOLEAN | Battery included (1/0) |
+| `bios_state` | TEXT | Locked/Unlocked/Unknown |
+| `description` | TEXT | Master condition: `'Untested'`, `'Refurbished'` |
+| `warehouse_location` | TEXT | Physical shelf location |
 
 ---
 
-## 🗺️ 3. Folder & UI Sitemap
-- `/assets/`: `css/style.css` (Global styles), `js/api.js` (Fetch callbacks).
-- `/db/`: The SQLite files.
-- `/templates/`: The `.odt`/`.ots` master templates and `.ps1` PowerShell scripts.
-- `/includes/`: `db.php` (PDO connections), `header.php`, `footer.php`.
-- `/api/`: PHP Endpoints returning JSON for the JS frontend to consume.
-- `/exports/`: Rendered labels and orders for download.
-- **`designPatterns.md`**: Strict rules on how to write PHP endpoints, Javascript fetch APIs, and SQLite Prepared Statements. Read this before coding!
-- **`DEPLOYMENT.md`**: Instructions for setting up the local XAMPP server, enabling SQLite, and configuring PowerShell.
-- **`LICENSE.md`**: MIT License.
-- **Views:**
-  - `index.php`: Dashboard & Stats.
-  - `labels.php` & `new_label.php`: Warehouse tracker & form to print physical `.odt`.
-  - `orders.php` & `new_order.php`: B2B cart & form to print invoice `.ots`.
-  - `rolodex.php` & `new_customer.php`: Leads / Customer tracker.
+## 🗺️ 3. Folder & File Sitemap
+
+```
+/LabelAPP/
+│
+├── /DOCS/                      ← Centralized System Documentation
+│   ├── ARCHITECTURE.md
+│   ├── ROADMAP.md
+│   ├── WorkLog.md
+│   └── SITEMAP.md
+│
+├── /assets/
+│   ├── /css/style.css          ← Single global dark-theme stylesheet
+│   └── /js/
+│       ├── forms.js            ← Handles hardware intake
+│       └── labels.js           ← Inventory management logic
+│
+├── /db/                        ← SQLite3 Databases
+│
+├── /debug/                     ← Internal Testing & Schema Verification
+│   ├── debug_api_call.php
+│   └── debug_schema.php
+│
+├── /migrations/                ← Schema Evolution Scripts
+│
+├── /templates/                 ← ODT/OTS Master Templates
+│
+├── /api/                       ← JSON-only endpoints
+│   ├── add_label.php           ← POST: Insert + generate label
+│   ├── reprint_label.php       ← POST: Regenerate ODT
+│   └── get_labels.php          ← GET: Inventory Search
+│
+├── index.php                   ← Dashboard (Live stats & Search)
+├── labels.php                  ← Warehouse Inventory Tracker
+└── new_label.php               ← Rapid Intake Profile Form
+```
 
 ---
 
 ## 🎨 4. Design System / UI Vibe
-- **Variables:** Use the roots in `style.css`: `--text-main: #333`, `--link-color: #007bff`, `--bg-page: #f8f9fa`, `--btn-primary-bg`, `--btn-success-bg`.
-- **Layout:** Dark, modern, premium hardware aesthetic. Avoid inline blocks; rely heavily on `display: flex;` and `display: grid;`.
-- **Interactivity:** Never use full-page POST reloads. All forms should use JS `e.preventDefault()`, show a loading spinner, send data via `fetch()` to `/api/`, and update the UI seamlessly.
+- **Theme:** Light mode (Professional/Clean). Background `#ffffff`, panels `#f4f6f8`.
+- **Accent Color:** Safety Green (`#8cc63f`).
+- **Interactivity:** All forms use `fetch()` APIs; no full-page reloads.
 
 ---
 
-## 🚀 5. Current Roadmap / Next Steps
-* Update this block manually when a phase is complete so the next AI knows where to start.
-- [x] **Phase 1: Setup:** Create the folder structure, `includes/db.php`, and initialize SQLite files.
-- [x] **Phase 2: UI Shell:** Create `assets/css/style.css` and the Sidebar `header.php`.
-- [x] **Phase 3: Label Engine:** Build `new_label.php` UI, JS toggles, and PowerShell ODt injection.
-- [x] **Phase 4: CRM:** Build `rolodex.php`.
-- [ ] **Phase 5: Ordering:** Build `new_order.php` cart, SQLite updates, and `.ots` injection.
+## 🚀 5. Roadmap Status
+- [x] **Phase 1-5**: Core infrastructure & Order Engine.
+- [x] **Phase 6**: Warehouse Tracking Revamp & SKU Logic.
+- [x] Phase 6B: Refurbished Tech Sheets (CPU/GPU/Battery Specs).
+- [x] Phase 6C: Warehouse Revamp (Rapid Reprint, CPU Split, API Hardening).
+- [x] **Phase 7: System Settings & Auto-Recovery** — Implemented `Schema Guard` for self-healing databases, `System Health` monitoring on Dashboard, and dedicated `settings.php` for backups and integrity repairs.
+- [ ] Phase 8: Analytics & Reporting (Inventory aging, sales trends).

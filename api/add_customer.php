@@ -16,15 +16,18 @@ try {
     $company_name = sanitize_text($_POST['company_name'] ?? null);
     $email = sanitize_text($_POST['email'] ?? null);
     $phone = sanitize_text($_POST['phone'] ?? null);
+    $website = sanitize_text($_POST['website'] ?? null);
+    $address = sanitize_text($_POST['address'] ?? null);
+    $tax_id = sanitize_text($_POST['tax_id'] ?? null);
     $lead_status = sanitize_text($_POST['lead_status'] ?? 'New Lead');
     $notes = sanitize_text($_POST['notes'] ?? null);
 
     // 2. Insert into rolodex.sqlite Database using Prepared Statement
     $stmt = $pdo_rolodex->prepare("
         INSERT INTO customers (
-            company_name, contact_person, email, phone, lead_status, notes
+            company_name, contact_person, email, phone, website, address, tax_id, lead_status, notes
         ) VALUES (
-            :company, :contact, :email, :phone, :status, :notes
+            :company, :contact, :email, :phone, :website, :address, :tax_id, :status, :notes
         )
     ");
 
@@ -33,6 +36,9 @@ try {
         ':contact' => $contact_person,
         ':email' => $email,
         ':phone' => $phone,
+        ':website' => $website,
+        ':address' => $address,
+        ':tax_id' => $tax_id,
         ':status' => $lead_status,
         ':notes' => $notes
     ]);

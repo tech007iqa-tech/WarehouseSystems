@@ -2,25 +2,28 @@
     /* -------------------------------------
        1. COLOR SYSTEM (Dark Theme Baseline)
        ------------------------------------- */
-    --bg-page: #121212;          /* Deep dark background */
-    --bg-panel: #1e1e1e;         /* Slightly lighter for cards/panels */
-    --border-color: #333333;     /* Subtle panel borders */
+     --bg-page: #ffffff;          /* Clean white page background */
+    --bg-panel: #f4f6f8;         /* Soft light gray for cards/panels */
+    --border-color: #d6d9dd;     /* Gentle, unobtrusive borders */
 
-    --text-main: #ffffff;        /* High contrast primary text */
-    --text-secondary: #aaaaaa;   /* Muted text for labels/paragraphs */
-    
-    --accent-color: #007bff;     /* Primary brand color (Electric Blue) */
-    --accent-hover: #0056b3;     /* Darker blue for hovers */
-    
-    /* Action Colors */
-    --btn-primary-bg: #007bff;
+    /* Text */
+    --text-main: #1a1a1a;        /* Dark gray for comfortable reading */
+    --text-secondary: #5a5a5a;   /* Softer gray for labels/descriptions */
+
+    /* Brand Accent (Safety Green) */
+    --accent-color: #8cc63f;     /* Bright, friendly green */
+    --accent-hover: #76ad36;     /* Slightly darker hover tone */
+
+    /* Buttons */
+    --btn-primary-bg: #0a1a2f;   /* Deep navy for strong CTAs */
     --btn-primary-text: #ffffff;
-    
-    --btn-success-bg: #28a745;
+    --btn-primary-hover: #0f2744;
+
+    --btn-success-bg: #8cc63f;   /* Green success button */
     --btn-success-text: #ffffff;
-    --btn-success-hover: #218838;
-    
-    --btn-danger-bg: #dc3545;
+    --btn-success-hover: #76ad36;
+
+    --btn-danger-bg: #dc3545;    /* Keep danger red for clarity */
     --btn-danger-text: #ffffff;
     --btn-danger-hover: #c82333;
 
@@ -146,31 +149,47 @@ h1, h2, h3 {
     font-size: 1rem;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.1s;
+    transition: background 0.25s ease, transform 0.1s, box-shadow 0.2s;
     text-align: center;
+    text-decoration: none !important;
 }
 
 .btn:active {
     transform: translateY(1px);
 }
 
+.btn:hover {
+    text-decoration: none !important;
+    color: #ffffff !important;
+    opacity: 0.9;
+}
+
 .btn-primary {
     background-color: var(--btn-primary-bg);
     color: var(--btn-primary-text);
 }
-.btn-primary:hover { background-color: var(--accent-hover); }
+.btn-primary:hover { 
+    background-color: var(--btn-primary-hover); 
+    opacity: 1;
+}
 
 .btn-success {
     background-color: var(--btn-success-bg);
     color: var(--btn-primary-text);
 }
-.btn-success:hover { background-color: var(--btn-success-hover); }
+.btn-success:hover { 
+    background-color: var(--btn-success-hover); 
+    opacity: 1;
+}
 
 .btn-danger {
     background-color: var(--btn-danger-bg);
     color: var(--btn-primary-text);
 }
-.btn-danger:hover { background-color: var(--btn-danger-hover); }
+.btn-danger:hover { 
+    background-color: var(--btn-danger-hover); 
+    opacity: 1;
+}
 
 /* Forms */
 .form-grid {
@@ -232,7 +251,7 @@ input:focus, select:focus {
 }
 
 .data-table tr:hover {
-    background-color: rgba(255, 255, 255, 0.02);
+    background-color: rgba(0, 0, 0, 0.03);
 }
 
 /* Utilities */

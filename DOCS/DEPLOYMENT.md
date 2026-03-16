@@ -56,11 +56,25 @@ Because this app generates `.odt` and `.ots` files natively using PowerShell (av
 1. Open the XAMPP web root directory: `C:\xampp\htdocs\`
 2. Create a new folder for the app: `C:\xampp\htdocs\LabelAPP\`
 3. Copy all the files from this repository into that folder.
-4. Ensure the `/db/`, `/exports/`, and `/templates/` directories have read/write permissions so PHP isn't blocked from modifying the SQLite files or generating new labels.
+4. Ensure the following directories have **read/write permissions** for PHP (right-click → Properties → Security):
+   - `/db/` — PHP must be able to create and write to the `.sqlite` files.
+   - `/exports/labels/` — PHP writes generated `.odt` label files here.
+   - `/exports/orders/` — PHP writes generated `.ots` purchase order files here.
+   - `/templates/` — PowerShell reads master template files from here.
+5. **CRITICAL — First Run:** The system is **Self-Healing**. Simply visit the dashboard in your browser (`http://localhost/LabelAPP/`), and the system will automatically create any missing SQLite databases and tables.
+    - If you ever need to manually force a schema update, you can still visit `http://localhost/LabelAPP/init_db.php`.
 
 ---
 
-## 6. Accessing the App on the Local Network
+## 6. System Health & Backups
+The system includes a built-in **Self-Diagnosis Engine**.
+1. **Health Check**: Every time the Dashboard loads, it verifies the integrity of your data.
+2. **Settings Hub**: Navigate to **⚙️ System Settings** in the menu to create manual backups (stored in `/db/backups/`) or run deep database repairs.
+3. **Recovery**: If a database file is accidentally deleted, simply refresh the app to rebuild the empty structure instantly.
+
+---
+
+## 7. Accessing the App on the Local Network
 **On the Host Server Machine:**
 Open a web browser and go to: `http://localhost/LabelAPP/`
 

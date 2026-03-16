@@ -19,8 +19,18 @@ require_once 'includes/header.php';
             </div>
 
             <div class="form-group">
+                <label for="website">Website / URL</label>
+                <input type="text" id="website" name="website" placeholder="https://www.company.com">
+            </div>
+
+            <div class="form-group">
                 <label for="contact_person">Contact Person *</label>
                 <input type="text" id="contact_person" name="contact_person" required placeholder="e.g., John Doe">
+            </div>
+
+            <div class="form-group">
+                <label for="tax_id">Address</label>
+                <input type="text" id="tax_id" name="tax_id" placeholder="e.g. 123 Main St">
             </div>
 
             <div class="form-group">
@@ -48,8 +58,13 @@ require_once 'includes/header.php';
             </div>
 
             <div class="form-group">
+                <label for="address">Shipping Address</label>
+                <textarea id="address" name="address" rows="2" placeholder="123 Industrial Way, Suite 100, City, State ZIP"></textarea>
+            </div>
+
+            <div class="form-group">
                 <label for="notes">Internal Notes & Context</label>
-                <textarea id="notes" name="notes" rows="3" placeholder="Met at convention, looking for 8th Gen laptops..."></textarea>
+                <textarea id="notes" name="notes" rows="2" placeholder="Met at convention, looking for 8th Gen laptops..."></textarea>
             </div>
         </div>
 

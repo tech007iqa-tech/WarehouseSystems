@@ -2,8 +2,8 @@
 /**
  * ONE-TIME SETUP SCRIPT
  * Run this by visiting init_db.php in the browser to build the SQLite tables.
- * 
- * Once the tables are built successfully according to ARCHITECTURE.md, 
+ *
+ * Once the tables are built successfully according to ARCHITECTURE.md,
  * you can safely delete this file.
  */
 
@@ -27,6 +27,14 @@ try {
             ram TEXT,
             storage TEXT,
             battery BOOLEAN,
+            battery_specs TEXT,
+            gpu TEXT,
+            screen_res TEXT,
+            webcam TEXT,
+            backlit_kb TEXT,
+            os_version TEXT,
+            cosmetic_grade TEXT,
+            work_notes TEXT,
             bios_state TEXT,
             description TEXT,
             status TEXT DEFAULT 'In Warehouse',
@@ -37,7 +45,7 @@ try {
     ");
     echo "✔ Labels database schema verified.\n\n";
 
-    // 2. Orders Database: `purchase_orders`
+    // 2. Orders Database: `purchase_orders` & `order_items`
     echo "Creating orders_db schema...\n";
     $pdo_orders->exec("
         CREATE TABLE IF NOT EXISTS purchase_orders (
@@ -47,6 +55,18 @@ try {
             total_qty INTEGER,
             total_price NUMERIC,
             document_path TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS order_items (
+            line_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_number INTEGER NOT NULL,
+            item_id INTEGER NOT NULL,
+            brand TEXT,
+            model TEXT,
+            specs_blob TEXT,
+            qty INTEGER DEFAULT 1,
+            unit_price NUMERIC,
+            total_price NUMERIC
         );
     ");
     echo "✔ Orders database schema verified.\n\n";
@@ -61,6 +81,9 @@ try {
             email TEXT,
             phone TEXT,
             lead_status TEXT DEFAULT 'New Lead',
+            address TEXT,
+            tax_id TEXT,
+            website TEXT,
             notes TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );

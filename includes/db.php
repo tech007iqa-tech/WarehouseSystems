@@ -33,6 +33,10 @@ try {
     $pdo_rolodex->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo_rolodex->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
+    // 4. Schema Guard (Self-Healing)
+    require_once __DIR__ . '/schema_guard.php';
+    check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex);
+
 } catch (PDOException $e) {
     // Return early if called from an API endpoint expecting JSON (Vibe Code standard)
     if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
