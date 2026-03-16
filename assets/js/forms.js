@@ -122,16 +122,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     lastInsertedId = result.data.id;
                     const name = (formData.get('brand') || '') + ' ' + (formData.get('model') || '');
                     
-                    let msg = `Saved <strong>${name}</strong> to ID #${String(lastInsertedId).padStart(5, '0')}.<br>The ODT label has been generated.`;
+                    let msg = `Saved <strong>${name}</strong> to ID #${String(lastInsertedId).padStart(5, '0')}.<br>Profile is ready for printing.`;
                     if (result.data.is_duplicate) {
-                        msg = `Found existing profile for <strong>${name}</strong> (ID #${String(lastInsertedId).padStart(5, '0')}).<br>The ODT label has been refreshed.`;
+                        msg = `Found existing profile for <strong>${name}</strong> (ID #${String(lastInsertedId).padStart(5, '0')}).`;
                     }
                     
                     successMsg.innerHTML = msg;
                     successOverlay.style.display = 'flex';
 
-                    // Optional: Try to open file automatically
-                    if(result.data.file_path) window.open(result.data.file_path, '_blank');
+                    // Trigger the print configuration modal for the new item
+                    if (window.openPrintConfig) window.openPrintConfig(lastInsertedId);
 
                 } else {
                     alert(`❌ Error: ${result.error}`);
@@ -148,26 +148,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Success Overlay Buttons
     if(successOverlay) {
-        // "Print Another" - Calls reprint API for the exact same ID
+        // "Print Another" - Now opens the config modal for variety/quantity
         document.getElementById('btnAgain').addEventListener('click', () => {
-            const btn = document.getElementById('btnAgain');
-            btn.disabled = true;
-            btn.textContent = '⏳ Printing...';
-
-            const fd = new FormData();
-            fd.append('id', lastInsertedId);
-
-            fetch('api/reprint_label.php', { method: 'POST', body: fd })
-                .then(r => r.json())
-                .then(json => {
-                    if(json.success && json.data.file_path) {
-                        window.open(json.data.file_path, '_blank');
-                    }
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.textContent = '🔄 Print Another (Same Profile)';
-                });
+            if (window.openPrintConfig) window.openPrintConfig(lastInsertedId);
         });
 
         // "Add New Hardware" - Clears form and hides overlay

@@ -10,35 +10,45 @@ param(
 )
 
 try {
-    # 1. Copy the master OTS template to the final output location
+    # 1. Check if output file is in use
+    if (Test-Path $OutputOTS) {
+        try {
+            $stream = [System.IO.File]::OpenWrite($OutputOTS)
+            $stream.Close()
+        } catch {
+            Write-Output "ERROR: The file is currently open in another program (LibreOffice Calc). Please close it and try again."
+            exit 1
+        }
+    }
+
+    # 2. Copy the master OTS template to the final output location
     Copy-Item -Path $MasterTemplate -Destination $OutputOTS -Force
 
-    # 2. Rename .ots to .zip so we can natively manipulate the archive
-    $TempZip = "$OutputOTS.zip"
-    Rename-Item -Path $OutputOTS -NewName (Split-Path $TempZip -Leaf)
+    # 3. Use .NET ZipArchive to modify the file directly
+    Add-Type -AssemblyName System.IO.Compression
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-    # 3. Create a temp folder replicating the internal ODS/OTS structure
-    #    The file we need to replace is always content.xml at the archive root
-    $TempFolder = Join-Path $env:TEMP "ots_generation_$(Get-Random)"
-    New-Item -ItemType Directory -Path $TempFolder -Force | Out-Null
+    $zip = [System.IO.Compression.ZipFile]::Open($OutputOTS, "Update")
+    
+    # Remove the dummy placeholder content.xml
+    $entry = $zip.GetEntry("content.xml")
+    if ($entry) {
+        $entry.Delete()
+    }
 
-    # Copy the PHP-generated XML into temp folder as content.xml
-    $TargetXML = Join-Path $TempFolder "content.xml"
-    Copy-Item -Path $SourceXML -Destination $TargetXML -Force
+    # Inject the actual business data XML
+    $xmlContent = [System.IO.File]::ReadAllText($SourceXML)
+    $newEntry = $zip.CreateEntry("content.xml", [System.IO.Compression.CompressionLevel]::Optimal)
+    $writer = New-Object System.IO.StreamWriter($newEntry.Open())
+    $writer.Write($xmlContent)
+    $writer.Dispose()
+    
+    # Close and finalize the archive
+    $zip.Dispose()
 
-    # 4. Use Compress-Archive -Update to inject the new content.xml into the zip
-    #    This overwrites the dummy placeholder data from the master template
-    Compress-Archive -Path $TargetXML -Update -DestinationPath $TempZip
-
-    # 5. Rename back to .ots
-    Rename-Item -Path $TempZip -NewName (Split-Path $OutputOTS -Leaf)
-
-    # 6. Clean up temp folder
-    Remove-Item -Path $TempFolder -Recurse -Force | Out-Null
-
-    # Output success marker for PHP to detect
+    # Output success marker for PHP
     Write-Output "SUCCESS"
 } catch {
-    Write-Error $_.Exception.Message
+    Write-Output "ERROR: $($_.Exception.Message)"
     exit 1
 }

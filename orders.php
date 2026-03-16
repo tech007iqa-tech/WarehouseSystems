@@ -96,12 +96,11 @@ try {
 
                         <td>
                             <?php if ($file_exists): ?>
-                                <a href="<?= htmlspecialchars($doc_path) ?>"
-                                   class="btn btn-primary"
-                                   style="font-size: 0.8rem; padding: 6px 12px;"
-                                   download>
-                                    ⬇ Download .ots
-                                </a>
+                                <button onclick="launchFile('<?= htmlspecialchars($doc_path) ?>')"
+                                        class="btn btn-primary"
+                                        style="font-size: 0.8rem; padding: 6px 12px; background: var(--text-main);">
+                                    🚀 Open in Windows
+                                </button>
                             <?php elseif ($doc_path): ?>
                                 <span style="color: var(--btn-danger-bg); font-size: 0.85rem;">⚠ File missing</span>
                             <?php else: ?>
@@ -119,6 +118,19 @@ try {
     document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('nav-orders').classList.add('active');
     });
+
+    async function launchFile(path) {
+        const fd = new FormData();
+        fd.append('path', path);
+
+        try {
+            const res = await fetch('api/open_windows_file.php', { method: 'POST', body: fd });
+            const json = await res.json();
+            if(!json.success) alert("Error: " + json.error);
+        } catch (err) {
+            alert("Network error communicating with the File Launcher.");
+        }
+    }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

@@ -331,10 +331,17 @@ generateBtn.addEventListener('click', async () => {
             showGenerateMessage('success', `
                 ✅ <strong>${d.order_number}</strong> created successfully!<br>
                 ${d.total_qty} units sold &nbsp;·&nbsp; ${d.total_price} total<br><br>
-                <a href="${d.file_path}" class="btn btn-success" download style="margin-top:8px;">
-                    ⬇ Download ${d.file_name}
-                </a>
+                <button onclick="window.parent.launchOrder('${d.file_path}')" class="btn btn-success" style="margin-top:8px; width:100%; height:50px;">
+                    🚀 Open Order in Windows
+                </button>
             `);
+
+            // Helper for locally launching the order file
+            window.launchOrder = async (path) => {
+                const fd = new FormData();
+                fd.append('path', path);
+                await fetch('api/open_windows_file.php', { method: 'POST', body: fd });
+            };
 
             // Reset cart state after success
             cart        = [];

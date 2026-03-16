@@ -106,10 +106,10 @@ try {
     // --- 4. BUILD THE ODS content.xml ---
     $order_date    = date('F j, Y');
     $order_num_pad = 'ORD-' . str_pad($order_number, 6, '0', STR_PAD_LEFT);
-    $company       = htmlspecialchars($customer['company_name'] ?? 'N/A', ENT_XML1, 'UTF-8');
-    $contact       = htmlspecialchars($customer['contact_person'] ?? '', ENT_XML1, 'UTF-8');
-    $phone         = htmlspecialchars($customer['phone'] ?? '', ENT_XML1, 'UTF-8');
-    $email         = htmlspecialchars($customer['email'] ?? '', ENT_XML1, 'UTF-8');
+    $company       = $customer['company_name']   ?? 'N/A';
+    $contact       = $customer['contact_person'] ?? '';
+    $phone         = $customer['phone']          ?? '';
+    $email         = $customer['email']          ?? '';
 
     // Helper to build a simple string cell
     function str_cell($val) {
@@ -160,13 +160,44 @@ try {
     }
 
     $xml_content = '<?xml version="1.0" encoding="UTF-8"?>
-<office:document-content
-  xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
-  xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
-  xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
-  xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
-  office:version="1.2">
-  <office:automatic-styles/>
+<office:document-content 
+    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" 
+    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" 
+    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" 
+    xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" 
+    xmlns:draw="urn:oasis:names:tc:opendocument:xmlns:drawing:1.0" 
+    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" 
+    xmlns:xlink="http://www.w3.org/1999/xlink" 
+    xmlns:dc="http://purl.org/dc/elements/1.1/" 
+    xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" 
+    xmlns:number="urn:oasis:names:tc:opendocument:xmlns:datastyle:1.0" 
+    xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" 
+    xmlns:chart="urn:oasis:names:tc:opendocument:xmlns:chart:1.0" 
+    xmlns:dr3d="urn:oasis:names:tc:opendocument:xmlns:dr3d:1.0" 
+    xmlns:math="http://www.w3.org/1998/Math/MathML" 
+    xmlns:form="urn:oasis:names:tc:opendocument:xmlns:form:1.0" 
+    xmlns:script="urn:oasis:names:tc:opendocument:xmlns:script:1.0" 
+    xmlns:ooo="http://openoffice.org/2004/office" 
+    xmlns:ooow="http://openoffice.org/2004/writer" 
+    xmlns:oooc="http://openoffice.org/2004/calc" 
+    xmlns:dom="http://www.w3.org/2001/xml-events" 
+    xmlns:xforms="http://www.w3.org/2002/xforms" 
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:rpt="http://openoffice.org/2005/report" 
+    xmlns:of="urn:oasis:names:tc:opendocument:xmlns:of:1.2" 
+    xmlns:xhtml="http://www.w3.org/1999/xhtml" 
+    xmlns:grddl="http://www.w3.org/2003/g/data-view#" 
+    xmlns:officeooo="http://openoffice.org/2009/office" 
+    xmlns:tableooo="http://openoffice.org/2009/table" 
+    xmlns:drawooo="http://openoffice.org/2010/draw" 
+    xmlns:calcext="http://openoffice.org/2009/calc" 
+    xmlns:loext="http://www.libreoffice.org/2017/content-optimise" 
+    xmlns:field="urn:openoffice:names:experimental:ooo-ms-interop:xmlns:field:1.0" 
+    office:version="1.2">
+  <office:scripts/>
+  <office:font-face-decls/>
+  <office:automatic-styles></office:automatic-styles>
   <office:body>
     <office:spreadsheet>
       <table:table table:name="Purchase Order">
@@ -267,8 +298,12 @@ try {
         unlink($temp_xml_path);
     }
 
-    if (strpos($exec_output, 'SUCCESS') === false && !file_exists($final_ots_path)) {
-        throw new Exception('OTS file generation failed. Check PowerShell permissions. Order #' . $order_number . ' was saved to DB.');
+    if (strpos($exec_output, 'SUCCESS') === false) {
+        $clean_err = 'OTS file generation failed.';
+        if (strpos($exec_output, 'ERROR:') !== false) {
+            $clean_err = trim(substr($exec_output, strpos($exec_output, 'ERROR:') + 6));
+        }
+        throw new Exception($clean_err);
     }
 
     // --- 5. UPDATE ORDER RECORD WITH FILE PATH ---

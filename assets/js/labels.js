@@ -265,38 +265,13 @@ function onDeleteClick(e) {
 function onReprintClick(e) {
     const btn = e.target.closest('.reprint-btn');
     const id  = btn.dataset.id;
-    const originalText = btn.textContent;
-
-    btn.disabled = true;
-    btn.textContent = '⏳ Printing...';
-
-    const formData = new FormData();
-    formData.append('id', id);
-
-    fetch('api/reprint_label.php', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(json => {
-            if (json.success) {
-                btn.textContent = '✅ Success!';
-                // Automatically open the file in a new tab if browser allows
-                if (json.data.file_path) {
-                    window.open(json.data.file_path, '_blank');
-                }
-            } else {
-                alert('Reprint failed: ' + json.error);
-                btn.textContent = originalText;
-            }
-        })
-        .catch(() => {
-            alert('Network error.');
-            btn.textContent = originalText;
-        })
-        .finally(() => {
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.textContent = originalText;
-            }, 3000);
-        });
+    
+    // Instead of raw fetch, open the new global Print Config Modal
+    if (window.openPrintConfig) {
+        window.openPrintConfig(id);
+    } else {
+        alert("Print engine not loaded.");
+    }
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────

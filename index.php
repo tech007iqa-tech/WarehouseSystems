@@ -148,7 +148,7 @@ try {
                     // Only show detailed order info for the first/main result
                     if (index === 0 && orderInfo) {
                         const docLink = orderInfo.document_path
-                            ? `<a href="${orderInfo.document_path}" download style="color:var(--accent-color);font-weight:bold;">⬇ Download ${orderInfo.order_number}.ots</a>`
+                            ? `<button onclick="launchFile('${orderInfo.document_path}')" class="btn" style="background:var(--accent-color); color:#fff; font-weight:bold; margin-top:5px; font-size:0.75rem; padding:5px 10px;">🚀 Open Order Form</button>`
                             : '';
                         orderHtml = `
                             <div style="margin-top:10px;padding:12px;background:rgba(0,0,0,0.03);border-radius:6px;font-size:0.85rem;color:var(--text-secondary);">

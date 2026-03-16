@@ -93,69 +93,11 @@ try {
         $inserted_id = $pdo_labels->lastInsertId();
     }
 
-    // 4. Generate the XML for the ODT Template Injection (Multi-page configuration)
-    // We combine the split CPU info for the "Specs" line
-    $cpu_spec_line = trim($cpu_specs . ' (' . $cpu_cores . ' @ ' . $cpu_speed . ')', ' (@ )');
-    if (!$cpu_spec_line) $cpu_spec_line = '—';
-
-    $xml_content = '<?xml version="1.0" encoding="UTF-8"?>
-<office:document-content 
-    xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" 
-    xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" 
-    xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" 
-    xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" 
-    xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" 
-    office:version="1.2">
-  <office:automatic-styles>
-    <style:style style:name="PB" style:family="paragraph" style:parent-style-name="Standard">
-      <style:paragraph-properties fo:break-before="page"/>
-    </style:style>
-  </office:automatic-styles>
-  <office:body>
-    <office:text>
-      <text:p text:style-name="Title">' . $brand . ' ' . $model . ' ' . $series . '</text:p>
-      <text:p text:style-name="PB">Technical Specifications (' . $cpu_gen . ')</text:p>
-      <text:p text:style-name="Standard">CPU: ' . $cpu_spec_line . '</text:p>
-      <text:p text:style-name="Standard">RAM: ' . ($ram ? $ram : 'None') . ' | Storage: ' . ($storage ? $storage : 'None') . '</text:p>
-      <text:p text:style-name="Standard">Battery: ' . ($battery ? 'YES' : 'NO') . ' | BIOS: ' . $bios_state . '</text:p>
-      <text:p text:style-name="Standard">Loc: ' . $warehouse_location . ' | Cond: ' . $description . '</text:p>
-    </office:text>
-  </office:body>
-</office:document-content>';
-
-    // 4. Save Temporary XML and call PowerShell Script
-    $temp_xml_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'label_' . time() . '.xml';
-    file_put_contents($temp_xml_path, $xml_content);
-
-    $export_dir = __DIR__ . '/../exports/labels/';
-    if (!is_dir($export_dir)) mkdir($export_dir, 0777, true);
-
-    $final_odt_name = "Label_" . $inserted_id . "_" . preg_replace('/[^a-zA-Z0-9]/', '', $brand . $model) . ".odt";
-    $final_odt_path = realpath($export_dir) . DIRECTORY_SEPARATOR . $final_odt_name;
-    
-    $master_template = realpath(__DIR__ . '/../templates/label_template.odt');
-    $ps_script = realpath(__DIR__ . '/../templates/scripts/generate_odt.ps1');
-
-    // Execute PowerShell
-    // Wrap paths in quotes to handle spaces in directory names
-    $cmd = 'powershell.exe -ExecutionPolicy Bypass -File "' . $ps_script . '" -SourceXML "' . $temp_xml_path . '" -OutputODT "' . $final_odt_path . '" -MasterTemplate "' . $master_template . '"';
-    
-    $exec_output = shell_exec($cmd);
-
-    // Clean up temporary XML
-    unlink($temp_xml_path);
-
-    if (strpos($exec_output, 'SUCCESS') !== false || file_exists($final_odt_path)) {
-        send_json_response(true, [
-            'id' => $inserted_id,
-            'file_name' => $final_odt_name,
-            'file_path' => 'exports/labels/' . $final_odt_name,
-            'is_duplicate' => $is_duplicate
-        ]);
-    } else {
-        // Warning: Database succeeded but file generation failed
-        send_json_response(false, null, "Item saved to Database, but ODT generation failed. Check PowerShell permissions.");
-    }
+    // 4. Return success to UI (No file generation here per user request)
+    send_json_response(true, [
+        'id' => $inserted_id,
+        'is_duplicate' => $is_duplicate
+    ]);
 
 } catch (Exception $e) {
     send_json_response(false, null, $e->getMessage());
