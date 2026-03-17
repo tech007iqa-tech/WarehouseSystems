@@ -100,7 +100,7 @@ Because we strictly avoid massive PHP frameworks or Composer bundles, we utilize
 
 ### Hybrid Printing Strategy
 The application utilizes two distinct printing workflows based on document type:
-- **Browser-Native (Labels)**: `print_label.php` renders hardware labels directly in HTML/CSS. It maps to exact **3" x 1.74"** dimensions via `@page` rules. This provides instant, zero-storage output (no files written to disk) for rapid warehouse use.
+- **Browser-Native (Labels)**: `print_label.php` renders hardware labels directly in HTML/CSS. It maps to exact **2" x 1"** dimensions via `@page` rules. This provides instant, zero-storage output (no files written to disk) for rapid warehouse use.
 - **Windows-Native (B2B Orders)**: B2B Purchase Orders are generated as persistent `.ots` files and launched directly in **LibreOffice Calc** via `api/open_windows_file.php`. This allows for native spreadsheet editing and professional printing controls.
 
 ### Technical Implementation:

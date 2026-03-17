@@ -12,13 +12,12 @@ CRITICAL: Do not write any application code right now. Just ensure `PROJECT_CONT
 ------------
 Read `PROJECT_CONTEXT.md` this is what the codebase is about.
 ------------
-Phase 7: ⚙️ File Printing
-inside labels.php
-Actions Print opens an external program to print the label. can we print it directly from the browser? this label has to be high quality and should not be stored, as a file. beacuse Creating a file already creates an entry inside the exports directory, correct?
-
+lets work on Phase 9: 
+🖨️ Thermal Printer Optimization (2x1 Margin-less Templates). the labels are fine as .odt but the generated PDF is not the size needed. I need labels 2x1, and 2 of them in one is the name and another the specs.
 Please let me know what it could be, then ask me again, then we can proceed.
 ------------
 ------------
 ------------
 ------------
+Status in warehouse for untested, delete sold
 ------------

@@ -2,23 +2,31 @@
     /* -------------------------------------
        1. COLOR SYSTEM (Robust Light Theme)
        ------------------------------------- */
-    --bg-page: #fdfdfd;          /* Extremely light gray to reduce glare */
-    --bg-panel: #ffffff;         /* White cards for high contrast */
-    --border-color: #e2e8f0;     /* Sharper borders */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --bg-page: #fdfdfd;
+    /* Extremely light gray to reduce glare */
+    --bg-panel: #ffffff;
+    /* White cards for high contrast */
+    --border-color: #e2e8f0;
+    /* Sharper borders */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
 
     /* Text */
-    --text-main: #0f172a;        /* Deep slate for legibility */
-    --text-secondary: #475569;   /* Slate gray */
+    --text-main: #0f172a;
+    /* Deep slate for legibility */
+    --text-secondary: #475569;
+    /* Slate gray */
 
     /* Brand Accent (Safety Green) */
     --accent-color: #8cc63f;
     --accent-hover: #7bad37;
 
     /* Buttons & Touch */
-    --btn-height: 48px;          /* iPhone Human Interface standard */
+    --btn-height: 48px;
+    /* iPhone Human Interface standard */
     --border-radius-lg: 12px;
     --border-radius-md: 8px;
+    --btn-success-bg: #28a745;
+    --btn-danger-bg: #ef4444;
 
     /* Sidebar Variables */
     --sidebar-width: 260px;
@@ -40,10 +48,12 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    -webkit-tap-highlight-color: transparent; /* Clean touch on Safari */
+    -webkit-tap-highlight-color: transparent;
+    /* Clean touch on Safari */
 }
 
-html, body {
+html,
+body {
     height: 100%;
     overflow-x: hidden;
 }
@@ -80,7 +90,7 @@ body {
     justify-content: space-between;
     z-index: 1000;
     padding-top: env(safe-area-inset-top);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
 .menu-label {
@@ -128,33 +138,133 @@ body {
     transition: margin-left 0.3s ease;
 }
 
+/* --- ACTION STRIPS --- */
+.action-strip {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+}
+
+.action-strip .btn {
+    font-size: 0.75rem;
+    min-height: 38px;
+    padding: 0 12px;
+    background: var(--bg-page);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.action-strip .btn:hover {
+    background: var(--bg-panel);
+    border-color: var(--accent-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.action-strip .btn-danger:hover {
+    background: var(--btn-danger-bg);
+    border-color: var(--btn-danger-bg);
+    color: #fff;
+}
+
+.action-strip .btn-success:hover {
+    background: var(--btn-success-bg);
+    border-color: var(--btn-success-bg);
+    color: #fff;
+}
+
+/* --- INPUT GROUPS --- */
+.input-group-prefix {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--bg-panel);
+}
+.input-group-prefix span {
+    background: rgba(140, 198, 63, 0.08);
+    padding: 8px 12px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    user-select: none;
+    white-space: nowrap;
+}
+.input-group-prefix input {
+    border: none !important;
+    flex: 1;
+    padding: 8px 15px;
+    outline: none;
+    font-size: 1rem;
+    font-weight: 700;
+    width: 100%;
+    color: var(--text-main);
+}
+.input-group-prefix input:focus {
+    background: rgba(140, 198, 63, 0.02);
+}
+
+/* --- ANALYTICS & CHARTS --- */
+.css-chart-container { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
+.chart-row { display: grid; grid-template-columns: 80px 1fr 40px; align-items: center; gap: 10px; }
+.chart-bar-bg { height: 12px; background: rgba(0,0,0,0.05); border-radius: 6px; overflow: hidden; position: relative; }
+.chart-bar-fill { height: 100%; background: var(--accent-color); border-radius: 6px; width: 0%; transition: width 0.8s cubic-bezier(0.1, 0.7, 1.0, 0.1); }
+.chart-label { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
+.chart-value { font-size: 0.8rem; font-weight: 800; text-align: right; }
+
+.css-chart-container.vertical { flex-direction: row; align-items: flex-end; justify-content: space-around; height: 150px; padding-bottom: 25px; }
+.chart-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; flex: 1; gap: 10px; }
+.chart-vbar-bg { width: 30px; background: rgba(0,0,0,0.05); border-radius: 4px; position: relative; height: 100%; display: flex; align-items: flex-end; }
+.chart-vbar-fill { width: 100%; background: var(--accent-color); border-radius: 4px; height: 0%; transition: height 0.8s ease-out; }
+.chart-vlabel { font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); position: absolute; bottom: -22px; width: 60px; text-align: center; white-space: nowrap; transform: rotate(-15deg); }
+
 /* -------------------------------------
    RESPONSIVE LOGIC
    ------------------------------------- */
+/* --- MOBILE SPECIFIC --- */
 @media (max-width: 1024px) {
-    .mobile-top-bar { display: flex; }
+    .mobile-top-bar {
+        display: flex;
+    }
+
     .sidebar {
         position: fixed;
         left: 0;
         top: 0;
         bottom: 0;
         transform: translateX(-100%);
-        box-shadow: 20px 0 50px rgba(0,0,0,0.1);
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.1);
         padding-top: calc(var(--header-height) + env(safe-area-inset-top));
     }
-    #nav-toggle:checked ~ .app-container .sidebar { transform: translateX(0); }
-    #nav-toggle:checked ~ .app-container::after {
+
+    #nav-toggle:checked~.app-container .sidebar {
+        transform: translateX(0);
+    }
+
+    #nav-toggle:checked~.app-container::after {
         content: '';
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.4);
+        background: rgba(0, 0, 0, 0.4);
         z-index: 850;
     }
+
     .main-content {
         padding: 20px;
         margin-top: calc(var(--header-height) + env(safe-area-inset-top));
     }
-    .mobile-only { display: block !important; }
+
+    .mobile-only {
+        display: block !important;
+    }
 }
 
 .stat-grid {
@@ -184,7 +294,9 @@ body {
 }
 
 @media (max-width: 768px) {
-    .stat-grid { grid-template-columns: 1fr; }
+    .stat-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* -------------------------------------
@@ -213,12 +325,29 @@ body {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.btn:active { transform: scale(0.98); }
-.btn-primary { background: var(--text-main); color: #fff; }
-.btn-success { background: var(--accent-color); color: #fff; }
-.btn-danger  { background: #ef4444; color: #fff; }
+.btn:active {
+    transform: scale(0.98);
+}
 
-input[type="text"], input[type="number"], select, textarea {
+.btn-primary {
+    background: var(--text-main);
+    color: #fff;
+}
+
+.btn-success {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: #fff;
+}
+
+input[type="text"],
+input[type="number"],
+select,
+textarea {
     width: 100%;
     min-height: var(--btn-height);
     padding: var(--input-padding);
@@ -235,7 +364,9 @@ input:focus {
 }
 
 /* Typography Headers */
-h1, h2, h3 {
+h1,
+h2,
+h3 {
     margin-bottom: 0.8em;
     font-weight: 600;
 }
@@ -271,12 +402,19 @@ h1, h2, h3 {
 }
 
 @media (max-width: 900px) {
-    .data-table, .data-table thead, .data-table tbody, .data-table th, .data-table td, .data-table tr {
+
+    .data-table,
+    .data-table thead,
+    .data-table tbody,
+    .data-table th,
+    .data-table td,
+    .data-table tr {
         display: block;
     }
 
     .data-table thead {
-        display: none; /* Hide headers on mobile */
+        display: none;
+        /* Hide headers on mobile */
     }
 
     .data-table tr {
@@ -318,7 +456,8 @@ h1, h2, h3 {
     }
 
     .data-table td:first-child::before {
-        display: none; /* Hide 'Brand & Model' label since it's obvious */
+        display: none;
+        /* Hide 'Brand & Model' label since it's obvious */
     }
 
     .data-table td:last-child {
@@ -346,5 +485,10 @@ h1, h2, h3 {
     }
 }
 
-.text-center { text-align: center; }
-.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.text-center {
+    text-align: center;
+}
+
+.safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+}

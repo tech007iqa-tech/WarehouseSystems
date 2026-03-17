@@ -24,19 +24,20 @@
 | Column | Type | Notes |
 |---|---|---|
 | `id` | INTEGER PK AUTOINCREMENT | Master Template ID (Hidden in UI) |
+| `type` | TEXT | Hardware category (e.g. 'Laptop') |
 | `brand` | TEXT NOT NULL | e.g. `'HP'` |
 | `model` | TEXT NOT NULL | e.g. `'EliteBook'` |
 | `series` | TEXT | e.g. `'840 G3'` |
-| `cpu_gen` | TEXT | e.g. `'11th Gen'` |
-| `cpu_specs` | TEXT | Processor name e.g. `'i7-11850H'` |
-| `cpu_cores` | TEXT | Physical Core count |
-| `cpu_speed` | TEXT | Clock speed e.g. `'2.40GHz'` |
-| `cpu_details` | TEXT | DEPRECATED (Legacy tech info) |
+| `cpu_gen` | TEXT | e.g. `'11th Gen'` (Triggers Auto-Spec) |
+| `cpu_specs` | TEXT | Technical model e.g. `'i7-11850H'` |
+| `cpu_cores` | TEXT | Core count (Auto-filled) |
+| `cpu_speed` | TEXT | Clock speed (Auto-filled) |
 | `ram` | TEXT | Memory capacity |
 | `storage` | TEXT | Drive capacity |
-| `battery` | BOOLEAN | Battery included (1/0) |
+| `gpu` | TEXT | Graphics controller |
 | `bios_state` | TEXT | Locked/Unlocked/Unknown |
-| `description` | TEXT | Master condition: `'Untested'`, `'Refurbished'` |
+| `description` | TEXT | Condition/Internal Note: `'Untested'`, `'Refurbished'`, `'For Parts'` |
+| `status` | TEXT | Display status: `'In Warehouse'`, `'Grade A/B/C'`, `'Tested'`, `'No Post'`, `'No Power'` |
 | `warehouse_location` | TEXT | Physical shelf location |
 
 ---
@@ -45,19 +46,17 @@
 
 ```
 /LabelAPP/
-│
-├── /DOCS/                      ← Centralized System Documentation
-│   ├── ARCHITECTURE.md
-│   ├── ROADMAP.md
-│   ├── WorkLog.md
-│   └── SITEMAP.md
-│
-├── /assets/
-│   ├── /css/style.css          ← Single global dark-theme stylesheet
-│   └── /js/
-│       ├── forms.js            ← Handles hardware intake
-│       ├── labels.js           ← Inventory management logic
-│       └── print_engine.js      ← Global Print Modal & Quantity Logic
+├── /DOCS/                      ← Architecture, Roadmap, WorkLog
+│   └── FUTURE_UPGRADES.md      ← Brain-dump of AI improvements & features
+├── /assets/js/
+│   ├── forms.js            ← Intelligent CPU Intake logic
+│   ├── actions.js          ← Global Technical Action Bridge (Flash Launch)
+│   ├── labels.js           ← Inventory management logic
+│   └── print_engine.js      ← Global Print Modal & Quantity Logic
+├── /includes/
+│   ├── hardware_form.php   ← Shared Technical Form component (Intake & Refurb)
+│   ├── schema_guard.php    ← Self-healing database logic
+│   └── db.php              ← PDO Master Connection
 │
 ├── /db/                        ← SQLite3 Databases
 │
@@ -75,16 +74,18 @@
 │   ├── /orders/                ← Customer B2B Forms
 │   └── .htaccess               ← Security: Block direct directory browsing
 │
-├── /api/                       ← JSON-only endpoints
+├── /api/                       ← JSON endpoints
 │   ├── add_label.php           ← POST: Insert + generate label
-│   ├── reprint_label.php       ← POST: Regenerate ODT
-│   ├── open_windows_file.php   ← Bridge: Launches local files in Windows
-│   └── get_labels.php          ← GET: Inventory Search
-│
-├── index.php                   ← Dashboard (Live stats & Action-First Search)
-├── labels.php                  ← Warehouse Inventory Tracker (Searchable Cards)
-├── print_label.php             ← High-Quality Browser-Native Print Page
-└── new_label.php               ← Rapid Intake Profile Form (Sidebar Layout)
+│   ├── reprint_label.php       ← POST: Regenerate/Open ODT
+│   ├── check_file_exists.php    ← GET: Utility for Flash Launch
+│   ├── get_analytics.php       ← GET: Dashboard performance metrics
+│   └── get_labels.php          ← GET: Universal Search Engine
+├── index.php                   ← Dashboard (Live stats & Action Strip)
+├── analytics.php               ← Detailed Performance Reports
+├── labels.php                  ← Warehouse Tracker (Print, Open, Edit)
+├── hardware_view.php           ← Shared Technical Sheet editor (Refurb/Parts)
+├── print_label.php             ← High-Quality 2" x 1" HTML Printing
+└── new_label.php               ← Rapid Intake & Profile Cloning Form
 ```
 
 ---
@@ -96,7 +97,7 @@
 - **Interactivity:** All forms use `fetch()` APIs; no full-page reloads.
 - **Interactive Printing:** Global Print Config Modal allows page selection and quantity control.
 - **Hybrid Printing Approach:** 
-  - **Browser Direct:** Instant, zero-file labels for rapid warehouse use.
+  - **Browser Direct:** Instant, zero-file labels for rapid warehouse use. Exactly **2" x 1"** dimensions.
   - **Windows Launch:** Precise, persistent document generation for official forms.
 
 ---
@@ -104,6 +105,10 @@
 ## 🚀 5. Roadmap Status
 - [x] **Phase 1-7**: Infrastructure, Ordering, SKU Logic, and System Health.
 - [x] **Phase 7.5: Native Printing Workflow** — Replaced browser downloads with direct Windows launch.
-- [x] **Phase 7.7: ODF Stability & Zero-Storage Print** — Solved LibreOffice "File Corrupt" warnings via Structural XML Surgery and implemented browser-native printing.
-- [ ] Phase 8: Analytics & Reporting (Inventory aging, sales trends).
+- [x] Phase 7.7: ODF Stability & Zero-Storage Print — Solved LibreOffice "File Corrupt" warnings.
+- [x] Phase 7.8: Universal Hardware Pattern (Form Unification + Flash Launch)
+- [x] Phase 8: Analytics & Reporting (Inventory aging, sales trends)
+- [x] Phase 8.5: Labels Page UX Overhaul (Card-based mobile layout, dynamic filtering, optimized action strips).
+- [x] Phase 8.6: ⚙️ File Printing / Opening - Implement precise native folder/file launching directly from `labels.php`.
+- [ ] Phase 8.7: 🚚 Sales & Dispatch Logic - Develop a system location or workflow to handle "Sold" items and gracefully filter them from the primary warehouse view.
 - [ ] Phase 9: Thermal Printer Optimization (4x6 Margin-less Templates).

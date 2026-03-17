@@ -57,12 +57,33 @@ This document tracks the high-level progress of the IQA Metal Label & Inventory 
 * [x] **Security Hardening**: Surgically removed `Configurations2/` and `manifest.rdf` from generated ODF files to eliminate LibreOffice macro warnings.
 * [x] **ODF Manifest Rebuild**: Implemented automatic `manifest.xml` reconstruction in PowerShell scripts for strict ISO schema compliance.
 
-## 🚀 Phase 8: Analytics & Reporting (Planned)
-* [ ] **Inventory Aging**: Track how long items sit in the warehouse before being sold.
-* [ ] **Sales Trends**: Visualize top customers and most popular hardware models.
-* [ ] **Thermal Optimization**: Investigating 4x6 margin-less label templates for thermal printers.
+## ✅ Phase 7.8: Universal Hardware Pattern
+* [x] **The Action Strip**: Standardized 🖨️, 📂, and ✏️ behavior across all inventory views.
+* [x] **Flash Launch**: Implemented "Open Existing" logic to instantly launch ODTs via the Windows Bridge.
+* [x] **Master Specification Sync**: Unified `new_label.php` and `refurbished_view.php` with a shared technical form.
+* [x] **Profile Cloning**: Added "One-Click Duplicate" to the intake sidebar for rapid processing.
+* [x] **CPU Intelligent Intake**: Added structured catalog for auto-filling processor specs based on Generation.
+
+## ✅ Phase 8: Analytics & Reporting
+* [x] **Inventory Aging**: Tracked items sitting >30 days in warehouse.
+* [x] **Sales Trends**: Created `analytics.php` to visualize top customers and sales velocity.
+* [x] **Reporting Engine**: Created `api/get_analytics.php` for high-performance metric delivery.
+
+## ✅ Phase 8.5: Labels Page UX Overhaul
+* [x] **Mobile-First Data Tables**: Implemented a responsive card-based layout using CSS techniques for warehouse technicians on phones.
+* [x] **Desktop Table Optimization**: Slimmed down columns and streamlined the Action Strip to use icon-only buttons (`🖨️`, `📂`, `✏️`, `🗑`).
+* [x] **Floating Action Button**: Added a fast "+ Create New Label Profile" sticky UI.
+* [x] **Filter Engine Upgrade**: Readied the filter bar for advanced condition-based queries and search clearing.
+
+## 🚀 Phase 8.6 & 8.7: Native Integrations & State Management (Planned)
+* [ ] **Native File Launching**: Connect the `📂 Open` action in `labels.php` directly to Windows default applications.
+* [ ] **Inventory Status Logic**: Default new intakes to "Untested" and implement robust cleanup/deletion of "Sold" inventory.
+
+## 🚀 Phase 9: Thermal Printer Optimization (Planned)
+* [ ] **Margin-less Templates**: 4x6 ODT templates specifically for thermal printers.
+* [ ] **Batch Labeling**: Ability to select multiple items and generate a single multi-page PDF/ODT.
 
 ---
 
-## 🚀 Status: PHASE 7.5 COMPLETE
-The system now features a robust, hybrid printing experience: instant browser-native labels and precise, persistent B2B documents. All ODF corruption issues are resolved. Phase 8 (Analytics) is the next focus area.
+## 🚀 Status: PHASE 9 IN PROGRESS
+The system now features a full analytics suite and a unified hardware intake/editing engine. Intelligent CPU lookups and Flash Launch logic have significantly reduced technician intake time. Phase 9 (Thermal Printer Optimization) is the next focus.

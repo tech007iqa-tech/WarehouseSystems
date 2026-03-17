@@ -387,9 +387,9 @@ function esc(str) {
 function conditionBadge(desc) {
     if (!desc) return '—';
     let color = 'var(--text-secondary)';
-    if (desc === 'For Parts')    color = 'var(--btn-danger-bg)';
-    if (desc === 'Refurbished')  color = 'var(--btn-success-bg)';
+    if (desc === 'For Parts')    color = '#ef4444';
+    if (desc === 'Refurbished')  color = 'var(--accent-color)';
     if (desc === 'Untested')     color = '#f39c12';
-    return `<span style="background:${color};color:#fff;padding:2px 7px;border-radius:4px;font-size:0.78rem;font-weight:bold;">${esc(desc)}</span>`;
+    return `<span style="background:${color};color:#fff;padding:2px 7px;border-radius:4px;font-size:0.75rem;font-weight:800;text-transform:uppercase;">${esc(desc)}</span>`;
 }
 

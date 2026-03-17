@@ -62,9 +62,8 @@ function buildRow(item) {
     tr.dataset.id   = item.id;
 
     const nameStr = `${esc(item.brand)} ${esc(item.model)}`;
-    const brandModelHtml = (item.description === 'Refurbished') 
-        ? `<a href="refurbished_view.php?id=${item.id}" style="color:var(--accent-color); text-decoration:none; font-weight:bold;">${nameStr}</a>`
-        : `<strong>${nameStr}</strong>`;
+    const linkColor = (item.description === 'Refurbished') ? 'var(--accent-color)' : 'var(--text-main)';
+    const brandModelHtml = `<a href="hardware_view.php?id=${item.id}" style="color:${linkColor}; text-decoration:none; font-weight:bold; font-size:1.1rem;">${nameStr}</a>`;
 
     tr.innerHTML = `
         <td>
@@ -80,15 +79,17 @@ function buildRow(item) {
         <td>${conditionBadge(item.description)}</td>
         <td style="font-size:0.85rem;color:var(--text-secondary);">${fmtDate(item.created_at)}</td>
         <td style="white-space:nowrap;">
-            <button class="btn reprint-btn" data-id="${item.id}" title="Reprint Label"
-                    style="font-size:0.75rem;padding:5px 8px;background:var(--bg-page);border:1px solid var(--border-color);color:var(--text-main);margin-right:4px;">🖨️ Print</button>
-            <button class="btn open-label-btn" data-id="${item.id}" title="Open Folder/File"
-                    style="font-size:0.75rem;padding:5px 8px;background:var(--bg-page);border:1px solid var(--border-color);color:var(--text-main);margin-right:4px;">📂 Open</button>
-            <button class="btn edit-btn" data-id="${item.id}"
-                    style="font-size:0.75rem;padding:5px 8px;background:var(--bg-page);border:1px solid var(--border-color);color:var(--text-main);margin-right:4px;">✏️ Edit</button>
-            <button class="btn btn-danger delete-btn" data-id="${item.id}"
-                    data-label="${esc(item.brand + ' ' + item.model)}"
-                    style="font-size:0.75rem;padding:5px 8px;">🗑 Del</button>
+            <div class="action-strip">
+                <button class="btn reprint-btn" data-id="${item.id}" title="Reprint Label">🖨️ Print</button>
+                <button class="btn open-label-btn" 
+                        data-id="${item.id}" 
+                        data-brand="${esc(item.brand)}" 
+                        data-model="${esc(item.model)}"
+                        title="Open Folder/File">📂 Open</button>
+                <button class="btn edit-btn" data-id="${item.id}">✏️ Edit</button>
+                <button class="btn btn-danger delete-btn" data-id="${item.id}"
+                        data-label="${esc(item.brand + ' ' + item.model)}">🗑 Del</button>
+            </div>
         </td>
     `;
 
@@ -273,36 +274,14 @@ function onReprintClick(e) {
     window.open('print_label.php?id=' + id, '_blank');
 }
 
-function onOpenClick(e) {
-    const btn = e.target.closest('.open-label-btn');
-    const id = btn.dataset.id;
-    const originalText = btn.innerHTML;
+async function onOpenClick(e) {
+    const btn   = e.target.closest('.open-label-btn');
+    const id    = btn.dataset.id;
+    const brand = btn.dataset.brand;
+    const model = btn.dataset.model;
 
-    btn.disabled = true;
-    btn.innerHTML = '⏳…';
-
-    const formData = new FormData();
-    formData.append('id', id);
-    formData.append('mode', 'open');
-    // Default print settings for the auto-generated ODT
-    formData.append('qty', 1);
-    formData.append('print_a', 1);
-    formData.append('print_b', 1);
-
-    fetch('api/reprint_label.php', { method: 'POST', body: formData })
-        .then(r => r.json())
-        .then(json => {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-            if (!json.success) {
-                alert('Launch failed: ' + (json.error || 'Unknown error'));
-            }
-        })
-        .catch(() => {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
-            alert('Network error — file could not be launched.');
-        });
+    // Use the global Flash Launch engine from actions.js
+    await flashOpenLabel(id, brand, model, btn);
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -318,7 +297,7 @@ function fmtDate(ts)  {
 }
 function conditionBadge(desc) {
     if (!desc) return '—';
-    const map = { 'For Parts': 'var(--btn-danger-bg)', 'Refurbished': 'var(--btn-success-bg)', 'Untested': '#f39c12' };
+    const map = { 'For Parts': '#ef4444', 'Refurbished': 'var(--accent-color)', 'Untested': '#f39c12' };
     const color = map[desc] || 'var(--text-secondary)';
-    return `<span style="background:${color};color:#fff;padding:2px 7px;border-radius:4px;font-size:0.78rem;font-weight:bold;">${esc(desc)}</span>`;
+    return `<span style="background:${color};color:#fff;padding:2px 7px;border-radius:4px;font-size:0.75rem;font-weight:800;text-transform:uppercase;">${esc(desc)}</span>`;
 }

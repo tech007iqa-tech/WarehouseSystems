@@ -12,6 +12,10 @@
     <!-- Global CSS Variables & Layout Rules -->
     <link rel="stylesheet" href="assets/css/style.css">
 
+    <!-- Universal Actions Bridge -->
+    <script src="assets/js/actions.js"></script>
+    <script src="assets/js/print_engine.js"></script>
+
     <!-- Optional: A nice system font hook if desired later. Using system-ui fallbacks in CSS for now -->
 </head>
 <body class="safe-area-bottom">
@@ -88,6 +92,7 @@
         <nav style="flex: 1; overflow-y: auto;">
             <ul class="nav-menu">
                 <li><a href="index.php" class="nav-link" id="nav-dashboard">📊 Dashboard</a></li>
+                <li><a href="analytics.php" class="nav-link" id="nav-analytics">📈 Performance</a></li>
                 <br>
 
                 <!-- LABELS / INVENTORY -->

@@ -169,12 +169,19 @@ try {
                                     ${item.status}
                                 </span>
                             </div>
-                            <div style="display:flex;gap:15px;flex-wrap:wrap;font-size:0.85rem;color:var(--text-secondary);">
+                            <div style="display:flex;gap:15px;flex-wrap:wrap;font-size:0.85rem;color:var(--text-secondary); margin-bottom:12px;">
                                 <span title="CPU">🧠 ${item.cpu_gen ?? '—'}</span>
                                 <span title="RAM/Storage">💾 ${item.ram ?? 'No RAM'} / ${item.storage ?? 'No Storage'}</span>
                                 <span title="Location">📍 <strong style="color:var(--text-main);">${item.warehouse_location ?? 'Unassigned'}</strong></span>
                                 <span style="background:${condColor};color:#fff;padding:1px 6px;border-radius:3px;font-size:0.75rem;font-weight:bold;">${item.description ?? '—'}</span>
                             </div>
+
+                            <div class="action-strip" style="justify-content: flex-start; margin-bottom: 10px;">
+                                <button onclick="window.openPrintConfig(${item.id})" class="btn" title="Print/Config Label">🖨️ Print</button>
+                                <button onclick="flashOpenLabel(${item.id}, '${item.brand}', '${item.model}', this)" class="btn" title="Open Label">📂 Open</button>
+                                <a href="hardware_view.php?id=${item.id}" class="btn">✏️ Edit</a>
+                            </div>
+
                             ${orderHtml}
                         </div>`;
                 });

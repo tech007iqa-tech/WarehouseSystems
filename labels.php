@@ -64,13 +64,13 @@ try {
                     <?php foreach ($inventory as $item): ?>
                         <tr data-id="<?= (int)$item['id'] ?>">
                             <td data-label="Model">
-                                <?php if (($item['description'] ?? '') === 'Refurbished'): ?>
-                                    <a href="refurbished_view.php?id=<?= (int)$item['id'] ?>" style="color:var(--accent-color); text-decoration:none; font-weight:bold;">
-                                        <?= htmlspecialchars($item['brand'] . ' ' . $item['model']) ?>
-                                    </a>
-                                <?php else: ?>
-                                    <strong style="font-size: 1.1rem;"><?= htmlspecialchars($item['brand'] . ' ' . $item['model']) ?></strong>
-                                <?php endif; ?>
+                                <?php
+                                    $linkDesc = $item['description'] ?? '';
+                                    $linkColor = $linkDesc === 'Refurbished' ? 'var(--accent-color)' : 'var(--text-main)';
+                                ?>
+                                <a href="hardware_view.php?id=<?= (int)$item['id'] ?>" style="color:<?= $linkColor ?>; text-decoration:none; font-weight:bold; font-size:1.1rem;">
+                                    <?= htmlspecialchars($item['brand'] . ' ' . $item['model']) ?>
+                                </a>
                                 <div style="font-size:0.8rem;color:var(--text-secondary);"><?= htmlspecialchars($item['series'] ?? '') ?></div>
                             </td>
 
@@ -103,28 +103,26 @@ try {
                             </td>
 
                             <td style="white-space:nowrap;">
-                                <div style="display: flex; gap: 5px; justify-content: flex-end;">
+                                <div class="action-strip">
                                     <button class="btn reprint-btn" 
                                             data-id="<?= (int)$item['id'] ?>" 
-                                            title="Reprint Label"
-                                            style="font-size:0.75rem; min-height: 38px; padding: 0 12px; background:var(--bg-page); border:1px solid var(--border-color); color:var(--text-main);">
+                                            title="Reprint Label">
                                         🖨️ Print
                                     </button>
                                     <button class="btn open-label-btn" 
                                             data-id="<?= (int)$item['id'] ?>" 
-                                            title="Open Folder/File"
-                                            style="font-size:0.75rem; min-height: 38px; padding: 0 12px; background:var(--bg-page); border:1px solid var(--border-color); color:var(--text-main);">
+                                            data-brand="<?= htmlspecialchars($item['brand'] ?? '') ?>"
+                                            data-model="<?= htmlspecialchars($item['model'] ?? '') ?>"
+                                            title="Open Folder/File">
                                         📂 Open
                                     </button>
                                     <button class="btn edit-btn"
-                                            data-id="<?= (int)$item['id'] ?>"
-                                            style="font-size:0.75rem; min-height: 38px; padding: 0 12px; background:var(--bg-page); border:1px solid var(--border-color); color:var(--text-main);">
+                                            data-id="<?= (int)$item['id'] ?>">
                                         ✏️ Edit
                                     </button>
                                     <button class="btn btn-danger delete-btn"
                                             data-id="<?= (int)$item['id'] ?>"
-                                            data-label="<?= htmlspecialchars($item['brand'] . ' ' . $item['model']) ?>"
-                                            style="font-size:0.75rem; min-height: 38px; padding: 0 12px;">
+                                            data-label="<?= htmlspecialchars($item['brand'] . ' ' . $item['model']) ?>">
                                         🗑 Del
                                     </button>
                                 </div>
