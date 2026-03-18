@@ -103,7 +103,7 @@ function renderSearchResults(items) {
                 <div style="font-size:0.8rem;color:var(--text-secondary);">${esc(item.series || '')}</div>
             </td>
             <td style="font-size:0.9rem;">${esc(item.cpu_gen || '—')}</td>
-            <td style="font-size:0.9rem;">${esc(item.ram || 'None')} / ${esc(item.storage || 'None')}</td>
+            <td style="font-size:0.9rem;">${esc(item.ram || 'No RAM')} / ${esc(item.storage || 'No Storage')}</td>
             <td>${conditionBadge(item.description)}</td>
             <td style="font-size:0.85rem;color:var(--text-secondary);">${esc(item.warehouse_location || '—')}</td>
             <td>
@@ -114,8 +114,8 @@ function renderSearchResults(items) {
                         data-model="${esc(item.model)}"
                         data-series="${esc(item.series || '')}"
                         data-cpu_gen="${esc(item.cpu_gen || '')}"
-                        data-ram="${esc(item.ram || 'None')}"
-                        data-storage="${esc(item.storage || 'None')}"
+                        data-ram="${esc(item.ram || 'No RAM')}"
+                        data-storage="${esc(item.storage || 'No Storage')}"
                         data-description="${esc(item.description || '')}">
                     ${inCart ? '+ Add More' : '+ Add to Order'}
                 </button>

@@ -1,47 +1,6 @@
-# 🎯 Universal Hardware Control Pattern (Master Plan)
-**Goal:** Create a cohesive, "mind-reading" fast interface for searching, editing, and printing hardware labels that can be reused across all system modules.
+hardware_view.php
+Make Inventory Info have the most important info when available.
+"Incorrect use of <label for=FORM_ELEMENT>"
+"No label associated with a form field"
+Move it at the top of the page on Mobile view
 
----
-
-## 🏗️ 1. The "Master Component" Strategy (UI Cohesion)
-*   **Universal Search Hub**: 
-    *   Standardized top-bar search supporting **Tokenized Keywords** (e.g., "HP i7 Untested") and **ID Auto-Jump** (type "104" + Enter to go straight to item).
-    *   **Persistence**: Save search terms and scroll position so "Back" doesn't reset the view.
-*   **Standardized Action Strip**: Every hardware card/row features the same three pillars:
-    *   `[🖨️ Print]` → Trigger Hybrid Printing Modal.
-    *   `[📂 Open]` → Flash Launch ODT via Windows Bridge.
-    *   `[✏️ Edit]` → Contextual Edit (Inline for speed, Page-based for technical depth).
-
----
-
-## 🚀 2. Creation & Modification Flow
-*   **The "Intake" (`new_label.php`)**:
-    *   **Profile Cloning**: Sidebar with "Recently Added" profiles. Clicking one auto-fills the Brand/Model/CPU/RAM for the new entry.
-    *   **Live Dupe-Check**: As you type, the UI alerts you if a matching hardware profile already exists in that location.
-*   **The "Deep Editor" (`refurbished_view.php`)**:
-    *   Transform this into an **Editable Technical Hub**.
-    *   **Shared Form Partial**: Use the exact same form logic/layout for "New Item" and "Edit Refurbished" to ensure a zero-learning-curve experience.
-
----
-
-## ⚙️ 3. The "Action Engine" (Open, Print, Search)
-*   **Smart Opening (The "Flash Launch")**:
-    *   **Logic**: Click Open ➔ JS checks for `exports/labels/...odt`. 
-    *   ➔ **If Found**: Launch instantly in LibreOffice via `api/open_windows_file.php`.
-    *   ➔ **If Missing**: Trigger PowerShell generation first, then launch.
-*   **Hybrid Printing Modal**: 
-    *   Standardize `assets/js/print_engine.js` into a popup that offers:
-        1. **Flash Print**: Instant, zero-storage Browser-native label.
-        2. **Pro Label**: Generate/Update ODT for persistent records.
-*   **Standardized API**: Harden `api/get_labels.php` to be the "Universal Search Source" for labels, orders, and sales modules.
-
----
-
-## 🛠️ 4. Phase-Specific Tasks
-- [ ] **Phase A**: Refactor `new_label.php` into a modular form that can be embedded in `refurbished_view.php`.
-- [ ] **Phase B**: Implement "Smart Open" logic in `assets/js/labels.js`.
-- [ ] **Phase C**: Add "Profile Cloning" to the Intake sidebar.
-- [ ] **Phase D**: Sync the "Action Strip" styling across Dashboard, Inventory, and Order views.
-
----
-**Status:** Planning Complete. Ready for Implementation.

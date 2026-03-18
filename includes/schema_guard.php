@@ -32,9 +32,24 @@ function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex) {
             description TEXT,
             status TEXT DEFAULT 'In Warehouse',
             warehouse_location TEXT,
+            serial_number TEXT,
             order_id INTEGER,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
+
+        // 1.5. Automated Migration: Add serial_number if table was already present
+        $stmt_info = $pdo_labels->query("PRAGMA table_info(items)");
+        $columns = $stmt_info->fetchAll(PDO::FETCH_ASSOC);
+        $has_sn = false;
+        foreach ($columns as $col) {
+            if ($col['name'] === 'serial_number') {
+                $has_sn = true;
+                break;
+            }
+        }
+        if (!$has_sn) {
+            $pdo_labels->exec("ALTER TABLE items ADD COLUMN serial_number TEXT");
+        }
 
         // 2. Check Orders
         $pdo_orders->exec("CREATE TABLE IF NOT EXISTS purchase_orders (
@@ -55,6 +70,16 @@ function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex) {
             qty INTEGER DEFAULT 1,
             unit_price NUMERIC,
             total_price NUMERIC
+        )");
+        $pdo_orders->exec("CREATE TABLE IF NOT EXISTS sold_history (
+            history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_number INTEGER NOT NULL,
+            item_id INTEGER NOT NULL,
+            serial_number TEXT,
+            customer_id INTEGER NOT NULL,
+            brand_model TEXT,
+            sale_price NUMERIC,
+            sale_date DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
 
         // 3. Check Rolodex

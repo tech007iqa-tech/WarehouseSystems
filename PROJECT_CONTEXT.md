@@ -15,6 +15,7 @@
 - **Native Printing:** Multi-modal support.
   - **Orders (.ots):** Direct Windows Launching via `api/open_windows_file.php`.
   - **Labels (.odt):** High-speed Browser-Native printing via `print_label.php` (Zero-storage/HTML-based).
+- **Mobile-First Hardware View:** Priority metadata display using CSS Grid `grid-template-areas` for small screens.
 
 ---
 
@@ -35,6 +36,8 @@
 | `ram` | TEXT | Memory capacity |
 | `storage` | TEXT | Drive capacity |
 | `gpu` | TEXT | Graphics controller |
+| `battery` | BOOLEAN | Battery included (1/0) |
+| `battery_specs` | TEXT | Health % and cycle counts |
 | `bios_state` | TEXT | Locked/Unlocked/Unknown |
 | `description` | TEXT | Condition/Internal Note: `'Untested'`, `'Refurbished'`, `'For Parts'` |
 | `status` | TEXT | Display status: `'In Warehouse'`, `'Grade A/B/C'`, `'Tested'`, `'No Post'`, `'No Power'` |
@@ -99,16 +102,13 @@
 - **Hybrid Printing Approach:** 
   - **Browser Direct:** Instant, zero-file labels for rapid warehouse use. Exactly **2" x 1"** dimensions.
   - **Windows Launch:** Precise, persistent document generation for official forms.
+- **Smart Panels:** Sidebar widgets in `hardware_view.php` utilize `<details>` toggles to hide deep technical specs while keeping critical info (CPU/RAM/Storage) visible.
 
 ---
 
 ## 🚀 5. Roadmap Status
-- [x] **Phase 1-7**: Infrastructure, Ordering, SKU Logic, and System Health.
-- [x] **Phase 7.5: Native Printing Workflow** — Replaced browser downloads with direct Windows launch.
-- [x] Phase 7.7: ODF Stability & Zero-Storage Print — Solved LibreOffice "File Corrupt" warnings.
-- [x] Phase 7.8: Universal Hardware Pattern (Form Unification + Flash Launch)
-- [x] Phase 8: Analytics & Reporting (Inventory aging, sales trends)
-- [x] Phase 8.5: Labels Page UX Overhaul (Card-based mobile layout, dynamic filtering, optimized action strips).
-- [x] Phase 8.6: ⚙️ File Printing / Opening - Implement precise native folder/file launching directly from `labels.php`.
+- [x] **Phase 1-8**: Infrastructure, Ordering, SKU Logic, Analytics, and Mobile-First Labels.
+- [x] **Phase 8.5: Hardware View Overhaul** — Implemented mobile-first vertical stacking and "Quick Spec" summary widgets.
+- [x] **Phase 8.6: Accessibility Audit** — Fixed `label for` mismatches and form field associations in the shared hardware engine.
 - [ ] Phase 8.7: 🚚 Sales & Dispatch Logic - Develop a system location or workflow to handle "Sold" items and gracefully filter them from the primary warehouse view.
-- [ ] Phase 9: Thermal Printer Optimization (4x6 Margin-less Templates).
+- [ ] Phase 9: Thermal Printer Optimization (2x1 Margin-less Templates & Label B Side-by-Side configuration).

@@ -44,6 +44,11 @@ $condition = $item['description'] ?? 'Untested';
             <label for="series">Series (e.g., 840 G3)</label>
             <input type="text" id="series" name="series" value="<?= htmlspecialchars($item['series'] ?? '') ?>">
         </div>
+        
+        <div class="form-group">
+            <label for="serial_number">Serial Number / Asset Tag</label>
+            <input type="text" id="serial_number" name="serial_number" value="<?= htmlspecialchars($item['serial_number'] ?? '') ?>" placeholder="S/N: ...">
+        </div>
 
         <div class="form-group" style="position: relative;">
             <label for="cpu_gen">CPU / Generation</label>
@@ -54,7 +59,7 @@ $condition = $item['description'] ?? 'Untested';
         </div>
 
         <div class="form-group">
-            <label for="cpu_specs">Processor Specs</label>
+            <label for="cpu_specs_main">Processor Specs</label>
             <div class="input-group-prefix" id="cpu_specs_group">
                 <span id="cpu_prefix_display"><?= str_contains($item['cpu_specs'] ?? '', '-') ? explode('-', $item['cpu_specs'])[0] . '-' : '' ?></span>
                 <input type="text" id="cpu_specs_main" value="<?= str_contains($item['cpu_specs'] ?? '', '-') ? explode('-', $item['cpu_specs'])[1] : ($item['cpu_specs'] ?? '') ?>">
@@ -122,7 +127,7 @@ $condition = $item['description'] ?? 'Untested';
                 </select>
             </div>
             <div class="form-group">
-                <label>Battery Mode</label>
+                <label for="battery">Battery Mode</label>
                 <select id="battery" name="battery">
                     <option value="1" <?= ($item['battery'] ?? 0) == 1 ? 'selected' : '' ?>>Included</option>
                     <option value="0" <?= ($item['battery'] ?? 0) == 0 ? 'selected' : '' ?>>N/A</option>
