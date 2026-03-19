@@ -22,7 +22,11 @@ try {
     $brand               = sanitize_text($_POST['brand']              ?? null);
     $model               = sanitize_text($_POST['model']              ?? null);
     $series              = sanitize_text($_POST['series']             ?? null);
+    $serial_number       = sanitize_text($_POST['serial_number']      ?? null);
     $cpu_gen             = sanitize_text($_POST['cpu_gen']            ?? null);
+    $cpu_specs           = sanitize_text($_POST['cpu_specs']          ?? null);
+    $cpu_cores           = sanitize_text($_POST['cpu_cores']          ?? null);
+    $cpu_speed           = sanitize_text($_POST['cpu_speed']          ?? null);
     $cpu_details         = sanitize_text($_POST['cpu_details']        ?? null);
     $ram                 = sanitize_text($_POST['ram']                ?? null);
     $storage             = sanitize_text($_POST['storage']            ?? null);
@@ -49,7 +53,11 @@ try {
             brand              = :brand,
             model              = :model,
             series             = :series,
+            serial_number      = :sn,
             cpu_gen            = :cpu_gen,
+            cpu_specs          = :cpu_specs,
+            cpu_cores          = :cpu_cores,
+            cpu_speed          = :cpu_speed,
             cpu_details        = :cpu_details,
             ram                = :ram,
             storage            = :storage,
@@ -65,7 +73,8 @@ try {
             bios_state         = :bios_state,
             description        = :description,
             warehouse_location = :warehouse_location,
-            status             = :status
+            status             = :status,
+            updated_at         = CURRENT_TIMESTAMP
         WHERE id = :id
     ");
 
@@ -73,7 +82,11 @@ try {
         ':brand'              => $brand,
         ':model'              => $model,
         ':series'             => $series,
+        ':sn'                 => $serial_number,
         ':cpu_gen'            => $cpu_gen,
+        ':cpu_specs'          => $cpu_specs,
+        ':cpu_cores'          => $cpu_cores,
+        ':cpu_speed'          => $cpu_speed,
         ':cpu_details'        => $cpu_details,
         ':ram'                => $ram,
         ':storage'            => $storage,

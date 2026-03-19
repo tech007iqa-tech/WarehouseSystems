@@ -1,5 +1,16 @@
 # Work Log - IQA Metal Inventory & Label System
 
+## [2026-03-18] - Thermal Printer Optimization (Zebra 2x1) & Maintenance
+### Added & Refactored
+- **Phase 9: Thermal Strategy**: Transformed `print_label.php` into a margin-less 2x1 thermal engine. Unified Branding (Label A) and Technical Specs (Label B) into a single 2-page print job (1 PDF file) specifically optimized for the Zebra GX 430d.
+- **Strict Sizing**: Enforced rigid `@page` dimensions (2in x 1in landscape) with zero browser margins to prevent PDF scaling bugs.
+- **Status Automation (v2)**: Updated `api/add_label.php` to automatically default status to **"In Warehouse"** during initial hardware intake, as requested.
+- **Maintenance Tools**: Modified `api/delete_label.php` to remove the restriction on deleting "Sold" items, allowing warehouse staff to purge old records from the dashboard.
+- **UUI Enhancements**: Added the **Series** field to the main header and "Quick Specs" summary sidebar in `hardware_view.php` for better hardware identification.
+- **Accessibility (8.6 Refinement)**: Fixed all "No label associated with form field" violations in `header.php` and `hardware_form.php` to ensure 100% compliance with browser accessibility scanners.
+- **Architectural Cleanup**: Centralized the Thermal Printer CSS into `assets/css/style.css` to prevent future logic regressions.
+- **Documentation**: Synchronized `PROJECT_CONTEXT.md` and `ARCHITECTURE.md` with the new hybrid printing and maintenance logic.
+
 ## [2026-03-17] - Hardware Form UX & Status Automations
 ### Added & Refactored
 - **Form Defaults**: Stripped placeholder examples from `includes/hardware_form.php` to prevent visual confusion with actual data.

@@ -57,7 +57,7 @@
                 </div>
             </div>
 
-            <label style="display:block; margin-bottom:10px; font-weight:700; font-size:0.85rem;">Quantity of Sets</label>
+            <label for="printQty" style="display:block; margin-bottom:10px; font-weight:700; font-size:0.85rem;">Quantity of Sets</label>
             <div style="display:flex; gap:10px; align-items:center; margin-bottom:25px;">
                 <input type="number" id="printQty" value="1" min="1" max="100" style="width:80px; text-align:center; font-size:1.2rem; font-weight:bold;">
                 <p style="font-size:0.8rem; color:var(--text-secondary);">Copies of the document.</p>

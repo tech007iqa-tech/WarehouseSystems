@@ -1,6 +1,14 @@
-hardware_view.php
-Make Inventory Info have the most important info when available.
-"Incorrect use of <label for=FORM_ELEMENT>"
-"No label associated with a form field"
-Move it at the top of the page on Mobile view
+### 🚀 NEXT PHASES - ARCHITECTURE & SALES
 
+#### **Phase 11: 📦 The "Dispatch Desk" (Sold Item Separation)**
+Objective: Keep the primary Warehouse Inventory focused on available stock and move Sold items to a dedicated history view.
+- Create `dispatch.php` (The Dispatch Desk) showing ONLY items with status 'Sold'.
+- Officially remove "Sold" from the `labels.php` filter (Complete).
+- Add "🚚 Dispatch Desk" to the Global Sidebar for history management.
+- Implement "Bulk Archive" logic: Automatically hide items older than 90 days from the Dispatch view to keep it performant.
+
+#### **Phase 12: 🏷️ Tiered B2B Pricing (Sales Logic)**
+Objective: Empower the order generator with pre-defined customer discounts.
+- Assign "Gold/Silver/Bronze" tiers to customers in the Rolodex (rolodex.sqlite).
+- Update `new_order.php` to auto-calculate price adjustments based on the selected customer profile.
+- Display "Customer Tier Savings" on the B2B Order Form summary.

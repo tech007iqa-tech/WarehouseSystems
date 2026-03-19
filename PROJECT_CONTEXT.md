@@ -110,5 +110,6 @@
 - [x] **Phase 1-8**: Infrastructure, Ordering, SKU Logic, Analytics, and Mobile-First Labels.
 - [x] **Phase 8.5: Hardware View Overhaul** — Implemented mobile-first vertical stacking and "Quick Spec" summary widgets.
 - [x] **Phase 8.6: Accessibility Audit** — Fixed `label for` mismatches and form field associations in the shared hardware engine.
-- [ ] Phase 8.7: 🚚 Sales & Dispatch Logic - Develop a system location or workflow to handle "Sold" items and gracefully filter them from the primary warehouse view.
-- [ ] Phase 9: Thermal Printer Optimization (2x1 Margin-less Templates & Label B Side-by-Side configuration).
+- [x] Phase 8.7: 🚚 Sales & Dispatch Logic - Implemented "Sold" status handling and unlocked deletion of sold records as per warehouse maintenance requirements.
+- [x] Phase 9: 🖨️ Thermal Printer Optimization (Zebra GX 430d) - Implemented 2" x 1" margin-less HTML printing. Unified Branding (Label A) and Specs (Label B) into a single 2-page print job for seamless PDF generation.
+- [x] Phase 10: 🏗️ Scalability Foundation - Implemented temporal tracking (`updated_at` timestamps) and Visual Identification anchors on labels to enable future mobile scanning and inventory velocity analytics.

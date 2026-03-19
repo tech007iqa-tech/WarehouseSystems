@@ -253,9 +253,13 @@ function openEditRow(tr, item) {
         </td>
     `;
 
-    // Add hidden fields for data not directly editable in the row
+    // Add hidden fields for data not directly editable in the row to prevent data loss on save
     const firstCell = tr.querySelector('td');
-    ['battery', 'bios_state', 'cpu_details'].forEach(field => {
+    [
+        'battery', 'battery_specs', 'bios_state', 'cpu_details', 
+        'gpu', 'screen_res', 'webcam', 'backlit_kb', 
+        'os_version', 'cosmetic_grade', 'work_notes'
+    ].forEach(field => {
         const hidden = document.createElement('input');
         hidden.type = 'hidden';
         hidden.name = field;

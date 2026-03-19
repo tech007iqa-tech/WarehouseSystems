@@ -51,7 +51,7 @@ try {
 
         <select id="filterStatus" class="filter-select" style="padding:10px; border-radius:8px; border:1px solid var(--border-color); color:var(--text-main);">
             <option value="In Warehouse">📦 In Warehouse</option>
-            <option value="Sold">🚚 Sold Records</option>
+            <!-- <option value="Sold">🚚 Sold Records</option> -->
             <option value="all">🌐 View All</option>
         </select>
 

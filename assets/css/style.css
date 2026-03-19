@@ -162,7 +162,7 @@ body {
     background: var(--bg-panel);
     border-color: var(--accent-color);
     transform: translateY(-1px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .action-strip .btn-danger:hover {
@@ -186,6 +186,7 @@ body {
     overflow: hidden;
     background: var(--bg-panel);
 }
+
 .input-group-prefix span {
     background: rgba(140, 198, 63, 0.08);
     padding: 8px 12px;
@@ -198,6 +199,7 @@ body {
     user-select: none;
     white-space: nowrap;
 }
+
 .input-group-prefix input {
     border: none !important;
     flex: 1;
@@ -208,23 +210,102 @@ body {
     width: 100%;
     color: var(--text-main);
 }
+
 .input-group-prefix input:focus {
     background: rgba(140, 198, 63, 0.02);
 }
 
 /* --- ANALYTICS & CHARTS --- */
-.css-chart-container { display: flex; flex-direction: column; gap: 15px; margin-top: 10px; }
-.chart-row { display: grid; grid-template-columns: 80px 1fr 40px; align-items: center; gap: 10px; }
-.chart-bar-bg { height: 12px; background: rgba(0,0,0,0.05); border-radius: 6px; overflow: hidden; position: relative; }
-.chart-bar-fill { height: 100%; background: var(--accent-color); border-radius: 6px; width: 0%; transition: width 0.8s cubic-bezier(0.1, 0.7, 1.0, 0.1); }
-.chart-label { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
-.chart-value { font-size: 0.8rem; font-weight: 800; text-align: right; }
+.css-chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 10px;
+}
 
-.css-chart-container.vertical { flex-direction: row; align-items: flex-end; justify-content: space-around; height: 150px; padding-bottom: 25px; }
-.chart-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; flex: 1; gap: 10px; }
-.chart-vbar-bg { width: 30px; background: rgba(0,0,0,0.05); border-radius: 4px; position: relative; height: 100%; display: flex; align-items: flex-end; }
-.chart-vbar-fill { width: 100%; background: var(--accent-color); border-radius: 4px; height: 0%; transition: height 0.8s ease-out; }
-.chart-vlabel { font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); position: absolute; bottom: -22px; width: 60px; text-align: center; white-space: nowrap; transform: rotate(-15deg); }
+.chart-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 40px;
+    align-items: center;
+    gap: 10px;
+}
+
+.chart-bar-bg {
+    height: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.chart-bar-fill {
+    height: 100%;
+    background: var(--accent-color);
+    border-radius: 6px;
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.1, 0.7, 1.0, 0.1);
+}
+
+.chart-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.chart-value {
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-align: right;
+}
+
+.css-chart-container.vertical {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-around;
+    height: 150px;
+    padding-bottom: 25px;
+}
+
+.chart-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    flex: 1;
+    gap: 10px;
+}
+
+.chart-vbar-bg {
+    width: 30px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+}
+
+.chart-vbar-fill {
+    width: 100%;
+    background: var(--accent-color);
+    border-radius: 4px;
+    height: 0%;
+    transition: height 0.8s ease-out;
+}
+
+.chart-vlabel {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    position: absolute;
+    bottom: -22px;
+    width: 60px;
+    text-align: center;
+    white-space: nowrap;
+    transform: rotate(-15deg);
+}
 
 /* -------------------------------------
    RESPONSIVE LOGIC
@@ -491,4 +572,142 @@ h3 {
 
 .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* -------------------------------------
+   🖨️ THERMAL PRINTER ENGINE (Dynamic)
+   ------------------------------------- */
+
+:root {
+    --label-width: 4in;
+    --label-height: 2in;
+    --font-brand: 24pt;
+    --font-spec: 11pt;
+    --font-spec-head: 13pt;
+}
+
+/* --- Screen Preview --- */
+.label-preview-body {
+    font-family: Arial, sans-serif !important;
+    background: #e8eaed !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding: 30px 20px !important;
+    min-height: 100vh;
+}
+
+.label-card-outer {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .18);
+    padding: 12px 14px 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.label-tag {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--accent-color);
+    font-weight: 800;
+}
+
+.label {
+    width: var(--label-width);
+    height: var(--label-height);
+    overflow: hidden;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0.1in;
+    background: #fff;
+    position: relative;
+    color: #111;
+}
+
+/* Label A — Branding */
+.label-a .brand-name {
+    font-size: var(--font-brand);
+    font-weight: 700;
+    line-height: 1.1;
+    word-wrap: break-word;
+}
+
+/* Label B — Specs */
+.label-b .spec-line {
+    font-size: var(--font-spec);
+    line-height: 1.35;
+    width: 100%;
+    text-align: center;
+    word-wrap: break-word;
+}
+
+.label-b .spec-line.head {
+    font-size: var(--font-spec-head);
+    font-weight: 700;
+    margin-bottom: 4pt;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 2pt;
+}
+
+/* --- Print Media Overrides --- */
+@media print {
+    .label-preview-body {
+        width: var(--label-width) !important;
+        height: var(--label-height) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        display: block !important;
+    }
+
+    @page {
+        size: var(--label-width) var(--label-height) landscape;
+        margin: 0;
+    }
+
+    .toolbar,
+    .label-tag,
+    .no-print {
+        display: none !important;
+    }
+
+    .label-card-outer {
+        display: block !important;
+        width: var(--label-width) !important;
+        height: var(--label-height) !important;
+        background: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        page-break-after: always;
+        page-break-inside: avoid;
+    }
+
+    .label {
+        width: var(--label-width) !important;
+        height: var(--label-height) !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0.05in !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
+        overflow: hidden !important;
+        background: #fff !important;
+    }
+
+    .label:last-child {
+        page-break-after: avoid !important;
+    }
 }

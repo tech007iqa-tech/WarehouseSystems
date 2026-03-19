@@ -107,13 +107,14 @@ $condition = $item['description'] ?? 'Untested';
         <div class="form-group">
             <label for="status">Status</label>
             <select id="status" name="status">
-                <option value="In Warehouse" <?= ($item['status'] ?? '') === 'In Warehouse' ? 'selected' : '' ?>>Untested</option>
+                <option value="In Warehouse" <?= (($item['status'] ?? 'In Warehouse') === 'In Warehouse') ? 'selected' : '' ?>>📦 In Warehouse (Active)</option>
                 <option value="Grade A"      <?= ($item['status'] ?? '') === 'Grade A'      ? 'selected' : '' ?>>Grade A</option>
                 <option value="Grade B"      <?= ($item['status'] ?? '') === 'Grade B'      ? 'selected' : '' ?>>Grade B</option>
                 <option value="Grade C"      <?= ($item['status'] ?? '') === 'Grade C'      ? 'selected' : '' ?>>Grade C</option>
                 <option value="Tested"       <?= ($item['status'] ?? '') === 'Tested'       ? 'selected' : '' ?>>Tested</option>
                 <option value="No Post"      <?= ($item['status'] ?? '') === 'No Post'      ? 'selected' : '' ?>>No Post</option>
                 <option value="No Power"     <?= ($item['status'] ?? '') === 'No Power'     ? 'selected' : '' ?>>No Power</option>
+                <option value="Sold"         <?= ($item['status'] ?? '') === 'Sold'         ? 'selected' : '' ?>>🚚 Sold Records</option>
             </select>
         </div>
 
@@ -139,7 +140,7 @@ $condition = $item['description'] ?? 'Untested';
             <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:5px;">
                 <label for="warehouse_location" style="margin-bottom:0;">Warehouse Bin / Location</label>
                 <?php if (!$isEdit): ?>
-                <label style="font-size:0.75rem; color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:4px;">
+                <label for="pin_location" style="font-size:0.75rem; color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:4px;">
                     <input type="checkbox" id="pin_location" title="Keep this location after saving"> 📌 Pin
                 </label>
                 <?php endif; ?>

@@ -10,31 +10,40 @@ try {
         throw new Exception("Brand and Model are required.");
     }
 
-    $brand = sanitize_text($_POST['brand']);
-    $model = sanitize_text($_POST['model']);
-    $series = sanitize_text($_POST['series'] ?? null);
-    $cpu_gen = sanitize_text($_POST['cpu_gen'] ?? null);
-    $cpu_specs = sanitize_text($_POST['cpu_specs'] ?? null);
-    $cpu_cores = sanitize_text($_POST['cpu_cores'] ?? null);
-    $cpu_speed = sanitize_text($_POST['cpu_speed'] ?? null);
-    $ram = isset($_POST['has_ram']) && $_POST['has_ram'] == '1' ? sanitize_text($_POST['ram'] ?? null) : null;
-    $storage = isset($_POST['has_storage']) && $_POST['has_storage'] == '1' ? sanitize_text($_POST['storage'] ?? null) : null;
-    $battery = isset($_POST['battery']) && $_POST['battery'] == '1' ? 1 : 0;
-    $bios_state = sanitize_text($_POST['bios_state'] ?? 'Unknown');
-    $description = sanitize_text($_POST['description'] ?? 'Untested');
+    $brand              = sanitize_text($_POST['brand']);
+    $model              = sanitize_text($_POST['model']);
+    $series             = sanitize_text($_POST['series']             ?? null);
+    $serial_number      = sanitize_text($_POST['serial_number']      ?? null);
+    $cpu_gen            = sanitize_text($_POST['cpu_gen']            ?? null);
+    $cpu_specs          = sanitize_text($_POST['cpu_specs']          ?? null);
+    $cpu_cores          = sanitize_text($_POST['cpu_cores']          ?? null);
+    $cpu_speed          = sanitize_text($_POST['cpu_speed']          ?? null);
+    $ram                = sanitize_text($_POST['ram']                ?? null);
+    $storage            = sanitize_text($_POST['storage']            ?? null);
+    
+    // Technical Sheet Fields
+    $gpu                = sanitize_text($_POST['gpu']                ?? null);
+    $screen_res         = sanitize_text($_POST['screen_res']         ?? null);
+    $battery            = isset($_POST['battery']) && $_POST['battery'] == '1' ? 1 : 0;
+    $battery_specs      = sanitize_text($_POST['battery_specs']      ?? null);
+    $webcam             = sanitize_text($_POST['webcam']             ?? null);
+    $backlit_kb         = sanitize_text($_POST['backlit_kb']         ?? null);
+    $os_version         = sanitize_text($_POST['os_version']         ?? null);
+    $cosmetic_grade     = sanitize_text($_POST['cosmetic_grade']     ?? null);
+    $work_notes         = sanitize_text($_POST['work_notes']         ?? null);
+    
+    $bios_state         = sanitize_text($_POST['bios_state']         ?? 'Unknown');
+    $description        = sanitize_text($_POST['description']        ?? 'Untested');
     $warehouse_location = sanitize_text($_POST['warehouse_location'] ?? null);
 
     // 2. Check for Duplicates (Avoid redundant Label Profiles)
     // We check if an item with exact technical specs and location already exists.
     $check_stmt = $pdo_labels->prepare("
         SELECT id FROM items 
-        WHERE brand = :brand AND model = :model AND (series = :series OR (series IS NULL AND :series_null IS NULL))
-        AND (cpu_gen = :cpu_gen OR (cpu_gen IS NULL AND :cpu_gen_null IS NULL))
+        WHERE brand = :brand AND model = :model 
+        AND (series = :series OR (series IS NULL AND :series_null IS NULL))
+        AND (serial_number = :sn OR (serial_number IS NULL AND :sn_null IS NULL))
         AND (cpu_specs = :cpu_specs OR (cpu_specs IS NULL AND :cpu_specs_null IS NULL))
-        AND (cpu_cores = :cpu_cores OR (cpu_cores IS NULL AND :cpu_cores_null IS NULL))
-        AND (cpu_speed = :cpu_speed OR (cpu_speed IS NULL AND :cpu_speed_null IS NULL))
-        AND (ram = :ram OR (ram IS NULL AND :ram_null IS NULL))
-        AND (storage = :storage OR (storage IS NULL AND :storage_null IS NULL))
         AND bios_state = :bios_state AND description = :description 
         AND (warehouse_location = :location OR (warehouse_location IS NULL AND :location_null IS NULL))
         AND status = 'In Warehouse'
@@ -42,16 +51,14 @@ try {
     ");
 
     $check_stmt->execute([
-        ':brand' => $brand, ':model' => $model, 
-        ':series' => $series, ':series_null' => $series,
-        ':cpu_gen' => $cpu_gen, ':cpu_gen_null' => $cpu_gen,
+        ':brand'     => $brand, 
+        ':model'     => $model, 
+        ':series'    => $series, ':series_null' => $series,
+        ':sn'        => $serial_number, ':sn_null' => $serial_number,
         ':cpu_specs' => $cpu_specs, ':cpu_specs_null' => $cpu_specs,
-        ':cpu_cores' => $cpu_cores, ':cpu_cores_null' => $cpu_cores,
-        ':cpu_speed' => $cpu_speed, ':cpu_speed_null' => $cpu_speed,
-        ':ram' => $ram, ':ram_null' => $ram,
-        ':storage' => $storage, ':storage_null' => $storage,
-        ':bios_state' => $bios_state, ':description' => $description,
-        ':location' => $warehouse_location, ':location_null' => $warehouse_location
+        ':bios_state'=> $bios_state, 
+        ':description'=> $description,
+        ':location'  => $warehouse_location, ':location_null' => $warehouse_location
     ]);
 
     $existing_item = $check_stmt->fetch(PDO::FETCH_ASSOC);
@@ -64,30 +71,41 @@ try {
         $is_duplicate = false;
         $stmt = $pdo_labels->prepare("
             INSERT INTO items (
-                brand, model, series, cpu_gen, cpu_specs, cpu_cores, cpu_speed, 
-                ram, storage, battery, bios_state, description, 
-                warehouse_location, status
+                brand, model, series, serial_number, cpu_gen, cpu_specs, cpu_cores, cpu_speed, 
+                ram, storage, gpu, screen_res, battery, battery_specs, webcam, 
+                backlit_kb, os_version, cosmetic_grade, work_notes,
+                bios_state, description, warehouse_location, status
             ) VALUES (
-                :brand, :model, :series, :cpu_gen, :cpu_specs, :cpu_cores, :cpu_speed, 
-                :ram, :storage, :battery, :bios_state, :description, 
-                :location, 'In Warehouse'
+                :brand, :model, :series, :sn, :cpu_gen, :cpu_specs, :cpu_cores, :cpu_speed, 
+                :ram, :storage, :gpu, :screen_res, :battery, :battery_specs, :webcam, 
+                :backlit_kb, :os_version, :cosmetic_grade, :work_notes,
+                :bios_state, :description, :location, 'In Warehouse'
             )
         ");
 
         $stmt->execute([
-            ':brand' => $brand,
-            ':model' => $model,
-            ':series' => $series,
-            ':cpu_gen' => $cpu_gen,
-            ':cpu_specs' => $cpu_specs,
-            ':cpu_cores' => $cpu_cores,
-            ':cpu_speed' => $cpu_speed,
-            ':ram' => $ram,
-            ':storage' => $storage,
-            ':battery' => $battery,
-            ':bios_state' => $bios_state,
-            ':description' => $description,
-            ':location' => $warehouse_location
+            ':brand'          => $brand,
+            ':model'          => $model,
+            ':series'         => $series,
+            ':sn'             => $serial_number,
+            ':cpu_gen'        => $cpu_gen,
+            ':cpu_specs'      => $cpu_specs,
+            ':cpu_cores'      => $cpu_cores,
+            ':cpu_speed'      => $cpu_speed,
+            ':ram'            => $ram,
+            ':storage'        => $storage,
+            ':gpu'            => $gpu,
+            ':screen_res'     => $screen_res,
+            ':battery'        => $battery,
+            ':battery_specs'  => $battery_specs,
+            ':webcam'         => $webcam,
+            ':backlit_kb'     => $backlit_kb,
+            ':os_version'     => $os_version,
+            ':cosmetic_grade' => $cosmetic_grade,
+            ':work_notes'     => $work_notes,
+            ':bios_state'     => $bios_state,
+            ':description'    => $description,
+            ':location'       => $warehouse_location
         ]);
 
         $inserted_id = $pdo_labels->lastInsertId();

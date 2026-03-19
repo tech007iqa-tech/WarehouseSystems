@@ -34,6 +34,7 @@ function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex) {
             warehouse_location TEXT,
             serial_number TEXT,
             order_id INTEGER,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
 
@@ -49,6 +50,18 @@ function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex) {
         }
         if (!$has_sn) {
             $pdo_labels->exec("ALTER TABLE items ADD COLUMN serial_number TEXT");
+        }
+
+        // Add updated_at if missing
+        $has_updated = false;
+        foreach ($columns as $col) {
+            if ($col['name'] === 'updated_at') {
+                $has_updated = true;
+                break;
+            }
+        }
+        if (!$has_updated) {
+            $pdo_labels->exec("ALTER TABLE items ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP");
         }
 
         // 2. Check Orders

@@ -21,10 +21,8 @@ try {
         throw new Exception('Item #' . $id . ' not found.');
     }
 
-    // Block deletion of sold items to preserve order history integrity
-    if ($item['status'] === 'Sold') {
-        throw new Exception('Cannot delete a Sold item. It is linked to a purchase order. Change its status first if needed.');
-    }
+    // User requested the ability to delete sold items as well.
+    // Restriction removed.
 
     $stmt = $pdo_labels->prepare("DELETE FROM items WHERE id = :id");
     $stmt->execute([':id' => $id]);

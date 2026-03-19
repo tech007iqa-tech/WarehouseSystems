@@ -31,7 +31,7 @@ $color = $desc === 'For Parts' ? 'var(--btn-danger-bg)'
 <div class="panel flex-between" style="margin-bottom: var(--spacing);">
     <div>
         <h1 style="color: <?= $color ?>;">🛠️ <?= htmlspecialchars($desc) ?> Technical Sheet</h1>
-        <p>Detailed specifications for <strong><?= htmlspecialchars($item['brand'] . ' ' . $item['model']) ?></strong></p>
+        <p>Detailed specifications for <strong><?= htmlspecialchars($item['brand'] . ' ' . $item['model'] . ' ' . ($item['series'] ?? '')) ?></strong></p>
     </div>
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
         <button id="btnPrint" class="btn btn-success"
@@ -117,6 +117,7 @@ $color = $desc === 'For Parts' ? 'var(--btn-danger-bg)'
                 <div style="margin: 15px 0; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px;">
                      <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.5px;">Quick Specs</div>
                      <div class="flex-between"><span>CPU Gen:</span> <strong><?= htmlspecialchars($item['cpu_gen'] ?: '—') ?></strong></div>
+                     <div class="flex-between"><span>Series:</span> <strong><?= htmlspecialchars($item['series'] ?: '—') ?></strong></div>
                      <div class="flex-between"><span>RAM:</span> <strong><?= htmlspecialchars($item['ram'] ?: 'None') ?></strong></div>
                      <div class="flex-between"><span>Storage:</span> <strong><?= htmlspecialchars($item['storage'] ?: 'None') ?></strong></div>
                      

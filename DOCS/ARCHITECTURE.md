@@ -98,10 +98,14 @@ Because we strictly avoid massive PHP frameworks or Composer bundles, we utilize
    - The generation engine surgically deletes the `Configurations2/` directory and `manifest.rdf` entry. These are macro-bearing config files that trigger LibreOffice's "Macros Disabled" or "File Corrupt" warnings on externally generated documents.
    - The system **rebuilds the `manifest.xml`** from scratch to ensure strict conformance with ODF 1.2 ISO schemas.
 
-### Hybrid Printing Strategy
-The application utilizes two distinct printing workflows based on document type:
-- **Browser-Native (Labels)**: `print_label.php` renders hardware labels directly in HTML/CSS. It maps to exact **2" x 1"** dimensions via `@page` rules. This provides instant, zero-storage output (no files written to disk) for rapid warehouse use.
-- **Windows-Native (B2B Orders)**: B2B Purchase Orders are generated as persistent `.ots` files and launched directly in **LibreOffice Calc** via `api/open_windows_file.php`. This allows for native spreadsheet editing and professional printing controls.
+### Hybrid Printing Approach:
+  - **Browser Direct:** Instant, zero-file labels for rapid warehouse use. Strictly **2" x 1"** dimensions via margin-less CSS. Optimized for **1-PDF-file, 2-page** output (Label A: Branding + Label B: Specs).
+  - **Windows Launch:** Precise, persistent document generation for official forms (.odt / .ots).
+- **Smart Panels:** Sidebar widgets in `hardware_view.php` utilize `<details>` toggles to hide deep technical specs while keeping critical info (**CPU/Series/RAM/Storage**) visible.
+
+### Data Maintenance Policy
+- **Sold Records**: Unlike order history which is protected, individual hardware profiles in `labels.sqlite` can be deleted regardless of status (including 'Sold') to allow for warehouse database maintenance.
+- **Default Status**: New hardware intake defaults to `'In Warehouse'` status when conditions are marked as 'Untested'.
 
 ### Technical Implementation:
 - **XML Escaping**: All dynamic strings are sanitized using `htmlspecialchars(..., ENT_XML1)` to ensure valid technical XML.
