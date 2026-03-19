@@ -158,3 +158,19 @@ The system treats the folder structure as part of its "state". The `ensure_syste
 - Setting up the `db/backups` directory.
 - Injecting security `.htaccess` files to prevent directory indexing and protect sensitive B2B documents.
 - Resolving absolute paths for the PowerShell engine to ensure ODT generation succeeds across different local environments.
+
+---
+
+## 11. Hardware Mapping Layer (Single Source of Truth)
+To prevent "field name guessing" errors by AI agents and ensure site-wide stability during schema evolutions, the system implements a **Dual-Path Mapping Layer**.
+
+### A. Core Definition Files
+- **PHP** (`includes/hardware_mapping.php`): Defines the `HW_FIELDS` constant array. Used for all backend SQL queries and POST data collection.
+- **JavaScript** (`assets/js/hardware_mapping.js`): Mirrors the mapping in the browser global `window.HW_FIELDS`. Used for all dynamic UI rendering, form element naming, and event handling.
+
+### B. Implementation Rules
+- **Rule 1**: AI agents and developers must NEVER hardcode strings like `'cpu_specs'`. They MUST reference the mapping (e.g., `HW_FIELDS['CPU_SPECS']`).
+- **Rule 2**: Any new hardware field must be added to both mapping files simultaneously.
+
+### C. Verification Strategy
+- **Diagnostic Tool** (`debug/verify_mapping.php`): A diagnostic script that performs a 3-way check between the PHP map, the JS map, and the actual SQLite database schema. It ensures that all mapped fields exist as columns in the `items` table and alerts if synchronization is broken.

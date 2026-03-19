@@ -3,50 +3,53 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/hardware_mapping.php';
 
 try {
     // 1. Validation & Sanitization
-    if (empty($_POST['brand']) || empty($_POST['model'])) {
+    if (empty($_POST[HW_FIELDS['BRAND']]) || empty($_POST[HW_FIELDS['MODEL']])) {
         throw new Exception("Brand and Model are required.");
     }
 
-    $brand              = sanitize_text($_POST['brand']);
-    $model              = sanitize_text($_POST['model']);
-    $series             = sanitize_text($_POST['series']             ?? null);
-    $serial_number      = sanitize_text($_POST['serial_number']      ?? null);
-    $cpu_gen            = sanitize_text($_POST['cpu_gen']            ?? null);
-    $cpu_specs          = sanitize_text($_POST['cpu_specs']          ?? null);
-    $cpu_cores          = sanitize_text($_POST['cpu_cores']          ?? null);
-    $cpu_speed          = sanitize_text($_POST['cpu_speed']          ?? null);
-    $ram                = sanitize_text($_POST['ram']                ?? null);
-    $storage            = sanitize_text($_POST['storage']            ?? null);
+    $brand              = sanitize_text($_POST[HW_FIELDS['BRAND']]);
+    $model              = sanitize_text($_POST[HW_FIELDS['MODEL']]);
+    $series             = sanitize_text($_POST[HW_FIELDS['SERIES']]             ?? null);
+    $serial_number      = sanitize_text($_POST[HW_FIELDS['SERIAL_NUMBER']]      ?? null);
+    $cpu_gen            = sanitize_text($_POST[HW_FIELDS['CPU_GEN']]            ?? null);
+    $cpu_specs          = sanitize_text($_POST[HW_FIELDS['CPU_SPECS']]          ?? null);
+    $cpu_cores          = sanitize_text($_POST[HW_FIELDS['CPU_CORES']]          ?? null);
+    $cpu_speed          = sanitize_text($_POST[HW_FIELDS['CPU_SPEED']]          ?? null);
+    $ram                = sanitize_text($_POST[HW_FIELDS['RAM']]                ?? null);
+    $storage            = sanitize_text($_POST[HW_FIELDS['STORAGE']]            ?? null);
     
     // Technical Sheet Fields
-    $gpu                = sanitize_text($_POST['gpu']                ?? null);
-    $screen_res         = sanitize_text($_POST['screen_res']         ?? null);
-    $battery            = isset($_POST['battery']) && $_POST['battery'] == '1' ? 1 : 0;
-    $battery_specs      = sanitize_text($_POST['battery_specs']      ?? null);
-    $webcam             = sanitize_text($_POST['webcam']             ?? null);
-    $backlit_kb         = sanitize_text($_POST['backlit_kb']         ?? null);
-    $os_version         = sanitize_text($_POST['os_version']         ?? null);
-    $cosmetic_grade     = sanitize_text($_POST['cosmetic_grade']     ?? null);
-    $work_notes         = sanitize_text($_POST['work_notes']         ?? null);
+    $gpu                = sanitize_text($_POST[HW_FIELDS['GPU']]                ?? null);
+    $screen_res         = sanitize_text($_POST[HW_FIELDS['SCREEN_RES']]         ?? null);
+    $battery            = isset($_POST[HW_FIELDS['BATTERY']]) && $_POST[HW_FIELDS['BATTERY']] == '1' ? 1 : 0;
+    $battery_specs      = sanitize_text($_POST[HW_FIELDS['BATTERY_SPECS']]      ?? null);
+    $webcam             = sanitize_text($_POST[HW_FIELDS['WEBCAM']]             ?? null);
+    $backlit_kb         = sanitize_text($_POST[HW_FIELDS['BACKLIT_KB']]         ?? null);
+    $os_version         = sanitize_text($_POST[HW_FIELDS['OS_VERSION']]         ?? null);
+    $cosmetic_grade     = sanitize_text($_POST[HW_FIELDS['COSMETIC_GRADE']]     ?? null);
+    $work_notes         = sanitize_text($_POST[HW_FIELDS['WORK_NOTES']]         ?? null);
     
-    $bios_state         = sanitize_text($_POST['bios_state']         ?? 'Unknown');
-    $description        = sanitize_text($_POST['description']        ?? 'Untested');
-    $warehouse_location = sanitize_text($_POST['warehouse_location'] ?? null);
+    $bios_state         = sanitize_text($_POST[HW_FIELDS['BIOS_STATE']]         ?? 'Unknown');
+    $description        = sanitize_text($_POST[HW_FIELDS['DESCRIPTION']]        ?? 'Untested');
+    $warehouse_location = sanitize_text($_POST[HW_FIELDS['LOCATION']]           ?? null);
 
     // 2. Check for Duplicates (Avoid redundant Label Profiles)
     // We check if an item with exact technical specs and location already exists.
     $check_stmt = $pdo_labels->prepare("
         SELECT id FROM items 
-        WHERE brand = :brand AND model = :model 
-        AND (series = :series OR (series IS NULL AND :series_null IS NULL))
-        AND (serial_number = :sn OR (serial_number IS NULL AND :sn_null IS NULL))
-        AND (cpu_specs = :cpu_specs OR (cpu_specs IS NULL AND :cpu_specs_null IS NULL))
-        AND bios_state = :bios_state AND description = :description 
-        AND (warehouse_location = :location OR (warehouse_location IS NULL AND :location_null IS NULL))
-        AND status = 'In Warehouse'
+        WHERE " . HW_FIELDS['BRAND'] . " = :brand 
+        AND " . HW_FIELDS['MODEL'] . " = :model 
+        AND (" . HW_FIELDS['SERIES'] . " = :series OR (" . HW_FIELDS['SERIES'] . " IS NULL AND :series_null IS NULL))
+        AND (" . HW_FIELDS['SERIAL_NUMBER'] . " = :sn OR (" . HW_FIELDS['SERIAL_NUMBER'] . " IS NULL AND :sn_null IS NULL))
+        AND (" . HW_FIELDS['CPU_SPECS'] . " = :cpu_specs OR (" . HW_FIELDS['CPU_SPECS'] . " IS NULL AND :cpu_specs_null IS NULL))
+        AND " . HW_FIELDS['BIOS_STATE'] . " = :bios_state 
+        AND " . HW_FIELDS['DESCRIPTION'] . " = :description 
+        AND (" . HW_FIELDS['LOCATION'] . " = :location OR (" . HW_FIELDS['LOCATION'] . " IS NULL AND :location_null IS NULL))
+        AND " . HW_FIELDS['STATUS'] . " = 'In Warehouse'
         LIMIT 1
     ");
 
@@ -71,10 +74,29 @@ try {
         $is_duplicate = false;
         $stmt = $pdo_labels->prepare("
             INSERT INTO items (
-                brand, model, series, serial_number, cpu_gen, cpu_specs, cpu_cores, cpu_speed, 
-                ram, storage, gpu, screen_res, battery, battery_specs, webcam, 
-                backlit_kb, os_version, cosmetic_grade, work_notes,
-                bios_state, description, warehouse_location, status
+                " . HW_FIELDS['BRAND'] . ", 
+                " . HW_FIELDS['MODEL'] . ", 
+                " . HW_FIELDS['SERIES'] . ", 
+                " . HW_FIELDS['SERIAL_NUMBER'] . ", 
+                " . HW_FIELDS['CPU_GEN'] . ", 
+                " . HW_FIELDS['CPU_SPECS'] . ", 
+                " . HW_FIELDS['CPU_CORES'] . ", 
+                " . HW_FIELDS['CPU_SPEED'] . ", 
+                " . HW_FIELDS['RAM'] . ", 
+                " . HW_FIELDS['STORAGE'] . ", 
+                " . HW_FIELDS['GPU'] . ", 
+                " . HW_FIELDS['SCREEN_RES'] . ", 
+                " . HW_FIELDS['BATTERY'] . ", 
+                " . HW_FIELDS['BATTERY_SPECS'] . ", 
+                " . HW_FIELDS['WEBCAM'] . ", 
+                " . HW_FIELDS['BACKLIT_KB'] . ", 
+                " . HW_FIELDS['OS_VERSION'] . ", 
+                " . HW_FIELDS['COSMETIC_GRADE'] . ", 
+                " . HW_FIELDS['WORK_NOTES'] . ",
+                " . HW_FIELDS['BIOS_STATE'] . ", 
+                " . HW_FIELDS['DESCRIPTION'] . ", 
+                " . HW_FIELDS['LOCATION'] . ", 
+                " . HW_FIELDS['STATUS'] . "
             ) VALUES (
                 :brand, :model, :series, :sn, :cpu_gen, :cpu_specs, :cpu_cores, :cpu_speed, 
                 :ram, :storage, :gpu, :screen_res, :battery, :battery_specs, :webcam, 

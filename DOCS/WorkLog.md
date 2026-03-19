@@ -1,5 +1,16 @@
 # Work Log - IQA Metal Inventory & Label System
 
+## [2026-03-19] - Hardware Mapping Layer (Architectural Fortification)
+### Added & Refactored
+- **Phase 11: Unified Mapping Layer**: Implemented a single source of truth for all hardware field keys as defined in `dsa.md`. This eliminates "field name guessing" by AI agents and ensures site-wide stability.
+- **Core Strategy**: Created `includes/hardware_mapping.php` (PHP constant) and `assets/js/hardware_mapping.js` (Browser global) to map 25+ technical fields to their exact database columns.
+- **System-Wide Refactor**: 
+    - Updated `includes/hardware_form.php` to use dynamic field mapping for all `name` and `id` attributes.
+    - Path-corrected all hardware APIs (`add_label.php`, `edit_label.php`, `get_labels.php`, `search_item.php`, `search_inventory.php`, `reprint_label.php`) to use the mapping layer for POST collection and SQL construction.
+    - Refactored `assets/js/labels.js` and `assets/js/forms.js` to drive the UI engine via the global `window.HW_FIELDS` object.
+- **Safety & Verification**: Created `debug/verify_mapping.php`, a diagnostic tool that verifies synchronization between PHP, JS, and the SQLite schema.
+- **Global Integration**: Modified `includes/header.php` to include the mapping JS globally, ensuring field availability on every page.
+
 ## [2026-03-18] - Thermal Printer Optimization (Zebra 2x1) & Maintenance
 ### Added & Refactored
 - **Phase 9: Thermal Strategy**: Transformed `print_label.php` into a margin-less 2x1 thermal engine. Unified Branding (Label A) and Technical Specs (Label B) into a single 2-page print job (1 PDF file) specifically optimized for the Zebra GX 430d.

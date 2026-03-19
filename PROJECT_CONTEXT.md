@@ -113,3 +113,20 @@
 - [x] Phase 8.7: 🚚 Sales & Dispatch Logic - Implemented "Sold" status handling and unlocked deletion of sold records as per warehouse maintenance requirements.
 - [x] Phase 9: 🖨️ Thermal Printer Optimization (Zebra GX 430d) - Implemented 2" x 1" margin-less HTML printing. Unified Branding (Label A) and Specs (Label B) into a single 2-page print job for seamless PDF generation.
 - [x] Phase 10: 🏗️ Scalability Foundation - Implemented temporal tracking (`updated_at` timestamps) and Visual Identification anchors on labels to enable future mobile scanning and inventory velocity analytics.
+- [x] Phase 11: 🏗️ Hardware Mapping Layer - Implemented a single source of truth for all hardware field keys (`includes/hardware_mapping.php` & `assets/js/hardware_mapping.js`) to ensure site-wide stability and eliminate "variable guessing" across PHP and JS.
+- [x] Phase 12: 🏗️ Enterprise Label Engine (4x2 / 2x1) - Implemented intelligent font-scaling, dual-column specification grids, and full Serial Number parity with factory standards.
+- [ ] Phase 13: 🏷️ Tiered B2B Pricing (Sales Logic) - Integrate Customer Tiers (Gold/Silver) in `rolodex.sqlite` with automatic discount calculations in the Order Generator.
+- [ ] Phase 14: 📦 The "Dispatch Desk" (Sold Item Separation) - Create a dedicated sub-view for archived sales to keep the primary inventory view performant and focused on available stock.
+
+---
+
+## [2026-03-19] - Enterprise Label Upgrade & Mapping Fortification
+### Added & Refactored
+- **Phase 12: High-Fidelity Labels (4x2)**: 
+    - Switched default thermal label size to **4" x 2"** for improved data density and readability.
+    - Implemented **Intelligent Font-Scaling**: Typography automatically adjusts (e.g., 24pt Branding / 11pt Specs vs 15pt/7.5pt) based on physical roll dimensions.
+    - **Enterprise Grid (Label B)**: Transformed the technical specification layout into a dual-column flex grid (Processing vs Logic/State) to match official HP/Dell factory sticker standards.
+- **Data Fidelity**: Integrated the **Serial Number / Asset Tag** and a high-contrast **Visual ID Anchor** (`ID: #xxxxx`) into the browser-native printing engine.
+- **Phase 11: Unified Mapping Layer**: Verified and leveraged the single source of truth for all hardware field keys as defined in `dsa.md`.
+- **Architectural Cleanup**: Centralized all dynamic printer CSS in `style.css` under the **Thermal Printer Engine (Dynamic)** section to prevent future logic regressions.
+The system now features a robust **Hardware Mapping Layer**, ensuring that any change to the database schema or UI field names only needs to be updated in one place. Combined with the **Intelligent CPU Intake** and **Thermal Printer Optimization**, the intake process is now highly automated and stable for future AI-driven enhancements.

@@ -15,6 +15,7 @@
     <!-- Universal Actions Bridge -->
     <script src="assets/js/actions.js"></script>
     <script src="assets/js/print_engine.js"></script>
+    <script src="assets/js/hardware_mapping.js"></script>
 
     <!-- Optional: A nice system font hook if desired later. Using system-ui fallbacks in CSS for now -->
 </head>

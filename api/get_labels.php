@@ -1,12 +1,13 @@
 <?php
 // api/get_labels.php
 // GET ?q=&status= : Filtered inventory search used by the labels.php filter bar.
-// Supports all status values ('In Warehouse', 'Sold') or 'all'.
 header('Content-Type: application/json');
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/hardware_mapping.php';
 
 try {
+    $F = HW_FIELDS;
     $q      = isset($_GET['q'])      ? trim($_GET['q'])      : '';
     $status = isset($_GET['status']) ? trim($_GET['status']) : 'all';
 
@@ -15,7 +16,7 @@ try {
 
     // Status filter
     if ($status !== 'all' && $status !== '') {
-        $conditions[] = "status = :status";
+        $conditions[] = "{$F['STATUS']} = :status";
         $params[':status'] = $status;
     }
 
@@ -30,10 +31,10 @@ try {
             $paramKey = ":q" . $i;
             $search_term = '%' . $word . '%';
             
-            $conditions[] = "(brand LIKE $paramKey OR model LIKE $paramKey OR series LIKE $paramKey
-                              OR cpu_gen LIKE $paramKey OR cpu_specs LIKE $paramKey 
-                              OR cpu_cores LIKE $paramKey OR cpu_speed LIKE $paramKey
-                              OR description LIKE $paramKey OR warehouse_location LIKE $paramKey
+            $conditions[] = "({$F['BRAND']} LIKE $paramKey OR {$F['MODEL']} LIKE $paramKey OR {$F['SERIES']} LIKE $paramKey
+                              OR {$F['CPU_GEN']} LIKE $paramKey OR {$F['CPU_SPECS']} LIKE $paramKey 
+                              OR {$F['CPU_CORES']} LIKE $paramKey OR {$F['CPU_SPEED']} LIKE $paramKey
+                              OR {$F['DESCRIPTION']} LIKE $paramKey OR {$F['LOCATION']} LIKE $paramKey
                               OR CAST(id AS TEXT) LIKE $paramKey)";
             
             $params[$paramKey] = $search_term;
@@ -58,3 +59,4 @@ try {
     send_json_response(false, null, $e->getMessage());
 }
 ?>
+

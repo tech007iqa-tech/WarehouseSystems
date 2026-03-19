@@ -1,11 +1,14 @@
 const newLabelForm = document.getElementById('newLabelForm');
 
 document.addEventListener("DOMContentLoaded", () => {
+    const F = window.HW_FIELDS;
+    if (!F) return; // Guard against missing mapping
+
     /* --- SECTION TOGGLING (Untested vs Refurbished) --- */
-    const conditionSelect = document.getElementById('description');
+    const conditionSelect = document.getElementById(F.DESCRIPTION);
     const technicalSection = document.getElementById('technicalSpecsSection');
-    const biosSelect = document.getElementById('bios_state');
-    const statusSelect = document.getElementById('status');
+    const biosSelect = document.getElementById(F.BIOS_STATE);
+    const statusSelect = document.getElementById(F.STATUS);
 
     if (conditionSelect) {
         const updateStatusOptions = (cond) => {
@@ -56,20 +59,20 @@ document.addEventListener("DOMContentLoaded", () => {
         card.addEventListener('click', () => {
             const data = card.dataset;
 
-            // Auto-fill form fields
-            const fields = [
-                'brand', 'model', 'series', 'cpu_gen', 'cpu_specs',
-                'cpu_cores', 'cpu_speed', 'ram', 'storage'
+            // Mapping keys to their logic names in dataset (camelCase)
+            const fieldsToClone = [
+                F.BRAND, F.MODEL, F.SERIES, F.CPU_GEN, F.CPU_SPECS,
+                F.CPU_CORES, F.CPU_SPEED, F.RAM, F.STORAGE
             ];
 
-            fields.forEach(f => {
+            fieldsToClone.forEach(f => {
                 const el = document.getElementById(f);
                 if (el) {
                     const val = data[f.replace(/_([a-z])/g, (g) => g[1].toUpperCase())] || '';
                     el.value = val;
 
                     // SPECIAL HANDLE FOR CPU SPECS CLONING
-                    if (f === 'cpu_specs') {
+                    if (f === F.CPU_SPECS) {
                         const prefixDisplay = document.getElementById('cpu_prefix_display');
                         const mainInput = document.getElementById('cpu_specs_main');
                         if (prefixDisplay && mainInput) {
@@ -97,12 +100,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     /* --- CUSTOM NARROWING CPU SEARCH --- */
-    const cpuInput = document.getElementById('cpu_gen');
-    const specsHidden = document.getElementById('cpu_specs'); // Hidden system field
+    const cpuInput = document.getElementById(F.CPU_GEN);
+    const specsHidden = document.getElementById(F.CPU_SPECS); // Hidden system field
     const prefixDisplay = document.getElementById('cpu_prefix_display');
     const mainSpecsInput = document.getElementById('cpu_specs_main'); // User visible part
-    const coresInput = document.getElementById('cpu_cores');
-    const speedInput = document.getElementById('cpu_speed');
+    const coresInput = document.getElementById(F.CPU_CORES);
+    const speedInput = document.getElementById(F.CPU_SPEED);
     const cpuWrapper = document.getElementById('cpuSearchWrapper');
 
     // Helper to sync split UI to hidden field
@@ -250,7 +253,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 if (result.success) {
                     lastInsertedId = result.data.id;
-                    const name = (formData.get('brand') || '') + ' ' + (formData.get('model') || '');
+                    const name = (formData.get(F.BRAND) || '') + ' ' + (formData.get(F.MODEL) || '');
 
                     let msg = `Saved <strong>${name}</strong> to ID #${String(lastInsertedId).padStart(5, '0')}.<br>Profile is ready for printing.`;
                     if (result.data.is_duplicate) {
@@ -286,7 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // "Add New Hardware" - Clears form and hides overlay
         document.getElementById('btnReset').addEventListener('click', () => {
             const pinLoc = document.getElementById('pin_location');
-            const locField = document.getElementById('warehouse_location');
+            const locField = document.getElementById(F.LOCATION);
             const savedLoc = locField ? locField.value : '';
 
             newLabelForm.reset();
@@ -439,3 +442,4 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 });
+

@@ -641,21 +641,70 @@ h3 {
     word-wrap: break-word;
 }
 
-/* Label B — Specs */
+
+/* Label B — Specs (Enterprise Grid) */
+.label-b .spec-grid {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 0;
+    margin-bottom: 4pt;
+    text-align: left;
+}
+
+.label-b .spec-col {
+    flex: 1;
+    min-width: 50%;
+    padding: 0 4pt;
+}
+
 .label-b .spec-line {
     font-size: var(--font-spec);
-    line-height: 1.35;
+    line-height: 1.45;
     width: 100%;
-    text-align: center;
     word-wrap: break-word;
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+    margin-bottom: 2pt;
+    font-weight: 500;
 }
 
 .label-b .spec-line.head {
     font-size: var(--font-spec-head);
+    font-weight: 800;
+    margin-bottom: 6pt;
+    border-bottom: 2px solid #333;
+    padding-bottom: 3pt;
+    text-align: center;
+    width: 100%;
+}
+
+.label-b .spec-footer {
+    width: 100%;
+    border-top: 1px solid #ddd;
+    margin-top: auto;
+    padding-top: 4pt;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.label-b .footer-item {
+    font-size: calc(var(--font-spec) * 0.95);
     font-weight: 700;
-    margin-bottom: 4pt;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 2pt;
+    color: #444;
+}
+
+/* Label Visual ID Link */
+.label .visual-id {
+    position: absolute;
+    bottom: 2pt;
+    right: 3pt;
+    font-size: calc(var(--font-spec) * 0.6);
+    font-weight: 900;
+    color: #bbb;
+    background: rgba(255,255,255,0.8);
+    padding: 0 4px;
+    border-radius: 2px;
 }
 
 /* --- Print Media Overrides --- */

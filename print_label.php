@@ -99,17 +99,36 @@ $gen_display = $cpu_gen ?: 'Gen Unknown';
             </div>
         </div>
 
-        <!-- Label B: Technical Specs -->
+        <!-- Label B: Technical Specs (Enterprise Grid) -->
         <div class="label-card-outer" id="cardB">
             <span class="label-tag">Label B — Specifications</span>
             <div class="label label-b">
-                <div class="spec-line head">Technical Specifications (<?= $gen_display ?>)</div>
-                <div class="spec-line">CPU: <?= $cpu_line ?></div>
-                <div class="spec-line">RAM: <?= $ram ?> &nbsp;|&nbsp; Storage: <?= $storage ?></div>
-                <div class="spec-line">Battery: <?= $battery ?> &nbsp;|&nbsp; BIOS: <?= $bios ?></div>
-                <div class="spec-line">Loc: <?= $location ?> &nbsp;|&nbsp; Cond: <?= $cond ?></div>
-                <div class="spec-line" style="font-weight:700; border-top:1px solid rgba(0,0,0,0.05); margin-top:1pt; padding-top:1pt;">S/N: <?= $serial ?></div>
-                <div style="position:absolute; bottom:2pt; right:3pt; font-size:5pt; font-weight:700; color:#ccc;">#<?= str_pad($id, 5, '0', STR_PAD_LEFT) ?></div>
+                <div class="spec-line head">TECHNICAL SPECIFICATIONS (<?= $gen_display ?>)</div>
+                
+                <div class="spec-grid">
+                    <!-- Left Column: Processing -->
+                    <div class="spec-col">
+                        <div class="spec-line" style="font-weight:700;">CPU: <?= $cpu_specs ?></div>
+                        <div class="spec-line"><?= $cpu_detail ?: '—' ?></div>
+                        <div class="spec-line">RAM: <?= $ram ?></div>
+                        <div class="spec-line">SSD: <?= $storage ?></div>
+                    </div>
+                    
+                    <!-- Right Column: Logic/State -->
+                    <div class="spec-col">
+                        <div class="spec-line">BATT: <?= $battery ?></div>
+                        <div class="spec-line">BIOS: <?= $bios ?></div>
+                        <div class="spec-line">LOC: <?= $location ?></div>
+                    </div>
+                </div>
+
+                <!-- Specs Footer: Identification & State -->
+                <div class="spec-footer">
+                    <div class="footer-item">COND: <?= $cond ?></div>
+                    <div class="footer-item" style="color:#000;">S/N: <?= $serial ?></div>
+                </div>
+
+                <div class="visual-id">ID: #<?= str_pad($id, 5, '0', STR_PAD_LEFT) ?></div>
             </div>
         </div>
 

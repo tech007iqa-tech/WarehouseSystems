@@ -85,76 +85,92 @@ if (DOM.filterStatus) {
 
 // ─── ROW BUILDER ─────────────────────────────────────────────────────────────
 
+// ─── ROW BUILDER ─────────────────────────────────────────────────────────────
+
 /**
- * Builds a display <tr> element from an item data object.
+ * Builds a display <tr> element from an item data object using <template>.
  */
 function buildRow(item) {
-    const tr = document.createElement('tr');
+    const template = document.getElementById('inventoryRowTemplate');
+    const clone = document.importNode(template.content, true);
+    const tr = clone.querySelector('tr');
     tr.dataset.id = item.id;
 
-    const nameStr = `${esc(item.brand)} ${esc(item.model)}`;
-    const linkColorClass = (item.description === 'Refurbished') ? 'text-accent' : 'text-main';
-    const isSold = (item.status === 'Sold');
+    const F = window.HW_FIELDS;
+    const brand = item[F.BRAND] || '';
+    const model = item[F.MODEL] || '';
+    const series = item[F.SERIES] || '';
+    const sn = item[F.SERIAL_NUMBER] || '';
+    const description = item[F.DESCRIPTION] || 'Untested';
+    const status = item[F.STATUS] || 'In Warehouse';
+    const location = item[F.LOCATION] || 'Unassigned';
 
-    // Handle Sold status display
-    let statusEntry = conditionBadge(item.description);
-    if (isSold) {
-        statusEntry = `
-            <div style="margin-bottom:4px;">${conditionBadge(item.description)}</div>
-            <span class="status-badge" style="background:#4b5563; font-size:10px;">🚚 SOLD</span>
-        `;
+    // Link & Name
+    const link = tr.querySelector('.tpl-link');
+    link.href = `hardware_view.php?id=${item.id}`;
+    link.textContent = `${brand} ${model}`;
+    if (description === 'Refurbished') link.classList.add('text-accent');
+
+    tr.querySelector('.tpl-series').textContent = series;
+    
+    // Serial Number
+    const snDiv = tr.querySelector('.tpl-sn');
+    if (sn) {
+        snDiv.textContent = `S/N: ${sn}`;
+    } else {
+        snDiv.innerHTML = '<span style="opacity:0.5;">No Serial</span>';
     }
 
-    // Handle Location / Buyer display
-    let locationEntry = `<span class="font-bold text-main">${esc(item.warehouse_location || 'Unassigned')}</span>`;
+    // CPU
+    tr.querySelector('.tpl-cpu-gen').textContent = item[F.CPU_GEN] || '—';
+    tr.querySelector('.tpl-cpu-specs').textContent = item[F.CPU_SPECS] || '';
+
+    // RAM / Storage
+    tr.querySelector('.tpl-ram').textContent = item[F.RAM] || 'None';
+    tr.querySelector('.tpl-storage').textContent = item[F.STORAGE] || 'None';
+
+    // Location / Buyer (Handle Sold logic)
+    const locBox = tr.querySelector('.tpl-location-box');
+    const isSold = (status === 'Sold');
+
     if (isSold && item.buyer_name) {
-        locationEntry = `
+        locBox.innerHTML = `
             <div class="text-xs text-secondary" style="margin-bottom:2px;">Sold to:</div>
             <div class="font-bold text-accent" style="font-size:0.85rem;">${esc(item.buyer_name)}</div>
             <div class="text-xs" style="color:var(--text-secondary); opacity:0.8;">${esc(item.buyer_order_num)}</div>
         `;
+    } else {
+        tr.querySelector('.tpl-location').textContent = location;
     }
 
-    tr.innerHTML = `
-        <td data-label="Model">
-            <a href="hardware_view.php?id=${item.id}" class="font-bold text-lg no-underline ${linkColorClass}">
-                ${nameStr}
-            </a>
-            <div class="text-sm text-secondary">${esc(item.series || '')}</div>
-            <div class="text-xs" style="margin-top:4px; font-family:monospace; color:var(--text-secondary);">
-                ${item.serial_number ? 'S/N: ' + esc(item.serial_number) : '<span style="opacity:0.5;">No Serial</span>'}
-            </div>
-        </td>
-        <td data-label="CPU" class="text-sm">
-            <div>${esc(item.cpu_gen || '—')}</div>
-            <div class="text-xs text-secondary">${esc(item.cpu_specs || '')}</div>
-        </td>
-        <td data-label="RAM/HDD" class="text-sm">
-            ${esc(item.ram || 'None')} / ${esc(item.storage || 'None')}
-        </td>
-        <td data-label="Location">
-            ${locationEntry}
-        </td>
-        <td data-label="Status">
-            ${statusEntry}
-        </td>
-        <td data-label="Added" class="text-xs text-secondary">
-            ${fmtDate(item.created_at)}
-        </td>
-        <td class="whitespace-nowrap">
-            <div class="action-strip">
-                <button class="btn reprint-btn" data-id="${item.id}" title="Reprint Label">🖨️ Print</button>
-                <button class="btn open-label-btn" 
-                        data-id="${item.id}" 
-                        data-brand="${esc(item.brand)}" 
-                        data-model="${esc(item.model)}"
-                        title="Open Folder/File">📂 Open</button>
-                <button class="btn edit-btn" data-id="${item.id}">✏️ Edit</button>
-                <button class="btn btn-danger delete-btn" data-id="${item.id}"
-                        data-label="${esc(item.brand + ' ' + item.model)}">🗑 Del</button>
-            </div>
-        </td>
-    `;
+    // Status Badge
+    const badge = tr.querySelector('.tpl-badge');
+    badge.textContent = description;
+    
+    if (description === 'For Parts') badge.classList.add('status-for-parts');
+    else if (description === 'Refurbished') badge.classList.add('status-refurbished');
+    else badge.classList.add('status-untested');
+
+    if (isSold) {
+        tr.querySelector('.tpl-status-box').insertAdjacentHTML('beforeend', 
+            `<div style="margin-top:4px;"><span class="status-badge" style="background:#4b5563; font-size:10px;">🚚 SOLD</span></div>`
+        );
+    }
+
+    // Date
+    tr.querySelector('.tpl-added').textContent = fmtDate(item.created_at);
+
+    // Buttons
+    tr.querySelector('.reprint-btn').dataset.id = item.id;
+    const openBtn = tr.querySelector('.open-label-btn');
+    openBtn.dataset.id = item.id;
+    openBtn.dataset.brand = brand;
+    openBtn.dataset.model = model;
+    
+    tr.querySelector('.edit-btn').dataset.id = item.id;
+    const delBtn = tr.querySelector('.delete-btn');
+    delBtn.dataset.id = item.id;
+    delBtn.dataset.label = `${brand} ${model}`;
 
     return tr;
 }
@@ -170,9 +186,10 @@ DOM.tbody.addEventListener('click', (e) => {
     if (!btn) return;
 
     const id = btn.dataset.id;
+    const tr = btn.closest('tr');
 
     if (btn.classList.contains('edit-btn')) {
-        onEditClick(id, btn.closest('tr'));
+        onEditClick(id, tr);
     } else if (btn.classList.contains('delete-btn')) {
         onDeleteClick(id, btn.dataset.label);
     } else if (btn.classList.contains('reprint-btn')) {
@@ -180,9 +197,9 @@ DOM.tbody.addEventListener('click', (e) => {
     } else if (btn.classList.contains('open-label-btn')) {
         onOpenClick(btn);
     } else if (btn.classList.contains('save-edit-btn')) {
-        saveEdit(btn.closest('tr'), id);
+        saveEdit(tr, id);
     } else if (btn.classList.contains('cancel-edit-btn')) {
-        cancelEdit(btn.closest('tr'));
+        cancelEdit(tr);
     }
 });
 
@@ -210,62 +227,50 @@ async function onEditClick(id, tr) {
 }
 
 /**
- * Transforms a display row into an editable form.
+ * Transforms a display row into an editable form using <template>.
  */
 function openEditRow(tr, item) {
-    // Store original HTML to allow cancellation
     tr.dataset.originalHtml = tr.innerHTML;
+    const F = window.HW_FIELDS;
 
-    tr.innerHTML = `
-        <td style="vertical-align:top;">
-            <input type="hidden" name="id" value="${item.id}">
-            <input type="text" class="edit-field" name="brand" value="${esc(item.brand || '')}" placeholder="Brand" style="width:90px;margin-bottom:4px;padding:6px;">
-            <input type="text" class="edit-field" name="model" value="${esc(item.model || '')}" placeholder="Model" style="width:100px;margin-bottom:4px;padding:6px;">
-            <input type="text" class="edit-field" name="series" value="${esc(item.series || '')}" placeholder="Series" style="width:85px;margin-bottom:4px;padding:6px;">
-            <input type="text" class="edit-field" name="serial_number" value="${esc(item.serial_number || '')}" placeholder="Serial S/N" style="width:85px;padding:6px;font-family:monospace;font-size:0.75rem;">
-        </td>
-        <td style="vertical-align:top;">
-            <input type="text" class="edit-field" name="cpu_gen" value="${esc(item.cpu_gen || '')}" placeholder="Gen" style="width:110px;margin-bottom:4px;padding:6px;">
-            <input type="text" class="edit-field" name="cpu_specs" value="${esc(item.cpu_specs || '')}" placeholder="Specs" style="width:110px;margin-bottom:4px;padding:6px;">
-            <div style="display:flex;gap:4px;">
-                <input type="text" class="edit-field" name="cpu_cores" value="${esc(item.cpu_cores || '')}" placeholder="Cores" style="width:53px;padding:6px;font-size:0.75rem;">
-                <input type="text" class="edit-field" name="cpu_speed" value="${esc(item.cpu_speed || '')}" placeholder="Speed" style="width:53px;padding:6px;font-size:0.75rem;">
-            </div>
-        </td>
-        <td>
-            <input type="text" class="edit-field" name="ram" value="${esc(item.ram || '')}" placeholder="RAM" style="width:65px;margin-bottom:4px;padding:6px;">
-            <input type="text" class="edit-field" name="storage" value="${esc(item.storage || '')}" placeholder="Storage" style="width:100px;padding:6px;">
-        </td>
-        <td>
-            <input type="text" class="edit-field" name="warehouse_location" value="${esc(item.warehouse_location || '')}" placeholder="Location" style="width:95px;padding:6px;">
-        </td>
-        <td>
-            <select class="edit-field" name="description" style="padding:6px;width:110px;">
-                <option value="Untested" ${item.description === 'Untested' ? 'selected' : ''}>Untested</option>
-                <option value="Refurbished" ${item.description === 'Refurbished' ? 'selected' : ''}>Refurbished</option>
-                <option value="For Parts" ${item.description === 'For Parts' ? 'selected' : ''}>For Parts</option>
-            </select>
-        </td>
-        <td class="text-xs text-secondary">${fmtDate(item.created_at)}</td>
-        <td class="whitespace-nowrap">
-            <button class="btn btn-success save-edit-btn" data-id="${item.id}" style="font-size:0.75rem;padding:5px 10px;margin-right:4px;">💾 Save</button>
-            <button class="btn cancel-edit-btn" style="font-size:0.75rem;padding:5px 10px;background:var(--bg-page);border:1px solid var(--border-color);color:var(--text-main);">✕ Cancel</button>
-        </td>
-    `;
+    const template = document.getElementById('editRowTemplate');
+    const clone = document.importNode(template.content, true);
+    const editTr = clone.querySelector('tr');
 
-    // Add hidden fields for data not directly editable in the row to prevent data loss on save
-    const firstCell = tr.querySelector('td');
-    [
-        'battery', 'battery_specs', 'bios_state', 'cpu_details', 
-        'gpu', 'screen_res', 'webcam', 'backlit_kb', 
-        'os_version', 'cosmetic_grade', 'work_notes'
-    ].forEach(field => {
-        const hidden = document.createElement('input');
-        hidden.type = 'hidden';
-        hidden.name = field;
-        hidden.value = item[field] ?? '';
-        firstCell.appendChild(hidden);
+    // Populate Fields
+    editTr.querySelector('input[name="id"]').value = item.id;
+    editTr.querySelectorAll('.edit-field').forEach(field => {
+        const val = item[field.name];
+        if (field.tagName === 'SELECT') {
+            field.value = val || 'Untested';
+        } else {
+            field.value = val || '';
+        }
     });
+
+    editTr.querySelector('.tpl-edit-added').textContent = fmtDate(item.created_at);
+    editTr.querySelector('.save-edit-btn').dataset.id = item.id;
+
+    // Add hidden fields for all mapping keys not present in the visible row inputs
+    const hiddenContainer = editTr.querySelector('.tpl-edit-cell-main');
+    const existingInputs = new Set([...editTr.querySelectorAll('input, select')].map(i => i.name));
+    
+    Object.values(F).forEach(dbField => {
+        if (!existingInputs.has(dbField)) {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = dbField;
+            hidden.value = item[dbField] ?? '';
+            hiddenContainer.appendChild(hidden);
+        }
+    });
+
+    // Swap Row
+    tr.innerHTML = '';
+    while (editTr.firstChild) {
+        tr.appendChild(editTr.firstChild);
+    }
+    tr.classList.add('edit-mode-row');
 }
 
 /**
@@ -274,6 +279,7 @@ function openEditRow(tr, item) {
 function cancelEdit(tr) {
     if (tr.dataset.originalHtml) {
         tr.innerHTML = tr.dataset.originalHtml;
+        tr.classList.remove('edit-mode-row');
         delete tr.dataset.originalHtml;
     }
 }
@@ -290,7 +296,9 @@ async function saveEdit(tr, id) {
 
     const formData = new FormData();
     formData.append('id', id);
-    tr.querySelectorAll('.edit-field, input[type="hidden"]').forEach(field => {
+
+    // Collect all inputs and selects (including hidden ones)
+    tr.querySelectorAll('input, select').forEach(field => {
         if (field.name) formData.append(field.name, field.value);
     });
 
@@ -314,6 +322,7 @@ async function saveEdit(tr, id) {
         saveBtn.textContent = originalBtnText;
     }
 }
+
 
 // ─── DELETE ──────────────────────────────────────────────────────────────────
 
@@ -383,17 +392,4 @@ function fmtDate(ts) {
     if (!ts) return '—';
     const d = new Date(ts);
     return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function conditionBadge(desc) {
-    if (!desc) return '—';
-    
-    let statusClass = 'status-untested';
-    if (desc === 'For Parts') {
-        statusClass = 'status-for-parts';
-    } else if (desc === 'Refurbished') {
-        statusClass = 'status-refurbished';
-    }
-
-    return `<span class="status-badge ${statusClass}">${esc(desc)}</span>`;
 }

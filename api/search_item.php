@@ -1,13 +1,13 @@
 <?php
 // api/search_item.php
 // GET ?id=N : Looks up a single item by ID from labels.sqlite.
-// Also fetches linked order info if the item is Sold.
-// Used by the Quick Locate widget on index.php.
 header('Content-Type: application/json');
 require_once '../includes/db.php';
 require_once '../includes/functions.php';
+require_once '../includes/hardware_mapping.php';
 
 try {
+    $F = HW_FIELDS;
     $raw_query = isset($_GET['id']) ? trim($_GET['id']) : '';
     if ($raw_query === '') {
         throw new Exception('Search query is required.');
@@ -33,10 +33,10 @@ try {
             $word = trim($word);
             if ($word === '') continue;
             $paramKey = ":q" . $i;
-            $conditions[] = "(brand LIKE $paramKey OR model LIKE $paramKey OR series LIKE $paramKey 
-                              OR cpu_gen LIKE $paramKey OR cpu_specs LIKE $paramKey 
-                              OR cpu_cores LIKE $paramKey OR cpu_speed LIKE $paramKey
-                              OR description LIKE $paramKey OR warehouse_location LIKE $paramKey 
+            $conditions[] = "({$F['BRAND']} LIKE $paramKey OR {$F['MODEL']} LIKE $paramKey OR {$F['SERIES']} LIKE $paramKey 
+                              OR {$F['CPU_GEN']} LIKE $paramKey OR {$F['CPU_SPECS']} LIKE $paramKey 
+                              OR {$F['CPU_CORES']} LIKE $paramKey OR {$F['CPU_SPEED']} LIKE $paramKey
+                              OR {$F['DESCRIPTION']} LIKE $paramKey OR {$F['LOCATION']} LIKE $paramKey 
                               OR CAST(id AS TEXT) LIKE $paramKey)";
             $params[$paramKey] = '%' . $word . '%';
             $i++;
@@ -62,7 +62,7 @@ try {
     $order_info = null;
     
     // Only fetch deep order info for the first result to keep it fast
-    if (($primary_item['status'] ?? '') === 'Sold' && ($primary_item['order_id'] ?? null)) {
+    if (($primary_item[$F['STATUS']] ?? '') === 'Sold' && ($primary_item['order_id'] ?? null)) {
         $stmt_order = $pdo_orders->prepare("SELECT * FROM purchase_orders WHERE order_number = :num");
         $stmt_order->execute([':num' => $primary_item['order_id']]);
         $order = $stmt_order->fetch(PDO::FETCH_ASSOC);
@@ -90,3 +90,4 @@ try {
     send_json_response(false, null, $e->getMessage());
 }
 ?>
+

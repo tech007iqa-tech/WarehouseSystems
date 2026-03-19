@@ -14,8 +14,8 @@ CRITICAL: Do not write any application code right now. Just ensure `PROJECT_CONT
 ------------
 Read `PROJECT_CONTEXT.md` this is what the codebase is about.
 ------------
-lets work on Phase 9: 
-🖨️ Thermal Printer Optimization (2x1 Margin-less Templates). the labels are fine as .odt but the generated PDF is not the size needed. I need labels 2x1, and 2 of them in one is the name and another the specs.
+lets work on next Phase: 
+@dsa.md 
 Please let me know what it could be, then ask me again, then we can proceed.
 ------------
 ------------
