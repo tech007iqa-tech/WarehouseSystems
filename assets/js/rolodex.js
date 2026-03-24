@@ -18,7 +18,8 @@ const CONFIG = {
         EDIT_CUSTOMER: 'api/edit_customer.php',
         DELETE_CUSTOMER: 'api/delete_customer.php'
     },
-    STATUS_OPTIONS: ['Active Customer', 'New Lead', 'Inactive']
+    STATUS_OPTIONS: ['Active Customer', 'New Lead', 'Inactive'],
+    TIER_OPTIONS: ['Bronze', 'Silver', 'Gold']
 };
 
 const DOM = {
@@ -107,6 +108,11 @@ function openCustomerEditRow(tr, c) {
         <td>
             <select class="edit-cust-field" name="lead_status" style="padding:6px; width:100%; min-width:140px;">
                 ${statusOptionsHtml}
+            </select>
+        </td>
+        <td>
+            <select class="edit-cust-field" name="tier" style="padding:6px; width:100%; min-width:100px;">
+                ${CONFIG.TIER_OPTIONS.map(t => `<option value="${t}" ${c.tier === t ? 'selected' : ''}>${t}</option>`).join('')}
             </select>
         </td>
         <td>
@@ -227,6 +233,11 @@ function buildCustomerRow(c) {
         <td>${c.email ? `<a href="mailto:${esc(c.email)}" class="text-sm">${esc(c.email)}</a>` : '<span class="text-secondary text-sm">-</span>'}</td>
         <td>${c.phone ? `<span class="text-sm">${esc(c.phone)}</span>` : '<span class="text-secondary text-sm">-</span>'}</td>
         <td><span style="background:${statusColor}; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold;">${esc(c.lead_status)}</span></td>
+        <td>
+            <span class="status-badge" style="background:${c.tier === 'Gold' ? '#ffd700' : c.tier === 'Silver' ? '#c0c0c0' : '#cd7f32'}; color:#000;">
+                ${esc(c.tier || 'Bronze')}
+            </span>
+        </td>
         <td class="text-xs text-secondary whitespace-nowrap overflow-hidden text-ellipsis" style="max-width:200px;">${esc(c.notes || '-')}</td>
         <td class="text-xs text-secondary">${fmtDate(c.created_at)}</td>
         <td class="whitespace-nowrap">

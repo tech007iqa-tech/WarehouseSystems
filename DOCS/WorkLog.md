@@ -1,6 +1,32 @@
-# Work Log - IQA Metal Inventory & Label System
+## [2026-03-20] - Snapshot Architecture & Financial Status Refactor
+### Added & Refactored
+- **Snapshot Engine**: Implemented a stringified `specs_blob` in the `order_items` table. This captures every detail of a hardware unit at the exact second it is sold—preserving pricing and technical specs even if the master label is later updated or deleted.
+- **Permanent Warehouse Library**: Decoupled `labels.php` from sales activity. Hardware records now remain 'In Warehouse' permanently, acting as a master template library.
+- **Financial Status Workflow**: Expanded the B2B order lifecycle to support five distinct states: **Pending ⏳**, **Active 🚀**, **Paid ✅**, **Dispatched 🚚**, and **Canceled ❌**.
+- **Dispatch Desk 2.0**: Migrated the Dispatch Desk to pull 100% from the **Orders Database**. It now features an "Archive Toggle" to switch between a 90-day active window and full lifetime history.
+- **Analytics Syncing**: Re-engineered the "Ready to Dispatch" counter in `analytics.php` to calculate physical backlog derived from Pending/Active/Paid order totals.
+- **CSS Utility Expansion**: Added `bg-primary` (Blue) and `bg-info` (Cyan) to the global design system for high-visibility logistical tracking.
 
-## [2026-03-19] - Hardware Mapping Layer (Architectural Fortification)
+## [2026-03-20] - B2B Sales & Dispatch Integrity Refactor
+### Added & Refactored
+- **Phase 11: Dispatch Desk**: Created `dispatch.php` as a specialized logistical view for "Sold" inventory. Integrated with `api/get_labels.php` to handle a 90-day rolling archival window, keeping the dispatch desk focused on active shipments.
+- **Phase 12: Tiered B2B Pricing**: Implemented a comprehensive Customer Tiering system (**Gold/Silver/Bronze**).
+    - **Database Evolution**: Updated `rolodex.sqlite` (customers) and `labels.sqlite` (items) to store tier status, buyer names, and order numbers.
+    - **Auto-Discount Logic**: Engineered the Order Creation engine (`new_order.js` and `api/orders_api.php`) to automatically detect customer tiers and apply **10% (Gold)** or **5% (Silver)** discounts.
+    - **ODS/OTS Integration**: Updated the ODS XML generation to include a "Tier Discount" line item in the final B2B Purchase Order document.
+- **Structural Decoupling (Phase 2)**: Fully refactored `labels.php` to use the client-side `<template>` engine for initial hydration. Eliminated all duplicate PHP/JS rendering code to ensure a single source of truth for the Warehouse UI.
+- **Global UI Sync**: Added "🚚 Dispatch Desk" to the persistent sidebar and updated the Rolodex to support inline Tier management.
+
+## [2026-03-20] - Unified Label Engine & Dynamic Scaling
+### Added & Refactored
+- **Unified Branding & Specs**: Transformed both the `.odt` and `print_label.php` engines to print on a **single physical label**. Branding (Label A) and Technical Specs (Label B) now flow together seamlessly.
+- **"Compact Flow" Scaling Engine**: Implemented a JS-based scaling engine (floor 4pt) that wraps/shrinks text to fit any hardware name into the 2"x1" surface.
+- **CPU Title Integration**: CPU models are automatically injected into the header. Technical detail lines now feature a break before the **@** symbol.
+- **Terminology Clean-up**: Switched CPU descriptions to use singular **"Core"** (e.g., `4 Core`) as per user request to prevent redundancy.
+- **Identifiers & Traceability**: Integrated Serial Number/Warehouse Status; repositioned the Visual ID to a minimalist top-left anchor.
+- **Data Parity**: Synchronized S/N and Location updates to reflect instantly on stickers.
+
+## [2026-03-20] - Unified Label Engine & Dynamic Scaling
 ### Added & Refactored
 - **Phase 11: Unified Mapping Layer**: Implemented a single source of truth for all hardware field keys as defined in `dsa.md`. This eliminates "field name guessing" by AI agents and ensures site-wide stability.
 - **Core Strategy**: Created `includes/hardware_mapping.php` (PHP constant) and `assets/js/hardware_mapping.js` (Browser global) to map 25+ technical fields to their exact database columns.

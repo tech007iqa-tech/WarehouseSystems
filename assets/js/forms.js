@@ -4,6 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const F = window.HW_FIELDS;
     if (!F) return; // Guard against missing mapping
 
+    // Make it globally available for other scripts
+    window.refreshPreview = updateLivePreview;
+
     /* --- SECTION TOGGLING (Untested vs Refurbished) --- */
     const conditionSelect = document.getElementById(F.DESCRIPTION);
     const technicalSection = document.getElementById('technicalSpecsSection');
@@ -35,6 +38,26 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
+        const updateDynamicRequirements = (cond) => {
+            const reqFields = [
+                document.getElementById(F.CPU_GEN),
+                document.getElementById(F.RAM),
+                document.getElementById(F.STORAGE)
+            ];
+            reqFields.forEach(f => {
+                if (f) {
+                    const label = document.querySelector(`label[for="${f.id}"]`);
+                    if (cond === 'Refurbished') {
+                        f.setAttribute('required', 'true');
+                        if (label && !label.innerHTML.includes('*')) label.innerHTML += ' <span style="color:var(--text-main);">*</span>';
+                    } else {
+                        f.removeAttribute('required');
+                        if (label) label.innerHTML = label.innerHTML.replace(' <span style="color:var(--text-main);">*</span>', '');
+                    }
+                }
+            });
+        };
+
         conditionSelect.addEventListener('change', (e) => {
             const cond = e.target.value;
 
@@ -46,12 +69,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             updateStatusOptions(cond);
+            updateDynamicRequirements(cond);
         });
 
         // Initialize state without overwriting BIOS defaults
         const initialCond = conditionSelect.value;
         if (technicalSection) technicalSection.style.display = (initialCond === 'Refurbished') ? 'block' : 'none';
         updateStatusOptions(initialCond);
+        updateDynamicRequirements(initialCond);
     }
 
     /* --- PROFILE CLONING LOGIC --- */
@@ -96,6 +121,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 card.style.borderColor = 'var(--border-color)';
                 card.style.background = 'var(--bg-panel)';
             }, 500);
+
+            // Update preview
+            updateLivePreview();
+
+            // AUTO-SCROLL to form on mobile for speed
+            if (window.innerWidth <= 1100) {
+                const formStart = document.querySelector('.form-panel');
+                if (formStart) {
+                    formStart.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
         });
     });
 
@@ -114,6 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const prefix = prefixDisplay.textContent.replace('-', '');
         const val = mainSpecsInput.value.trim();
         specsHidden.value = val ? `${prefix}-${val}` : '';
+        updateLivePreview(); // Manually trigger preview update since hidden fields don't fire events
     };
 
     if (mainSpecsInput) {
@@ -174,6 +211,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (matches.length > 0) {
                 cpuWrapper.style.display = 'block';
+                
+                // Smart Positioning: shift up if not enough space below
+                const rect = cpuInput.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const minSpaceNeeded = Math.min(250, matches.length * 45); // Approximate max height
+                
+                if (spaceBelow < minSpaceNeeded && rect.top > spaceBelow) {
+                    cpuWrapper.classList.add('shift-up');
+                } else {
+                    cpuWrapper.classList.remove('shift-up');
+                }
+
                 matches.forEach(g => {
                     const item = document.createElement('div');
                     item.className = 'search-suggestion-item cpu-opt';
@@ -209,9 +258,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
                         // 3. Set focus and select
                         if (mainSpecsInput) {
-                            mainSpecsInput.focus();
-                            const len = mainSpecsInput.value.length;
-                            mainSpecsInput.setSelectionRange(len, len);
+                            // On mobile, jumping focus physically shifts the viewport and disrupts the keyboard.
+                            // We completely bypass programmatic focus on narrow screens to stop the screen from violently panning.
+                            if (window.innerWidth > 768) {
+                                mainSpecsInput.focus({ preventScroll: true });
+                                const len = mainSpecsInput.value.length;
+                                mainSpecsInput.setSelectionRange(len, len);
+                            }
                         }
                     });
                     cpuWrapper.appendChild(item);
@@ -236,10 +289,17 @@ document.addEventListener("DOMContentLoaded", () => {
         newLabelForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const btn = document.getElementById('submitLabelBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳ Processing...';
-            btn.disabled = true;
+            // Support both Desktop and Mobile buttons
+            const btnDesktop = document.getElementById('submitLabelBtnDesktop');
+            const btnMobile = document.getElementById('submitLabelBtnMobile');
+            
+            const btns = [btnDesktop, btnMobile].filter(b => b !== null);
+            const originalTexts = btns.map(b => b.innerHTML);
+            
+            btns.forEach(b => {
+                b.innerHTML = '⏳ Processing...';
+                b.disabled = true;
+            });
 
             const formData = new FormData(newLabelForm);
 
@@ -273,20 +333,69 @@ document.addEventListener("DOMContentLoaded", () => {
                 console.error("Submission Error:", err);
                 alert(`❌ Network Error: Could not connect to the label engine. (Details: ${err.message})`);
             } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                btns.forEach((b, i) => {
+                    b.innerHTML = originalTexts[i];
+                    b.disabled = false;
+                });
             }
         });
     }
 
     // Success Overlay Buttons
     if (successOverlay) {
-        // "Print Another" - Now opens the config modal for variety/quantity
+        // Quick Print (1 Copy, both pages)
+        document.getElementById('btnQuickPrint').addEventListener('click', async () => {
+            const btn = document.getElementById('btnQuickPrint');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Printing...';
+            btn.disabled = true;
+
+            const fd = new FormData();
+            fd.append('id', lastInsertedId);
+            fd.append('qty', 1);
+            fd.append('print_a', '1');
+            fd.append('print_b', '1');
+            fd.append('mode', 'open');
+
+            try {
+                const res = await fetch('api/reprint_label.php', { method: 'POST', body: fd});
+                const json = await res.json();
+                if (json.success) {
+                    btn.innerHTML = '✅ Sent!';
+                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 1500);
+                } else {
+                    alert("Print Error: " + json.error);
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                alert("Network error.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // "Print Config" - Opens the config modal
         document.getElementById('btnAgain').addEventListener('click', () => {
             if (window.openPrintConfig) window.openPrintConfig(lastInsertedId);
         });
 
-        // "Add New Hardware" - Clears form and hides overlay
+        // "Add Another (Same Model)" - Clears only identifiers
+        document.getElementById('btnCloneNext').addEventListener('click', () => {
+            const pinLoc = document.getElementById('pin_location');
+            const snField = document.getElementById(F.SERIAL_NUMBER);
+            const locField = document.getElementById(F.LOCATION);
+
+            if (snField) snField.value = '';
+            
+            // If location isn't pinned, we might want to clear it or keep it? 
+            // Usually, batching means same location. Let's keep location unless they reset.
+            
+            successOverlay.style.display = 'none';
+            if (snField) snField.focus();
+        });
+
+        // "Start Fresh" - Clears everything
         document.getElementById('btnReset').addEventListener('click', () => {
             const pinLoc = document.getElementById('pin_location');
             const locField = document.getElementById(F.LOCATION);
@@ -304,6 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (typeof hasStorage !== 'undefined') storageInput.disabled = !hasStorage.checked;
 
             // Reset CPU Prefix Display
+            const prefixDisplay = document.getElementById('cpu_prefix_display');
             if (prefixDisplay) prefixDisplay.textContent = '';
 
             successOverlay.style.display = 'none';
@@ -441,5 +551,62 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Attach listeners via event delegation on the form itself
+    const formEl = document.getElementById('newLabelForm');
+    if (formEl) {
+        formEl.addEventListener('input', updateLivePreview);
+        formEl.addEventListener('change', updateLivePreview);
+    }
+
+    // Run once on load to catch cloned or default data
+    setTimeout(updateLivePreview, 150);
 });
+
+/* --- LIVE PREVIEW ENGINE (Global Scope for resilience) --- */
+function updateLivePreview() {
+    if (typeof window.HW_FIELDS === 'undefined') return;
+    const F = window.HW_FIELDS;
+    
+    const pvBrandModel = document.getElementById('prevBrandModel');
+    const pvSeriesSpecs = document.getElementById('prevSeriesSpecs');
+    const pvCpu = document.getElementById('prevCpu');
+    const pvRam = document.getElementById('prevRam');
+    const pvStorage = document.getElementById('prevStorage');
+    const pvBattery = document.getElementById('prevBattery');
+    const pvSN = document.getElementById('prevSN');
+    const pvCond = document.getElementById('prevCond');
+
+    if (!pvBrandModel) return;
+
+    // Core fields lookup
+    const elBrand = document.getElementById(F.BRAND);
+    const elModel = document.getElementById(F.MODEL);
+    const elSeries = document.getElementById(F.SERIES);
+    const elSpecs = document.getElementById(F.CPU_SPECS);
+    const elRam = document.getElementById(F.RAM);
+    const elStorage = document.getElementById(F.STORAGE);
+    const elBattery = document.getElementById(F.BATTERY);
+    const elSN = document.getElementById(F.SERIAL_NUMBER);
+    const elCond = document.getElementById(F.DESCRIPTION);
+
+    const brand = elBrand ? elBrand.value : '';
+    const model = elModel ? elModel.value : '';
+    const specsHidden = elSpecs ? elSpecs.value : '';
+    const series = elSeries ? elSeries.value : '';
+
+    // Textual display logic
+    pvBrandModel.textContent = (brand || model) ? (brand + ' ' + model).trim() : 'BRAND MODEL';
+    pvSeriesSpecs.textContent = (series || specsHidden) ? (series + ' ' + specsHidden).trim() : 'SERIES SPECS';
+    
+    if (pvCpu) pvCpu.textContent = specsHidden || '—';
+    if (pvRam) pvRam.textContent = elRam ? (elRam.value || '—') : '—';
+    if (pvStorage) pvStorage.textContent = elStorage ? (elStorage.value || '—') : '—';
+    
+    if (pvBattery && elBattery) {
+        pvBattery.textContent = (elBattery.value == '1') ? 'YES' : 'NO';
+    }
+    
+    if (pvSN) pvSN.textContent = 'S/N: ' + (elSN ? (elSN.value || 'XXXXXX') : 'XXXXXX');
+    if (pvCond) pvCond.textContent = elCond ? (elCond.value || 'UNTESTED') : 'UNTESTED';
+}
 

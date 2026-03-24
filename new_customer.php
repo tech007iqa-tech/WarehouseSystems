@@ -41,6 +41,15 @@ require_once 'includes/header.php';
                     <option value="Inactive">Inactive 🚫</option>
                 </select>
             </div>
+
+            <div class="form-group">
+                <label for="tier">B2B Pricing Tier *</label>
+                <select id="tier" name="tier" required>
+                    <option value="Bronze" selected>Bronze Tier (Base Price)</option>
+                    <option value="Silver">Silver Tier (5% Discount)</option>
+                    <option value="Gold">Gold Tier (10% Discount)</option>
+                </select>
+            </div>
         </div>
 
         <!-- Column 2 -->

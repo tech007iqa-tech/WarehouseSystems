@@ -26,9 +26,14 @@ require_once 'includes/header.php';
         <span class="stat-subtext">Current Period</span>
     </div>
     <div class="panel text-center">
-        <span class="stat-label">Average Hold Time</span>
+        <span class="stat-label">Ready to Dispatch</span>
+        <p class="stat-value" id="sold_stock" style="color: #f39c12;">—</p>
+        <span class="stat-subtext">Sold Inventory</span>
+    </div>
+    <div class="panel text-center">
+        <span class="stat-label">Avg Hold Time</span>
         <p class="stat-value" id="avg_stock_days">—</p>
-        <span class="stat-subtext">Avg. Days in Stock</span>
+        <span class="stat-subtext">Days in Warehouse</span>
     </div>
 </div>
 
@@ -46,6 +51,22 @@ require_once 'includes/header.php';
     <div class="panel">
         <h3 class="form-section-header">Last 6 Months Sales</h3>
         <div id="salesChart" class="css-chart-container vertical">
+            <!-- Dynamic Injection -->
+        </div>
+    </div>
+
+    <!-- TIER DISTRIBUTION -->
+    <div class="panel">
+        <h3 class="form-section-header">Sales by Pricing Tier</h3>
+        <div id="tierChart" class="css-chart-container">
+            <!-- Dynamic Injection -->
+        </div>
+    </div>
+
+    <!-- TOP BUYERS -->
+    <div class="panel">
+        <h3 class="form-section-header">Top 3 B2B Buyers</h3>
+        <div id="buyersChart" class="css-chart-container">
             <!-- Dynamic Injection -->
         </div>
     </div>
@@ -112,29 +133,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 1. Summary
         document.getElementById('total_stock').innerText = d.summary.total_stock;
+        document.getElementById('sold_stock').innerText  = d.summary.sold_stock;
         document.getElementById('this_month_sales').innerText = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(d.summary.this_month_sales);
         document.getElementById('avg_stock_days').innerText = d.summary.avg_stock_days + ' Days';
 
-        // 2. Brand Chart (Top 5)
-        const brandChart = document.getElementById('brandChart');
-        const labels = d.brand_distribution.slice(0, 5);
-        if (labels.length > 0) {
-            const max = labels[0].count;
-            brandChart.innerHTML = labels.map(b => `
+        // Helper for simple bar charts
+        const renderBarChart = (id, data, formatAsCurrency = false) => {
+            const container = document.getElementById(id);
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:var(--text-secondary);">No data yet.</p>';
+                return;
+            }
+            const max = Math.max(...data.map(i => i.count));
+            container.innerHTML = data.map(i => `
                 <div class="chart-row">
-                    <span class="chart-label">${b.label}</span>
-                    <div class="chart-bar-bg"><div class="chart-bar-fill" style="width: 0%" data-w="${(b.count / max * 100).toFixed(0)}%"></div></div>
-                    <span class="chart-value">${b.count}</span>
+                    <span class="chart-label" title="${i.label}">${i.label}</span>
+                    <div class="chart-bar-bg"><div class="chart-bar-fill" style="width: 0%" data-w="${(i.count / max * 100).toFixed(0)}%"></div></div>
+                    <span class="chart-value">${formatAsCurrency ? '$' + Math.round(i.count).toLocaleString() : i.count}</span>
                 </div>
             `).join('');
-        } else {
-            brandChart.innerHTML = '<p style="text-align:center; color:var(--text-secondary);">No data yet.</p>';
-        }
+        };
 
-        // 3. Sales Chart (Last 6 Months)
+        // 2. Row Charts
+        renderBarChart('brandChart', d.brand_distribution.slice(0, 5));
+        renderBarChart('tierChart', d.tier_distribution, true);
+        renderBarChart('buyersChart', d.top_buyers, true);
+
+        // 3. Sales Chart (Vertical)
         const salesChart = document.getElementById('salesChart');
         const sales = d.sales_performance;
-        if (sales.length > 0) {
+        if (sales && sales.length > 0) {
             const maxRev = Math.max(...sales.map(s => s.total_revenue));
             salesChart.innerHTML = sales.map(s => `
                 <div class="chart-col">
@@ -142,8 +170,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <span class="chart-vlabel">${s.month}</span>
                 </div>
             `).join('');
-        } else {
-            salesChart.innerHTML = '<p style="text-align:center; color:var(--text-secondary);">No sales history.</p>';
         }
 
         // 4. Aging Table
@@ -155,7 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td><strong>#${item.id.toString().padStart(5,'0')}</strong> ${item.brand} ${item.model}</td>
                     <td>${item.description}</td>
                     <td style="font-size: 0.8rem;">${item.created_at.substring(0,10)}</td>
-                    <td style="text-align: right;" class="${daysClass}">${item.days_old} Days</td>
+                    <td style="text-align: right;" class="${daysClass}">${Math.round(item.days_old)} Days</td>
                 </tr>
             `;
         }).join('');

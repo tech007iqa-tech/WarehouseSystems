@@ -34,35 +34,22 @@ function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex) {
             warehouse_location TEXT,
             serial_number TEXT,
             order_id INTEGER,
+            buyer_name TEXT,
+            buyer_order_num TEXT,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
 
-        // 1.5. Automated Migration: Add serial_number if table was already present
+        // Automated Migration for labels
         $stmt_info = $pdo_labels->query("PRAGMA table_info(items)");
         $columns = $stmt_info->fetchAll(PDO::FETCH_ASSOC);
-        $has_sn = false;
-        foreach ($columns as $col) {
-            if ($col['name'] === 'serial_number') {
-                $has_sn = true;
-                break;
-            }
-        }
-        if (!$has_sn) {
-            $pdo_labels->exec("ALTER TABLE items ADD COLUMN serial_number TEXT");
-        }
+        $col_names = array_column($columns, 'name');
 
-        // Add updated_at if missing
-        $has_updated = false;
-        foreach ($columns as $col) {
-            if ($col['name'] === 'updated_at') {
-                $has_updated = true;
-                break;
-            }
-        }
-        if (!$has_updated) {
-            $pdo_labels->exec("ALTER TABLE items ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP");
-        }
+        if (!in_array('serial_number', $col_names)) $pdo_labels->exec("ALTER TABLE items ADD COLUMN serial_number TEXT");
+        if (!in_array('updated_at',    $col_names)) $pdo_labels->exec("ALTER TABLE items ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP");
+        if (!in_array('buyer_name',    $col_names)) $pdo_labels->exec("ALTER TABLE items ADD COLUMN buyer_name TEXT");
+        if (!in_array('buyer_order_num', $col_names)) $pdo_labels->exec("ALTER TABLE items ADD COLUMN buyer_order_num TEXT");
+        if (!in_array('sale_price',    $col_names)) $pdo_labels->exec("ALTER TABLE items ADD COLUMN sale_price NUMERIC");
 
         // 2. Check Orders
         $pdo_orders->exec("CREATE TABLE IF NOT EXISTS purchase_orders (
@@ -71,8 +58,15 @@ function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex) {
             order_date DATETIME DEFAULT CURRENT_TIMESTAMP,
             total_qty INTEGER,
             total_price NUMERIC,
-            document_path TEXT
+            document_path TEXT,
+            invoice_status TEXT DEFAULT 'Pending'
         )");
+
+        // Order Migrations
+        $stmt_oinfo = $pdo_orders->query("PRAGMA table_info(purchase_orders)");
+        $orow_names = array_column($stmt_oinfo->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (!in_array('invoice_status', $orow_names)) $pdo_orders->exec("ALTER TABLE purchase_orders ADD COLUMN invoice_status TEXT DEFAULT 'Pending'");
+        if (!in_array('document_path', $orow_names))  $pdo_orders->exec("ALTER TABLE purchase_orders ADD COLUMN document_path TEXT");
         $pdo_orders->exec("CREATE TABLE IF NOT EXISTS order_items (
             line_id INTEGER PRIMARY KEY AUTOINCREMENT,
             order_number INTEGER NOT NULL,
@@ -103,12 +97,18 @@ function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex) {
             email TEXT,
             phone TEXT,
             lead_status TEXT DEFAULT 'New Lead',
+            tier TEXT DEFAULT 'Bronze',
             address TEXT,
             tax_id TEXT,
             website TEXT,
             notes TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
+
+        // Migration for Rolodex
+        $stmt_cinfo = $pdo_rolodex->query("PRAGMA table_info(customers)");
+        $crow_names = array_column($stmt_cinfo->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (!in_array('tier', $crow_names)) $pdo_rolodex->exec("ALTER TABLE customers ADD COLUMN tier TEXT DEFAULT 'Bronze'");
 
         return true;
     } catch (Exception $e) {

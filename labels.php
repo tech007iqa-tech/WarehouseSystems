@@ -60,85 +60,22 @@ try {
                 </tr>
             </thead>
             <tbody id="inventoryTableBody">
-                <?php if (empty($inventory)): ?>
-                    <tr>
-                        <td colspan="9" class="text-center empty-table-message">
-                            No items found. <a href="new_label.php" class="btn btn-link">Print your first label →</a>
-                        </td>
-                    </tr>
-                <?php else: ?>
-                    <?php foreach ($inventory as $item): ?>
-                        <tr data-id="<?= (int)$item['id'] ?>">
-                            <td data-label="Model">
-                                <?php
-                                    $linkDesc = $item[HW_FIELDS['DESCRIPTION']] ?? '';
-                                    $linkColorClass = ($linkDesc === 'Refurbished') ? 'text-accent' : '';
-                                ?>
-                                <a href="hardware_view.php?id=<?= (int)$item['id'] ?>" class="tpl-link font-bold text-lg no-underline <?= $linkColorClass ?>">
-                                    <?= htmlspecialchars($item[HW_FIELDS['BRAND']] . ' ' . $item[HW_FIELDS['MODEL']]) ?>
-                                </a>
-                                <div class="tpl-series text-sm text-secondary"><?= htmlspecialchars($item[HW_FIELDS['SERIES']] ?? '') ?></div>
-                                <div class="tpl-sn text-xs" style="margin-top:4px; font-family:monospace; color:var(--text-secondary);">
-                                    <?= ($item[HW_FIELDS['SERIAL_NUMBER']]) ? 'S/N: ' . htmlspecialchars($item[HW_FIELDS['SERIAL_NUMBER']]) : '<span style="opacity:0.5;">No Serial</span>' ?>
-                                </div>
-                            </td>
-
-                            <td data-label="CPU" class="text-sm">
-                                <div class="tpl-cpu-gen"><?= htmlspecialchars($item[HW_FIELDS['CPU_GEN']] ?? '—') ?></div>
-                                <div class="tpl-cpu-specs text-xs text-secondary"><?= htmlspecialchars($item[HW_FIELDS['CPU_SPECS']] ?? '') ?></div>
-                            </td>
-
-                            <td data-label="RAM/HDD" class="text-sm">
-                                <span class="tpl-ram"><?= htmlspecialchars($item[HW_FIELDS['RAM']] ?? 'None') ?></span> /
-                                <span class="tpl-storage"><?= htmlspecialchars($item[HW_FIELDS['STORAGE']] ?? 'None') ?></span>
-                            </td>
-
-                            <td data-label="Location">
-                                <div class="tpl-location-box">
-                                    <span class="tpl-location font-bold text-main"><?= htmlspecialchars($item[HW_FIELDS['LOCATION']] ?? 'Unassigned') ?></span>
-                                </div>
-                            </td>
-
-                            <td data-label="Status">
-                                <div class="tpl-status-box">
-                                    <?php
-                                        $desc  = $item[HW_FIELDS['DESCRIPTION']] ?? 'Untested';
-                                        $statusClass = '';
-                                        if ($desc === 'For Parts') $statusClass = 'status-for-parts';
-                                        elseif ($desc === 'Refurbished') $statusClass = 'status-refurbished';
-                                        else $statusClass = 'status-untested';
-                                    ?>
-                                    <span class="tpl-badge status-badge <?= $statusClass ?>">
-                                        <?= htmlspecialchars($desc) ?>
-                                    </span>
-                                </div>
-                            </td>
-
-                            <td data-label="Added" class="tpl-added text-xs text-secondary">
-                                <?= format_date($item['created_at']) ?>
-                            </td>
-
-                            <td class="whitespace-nowrap">
-                                <div class="action-strip">
-                                    <button class="btn reprint-btn" data-id="<?= (int)$item['id'] ?>" title="Reprint Label">🖨️ Print</button>
-                                    <button class="btn open-label-btn" 
-                                            data-id="<?= (int)$item['id'] ?>" 
-                                            data-brand="<?= htmlspecialchars($item[HW_FIELDS['BRAND']] ?? '') ?>"
-                                            data-model="<?= htmlspecialchars($item[HW_FIELDS['MODEL']] ?? '') ?>"
-                                            title="Open Folder/File">📂 Open</button>
-                                    <button class="btn edit-btn" data-id="<?= (int)$item['id'] ?>">✏️ Edit</button>
-                                    <button class="btn btn-danger delete-btn" 
-                                            data-id="<?= (int)$item['id'] ?>"
-                                            data-label="<?= htmlspecialchars($item[HW_FIELDS['BRAND']] . ' ' . $item[HW_FIELDS['MODEL']]) ?>">🗑 Del</button>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                <!-- Data Hydrated by labels.js via #inventoryRowTemplate -->
+                <tr>
+                    <td colspan="7" class="text-center empty-table-message" style="padding: 50px;">
+                        <div class="loader-spinner" style="margin-bottom:10px;">⏳</div>
+                        Waking up the warehouse...
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
 </div>
+
+<!-- Inject Initial Data for JS Hydration -->
+<script>
+    window.INITIAL_INVENTORY = <?= json_encode($inventory) ?>;
+</script>
 
 <!-- TEMPLATES FOR DYNAMIC UI -->
 <!-- Template A: Display Row (Used by buildRow in labels.js) -->
@@ -147,7 +84,10 @@ try {
         <td data-label="Model">
             <a href="#" class="tpl-link font-bold text-lg no-underline text-main">BRAND MODEL</a>
             <div class="tpl-series text-sm text-secondary">SERIES</div>
-            <div class="tpl-sn text-xs" style="margin-top:4px; font-family:monospace; color:var(--text-secondary);">S/N</div>
+            <div class="tpl-sn text-xs" style="margin-top:4px; font-family:monospace; color:var(--text-secondary);">
+                <span class="tpl-sn-text">S/N</span>
+                <span class="tpl-sn-empty" style="opacity:0.5; display:none;">No Serial</span>
+            </div>
         </td>
         <td data-label="CPU" class="text-sm">
             <div class="tpl-cpu-gen">GEN</div>
@@ -164,6 +104,9 @@ try {
         <td data-label="Status">
             <div class="tpl-status-box">
                 <span class="tpl-badge status-badge">CONDITION</span>
+                <div class="tpl-sold-badge" style="margin-top:4px; display:none;">
+                    <span class="status-badge" style="background:#4b5563; font-size:10px;">🚚 SOLD</span>
+                </div>
             </div>
         </td>
         <td data-label="Added" class="tpl-added text-xs text-secondary">DATE</td>

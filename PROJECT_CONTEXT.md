@@ -21,29 +21,31 @@
 
 ## 🗄️ 2. Database Architecture (3 Separate SQLite Files)
 
-### A. `labels.sqlite` — Hardware Label Master
+### A. `labels.sqlite` — Master Hardware Library (Templates)
 | Column | Type | Notes |
 |---|---|---|
-| `id` | INTEGER PK AUTOINCREMENT | Master Template ID (Hidden in UI) |
-| `type` | TEXT | Hardware category (e.g. 'Laptop') |
-| `brand` | TEXT NOT NULL | e.g. `'HP'` |
-| `model` | TEXT NOT NULL | e.g. `'EliteBook'` |
-| `series` | TEXT | e.g. `'840 G3'` |
-| `cpu_gen` | TEXT | e.g. `'11th Gen'` (Triggers Auto-Spec) |
-| `cpu_specs` | TEXT | Technical model e.g. `'i7-11850H'` |
-| `cpu_cores` | TEXT | Core count (Auto-filled) |
-| `cpu_speed` | TEXT | Clock speed (Auto-filled) |
-| `ram` | TEXT | Memory capacity |
-| `storage` | TEXT | Drive capacity |
-| `gpu` | TEXT | Graphics controller |
-| `battery` | BOOLEAN | Battery included (1/0) |
-| `battery_specs` | TEXT | Health % and cycle counts |
-| `bios_state` | TEXT | Locked/Unlocked/Unknown |
-| `description` | TEXT | Condition/Internal Note: `'Untested'`, `'Refurbished'`, `'For Parts'` |
-| `status` | TEXT | Display status: `'In Warehouse'`, `'Grade A/B/C'`, `'Tested'`, `'No Post'`, `'No Power'` |
-| `warehouse_location` | TEXT | Physical shelf location |
+| `id` | INTEGER PK | Master Template ID (Pristine Reference) |
+| `status` | TEXT | ALWAYS `'In Warehouse'` (Decoupled from Sales) |
+| `description` | TEXT | Condition: `'Untested'`, `'Refurbished'`, `'For Parts'` |
+| `created_at` | DATETIME | Original intake timestamp |
+
+### B. `orders.sqlite` — Sales & Financial Snapshots
+| Column | Type | Notes |
+|---|---|---|
+| `invoice_status` | TEXT | **`Pending`, `Active`, `Paid`, `Dispatched`, `Canceled`** |
+| `specs_blob` | TEXT | **Snapshot of item specs at time of sale** (Preserves history) |
+| `unit_price` | NUMERIC | Individual sale price for the unit |
+| `order_date` | DATETIME | Used for Dispatch Desk archival (90-day filter) |
 
 ---
+
+### C. `rolodex.sqlite` — Customer & CRM
+| Column | Type | Notes |
+|---|---|---|
+| `customer_id` | INTEGER PK | Master Contact ID |
+| `company_name` | TEXT | Primary Billing Name |
+| `tier` | TEXT | **Gold (10%)**, **Silver (5%)**, **Bronze (0%)** |
+| `lead_status` | TEXT | `'Active Customer'`, `'New Lead'`, `'Inactive'` |
 
 ## 🗺️ 3. Folder & File Sitemap
 
@@ -82,10 +84,13 @@
 │   ├── reprint_label.php       ← POST: Regenerate/Open ODT
 │   ├── check_file_exists.php    ← GET: Utility for Flash Launch
 │   ├── get_analytics.php       ← GET: Dashboard performance metrics
-│   └── get_labels.php          ← GET: Universal Search Engine
+│   ├── get_labels.php          ← GET: Universal Search (with 90d archive)
+│   ├── edit_customer.php       ← POST: Updates contact + B2B tier
+│   └── orders_api.php          ← POST: Bulk ORD generation with auto-discount
 ├── index.php                   ← Dashboard (Live stats & Action Strip)
 ├── analytics.php               ← Detailed Performance Reports
 ├── labels.php                  ← Warehouse Tracker (Print, Open, Edit)
+├── dispatch.php                ← 🚚 Dispatch Desk (Sold & Archived view)
 ├── hardware_view.php           ← Shared Technical Sheet editor (Refurb/Parts)
 ├── print_label.php             ← High-Quality 2" x 1" HTML Printing
 └── new_label.php               ← Rapid Intake & Profile Cloning Form
@@ -108,25 +113,35 @@
 
 ## 🚀 5. Roadmap Status
 - [x] **Phase 1-8**: Infrastructure, Ordering, SKU Logic, Analytics, and Mobile-First Labels.
-- [x] **Phase 8.5: Hardware View Overhaul** — Implemented mobile-first vertical stacking and "Quick Spec" summary widgets.
-- [x] **Phase 8.6: Accessibility Audit** — Fixed `label for` mismatches and form field associations in the shared hardware engine.
-- [x] Phase 8.7: 🚚 Sales & Dispatch Logic - Implemented "Sold" status handling and unlocked deletion of sold records as per warehouse maintenance requirements.
-- [x] Phase 9: 🖨️ Thermal Printer Optimization (Zebra GX 430d) - Implemented 2" x 1" margin-less HTML printing. Unified Branding (Label A) and Specs (Label B) into a single 2-page print job for seamless PDF generation.
-- [x] Phase 10: 🏗️ Scalability Foundation - Implemented temporal tracking (`updated_at` timestamps) and Visual Identification anchors on labels to enable future mobile scanning and inventory velocity analytics.
-- [x] Phase 11: 🏗️ Hardware Mapping Layer - Implemented a single source of truth for all hardware field keys (`includes/hardware_mapping.php` & `assets/js/hardware_mapping.js`) to ensure site-wide stability and eliminate "variable guessing" across PHP and JS.
-- [x] Phase 12: 🏗️ Enterprise Label Engine (4x2 / 2x1) - Implemented intelligent font-scaling, dual-column specification grids, and full Serial Number parity with factory standards.
-- [ ] Phase 13: 🏷️ Tiered B2B Pricing (Sales Logic) - Integrate Customer Tiers (Gold/Silver) in `rolodex.sqlite` with automatic discount calculations in the Order Generator.
-- [ ] Phase 14: 📦 The "Dispatch Desk" (Sold Item Separation) - Create a dedicated sub-view for archived sales to keep the primary inventory view performant and focused on available stock.
+- [x] **Phase 11: Unified Mapping Layer** — Implemented a single source of truth for all hardware field keys.
+- [x] **Phase 12: Unified Enterprise Label Engine** — Merged Branding and Technical Specifications.
+- [x] **Dynamic Scaling Engine**: Implemented "Compact Flow" scaling that shrinks and wraps text automatically.
+- [x] **Phase 13: 📦 The "Dispatch Desk"** — Implemented `dispatch.php` with 90-day archival and sold-item separation.
+- [x] **Phase 14: 🏷️ Tiered B22 Pricing** — Integrated Gold/Silver/Bronze tiers with auto-discounts in the Order Engine.
+- [x] **Phase 15: 📊 Performance Dashboard V2** — Detailed profitability reports and top buyer leaderboard.
+- [ ] Phase 16: 📝 Audit Logs — System-wide status change tracking.
 
 ---
 
-## [2026-03-19] - Enterprise Label Upgrade & Mapping Fortification
+---
+
+## [2026-03-20] - Snapshot Architecture & Financial Status Refactor
 ### Added & Refactored
-- **Phase 12: High-Fidelity Labels (4x2)**: 
-    - Switched default thermal label size to **4" x 2"** for improved data density and readability.
-    - Implemented **Intelligent Font-Scaling**: Typography automatically adjusts (e.g., 24pt Branding / 11pt Specs vs 15pt/7.5pt) based on physical roll dimensions.
-    - **Enterprise Grid (Label B)**: Transformed the technical specification layout into a dual-column flex grid (Processing vs Logic/State) to match official HP/Dell factory sticker standards.
-- **Data Fidelity**: Integrated the **Serial Number / Asset Tag** and a high-contrast **Visual ID Anchor** (`ID: #xxxxx`) into the browser-native printing engine.
-- **Phase 11: Unified Mapping Layer**: Verified and leveraged the single source of truth for all hardware field keys as defined in `dsa.md`.
-- **Architectural Cleanup**: Centralized all dynamic printer CSS in `style.css` under the **Thermal Printer Engine (Dynamic)** section to prevent future logic regressions.
-The system now features a robust **Hardware Mapping Layer**, ensuring that any change to the database schema or UI field names only needs to be updated in one place. Combined with the **Intelligent CPU Intake** and **Thermal Printer Optimization**, the intake process is now highly automated and stable for future AI-driven enhancements.
+- **Snapshot Engine**: `order_items` now captures a `specs_blob` (stringified hardware profile) at the moment of sale. This decouples sales history from the master labels library.
+- **Financial Status Workflow**: Orders now support a full lifecycle: **Pending ⏳**, **Active 🚀**, **Paid ✅**, **Dispatched 🚚**, and **Canceled ❌**.
+- **Logistical Decoupling**: Items in `labels.php` now remain 'In Warehouse' permanently. They serve as master templates that stay "in the library" even after being sold.
+- **Dispatch Desk 2.0**: The dispatch view now pulls data 100% from the **Orders Database**, ensuring historical accuracy (price/specs) even if the original label is deleted.
+- **Analytics Sync**: The "Ready to Dispatch" counter now smartly ignores `Canceled` and `Dispatched` orders to show actual physical backlog.
+- **Windows Path Fixes**: Resolved cross-database `ATTACH` bugs by implementing a PHP-level mapping engine for Windows/XAMPP compatibility.
+
+---
+
+### 🧪 Session Verification Case
+*   **Last Tested ID:** `ORD-000001` (Miguel Garcia - Verified "Dispatched" status correctly clears the Analytics backlog).
+*   **Hardware Snapshot:** Verified that editing a label in `labels.php` after a sale does **not** corrupt the historical record in `dispatch.php`.
+*   **Next Verification Step:** Open `analytics.php` and verify that "Ready to Dispatch" shows a non-zero count for "Active" and "Paid" orders.
+
+### ⏭️ Next 3 Steps (Session Start)
+1.  **Phase 16: Audit Logs**: Implement `audit.sqlite` to track who changed an order status (e.g. from Paid to Dispatched) and when.
+2.  **Bulk Batching Tool**: Add a multi-select mode to the Warehouse Tracker for updating locations or descriptions for 20+ items at once.
+3.  **PDF/Print Manifests**: Generate a "Daily Dispatch Manifest" (PDF/HTML) for the shipping team listing all orders currently marked "Ready to Dispatch."

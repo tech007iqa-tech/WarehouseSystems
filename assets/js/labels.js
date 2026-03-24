@@ -114,11 +114,15 @@ function buildRow(item) {
     tr.querySelector('.tpl-series').textContent = series;
     
     // Serial Number
-    const snDiv = tr.querySelector('.tpl-sn');
+    const snText   = tr.querySelector('.tpl-sn-text');
+    const snEmpty  = tr.querySelector('.tpl-sn-empty');
     if (sn) {
-        snDiv.textContent = `S/N: ${sn}`;
+        snText.textContent = `S/N: ${sn}`;
+        snText.style.display = 'inline';
+        snEmpty.style.display = 'none';
     } else {
-        snDiv.innerHTML = '<span style="opacity:0.5;">No Serial</span>';
+        snText.style.display = 'none';
+        snEmpty.style.display = 'inline';
     }
 
     // CPU
@@ -152,9 +156,7 @@ function buildRow(item) {
     else badge.classList.add('status-untested');
 
     if (isSold) {
-        tr.querySelector('.tpl-status-box').insertAdjacentHTML('beforeend', 
-            `<div style="margin-top:4px;"><span class="status-badge" style="background:#4b5563; font-size:10px;">🚚 SOLD</span></div>`
-        );
+        tr.querySelector('.tpl-sold-badge').style.display = 'block';
     }
 
     // Date
@@ -383,6 +385,29 @@ function esc(str) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
+
+// ─── INITIALIZATION (Phase 2 Hydration) ──────────────────────────────────────
+
+(function init() {
+    if (window.INITIAL_INVENTORY && Array.isArray(window.INITIAL_INVENTORY)) {
+        const data = window.INITIAL_INVENTORY;
+        if (data.length > 0) {
+            DOM.tbody.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            data.forEach(item => fragment.appendChild(buildRow(item)));
+            DOM.tbody.appendChild(fragment);
+            DOM.filterMsg.textContent = `${data.length} items loaded`;
+        } else {
+            DOM.tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center empty-table-message" style="padding: 50px;">
+                        No items found. <a href="new_label.php" class="btn btn-primary" style="margin-top:10px; display:inline-block;">Print your first label →</a>
+                    </td>
+                </tr>`;
+            DOM.filterMsg.textContent = 'Warehouse empty.';
+        }
+    }
+})();
 
 function pad(n, len) { 
     return String(n).padStart(len, '0'); 

@@ -30,6 +30,7 @@ try {
     $address      = sanitize_text($_POST['address']      ?? null);
     $tax_id       = sanitize_text($_POST['tax_id']       ?? null);
     $lead_status  = sanitize_text($_POST['lead_status']  ?? 'New Lead');
+    $tier         = sanitize_text($_POST['tier']         ?? 'Bronze');
     $notes        = sanitize_text($_POST['notes']        ?? null);
 
     $stmt = $pdo_rolodex->prepare("
@@ -42,6 +43,7 @@ try {
             address        = :address,
             tax_id         = :tax_id,
             lead_status    = :lead_status,
+            tier           = :tier,
             notes          = :notes
         WHERE customer_id = :id
     ");
@@ -55,6 +57,7 @@ try {
         ':address'        => $address,
         ':tax_id'         => $tax_id,
         ':lead_status'    => $lead_status,
+        ':tier'           => $tier,
         ':notes'          => $notes,
         ':id'             => $id,
     ]);

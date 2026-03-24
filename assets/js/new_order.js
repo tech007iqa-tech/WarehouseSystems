@@ -19,9 +19,15 @@
 'use strict';
 
 // ─── STATE ──────────────────────────────────────────────────────────────────
-let cart        = [];
-let cartItemIds = new Set();
-let searchTimer = null;
+let cart         = [];
+let cartItemIds  = new Set();
+let searchTimer  = null;
+let currentTier  = 'Bronze'; // Initial default
+const TIER_DISCOUNTS = {
+    'Gold':   0.10, // 10% Off
+    'Silver': 0.05, // 5% Off
+    'Bronze': 0.00
+};
 
 // ─── DOM REFS ───────────────────────────────────────────────────────────────
 const customerSelect      = document.getElementById('customerSelect');
@@ -44,8 +50,15 @@ customerSelect.addEventListener('change', () => {
     const opt     = customerSelect.selectedOptions[0];
     const company = opt.dataset.company || opt.text;
     const contact = opt.dataset.contact || '';
-    customerPreviewText.textContent = company + (contact ? ' (' + contact + ')' : '');
+    currentTier   = opt.dataset.tier || 'Bronze';
+    
+    // Update display with Tier badge
+    const tierColor = currentTier === 'Gold' ? '#ffd700' : currentTier === 'Silver' ? '#c0c0c0' : '#cd7f32';
+    customerPreviewText.innerHTML = `${company} ${contact ? ' (' + contact + ')' : ''} 
+        <span class="status-badge" style="background:${tierColor}; color:#000; font-size:0.7rem; margin-left:8px;">${currentTier} Tier</span>`;
+    
     customerPreview.style.display = 'block';
+    updateTotals(); // Recalculate with new tier
 });
 
 // ─── WAREHOUSE SEARCH ───────────────────────────────────────────────────────
@@ -272,12 +285,23 @@ function calcSubtotal(group) {
 
 function updateTotals() {
     const totalQty   = cart.reduce((sum, g) => sum + (parseInt(g.qty) || 0), 0);
-    const totalPrice = cart.reduce((sum, g) => {
+    const subtotal   = cart.reduce((sum, g) => {
         return sum + ((parseFloat(g.unit_price) || 0) * (parseInt(g.qty) || 0));
     }, 0);
 
+    const discountRate = TIER_DISCOUNTS[currentTier] || 0;
+    const discountAmt  = subtotal * discountRate;
+    const finalTotal   = subtotal - discountAmt;
+
     cartTotalQty.textContent   = totalQty;
-    cartTotalPrice.textContent = '$' + totalPrice.toFixed(2);
+    
+    // Update Footer Display
+    let totalsHtml = `
+        <div style="font-size:0.9rem; color:var(--text-secondary);">Subtotal: $${subtotal.toFixed(2)}</div>
+        ${discountAmt > 0 ? `<div style="font-size:0.85rem; color:#f39c12;">${currentTier} Discount (${(discountRate*100)}%): -$${discountAmt.toFixed(2)}</div>` : ''}
+        <div style="font-size:1.3rem; font-weight:bold; color:var(--btn-success-bg); margin-top:5px;">$${finalTotal.toFixed(2)}</div>
+    `;
+    cartTotalPrice.innerHTML = totalsHtml;
 }
 
 // ─── GENERATE ORDER ─────────────────────────────────────────────────────────

@@ -51,6 +51,7 @@ try {
                     <th>Email</th>
                     <th>Phone</th>
                     <th>Status</th>
+                    <th>Tier</th>
                     <th>Notes</th>
                     <th>Record</th>
                     <th>Actions</th>
@@ -107,6 +108,16 @@ try {
                             <td>
                                 <span class="status-badge <?= $statusClass ?>">
                                     <?= htmlspecialchars($status) ?>
+                                </span>
+                            </td>
+    
+                            <td>
+                                <?php
+                                    $tier = $contact['tier'] ?? 'Bronze';
+                                    $tColor = ($tier === 'Gold') ? '#ffd700' : (($tier === 'Silver') ? '#c0c0c0' : '#cd7f32');
+                                ?>
+                                <span class="status-badge" style="background:<?= $tColor ?>; color:#000;">
+                                    <?= htmlspecialchars($tier) ?>
                                 </span>
                             </td>
 

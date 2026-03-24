@@ -37,7 +37,8 @@ The application implements a multi-keyword search engine. When a technician sear
 * **`cosmetic_grade`** (`TEXT`): Grade A, B, or C.
 * **`work_notes`** (`TEXT`): Detailed technical/reparation notes for refurbished units.
 * **`description`** (`TEXT`): Internal condition (e.g., 'Untested', 'Refurbished').
-* **`warehouse_location`** (`TEXT`): Physical location of the master batch or prototype.
+* **`status`** (`TEXT`): ALWAYS `'In Warehouse'`. Labels are treated as master templates and remain in the library permanently.
+* **`updated_at`** (`DATETIME`): Last timestamp for a configuration edit.
 * **`created_at`** (`DATETIME DEFAULT CURRENT_TIMESTAMP`)
 
 ---
@@ -48,6 +49,7 @@ This database tracks **B2B Purchase Orders**. It utilizes a Header-Line architec
 ### Table: `purchase_orders` (Header)
 * **`order_number`** (`INTEGER PRIMARY KEY AUTOINCREMENT`): Unique invoice number.
 * **`customer_id`** (`INTEGER NOT NULL`): Foreign Key to `rolodex.sqlite`.
+* **`invoice_status`** (`TEXT`): **`Pending`, `Active`, `Paid`, `Dispatched`, `Canceled`**.
 * **`order_date`** (`DATETIME DEFAULT CURRENT_TIMESTAMP`)
 * **`total_qty`** (`INTEGER`): Sum of all quantities on the order.
 * **`total_price`** (`NUMERIC`): Total dollar value.
@@ -55,12 +57,11 @@ This database tracks **B2B Purchase Orders**. It utilizes a Header-Line architec
 
 ### Table: `order_items` (Lines)
 * **`line_id`** (`INTEGER PRIMARY KEY AUTOINCREMENT`)
-* **`order_number`** (`INTEGER NOT NULL`): Link to `purchase_orders`.
-* **`item_id`** (`INTEGER NOT NULL`): Link to the master Label template in `labels.sqlite`.
-* **`brand`** / **`model`** (`TEXT`): Snapshotted display names.
-* **`specs_blob`** (`TEXT`): A snapshot of the exact specs at time of sale.
-* **`qty`** (`INTEGER`): Number of units sold.
-* **`unit_price`** (`NUMERIC`): Price per unit.
+* **`order_number`** (`INTEGER NOT NULL\`)
+* **`item_id`** (`INTEGER NOT NULL`): Original Master ID from `labels.sqlite`.
+* **`specs_blob`** (`TEXT`): **Technical Snapshot.** Stores the stringified hardware profile at time of sale.
+* **`qty`** (`INTEGER`): Units sold in this line.
+* **`unit_price`** (`NUMERIC`): Sold price per unit.
 * **`total_price`** (`NUMERIC`): `qty * unit_price`.
 
 ---
@@ -80,6 +81,7 @@ This acts as a lightweight CRM (Customer Relationship Management) system. It sto
 | `tax_id` | TEXT | Linked to "Address" field in UI (per user request) |
 | `website` | TEXT | Official company URL |
 | `lead_status` | TEXT | `'Active Customer'`, `'New Lead'`, `'Inactive'` |
+| `tier` | TEXT | **Gold (10%)**, **Silver (5%)**, **Bronze (0%)** |
 | `notes` | TEXT | Internal background notes |
 | `created_at` | DATETIME | Default `CURRENT_TIMESTAMP` |
 
@@ -120,12 +122,15 @@ require_once __DIR__ . '/../includes/db.php';
 ```
 This ensures that `shell_exec` and file writes always resolve to the correct project root regardless of the current working directory.
 
-## 7. Order Rollback (Data Integrity)
-To handle cancelled deals, the system supports a **Rollback** mechanism:
-1. The physical `.ots` file is permanently deleted from `/exports/orders/`.
-2. All line-item records linked to the `order_number` are deleted from `order_items`.
-3. The main Order header is deleted from `purchase_orders`.
-*Note: Because Label Profiles are reusable templates, they do not need to be "returned" to inventory status.*
+## 7. Order Lifecycle & Status Workflow
+The system implements a multi-stage logistical workflow to track items from sale to floor exit:
+1. **Pending ⏳**: Order is created as a draft or waiting for approval.
+2. **Active 🚀**: Order is finalized and ready for the technical team to pull stock.
+3. **Paid ✅**: Payment confirmed. Items are marked for priority dispatch.
+4. **Dispatched 🚚**: Final Logistical State. Items have physically left the building. Orders move to the Archive after 90 days.
+5. **Canceled ❌**: Voided order. Item counts are removed from the sales history.
+
+*Note: Because Label Profiles in `labels.php` are master templates, they remain 'In Warehouse' permanently and are never physically 'moved' between databases.*
 ## 8. System Fortification (Self-Healing)
 To ensure the application remains operational even after accidental file deletion or potential corruption, the system implements a "Self-Healing" architecture.
 

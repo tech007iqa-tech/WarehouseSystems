@@ -47,26 +47,41 @@ try {
 
     $xml_inner = '';
     for ($i = 0; $i < $qty; $i++) {
-        // Label A (Branding)
-        if ($show_a) {
-            $xml_inner .= '<text:p text:style-name="P3">' . $brand . ' ' . $model . ' ' . $series . '</text:p>';
-            if ($show_b || $i < $qty - 1) {
-                $xml_inner .= '<text:p text:style-name="PB"></text:p>';
-            }
+        // --- 1. Branding Title (Unified Heading) ---
+        // Title Line 1: Brand + Model + Series
+        $xml_inner .= '<text:p text:style-name="P3">' . $brand . ' ' . $model . ' ' . $series . '</text:p>';
+        // Title Line 2: CPU Model as requested ("Like part of the title")
+        if ($cpu_specs) {
+            $xml_inner .= '<text:p text:style-name="P3">' . $cpu_specs . '</text:p>';
         }
 
-        // Label B (Specs)
-        if ($show_b) {
-            $xml_inner .= '<text:p text:style-name="Standard">Technical Specifications (' . $cpu_gen_display . ')</text:p>';
-            $xml_inner .= '<text:p text:style-name="Standard">CPU: ' . $cpu_spec_line . '</text:p>';
-            $xml_inner .= '<text:p text:style-name="Standard">RAM: ' . ($ram ? $ram : 'None') . ' | Storage: ' . ($storage ? $storage : 'None') . '</text:p>';
-            $xml_inner .= '<text:p text:style-name="Standard">Battery: ' . ($battery ? 'YES' : 'NO') . ' | BIOS: ' . $bios_state . '</text:p>';
-            $xml_inner .= '<text:p text:style-name="Standard">Loc: ' . $warehouse_location . ' | Cond: ' . $description . '</text:p>';
-            
-            // Add page break only if there is another set coming up
-            if ($i < $qty - 1) {
-                $xml_inner .= '<text:p text:style-name="PB"></text:p>';
-            }
+        // --- 2. Technical Specs (Same Label) ---
+        $xml_inner .= '<text:p text:style-name="Standard">Technical Specifications (' . $cpu_gen_display . ')</text:p>';
+        $xml_inner .= '<text:p text:style-name="Standard">CPU: ' . $cpu_spec_line . '</text:p>';
+        $xml_inner .= '<text:p text:style-name="Standard">RAM: ' . ($ram ? $ram : 'None') . ' | Storage: ' . ($storage ? $storage : 'None') . '</text:p>';
+        $xml_inner .= '<text:p text:style-name="Standard">Battery: ' . ($battery ? 'YES' : 'NO') . ' | BIOS: ' . $bios_state . '</text:p>';
+        $xml_inner .= '<text:p text:style-name="Standard">Loc: ' . $warehouse_location . ' | Cond: ' . $description . '</text:p>';
+
+        // --- 3. Deep Technical Sheet & Identifiers ---
+        // We include S/N and ID universally for warehouse traceability.
+        $serial = htmlspecialchars($item[$F['SERIAL_NUMBER']] ?? 'N/A', ENT_XML1, 'UTF-8');
+        $status = htmlspecialchars($item[$F['STATUS']] ?? 'In Warehouse', ENT_XML1, 'UTF-8');
+        
+        $xml_inner .= '<text:p text:style-name="Standard">S/N: ' . $serial . ' | Status: ' . $status . '</text:p>';
+
+        if ($item[$F['DESCRIPTION']] === 'Refurbished') {
+            $gpu    = htmlspecialchars($item[$F['GPU']] ?? 'Integrated', ENT_XML1, 'UTF-8');
+            $res    = htmlspecialchars($item[$F['SCREEN_RES']] ?? '—', ENT_XML1, 'UTF-8');
+            $os     = htmlspecialchars($item[$F['OS_VERSION']] ?? '—', ENT_XML1, 'UTF-8');
+            $grade  = htmlspecialchars($item[$F['COSMETIC_GRADE']] ?? '—', ENT_XML1, 'UTF-8');
+
+            $xml_inner .= '<text:p text:style-name="Standard">GPU: ' . $gpu . ' | Res: ' . $res . '</text:p>';
+            $xml_inner .= '<text:p text:style-name="Standard">OS: ' . $os . ' | Cosmetic: Grade ' . $grade . '</text:p>';
+        }
+
+        // --- 4. Page Break (ONLY for next label copy) ---
+        if ($i < $qty - 1) {
+            $xml_inner .= '<text:p text:style-name="PB"></text:p>';
         }
     }
 

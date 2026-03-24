@@ -35,15 +35,15 @@ if (!$item || ($item['description'] ?? '') !== 'Refurbished') {
 <!-- Main Content Grid -->
 <form id="refurbForm">
     <div style="display: grid; grid-template-columns: 1fr 350px; gap: var(--spacing); align-items: start;">
-        
+
         <!-- LEFT: Technical Specs & Baseline Form -->
         <div class="panel">
             <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 Detailed Hardware Profile
             </h3>
-            
+
             <input type="hidden" name="id" value="<?= (int)$item['id'] ?>">
-            
+
             <!-- SECTION 1: Baseline Hardware (Previously Read-Only) -->
             <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 30px; background: rgba(0,0,0,0.02); padding: 15px; border-radius: 8px;">
                 <div class="form-group">
@@ -150,7 +150,7 @@ if (!$item || ($item['description'] ?? '') !== 'Refurbished') {
                 <div class="flex-between"><span>Current Status:</span> <strong><?= htmlspecialchars($item['status'] ?? '—') ?></strong></div>
                 <div class="flex-between"><span>Warehouse Loc:</span> <strong><?= htmlspecialchars($item['warehouse_location'] ?? '—') ?></strong></div>
             </div>
-            
+
             <div style="margin-top: 25px; padding: 15px; background: rgba(140, 198, 63, 0.1); border-radius: 8px; color: var(--accent-hover); font-size: 0.85rem;">
                 💡 <strong>Sales Note:</strong> The technical sheets are the primary source for buyers. Keeping CPU, GPU and Battery health updated here will push accurate data to the Purchase Order.
             </div>

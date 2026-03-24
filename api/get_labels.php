@@ -8,11 +8,17 @@ require_once '../includes/hardware_mapping.php';
 
 try {
     $F = HW_FIELDS;
-    $q      = isset($_GET['q'])      ? trim($_GET['q'])      : '';
-    $status = isset($_GET['status']) ? trim($_GET['status']) : 'all';
+    $q       = isset($_GET['q'])       ? trim($_GET['q'])       : '';
+    $status  = isset($_GET['status'])  ? trim($_GET['status'])  : 'all';
+    $archive = isset($_GET['archive']) ? (int)$_GET['archive']  : 0;
 
     $params      = [];
     $conditions  = [];
+
+    // Archive Days filter (e.g. only Sold items within last 90 days)
+    if ($archive > 0) {
+        $conditions[] = "updated_at >= datetime('now', '-{$archive} days')";
+    }
 
     // Status filter
     if ($status !== 'all' && $status !== '') {
@@ -35,6 +41,7 @@ try {
                               OR {$F['CPU_GEN']} LIKE $paramKey OR {$F['CPU_SPECS']} LIKE $paramKey 
                               OR {$F['CPU_CORES']} LIKE $paramKey OR {$F['CPU_SPEED']} LIKE $paramKey
                               OR {$F['DESCRIPTION']} LIKE $paramKey OR {$F['LOCATION']} LIKE $paramKey
+                              OR buyer_name LIKE $paramKey OR buyer_order_num LIKE $paramKey
                               OR CAST(id AS TEXT) LIKE $paramKey)";
             
             $params[$paramKey] = $search_term;

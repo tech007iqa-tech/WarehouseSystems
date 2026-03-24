@@ -39,6 +39,7 @@ try {
         <thead>
             <tr>
                 <th>Order #</th>
+                <th>Status</th>
                 <th>Customer</th>
                 <th>Contact</th>
                 <th>Date</th>
@@ -70,6 +71,23 @@ try {
                             <a href="order_view.php?id=<?= (int)$order['order_number'] ?>" style="color:var(--accent-color); text-decoration:none;">
                                 <?= htmlspecialchars($order_num_pad) ?>
                             </a>
+                        </td>
+
+                        <td>
+                            <?php 
+                                $status = $order['invoice_status'] ?? 'Pending';
+                                $sClass = ($status === 'Paid') ? 'bg-success' : 
+                                         (($status === 'Canceled') ? 'bg-danger' : 
+                                         (($status === 'Dispatched') ? 'bg-primary' : 'bg-warning'));
+                            ?>
+                            <select class="status-select <?= $sClass ?>" data-id="<?= (int)$order['order_number'] ?>" 
+                                    style="padding:4px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer; color:#fff; border:none;">
+                                <option value="Pending"    <?= $status === 'Pending' ? 'selected' : '' ?>>Pending ⏳</option>
+                                <option value="Active"     <?= $status === 'Active' ? 'selected' : '' ?>>Active 🚀</option>
+                                <option value="Paid"       <?= $status === 'Paid' ? 'selected' : '' ?>>Paid ✅</option>
+                                <option value="Dispatched" <?= $status === 'Dispatched' ? 'selected' : '' ?>>Dispatched 🚚</option>
+                                <option value="Canceled"   <?= $status === 'Canceled' ? 'selected' : '' ?>>Canceled ❌</option>
+                            </select>
                         </td>
 
                         <td style="font-weight: bold;">
@@ -117,6 +135,33 @@ try {
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('nav-orders').classList.add('active');
+
+        // Listen for status changes
+        document.querySelectorAll('.status-select').forEach(sel => {
+            sel.addEventListener('change', async () => {
+                const id = sel.dataset.id;
+                const newStatus = sel.value;
+                
+                // Update UI color immediately
+                sel.classList.remove('bg-success', 'bg-warning', 'bg-danger', 'bg-primary');
+                if (newStatus === 'Paid') sel.classList.add('bg-success');
+                else if (newStatus === 'Canceled') sel.classList.add('bg-danger');
+                else if (newStatus === 'Dispatched') sel.classList.add('bg-primary');
+                else sel.classList.add('bg-warning');
+
+                const fd = new FormData();
+                fd.append('order_id', id);
+                fd.append('status', newStatus);
+
+                try {
+                    const res = await fetch('api/update_order_status.php', { method: 'POST', body: fd });
+                    const json = await res.json();
+                    if(!json.success) alert("Error: " + json.error);
+                } catch (err) {
+                    alert("Network error.");
+                }
+            });
+        });
     });
 
     async function launchFile(path) {

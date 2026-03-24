@@ -99,6 +99,7 @@
                 <!-- LABELS / INVENTORY -->
                 <li style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 12px; margin-bottom: 8px;">Warehouse</li>
                 <li><a href="labels.php" class="nav-link" id="nav-labels">📦 Inventory Tracker</a></li>
+                <li><a href="dispatch.php" class="nav-link" id="nav-dispatch">🚚 Dispatch Desk</a></li>
                 <li><a href="new_label.php" class="nav-link" id="nav-new-label">🏷️ Print Hardware Label</a></li>
                 <br>
 

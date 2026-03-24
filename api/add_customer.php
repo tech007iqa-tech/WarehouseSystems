@@ -20,14 +20,15 @@ try {
     $address = sanitize_text($_POST['address'] ?? null);
     $tax_id = sanitize_text($_POST['tax_id'] ?? null);
     $lead_status = sanitize_text($_POST['lead_status'] ?? 'New Lead');
+    $tier = sanitize_text($_POST['tier'] ?? 'Bronze');
     $notes = sanitize_text($_POST['notes'] ?? null);
 
     // 2. Insert into rolodex.sqlite Database using Prepared Statement
     $stmt = $pdo_rolodex->prepare("
         INSERT INTO customers (
-            company_name, contact_person, email, phone, website, address, tax_id, lead_status, notes
+            company_name, contact_person, email, phone, website, address, tax_id, lead_status, tier, notes
         ) VALUES (
-            :company, :contact, :email, :phone, :website, :address, :tax_id, :status, :notes
+            :company, :contact, :email, :phone, :website, :address, :tax_id, :status, :tier, :notes
         )
     ");
 
@@ -40,6 +41,7 @@ try {
         ':address' => $address,
         ':tax_id' => $tax_id,
         ':status' => $lead_status,
+        ':tier' => $tier,
         ':notes' => $notes
     ]);
 

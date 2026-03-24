@@ -11,12 +11,12 @@ At its core, the app does three things:
 ---
 
 ## 2. The Tech Stack (Strict Rules)
-To maintain the "Vibe", this project strictly adheres to a native, lightweight stack. 
+To maintain the "Vibe", this project strictly adheres to a native, lightweight stack.
 
 * **Frontend:** Vanilla HTML5, Vanilla CSS3 (Custom roots, flex/grid layouts), and Vanilla JavaScript (ES6+).
 * **Backend:** PHP 8+
-* **Database:** SQLite3 (Using PDO via `includes/db.php`). 
-* **Zero Bloat:** **NO** `node_modules`, **NO** Tailwind CSS or Bootstrap, **NO** PHP Frameworks (Laravel), and **NO** Composer packages unless absolutely critical. 
+* **Database:** SQLite3 (Using PDO via `includes/db.php`).
+* **Zero Bloat:** **NO** `node_modules`, **NO** Tailwind CSS or Bootstrap, **NO** PHP Frameworks (Laravel), and **NO** Composer packages unless absolutely critical.
 
 ### Why No Composer? (The PowerShell Injection Pattern)
 Handling document generation natively in PHP usually requires heavy libraries like `PhpSpreadsheet`, which demand Composer and create dependency bloat.

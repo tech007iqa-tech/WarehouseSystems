@@ -28,12 +28,12 @@ if (isset($_POST['repair_db'])) {
 if (isset($_POST['backup_db'])) {
     $backup_dir = __DIR__ . '/db/backups/';
     if (!is_dir($backup_dir)) mkdir($backup_dir, 0777, true);
-    
+
     $timestamp = date('Y-m-d_His');
     copy(__DIR__ . '/db/labels.sqlite', $backup_dir . "labels_backup_$timestamp.sqlite");
     copy(__DIR__ . '/db/orders.sqlite', $backup_dir . "orders_backup_$timestamp.sqlite");
     copy(__DIR__ . '/db/rolodex.sqlite', $backup_dir . "rolodex_backup_$timestamp.sqlite");
-    
+
     $message = "System backup created successfully in /db/backups/.";
 }
 ?>
@@ -58,7 +58,7 @@ if (isset($_POST['backup_db'])) {
                 <?= strtoupper($health['status']) ?>
             </span>
         </h2>
-        
+
         <div style="margin:20px 0;">
             <?php foreach ($health['databases'] as $db): ?>
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border-color);">
@@ -84,7 +84,7 @@ if (isset($_POST['backup_db'])) {
         <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:20px;">
             Creating a backup will save a copy of your current inventory, orders, and contacts into the internal server vault.
         </p>
-        
+
         <form method="POST" style="display:flex; flex-direction:column; gap:10px;">
             <button type="submit" name="backup_db" class="btn btn-success" style="padding:15px; font-weight:bold;">
                 📦 Create Instant System Backup

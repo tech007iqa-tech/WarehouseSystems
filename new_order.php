@@ -7,7 +7,7 @@ require_once 'includes/header.php';
 $customers = [];
 try {
     $stmt = $pdo_rolodex->query("
-        SELECT customer_id, company_name, contact_person
+        SELECT customer_id, company_name, contact_person, tier
         FROM customers
         ORDER BY company_name ASC
     ");
@@ -41,7 +41,8 @@ try {
                 <?php foreach ($customers as $c): ?>
                     <option value="<?= (int)$c['customer_id'] ?>"
                             data-company="<?= htmlspecialchars($c['company_name'] ?? '') ?>"
-                            data-contact="<?= htmlspecialchars($c['contact_person']) ?>">
+                            data-contact="<?= htmlspecialchars($c['contact_person']) ?>"
+                            data-tier="<?= htmlspecialchars($c['tier'] ?? 'Bronze') ?>">
                         <?= htmlspecialchars(($c['company_name'] ?? '') . ' — ' . $c['contact_person']) ?>
                     </option>
                 <?php endforeach; ?>
