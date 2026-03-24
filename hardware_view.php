@@ -88,12 +88,10 @@ $color = $desc === 'For Parts' ? 'var(--btn-danger-bg)'
             </h3>
             
             <input type="hidden" name="id" value="<?= (int)$item['id'] ?>">
-            <input type="hidden" name="status" value="<?= htmlspecialchars($item['status'] ?? 'In Warehouse') ?>">
-
-            <?php 
-                $formType = 'edit';
-                include 'includes/hardware_form.php'; 
-            ?>
+<?php 
+    $formType = 'edit';
+    include 'includes/hardware_form.php'; 
+?>
 
             <hr style="border:0; border-top:1px solid var(--border-color); margin: 25px 0;">
 
@@ -144,8 +142,14 @@ $color = $desc === 'For Parts' ? 'var(--btn-danger-bg)'
     </div>
 </form>
 
+<!-- Add the dynamic JS controls -->
+<script src="assets/js/forms.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    // Set active link in sidebar
+    const navLink = document.getElementById('nav-labels');
+    if (navLink) navLink.classList.add('active');
+
     const refurbForm = document.getElementById('refurbForm');
     const saveBtn    = document.getElementById('saveRefurbBtn');
     const statusMsg  = document.getElementById('saveStatus');

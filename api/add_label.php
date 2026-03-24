@@ -25,7 +25,7 @@ try {
     // Technical Sheet Fields
     $gpu                = sanitize_text($_POST[HW_FIELDS['GPU']]                ?? null);
     $screen_res         = sanitize_text($_POST[HW_FIELDS['SCREEN_RES']]         ?? null);
-    $battery            = isset($_POST[HW_FIELDS['BATTERY']]) && $_POST[HW_FIELDS['BATTERY']] == '1' ? 1 : 0;
+    $battery            = isset($_POST[HW_FIELDS['BATTERY']]) && $_POST[HW_FIELDS['BATTERY']] !== '' ? (int)$_POST[HW_FIELDS['BATTERY']] : null;
     $battery_specs      = sanitize_text($_POST[HW_FIELDS['BATTERY_SPECS']]      ?? null);
     $webcam             = sanitize_text($_POST[HW_FIELDS['WEBCAM']]             ?? null);
     $backlit_kb         = sanitize_text($_POST[HW_FIELDS['BACKLIT_KB']]         ?? null);
@@ -133,7 +133,13 @@ try {
         $inserted_id = $pdo_labels->lastInsertId();
     }
 
-    // 4. Return success to UI (No file generation here per user request)
+    // 4. LOG THE AUDIT EVENT
+    if (!$is_duplicate) {
+        $summary = "Intake: Added $brand $model" . ($series ? " ($series)" : "") . " to warehouse.";
+        log_audit_event($pdo_audit, 'Label', $inserted_id, 'CREATED', $summary, null, $_POST);
+    }
+
+    // 5. Return success to UI
     send_json_response(true, [
         'id' => $inserted_id,
         'is_duplicate' => $is_duplicate

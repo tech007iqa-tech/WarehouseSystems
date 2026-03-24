@@ -3,7 +3,7 @@
 // This utility ensures that if a database file is missing or corrupted,
 // the system can automatically rebuild the tables to prevent a total crash.
 
-function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex) {
+function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex, $pdo_audit) {
     try {
         // 1. Check Labels
         $pdo_labels->exec("CREATE TABLE IF NOT EXISTS items (
@@ -109,6 +109,19 @@ function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex) {
         $stmt_cinfo = $pdo_rolodex->query("PRAGMA table_info(customers)");
         $crow_names = array_column($stmt_cinfo->fetchAll(PDO::FETCH_ASSOC), 'name');
         if (!in_array('tier', $crow_names)) $pdo_rolodex->exec("ALTER TABLE customers ADD COLUMN tier TEXT DEFAULT 'Bronze'");
+
+        // 4. Check Audit
+        $pdo_audit->exec("CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entity_type TEXT NOT NULL,
+            entity_id TEXT NOT NULL,
+            action TEXT NOT NULL,
+            summary TEXT,
+            old_value TEXT,
+            new_value TEXT,
+            user_name TEXT DEFAULT 'System',
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
 
         return true;
     } catch (Exception $e) {

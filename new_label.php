@@ -192,7 +192,7 @@ try {
                     <div id="prevCond">UNTESTED</div>
                 </div>
             </div>
-            <p style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 8px; font-style: italic; text-align: center;">
+            <p style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 8px; font-style: italic; text-align: left;">
                 Visual approximation of 2" x 1" thermal output.
             </p>
         </div>

@@ -27,6 +27,10 @@ try {
     $stmt = $pdo_labels->prepare("DELETE FROM items WHERE id = :id");
     $stmt->execute([':id' => $id]);
 
+    // LOG THE AUDIT EVENT
+    $summary = "Permanent Deletion: " . $item['brand'] . " " . $item['model'] . " (#$id) removed from system.";
+    log_audit_event($pdo_audit, 'Label', $id, 'DELETED', $summary, $item, null);
+
     send_json_response(true, [
         'deleted_id' => $id,
         'message'    => 'Item #' . str_pad($id, 5, '0', STR_PAD_LEFT)

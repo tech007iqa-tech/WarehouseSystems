@@ -31,7 +31,8 @@ try {
     $cpu_speed= htmlspecialchars($item[$F['CPU_SPEED']] ?? '', ENT_XML1, 'UTF-8');
     $ram      = htmlspecialchars($item[$F['RAM']] ?? 'None', ENT_XML1, 'UTF-8');
     $storage  = htmlspecialchars($item[$F['STORAGE']] ?? 'None', ENT_XML1, 'UTF-8');
-    $battery  = (int)($item[$F['BATTERY']] ?? 0) === 1 ? 'YES' : 'NO';
+    $b_val = $item[$F['BATTERY']] ?? null;
+    $battery  = ($b_val === null || $b_val === '') ? 'N/A' : ((int)$b_val === 1 ? 'YES' : 'NO');
     $bios_state = htmlspecialchars($item[$F['BIOS_STATE']] ?? 'Unknown', ENT_XML1, 'UTF-8');
     $warehouse_location = htmlspecialchars($item[$F['LOCATION']] ?? 'Unassigned', ENT_XML1, 'UTF-8');
     $description = htmlspecialchars($item[$F['DESCRIPTION']] ?? 'Untested', ENT_XML1, 'UTF-8');
@@ -59,7 +60,7 @@ try {
         $xml_inner .= '<text:p text:style-name="Standard">Technical Specifications (' . $cpu_gen_display . ')</text:p>';
         $xml_inner .= '<text:p text:style-name="Standard">CPU: ' . $cpu_spec_line . '</text:p>';
         $xml_inner .= '<text:p text:style-name="Standard">RAM: ' . ($ram ? $ram : 'None') . ' | Storage: ' . ($storage ? $storage : 'None') . '</text:p>';
-        $xml_inner .= '<text:p text:style-name="Standard">Battery: ' . ($battery ? 'YES' : 'NO') . ' | BIOS: ' . $bios_state . '</text:p>';
+        $xml_inner .= '<text:p text:style-name="Standard">Battery: ' . $battery . ' | BIOS: ' . $bios_state . '</text:p>';
         $xml_inner .= '<text:p text:style-name="Standard">Loc: ' . $warehouse_location . ' | Cond: ' . $description . '</text:p>';
 
         // --- 3. Deep Technical Sheet & Identifiers ---

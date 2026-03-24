@@ -12,10 +12,12 @@ try {
         throw new Exception('A valid item ID is required.');
     }
 
-    // Verify the item exists
-    $stmt_check = $pdo_labels->prepare("SELECT id FROM items WHERE id = :id");
-    $stmt_check->execute([':id' => $id]);
-    if (!$stmt_check->fetch()) {
+    // 1. Fetch OLD record BEFORE update for auditing
+    $stmt_old = $pdo_labels->prepare("SELECT * FROM items WHERE id = :id");
+    $stmt_old->execute([':id' => $id]);
+    $old_item = $stmt_old->fetch(PDO::FETCH_ASSOC);
+
+    if (!$old_item) {
         throw new Exception('Item #' . $id . ' not found.');
     }
 
@@ -31,7 +33,7 @@ try {
     $cpu_details         = sanitize_text($_POST[HW_FIELDS['CPU_DETAILS']]        ?? null);
     $ram                 = sanitize_text($_POST[HW_FIELDS['RAM']]                ?? null);
     $storage             = sanitize_text($_POST[HW_FIELDS['STORAGE']]            ?? null);
-    $battery             = isset($_POST[HW_FIELDS['BATTERY']]) && $_POST[HW_FIELDS['BATTERY']] == '1' ? 1 : 0;
+    $battery             = isset($_POST[HW_FIELDS['BATTERY']]) && $_POST[HW_FIELDS['BATTERY']] !== '' ? (int)$_POST[HW_FIELDS['BATTERY']] : null;
     $battery_specs       = sanitize_text($_POST[HW_FIELDS['BATTERY_SPECS']]      ?? null);
     $gpu                 = sanitize_text($_POST[HW_FIELDS['GPU']]                ?? null);
     $screen_res          = sanitize_text($_POST[HW_FIELDS['SCREEN_RES']]         ?? null);
@@ -111,6 +113,22 @@ try {
     $stmt_fetch = $pdo_labels->prepare("SELECT * FROM items WHERE id = :id");
     $stmt_fetch->execute([':id' => $id]);
     $updated_item = $stmt_fetch->fetch(PDO::FETCH_ASSOC);
+
+    // 2. LOG THE AUDIT EVENT
+    $action = 'UPDATED';
+    $summary = "Updated details for " . ($updated_item[HW_FIELDS['BRAND']] ?? '') . " " . ($updated_item[HW_FIELDS['MODEL']] ?? '');
+    
+    // Status Change Summary
+    if (($old_item[HW_FIELDS['STATUS']] ?? '') !== ($updated_item[HW_FIELDS['STATUS']] ?? '')) {
+        $action = 'STATUS_CHANGE';
+        $summary = "Status Changed: " . ($old_item[HW_FIELDS['STATUS']] ?? '—') . " → " . ($updated_item[HW_FIELDS['STATUS']] ?? '—');
+    }
+    // Location Change Summary
+    else if (($old_item[HW_FIELDS['LOCATION']] ?? '') !== ($updated_item[HW_FIELDS['LOCATION']] ?? '')) {
+        $summary = "Moved from " . ($old_item[HW_FIELDS['LOCATION']] ?? 'Unknown') . " to " . ($updated_item[HW_FIELDS['LOCATION']] ?? 'Unknown');
+    }
+
+    log_audit_event($pdo_audit, 'Label', $id, $action, $summary, $old_item, $updated_item);
 
     send_json_response(true, ['item' => $updated_item]);
 

@@ -6,7 +6,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
     <title>TEST ENVIROMENT</title>
 
     <!-- Global CSS Variables & Layout Rules -->
@@ -118,6 +118,7 @@
 
         <!-- Bottom Settings / Logout push down -->
         <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-color);">
+            <a href="audit_logs.php" class="nav-link" id="nav-audit" style="font-size: 0.9rem;">🛡️ Audit Trails</a>
             <a href="settings.php" class="nav-link" id="nav-settings" style="font-size: 0.9rem;">⚙️ System Settings</a>
         </div>
     </aside>

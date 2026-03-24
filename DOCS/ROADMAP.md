@@ -79,11 +79,29 @@ This document tracks the high-level progress of the IQA Metal Label & Inventory 
 * [ ] **Native File Launching**: Connect the `📂 Open` action in `labels.php` directly to Windows default applications.
 * [ ] **Inventory Status Logic**: Default new intakes to "Untested" and implement robust cleanup/deletion of "Sold" inventory.
 
-## 🚀 Phase 9: Thermal Printer Optimization (Planned)
-* [ ] **Margin-less Templates**: 4x6 ODT templates specifically for thermal printers.
-* [ ] **Batch Labeling**: Ability to select multiple items and generate a single multi-page PDF/ODT.
+## ✅ Phase 9: Thermal Printer Optimization (Zebra 2x1)
+* [x] **Strict 2x1 Sizing**: Enforced 2in x 1in dimensions with zero browser margins in `print_label.php`.
+* [x] **Single-Sheet Hybrid**: Unified Branding (Label A) and Specs (Label B) into a single physical label output.
+* [x] **Batch Labeling**: Ability to select multiple items and generate a single multi-page PDF/ODT.
+
+## ✅ Phase 11 & 12: Unified Mapping & Logic
+* [x] **Unified Mapping Layer**: Created `includes/hardware_mapping.php` as the single source of truth for database keys.
+* [x] **Intelligent CPU Intake V2**: Added suffix-based auto-fill for Core Count and Clock Speed in `forms.js`.
+* [x] **Dynamic Scaling Engine**: Text automatically wraps and shrinks (down to 4pt) to fit technical specs on the 2x1 label.
+
+## ✅ Phase 13: 📦 The Dispatch Desk
+* [x] **Sold Item Separation**: Created `dispatch.php` to handle physical logistics for items that have left the warehouse.
+* [x] **Rolling Archival**: Implemented 90-day filter for active shipments while preserving full lifetime history.
+
+## ✅ Phase 14: 🏷️ Tiered B2B Pricing
+* [x] **Customer Tiers**: Integrated **Gold (10%)**, **Silver (5%)**, and **Bronze (0%)** discounts into the Rolodex.
+* [x] **Auto-Discount Engine**: The Order Engine now automatically applies tier-based discounts to line items.
+
+## ✅ Phase 15: 📊 Performance Dashboard V2
+* [x] **Financial Reporting**: Detailed profitability reports and top buyer leaderboard in `analytics.php`.
+* [x] **Logistical Decoupling**: Dispatched items now ignore physical backlog counts.
 
 ---
 
-## 🚀 Status: PHASE 9 IN PROGRESS
-The system now features a full analytics suite and a unified hardware intake/editing engine. Intelligent CPU lookups and Flash Launch logic have significantly reduced technician intake time. Phase 9 (Thermal Printer Optimization) is the next focus.
+## 🚀 Status: PHASE 17 IN PROGRESS
+The system has successfully implemented full Audit Logging for all hardware and order state changes. The next goal is **Phase 17: Bulk Batching Tool** to allow rapid multi-select warehouse moves and condition updates.

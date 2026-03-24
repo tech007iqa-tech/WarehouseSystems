@@ -45,7 +45,7 @@ $cpu_cores= htmlspecialchars($item['cpu_cores'] ?? '',         ENT_QUOTES, 'UTF-
 $cpu_speed= htmlspecialchars($item['cpu_speed'] ?? '',         ENT_QUOTES, 'UTF-8');
 $ram      = htmlspecialchars($item['ram']     ?? 'None',       ENT_QUOTES, 'UTF-8');
 $storage  = htmlspecialchars($item['storage'] ?? 'None',       ENT_QUOTES, 'UTF-8');
-$battery  = (int)($item['battery'] ?? 0) === 1 ? 'YES' : 'NO';
+$battery  = (!isset($item['battery']) || $item['battery'] === null || $item['battery'] === '') ? 'N/A' : ((int)$item['battery'] === 1 ? 'YES' : 'NO');
 $bios     = htmlspecialchars($item['bios_state'] ?? 'Unknown', ENT_QUOTES, 'UTF-8');
 $location = htmlspecialchars($item['warehouse_location'] ?? 'Unassigned', ENT_QUOTES, 'UTF-8');
 $cond     = htmlspecialchars($item['description'] ?? 'Untested', ENT_QUOTES, 'UTF-8');

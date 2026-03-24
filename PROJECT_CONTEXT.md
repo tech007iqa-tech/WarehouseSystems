@@ -10,7 +10,7 @@
 **Tech Stack:**
 - **Frontend:** Vanilla HTML5, Vanilla CSS3, Vanilla JS.
 - **Backend:** PHP 8+ handling API endpoints in `/api/`.
-- **Database:** SQLite3 using PDO (`includes/db.php`). Three separate `.sqlite` files.
+- **Database:** SQLite3 using PDO (`includes/db.php`). Four separate `.sqlite` files (labels, orders, rolodex, audit).
 - **File Generation:** Native PowerShell "Structural Surgery" injecting content into original Master Templates.
 - **Native Printing:** Multi-modal support.
   - **Orders (.ots):** Direct Windows Launching via `api/open_windows_file.php`.
@@ -19,7 +19,7 @@
 
 ---
 
-## 🗄️ 2. Database Architecture (3 Separate SQLite Files)
+## 🗄️ 2. Database Architecture (4 Separate SQLite Files)
 
 ### A. `labels.sqlite` — Master Hardware Library (Templates)
 | Column | Type | Notes |
@@ -46,6 +46,17 @@
 | `company_name` | TEXT | Primary Billing Name |
 | `tier` | TEXT | **Gold (10%)**, **Silver (5%)**, **Bronze (0%)** |
 | `lead_status` | TEXT | `'Active Customer'`, `'New Lead'`, `'Inactive'` |
+
+### D. `audit.sqlite` — System-Wide Audit Trails
+| Column | Type | Notes |
+|---|---|---|
+| `id` | INTEGER PK | Audit Log ID |
+| `target_id` | INTEGER | ID of the Label/Order affected |
+| `action` | TEXT | `'CREATED'`, `'UPDATED'`, `'DELETED'`, `'STATUS_CHANGE'` |
+| `old_data` | TEXT (JSON) | State before the action |
+| `new_data` | TEXT (JSON) | State after the action |
+
+---
 
 ## 🗺️ 3. Folder & File Sitemap
 
@@ -92,6 +103,7 @@
 ├── labels.php                  ← Warehouse Tracker (Print, Open, Edit)
 ├── dispatch.php                ← 🚚 Dispatch Desk (Sold & Archived view)
 ├── hardware_view.php           ← Shared Technical Sheet editor (Refurb/Parts)
+├── audit_logs.php              ← System-Wide Tracking with JSON payloads
 ├── print_label.php             ← High-Quality 2" x 1" HTML Printing
 └── new_label.php               ← Rapid Intake & Profile Cloning Form
 ```
@@ -119,29 +131,27 @@
 - [x] **Phase 13: 📦 The "Dispatch Desk"** — Implemented `dispatch.php` with 90-day archival and sold-item separation.
 - [x] **Phase 14: 🏷️ Tiered B22 Pricing** — Integrated Gold/Silver/Bronze tiers with auto-discounts in the Order Engine.
 - [x] **Phase 15: 📊 Performance Dashboard V2** — Detailed profitability reports and top buyer leaderboard.
-- [ ] Phase 16: 📝 Audit Logs — System-wide status change tracking.
+- [x] **Phase 16: 📝 Audit Logs** — System-wide status change tracking with `audit.sqlite`.
+- [ ] **Phase 17: 📦 Bulk Batching Tool** — Multi-select batch upgrades for warehouse moves.
 
 ---
 
 ---
 
-## [2026-03-20] - Snapshot Architecture & Financial Status Refactor
+## [2026-03-24] - Audit Logs, iOS CSS Optimization & Battery Logic
 ### Added & Refactored
-- **Snapshot Engine**: `order_items` now captures a `specs_blob` (stringified hardware profile) at the moment of sale. This decouples sales history from the master labels library.
-- **Financial Status Workflow**: Orders now support a full lifecycle: **Pending ⏳**, **Active 🚀**, **Paid ✅**, **Dispatched 🚚**, and **Canceled ❌**.
-- **Logistical Decoupling**: Items in `labels.php` now remain 'In Warehouse' permanently. They serve as master templates that stay "in the library" even after being sold.
-- **Dispatch Desk 2.0**: The dispatch view now pulls data 100% from the **Orders Database**, ensuring historical accuracy (price/specs) even if the original label is deleted.
-- **Analytics Sync**: The "Ready to Dispatch" counter now smartly ignores `Canceled` and `Dispatched` orders to show actual physical backlog.
-- **Windows Path Fixes**: Resolved cross-database `ATTACH` bugs by implementing a PHP-level mapping engine for Windows/XAMPP compatibility.
+- **Audit Logs (Phase 16)**: Implemented complete system-wide tracking in `audit.sqlite` via `log_audit_event()`. Integrated seamlessly across `add_label`, `edit_label`, `delete_label`, and `orders_api`. Built `audit_logs.php` with a gorgeous JSON terminal-inspector capability.
+- **Deep Technical Sheet Hierarchy**: Moved the `Battery Status` selection field entirely out of basic intake and directly into the Deep Technical Sheet (Refurbished View). This prevents false data drops for strictly untested intakes.
+- **NULL Battery States**: Upgraded database saving logic to cleanly preserve `NULL` ('Pending/Unknown') for items that have not yet been evaluated, instead of forcing a 0 boolean state.
+- **Fluid iOS Optimizations**: Re-engineered core CSS using `100dvh`, `-webkit-overflow-scrolling`, viewport `cover`, and `.label-mockup` fluid widths (`80vw`), ensuring the app feels native and unbroken on Mobile Safari and iPhone notches.
 
 ---
 
 ### 🧪 Session Verification Case
-*   **Last Tested ID:** `ORD-000001` (Miguel Garcia - Verified "Dispatched" status correctly clears the Analytics backlog).
-*   **Hardware Snapshot:** Verified that editing a label in `labels.php` after a sale does **not** corrupt the historical record in `dispatch.php`.
-*   **Next Verification Step:** Open `analytics.php` and verify that "Ready to Dispatch" shows a non-zero count for "Active" and "Paid" orders.
+*   **Verification Case**: Open `hardware_view.php` for a fresh untested unit. Switch condition to **"Refurbished"**.
+*   **Success Metric**: Verify that the newly opened **Deep Technical Sheet** contains the **Battery Status** dropdown defaulting to `— Unknown / Pending —`.
 
 ### ⏭️ Next 3 Steps (Session Start)
-1.  **Phase 16: Audit Logs**: Implement `audit.sqlite` to track who changed an order status (e.g. from Paid to Dispatched) and when.
-2.  **Bulk Batching Tool**: Add a multi-select mode to the Warehouse Tracker for updating locations or descriptions for 20+ items at once.
-3.  **PDF/Print Manifests**: Generate a "Daily Dispatch Manifest" (PDF/HTML) for the shipping team listing all orders currently marked "Ready to Dispatch."
+1.  **Bulk Batching Tool (Phase 17)**: Add multi-select checkboxes to `labels.php` rows to create a "Batch Selection".
+2.  **Batch Status Updating**: Create an Action Strip payload to update Location/Status for multiple items at once (e.g., grading an entire palette).
+3.  **Audit Integration**: Ensure the new Bulk Batching tool sends accurate parallel records to `audit.sqlite`.

@@ -304,7 +304,11 @@ try {
     // Section removed per user request: Labels in labels.php should not be marked sold.
     // Sale data is archived in the Orders database.
 
-    // --- 7. RETURN SUCCESS ---
+    // --- 7. LOG THE AUDIT EVENT ---
+    $order_summary = "Purchase Order created for $company ($order_num_pad). Items: $total_qty, Total: $" . number_format($final_total, 2);
+    log_audit_event($pdo_audit, 'Order', $order_number, 'CREATED', $order_summary, null, $input);
+
+    // --- 8. RETURN SUCCESS ---
     send_json_response(true, [
         'order_number' => $order_num_pad,
         'file_name'    => $final_ots_name,

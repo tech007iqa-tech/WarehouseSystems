@@ -1,3 +1,17 @@
+## [2026-03-24] - System Audit Logs & iOS UX Overhaul
+### Added & Refactored
+- **Phase 16: Audit Logs**: Initialized `audit.sqlite` and integrated a global `log_audit_event()` function across all main API endpoints (`add_label`, `edit_label`, `delete_label`, `orders_api`).
+- **Audit Dashboard**: Created `audit_logs.php` to display chronological system changes with a premium "Terminal Inspector" feature for viewing raw JSON state snapshots.
+- **Battery Logic Overhaul**: Moved the 'Battery Status' dropdown out of standard intake and into the 'Refurbished' Deep Technical Sheet. Upgraded the Database layer to correctly handle `NULL` values when items are untested.
+- **iOS & Mobile Polish**: Switched CSS layouts to use `100dvh`, added `viewport-fit=cover` for iPhone notches, applied `-webkit-appearance: none` to strip Apple forms, added `-webkit-overflow-scrolling: touch` for buttery table scrolling, and implemented `80vw` scalable widths for the Live Mockup preview.
+
+## [2026-03-24] - Intelligent Suffix-based CPU Auto-fill
+### Added & Refactored
+- **CPU "Quick Specs" Catalog**: Expanded `assets/js/forms.js` with a secondary `cpuTechnicalSpecs` lookup catalog triggered by the `mainSpecsInput` field.
+- **Suffix-Based Auto-Fill**: Technicians can now type specific model suffixes (e.g., `8350U`, `1185G7`, `M1`) to instantly populate **Core Count** and **Clock Speed**, bypassing the standard Generation selector if preferred.
+- **Input Resilience**: Implemented case-insensitive matching and automatic stripping of common prefixes (`i5-`, `Ryzen 5 `, etc.) to ensure a match from the user's manual input.
+- **Expanded Hardware Support**: Added support for common Intel (6th-12th Gen), AMD Ryzen (3000-5000), and Apple M-series (M1-M3) specifications.
+
 ## [2026-03-20] - Snapshot Architecture & Financial Status Refactor
 ### Added & Refactored
 - **Snapshot Engine**: Implemented a stringified `specs_blob` in the `order_items` table. This captures every detail of a hardware unit at the exact second it is sold—preserving pricing and technical specs even if the master label is later updated or deleted.

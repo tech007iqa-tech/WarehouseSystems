@@ -128,22 +128,13 @@ $condition = $item[HW_FIELDS['DESCRIPTION']] ?? 'Untested';
 
         <div class="form-divider"></div>
 
-        <div class="form-row-mobile">
-            <div class="form-group">
-                <label for="<?= HW_FIELDS['BIOS_STATE'] ?>">BIOS Security</label>
-                <select id="<?= HW_FIELDS['BIOS_STATE'] ?>" name="<?= HW_FIELDS['BIOS_STATE'] ?>" class="select-modern">
-                    <option value="Unknown"  <?= ($item[HW_FIELDS['BIOS_STATE']] ?? '') === 'Unknown'  ? 'selected' : '' ?>>Unknown / Unset</option>
-                    <option value="Unlocked" <?= ($item[HW_FIELDS['BIOS_STATE']] ?? '') === 'Unlocked' ? 'selected' : '' ?>>Open / Unlocked</option>
-                    <option value="Locked"   <?= ($item[HW_FIELDS['BIOS_STATE']] ?? '') === 'Locked'   ? 'selected' : '' ?>>Password Locked</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="<?= HW_FIELDS['BATTERY'] ?>">Battery Status</label>
-                <select id="<?= HW_FIELDS['BATTERY'] ?>" name="<?= HW_FIELDS['BATTERY'] ?>" class="select-modern">
-                    <option value="1" <?= ($item[HW_FIELDS['BATTERY']] ?? 0) == 1 ? 'selected' : '' ?>>Included / Present</option>
-                    <option value="0" <?= ($item[HW_FIELDS['BATTERY']] ?? 0) == 0 ? 'selected' : '' ?>>Missing / N/A</option>
-                </select>
-            </div>
+        <div class="form-group">
+            <label for="<?= HW_FIELDS['BIOS_STATE'] ?>">BIOS Security</label>
+            <select id="<?= HW_FIELDS['BIOS_STATE'] ?>" name="<?= HW_FIELDS['BIOS_STATE'] ?>" class="select-modern">
+                <option value="Unknown"  <?= ($item[HW_FIELDS['BIOS_STATE']] ?? '') === 'Unknown'  ? 'selected' : '' ?>>Unknown / Unset</option>
+                <option value="Unlocked" <?= ($item[HW_FIELDS['BIOS_STATE']] ?? '') === 'Unlocked' ? 'selected' : '' ?>>Open / Unlocked</option>
+                <option value="Locked"   <?= ($item[HW_FIELDS['BIOS_STATE']] ?? '') === 'Locked'   ? 'selected' : '' ?>>Password Locked</option>
+            </select>
         </div>
 
         <div class="form-group">
@@ -178,12 +169,31 @@ $condition = $item[HW_FIELDS['DESCRIPTION']] ?? 'Untested';
 
         <div class="form-row-mobile" style="margin-bottom: 12px;">
             <div class="form-group">
+                <label for="<?= HW_FIELDS['BATTERY'] ?>">🔋 Battery Status</label>
+                <select id="<?= HW_FIELDS['BATTERY'] ?>" name="<?= HW_FIELDS['BATTERY'] ?>" class="select-modern">
+                    <option value="" <?= !isset($item[HW_FIELDS['BATTERY']]) ? 'selected' : '' ?>>— Unknown / Pending —</option>
+                    <option value="1" <?= (isset($item[HW_FIELDS['BATTERY']]) && $item[HW_FIELDS['BATTERY']] == 1) ? 'selected' : '' ?>>Included / Good</option>
+                    <option value="0" <?= (isset($item[HW_FIELDS['BATTERY']]) && $item[HW_FIELDS['BATTERY']] == '0') ? 'selected' : '' ?>>Missing / Dead</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="<?= HW_FIELDS['BATTERY_SPECS'] ?>">🔋 Health / Cycles</label>
                 <input type="text" id="<?= HW_FIELDS['BATTERY_SPECS'] ?>" name="<?= HW_FIELDS['BATTERY_SPECS'] ?>" value="<?= htmlspecialchars($item[HW_FIELDS['BATTERY_SPECS']] ?? '') ?>" placeholder="e.g. 85% Health / 120 Cycles">
             </div>
+        </div>
+
+        <div class="form-row-mobile" style="margin-bottom: 12px;">
             <div class="form-group">
                 <label for="<?= HW_FIELDS['WEBCAM'] ?>">📷 Webcam Specs</label>
                 <input type="text" id="<?= HW_FIELDS['WEBCAM'] ?>" name="<?= HW_FIELDS['WEBCAM'] ?>" value="<?= htmlspecialchars($item[HW_FIELDS['WEBCAM']] ?? '') ?>" placeholder="720p / 1080p / IR">
+            </div>
+            <div class="form-group">
+                <label for="<?= HW_FIELDS['BACKLIT_KB'] ?>">⌨️ Backlit Keyboard?</label>
+                <select name="<?= HW_FIELDS['BACKLIT_KB'] ?>" id="<?= HW_FIELDS['BACKLIT_KB'] ?>" class="select-modern">
+                    <option value="">— Unset —</option>
+                    <option value="Yes" <?= ($item[HW_FIELDS['BACKLIT_KB']] ?? '') === 'Yes' ? 'selected' : '' ?>>Yes, Illuminated</option>
+                    <option value="No"  <?= ($item[HW_FIELDS['BACKLIT_KB']] ?? '') === 'No'  ? 'selected' : '' ?>>No Backlight</option>
+                </select>
             </div>
         </div>
 
@@ -193,23 +203,14 @@ $condition = $item[HW_FIELDS['DESCRIPTION']] ?? 'Untested';
                 <input type="text" id="<?= HW_FIELDS['OS_VERSION'] ?>" name="<?= HW_FIELDS['OS_VERSION'] ?>" value="<?= htmlspecialchars($item[HW_FIELDS['OS_VERSION']] ?? '') ?>" placeholder="Win 11 Pro / macOS Sonoma">
             </div>
             <div class="form-group">
-                <label for="<?= HW_FIELDS['BACKLIT_KB'] ?>">⌨️ Backlit Keyboard?</label>
-                <select name="<?= HW_FIELDS['BACKLIT_KB'] ?>" id="<?= HW_FIELDS['BACKLIT_KB'] ?>" class="select-modern">
-                    <option value="">— Choose —</option>
-                    <option value="Yes" <?= ($item[HW_FIELDS['BACKLIT_KB']] ?? '') === 'Yes' ? 'selected' : '' ?>>Yes, Illuminated</option>
-                    <option value="No"  <?= ($item[HW_FIELDS['BACKLIT_KB']] ?? '') === 'No'  ? 'selected' : '' ?>>No Backlight</option>
+                <label for="<?= HW_FIELDS['COSMETIC_GRADE'] ?>">✨ Cosmetic Grading</label>
+                <select name="<?= HW_FIELDS['COSMETIC_GRADE'] ?>" id="<?= HW_FIELDS['COSMETIC_GRADE'] ?>" class="select-modern">
+                    <option value="">— Unset —</option>
+                    <option value="A" <?= ($item[HW_FIELDS['COSMETIC_GRADE']] ?? '') === 'A' ? 'selected' : '' ?>>🌟 Grade A (Mint/Like New)</option>
+                    <option value="B" <?= ($item[HW_FIELDS['COSMETIC_GRADE']] ?? '') === 'B' ? 'selected' : '' ?>>✅ Grade B (Minor Scratches)</option>
+                    <option value="C" <?= ($item[HW_FIELDS['COSMETIC_GRADE']] ?? '') === 'C' ? 'selected' : '' ?>>⚠️ Grade C (Heavy Wear/Dents)</option>
                 </select>
             </div>
-        </div>
-
-        <div class="form-group">
-            <label for="<?= HW_FIELDS['COSMETIC_GRADE'] ?>">✨ Cosmetic Grading</label>
-            <select name="<?= HW_FIELDS['COSMETIC_GRADE'] ?>" id="<?= HW_FIELDS['COSMETIC_GRADE'] ?>" class="select-modern">
-                <option value="">— Unset —</option>
-                <option value="A" <?= ($item[HW_FIELDS['COSMETIC_GRADE']] ?? '') === 'A' ? 'selected' : '' ?>>🌟 Grade A (Mint/Like New)</option>
-                <option value="B" <?= ($item[HW_FIELDS['COSMETIC_GRADE']] ?? '') === 'B' ? 'selected' : '' ?>>✅ Grade B (Minor Scratches)</option>
-                <option value="C" <?= ($item[HW_FIELDS['COSMETIC_GRADE']] ?? '') === 'C' ? 'selected' : '' ?>>⚠️ Grade C (Heavy Wear/Dents)</option>
-            </select>
         </div>
 
         <div class="form-divider"></div>

@@ -13,6 +13,7 @@ if (!is_dir($db_dir)) {
 $labels_db_path = $db_dir . 'labels.sqlite';
 $orders_db_path = $db_dir . 'orders.sqlite';
 $rolodex_db_path = $db_dir . 'rolodex.sqlite';
+$audit_db_path   = $db_dir . 'audit.sqlite';
 
 try {
     // 1. Labels Database
@@ -33,9 +34,17 @@ try {
     $pdo_rolodex->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo_rolodex->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
 
-    // 4. Schema Guard (Self-Healing)
+    // 4. Audit Database
+    $pdo_audit = new PDO("sqlite:" . $audit_db_path);
+    $pdo_audit->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo_audit->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+
+    // 5. Schema Guard (Self-Healing)
     require_once __DIR__ . '/schema_guard.php';
-    check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex);
+    check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex, $pdo_audit);
+
+    // 6. Global Audit Support
+    require_once __DIR__ . '/audit.php';
 
 } catch (PDOException $e) {
     // Return early if called from an API endpoint expecting JSON (Vibe Code standard)
