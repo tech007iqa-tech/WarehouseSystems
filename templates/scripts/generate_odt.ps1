@@ -72,19 +72,16 @@ try {
     $reader.Close()
     $stream.Close()
 
-    # --- SURGERY: Inject New Styles ---
-    # We inject specific styles to ensure the label matches our "One Label" layout requirements.
-    $PBStyle    = '<style:style style:name="PB" style:family="paragraph"><style:paragraph-properties fo:break-before="page"/></style:style>'
-    $TitleStyle = '<style:style style:name="P3" style:family="paragraph" style:parent-style-name="Standard"><style:paragraph-properties fo:text-align="center" fo:margin-bottom="0.05in"/><style:text-properties fo:font-size="20pt" fo:font-weight="bold"/></style:style>'
-    $SpecStyle  = '<style:style style:name="Standard" style:family="paragraph" style:class="text"><style:paragraph-properties fo:margin-top="0in" fo:margin-bottom="0.02in" fo:line-height="100%"/><style:text-properties fo:font-size="10pt"/></style:style>'
-    
-    $AllStyles = $PBStyle + $TitleStyle + $SpecStyle
+    # --- SURGERY: Inject Only the Missing PB (Page Break) Style ---
+    # The template already defines P3 (22pt title), P5 (11pt specs), and Standard correctly.
+    # We ONLY inject PB which is the only style the template does NOT have.
+    # Injecting P3/Standard here would create duplicates and LibreOffice ignores the second definition.
+    $PBStyle = '<style:style style:name="PB" style:family="paragraph"><style:paragraph-properties fo:break-before="page"/></style:style>'
 
     if ($MasterXML -match '<office:automatic-styles>') {
-        $MasterXML = $MasterXML -replace '<office:automatic-styles>', "<office:automatic-styles>$AllStyles"
+        $MasterXML = $MasterXML -replace '<office:automatic-styles>', "<office:automatic-styles>$PBStyle"
     } else {
-        # If block doesn't exist, create it after font-face-decls or before body
-        $MasterXML = $MasterXML -replace '</office:font-face-decls>', "</office:font-face-decls><office:automatic-styles>$AllStyles</office:automatic-styles>"
+        $MasterXML = $MasterXML -replace '</office:font-face-decls>', "</office:font-face-decls><office:automatic-styles>$PBStyle</office:automatic-styles>"
     }
 
     # --- SURGERY: Replace Internal Body ---
