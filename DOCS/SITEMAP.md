@@ -2,75 +2,69 @@
 
 ## 1. Directory Structure
 ```text
-/LabelAPP/
+/app/
 │
 ├── /assets/                # Static frontend assets
 │   ├── /css/
-│   │   └── style.css       # Global dark-theme stylesheet
+│   │   └── style.css       # Global light-theme stylesheet
 │   └── /js/
-│       ├── forms.js        # Logic for new_label/new_customer forms (Intelligent CPU Intake)
-│       ├── new_order.js    # Logic for the 4-step ordering cart
+│       ├── forms.js        # Logic for new_label form (Intelligent CPU Intake)
 │       ├── labels.js       # CRUD & Filtering for warehouse tracking
-│       ├── rolodex.js      # CRUD for customer list
 │       ├── actions.js      # Global Technical Action Bridge (Open/Launch/Reprint)
+│       ├── api.js          # Shared API utilities
+│       ├── hardware_mapping.js  # Field name constants (mirrors PHP)
 │       └── print_engine.js # Quantity & Layout Logic for Printer Direct
 │
 ├── /db/                    # SQLite Database Files
 │   ├── labels.sqlite       # Items & Inventory
-│   ├── orders.sqlite       # Purchase Orders
-│   └── rolodex.sqlite      # Customers & Leads
+│   └── audit.sqlite        # System audit trail
 │
 ├── /templates/             # Master files for PowerShell Injection
 │   ├── label_template.odt  # Master hardware label
-│   ├── order_template.ots  # Master purchase order sheet
+│   ├── label_template.zip  # Backup of template
 │   └── /scripts/           
-│       ├── generate_odt.ps1
-│       └── generate_ots.ps1
+│       └── generate_odt.ps1  # Label document generator
 │
 ├── /includes/              # Reusable PHP backend components
 │   ├── db.php              # PDO Shared Connections
 │   ├── header.php          # Sidebar Nav & HTML Head
 │   ├── footer.php          
+│   ├── functions.php       # Formatting & Sanitization
 │   ├── hardware_form.php   # Unified Intake/Edit Component
+│   ├── hardware_mapping.php # Field name constants (HW_FIELDS)
 │   ├── schema_guard.php    # Self-Healing Schema Logic
-│   └── functions.php       # Formatting & Sanitization
+│   ├── status_functions.php # System health monitoring
+│   └── audit.php           # Audit trail logging function
 │
 ├── /api/                   # API Endpoints (All return JSON)
-│   ├── add_label.php       
-│   ├── edit_label.php      
-│   ├── delete_label.php    
-│   ├── get_labels.php      # Search/Filter warehouse
-│   ├── search_item.php     # Quick Locate lookup
-│   ├── get_analytics.php   # Dashboard Metrics
-│   ├── check_file_exists.php # Bridge: Verify ODT exists
-│   ├── add_customer.php    
-│   ├── edit_customer.php   
-│   ├── delete_customer.php 
-│   ├── get_customer.php    
-│   ├── search_inventory.php # Search for cart items
-│   └── orders_api.php      # Process PO & OTS generation
+│   ├── add_label.php       # POST: Insert new hardware + generate label
+│   ├── edit_label.php      # POST: Update hardware record
+│   ├── delete_label.php    # POST: Remove hardware record
+│   ├── get_labels.php      # GET: Search/Filter warehouse
+│   ├── search_item.php     # GET: Quick Locate lookup
+│   ├── search_inventory.php # GET: Inventory search
+│   ├── reprint_label.php   # POST: Regenerate/Open ODT
+│   ├── check_file_exists.php # GET: Verify ODT exists on disk
+│   └── open_windows_file.php # POST: Launch file in Windows app
 │
-├── /exports/               # Generated .odt / .ots files
-│   ├── /labels/
-│   └── /orders/
+├── /exports/               # Generated .odt files
+│   └── /labels/            # Individual printer files
 │
-├── index.php               # Dashboard (Stats & Search)
-├── analytics.php           # Performance & Sales Reports
-├── labels.php              # Warehouse Table View
+├── index.php               # Landing Page (Quick Search & Stats)
+├── labels.php              # Warehouse Table View (main inventory)
 ├── new_label.php           # Add Item Form (CPU Intake)
-├── refurbished_view.php    # Technical Refurbishment Form
-├── orders.php              # PO List View
-├── order_view.php          # Detailed PO Card / Item List
-├── new_order.php           # Shopping Cart View
-├── rolodex.php             # CRM List View
-├── new_customer.php        # Add Customer Form
-├── customer_view.php       # Detailed card & PO history
-└── edit_customer.php       # Full-page edit form
+├── hardware_view.php       # Technical Sheet Editor
+├── refurbished_view.php    # Refurbishment Details Form
+├── print_label.php         # High-Quality 2" x 1" HTML Printing
+├── settings.php            # System Health & Backups
+├── init_db.php             # One-time DB schema setup
+└── 404.php                 # Error page
 ```
 
 ## 2. UI View Hierarchy
-- **Dashboard (`index.php`):** High-level metrics + **Quick Locate** barcode/ID lookup.
-- **Hardware (`labels.php`):** Filterable table with **Inline Editing** and **Deletion**.
-- **Orders (`orders.php`):** History of all sales with download links for OTS files.
-- **Rolodex (`rolodex.php`):** CRM list with **Inline Editing** for customer data.
-- **Customer Card (`customer_view.php`):** Profile overview, Shipping label, and specific PO history.
+- **Landing (`index.php`):** Quick Locate search + warehouse stat counter + quick actions.
+- **Inventory (`labels.php`):** Filterable table with **Inline Editing**, **Print**, **Open**, and **Delete**.
+- **New Label (`new_label.php`):** Hardware intake form with Intelligent CPU Auto-fill and Profile Cloning.
+- **Hardware View (`hardware_view.php`):** Deep technical editor with sidebar specs panel.
+- **Print Label (`print_label.php`):** Browser-native 2" x 1" thermal label output.
+- **Settings (`settings.php`):** Database health checks, backups, and system repair tools.

@@ -34,8 +34,8 @@ if (!empty($referer) && strpos($referer, '404.php') === false) {
             ⬅ Return to Last Page
         </a>
         
-        <a href="index.php" class="btn" style="padding: 15px 40px; font-size: 1.1rem; border-radius: 50px; background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main);">
-            📊 Dashboard
+        <a href="labels.php" class="btn" style="padding: 15px 40px; font-size: 1.1rem; border-radius: 50px; background: var(--bg-panel); border: 1px solid var(--border-color); color: var(--text-main);">
+            📦 Inventory
         </a>
     </div>
 

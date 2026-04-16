@@ -1,6 +1,0 @@
-# Next Session Focus: Phase 17 (Bulk Batching Tool)
-
-Here are the 3 specific steps to execute in the upcoming session:
-1. Multi-Select Checkboxes: Add UI checkboxes to the left of the `labels.php` rows and create a floating action strip that appears when items are selected.
-2. Batch API Endpoint: Create an `api/batch_update.php` endpoint that accepts an array of ITEM IDs and applies bulk status drops or location moves.
-3. Audit Log Expansion: Ensure the new batch endpoint securely records every single status/location change payload into `audit.sqlite` to maintain Phase 16 system integrity.

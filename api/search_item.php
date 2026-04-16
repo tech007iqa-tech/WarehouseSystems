@@ -57,32 +57,8 @@ try {
         throw new Exception('No matching hardware found.');
     }
 
-    // 3. Enrich the FIRST/PRIMARY result with order data (Dashboard experience)
-    $primary_item = $results[0];
-    $order_info = null;
-    
-    // Only fetch deep order info for the first result to keep it fast
-    if (($primary_item[$F['STATUS']] ?? '') === 'Sold' && ($primary_item['order_id'] ?? null)) {
-        $stmt_order = $pdo_orders->prepare("SELECT * FROM purchase_orders WHERE order_number = :num");
-        $stmt_order->execute([':num' => $primary_item['order_id']]);
-        $order = $stmt_order->fetch(PDO::FETCH_ASSOC);
-        if ($order) {
-            $stmt_cust = $pdo_rolodex->prepare("SELECT company_name, contact_person FROM customers WHERE customer_id = :cid");
-            $stmt_cust->execute([':cid' => $order['customer_id']]);
-            $customer = $stmt_cust->fetch(PDO::FETCH_ASSOC);
-            $order_info = [
-                'order_number'   => 'ORD-' . str_pad($order['order_number'], 6, '0', STR_PAD_LEFT),
-                'order_date'     => $order['order_date'],
-                'company_name'   => $customer['company_name']   ?? 'Unknown',
-                'contact_person' => $customer['contact_person'] ?? '',
-                'document_path'  => $order['document_path']     ?? null,
-            ];
-        }
-    }
-
     send_json_response(true, [
         'results'     => $results,
-        'order_info'  => $order_info, // Only for the top result
         'is_single'   => (count($results) === 1)
     ]);
 

@@ -1,23 +1,31 @@
-# 🚀 AI Future Upgrades & Potential Enhancements
+# 🚀 Future Upgrades & Potential Enhancements
 
 **File:** `DOCS/FUTURE_UPGRADES.md`
-**Purpose:** A brain-dump of brainstormed features, potential architectural upgrades, and UX enhancements that AI agents can use for inspiration when moving the IQA Metal project forward.
+**Purpose:** Brainstormed features and potential upgrades for the IQA Metal project.
 
 ---
 
-## 1. 🚚 Sales & Dispatch Workflow (Advanced)
-*Currently, "Sold" items are managed through status updates. A future upgrade could entail:*
-- **Dedicated Dispatch UI:** A separate page specifically for managing sold inventory waiting to be shipped.
-- **Automated Archive:** Automatically offload "Sold" items from the primary `labels.sqlite` view into an `archive.sqlite` or a locked state after a configurable number of days, keeping the main inventory view fast and clean.
-- **Integration with Orders:** When a `.ots` Purchase Order is generated, automatically prompt the user to transition the status of included items to "Sold" or "Reserved".
+## 1. 📦 Bulk Batching Tool
+- **Multi-Select Checkboxes**: Add checkboxes to `labels.php` rows for batch selection.
+- **Batch API Endpoint**: Create `api/batch_update.php` for bulk status/location changes.
+- **Audit Integration**: Ensure batch operations log individual entries to `audit.sqlite`.
 
-## 2. 📇 Advanced CRM & B2B Purchasing
-- **Customer Portals:** A lightweight read-only view where repeating B2B customers can view available inventory and request a formalized Order Form natively.
-- **Tiered Pricing Rules:** Automatic application of discounts on hardware based on the selected customer profile in `new_order.php`.
+## 2. 📊 Inventory Analytics
+- **Aging Tracker**: Highlight items sitting in warehouse > 30 days.
+- **Brand Distribution**: Visualize inventory breakdown by manufacturer.
+- **Condition Breakdown**: Chart of Untested vs. Refurbished vs. For Parts.
+
+## 3. 🔍 Advanced Search & Filtering
+- **Saved Filters**: Let users save frequently-used filter combinations.
+- **Barcode Scanning**: Integrate camera-based barcode reading for mobile intake.
+
+## 4. 📱 Progressive Web App (PWA)
+- **Offline Mode**: Cache recent inventory data for warehouse use without connectivity.
+- **Home Screen Install**: Enable "Add to Home Screen" for a native app feel.
 
 ---
 
 ### ✅ Completed / Integrated
-- **Thermal Printer Native Optimization:** (DONE: Phase 9) - Unified high-speed 2x1 HTML/CSS printing implemented.
-- **Offline / Zero-Storage Mode:** (DONE: Phase 9) - Browser-native printing bypasses file system storage for rapid warehouse use.
-- **Visual Identification Hooks:** (DONE: Phase 10) - Hardware ID anchors added to physical labels to prepare for future manual scanning.
+- **Thermal Printer Native Optimization:** Unified high-speed 2x1 HTML/CSS printing implemented.
+- **Offline / Zero-Storage Mode:** Browser-native printing bypasses file system storage for rapid warehouse use.
+- **Visual Identification Hooks:** Hardware ID anchors added to physical labels.

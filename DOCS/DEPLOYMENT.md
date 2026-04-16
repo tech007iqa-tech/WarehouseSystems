@@ -1,7 +1,7 @@
 # Local Environment Setup Guide (XAMPP)
 
 ## 1. Overview
-The IQA Metal Label & Inventory system is designed to run on a local network server. This guide explains how to set up the environment on a dedicated Windows machine using **XAMPP**.
+The IQA Metal Inventory & Label system is designed to run on a local network server. This guide explains how to set up the environment on a dedicated Windows machine using **XAMPP**.
 
 By following these steps, any device on your local warehouse network (phones, tablets, other laptops) will be able to access the app via a web browser.
 
@@ -35,7 +35,7 @@ SQLite does not require a background service, but PHP needs permission to talk t
 ---
 
 ## 4. Enabling PowerShell Script Execution
-Because this app generates `.odt` and `.ots` files natively using PowerShell (avoiding bloated PHP packages), the Windows server machine must allow scripts to run.
+Because this app generates `.odt` label files natively using PowerShell, the Windows server machine must allow scripts to run.
 
 1. On the Windows Server machine, click Start and search for **PowerShell**.
 2. Right-click it and select **Run as Administrator**.
@@ -54,31 +54,29 @@ Because this app generates `.odt` and `.ots` files natively using PowerShell (av
 
 ## 5. Deploying the Application Code
 1. Open the XAMPP web root directory: `C:\xampp\htdocs\`
-2. Create a new folder for the app: `C:\xampp\htdocs\LabelAPP\`
+2. Create a new folder for the app: `C:\xampp\htdocs\app\`
 3. Copy all the files from this repository into that folder.
-4. Ensure the following directories have **read/write permissions** for PHP (right-click → Properties → Security):
+4. Ensure the following directories have **read/write permissions** for PHP:
    - `/db/` — PHP must be able to create and write to the `.sqlite` files.
    - `/exports/labels/` — PHP writes generated `.odt` label files here.
-   - `/exports/orders/` — PHP writes generated `.ots` purchase order files here.
    - `/templates/` — PowerShell reads master template files from here.
-5. **CRITICAL — First Run:** The system is **Self-Healing**. Simply visit the dashboard in your browser (`http://localhost/LabelAPP/`), and the system will automatically create any missing SQLite databases and tables.
-    - If you ever need to manually force a schema update, you can still visit `http://localhost/LabelAPP/init_db.php`.
+5. **CRITICAL — First Run:** The system is **Self-Healing**. Simply visit the app in your browser (`http://localhost/app/`), and it will automatically create any missing databases and tables.
 
 ---
 
 ## 6. System Health & Backups
 The system includes a built-in **Self-Diagnosis Engine**.
-1. **Health Check**: Every time the Dashboard loads, it verifies the integrity of your data.
-2. **Settings Hub**: Navigate to **⚙️ System Settings** in the menu to create manual backups (stored in `/db/backups/`) or run deep database repairs.
+1. **Health Check**: The landing page verifies database integrity on load.
+2. **Settings Hub**: Navigate to **⚙️ System Settings** to create manual backups (stored in `/db/backups/`) or run deep database repairs.
 3. **Recovery**: If a database file is accidentally deleted, simply refresh the app to rebuild the empty structure instantly.
 
 ---
 
 ## 7. Accessing the App on the Local Network
 **On the Host Server Machine:**
-Open a web browser and go to: `http://localhost/LabelAPP/`
+Open a web browser and go to: `http://localhost/app/`
 
 **From Other Devices on the Warehouse Network:**
 1. On the host server machine, open Command Prompt (`cmd`) and type `ipconfig`.
 2. Look for the **IPv4 Address** (e.g., `192.168.1.50`).
-3. On any phone or laptop connected to the same WiFi/Network, open the browser and go to: `http://192.168.1.50/LabelAPP/`
+3. On any phone or laptop connected to the same WiFi/Network, open the browser and go to: `http://192.168.1.50/app/`

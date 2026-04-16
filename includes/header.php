@@ -92,33 +92,16 @@
 
         <nav style="flex: 1; overflow-y: auto;">
             <ul class="nav-menu">
-                <li><a href="index.php" class="nav-link" id="nav-dashboard">📊 Dashboard</a></li>
-                <li><a href="analytics.php" class="nav-link" id="nav-analytics">📈 Performance</a></li>
-                <br>
-
                 <!-- LABELS / INVENTORY -->
                 <li style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 12px; margin-bottom: 8px;">Warehouse</li>
                 <li><a href="labels.php" class="nav-link" id="nav-labels">📦 Inventory Tracker</a></li>
-                <li><a href="dispatch.php" class="nav-link" id="nav-dispatch">🚚 Dispatch Desk</a></li>
                 <li><a href="new_label.php" class="nav-link" id="nav-new-label">🏷️ Print Hardware Label</a></li>
-                <br>
-
-                <!-- ORDERS / PURCHASING -->
-                <li style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 12px; margin-bottom: 8px;">Sales & Forms</li>
-                <li><a href="orders.php" class="nav-link" id="nav-orders">🧾 Purchase Orders</a></li>
-                <li><a href="new_order.php" class="nav-link" id="nav-new-order">🛒 Create B2B Form</a></li>
-                <br>
-
-                <!-- CRM -->
-                <li style="color: var(--text-secondary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding-left: 12px; margin-bottom: 8px;">Rolodex</li>
-                <li><a href="rolodex.php" class="nav-link" id="nav-rolodex">📇 Customers & Leads</a></li>
-                <li><a href="new_customer.php" class="nav-link" id="nav-new-customer">➕ Add Contact</a></li>
+                <li><a href="../orders/" class="nav-link" id="nav-new-label">Customers</a></li>
             </ul>
         </nav>
 
         <!-- Bottom Settings / Logout push down -->
         <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-color);">
-            <a href="audit_logs.php" class="nav-link" id="nav-audit" style="font-size: 0.9rem;">🛡️ Audit Trails</a>
             <a href="settings.php" class="nav-link" id="nav-settings" style="font-size: 0.9rem;">⚙️ System Settings</a>
         </div>
     </aside>
