@@ -44,33 +44,23 @@ async function flashOpenLabel(id, brand, model, btn = null) {
     }
 
     try {
-        const safeName = (brand + model).replace(/[^a-zA-Z0-9]/g, '');
-        const fileName = `Label_${id}_${safeName}.odt`;
-        const filePath = `exports/labels/${fileName}`;
+        // We always regenerate to ensure edits are reflected.
+        const formData = new FormData();
+        formData.append('id', id);
+        formData.append('mode', 'open'); // This tells the API to launch it after generation
+        formData.append('qty', 1);
+        formData.append('print_a', 1);
+        formData.append('print_b', 1);
 
-        // Check if file exists
-        const checkRes = await fetch(`api/check_file_exists.php?path=${encodeURIComponent(filePath)}`);
-        const checkJson = await checkRes.json();
-
-        if (checkJson.success && checkJson.data.exists) {
-            // EXISTS: Direct Launch
-            await launchFile(filePath);
-        } else {
-            // NOT FOUND: Generate then open
-            const formData = new FormData();
-            formData.append('id', id);
-            formData.append('mode', 'open');
-            formData.append('qty', 1);
-            formData.append('print_a', 1);
-            formData.append('print_b', 1);
-
-            const genRes = await fetch('api/reprint_label.php', { method: 'POST', body: formData });
-            const genJson = await genRes.json();
-            if (!genJson.success) alert('Generation failed: ' + genJson.error);
+        const genRes = await fetch('api/reprint_label.php', { method: 'POST', body: formData });
+        const genJson = await genRes.json();
+        
+        if (!genJson.success) {
+            alert('Generation failed: ' + genJson.error);
         }
     } catch (err) {
         console.error(err);
-        alert('Action error: Could not open technical label.');
+        alert('Action error: Could not process technical label.');
     } finally {
         if (btn) {
             btn.disabled = false;

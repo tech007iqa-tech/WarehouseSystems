@@ -34,17 +34,12 @@ $color = $desc === 'For Parts' ? 'var(--btn-danger-bg)'
         <p>Detailed specifications for <strong><?= htmlspecialchars($item['brand'] . ' ' . $item['model'] . ' ' . ($item['series'] ?? '')) ?></strong></p>
     </div>
     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <button id="btnPrint" class="btn btn-success"
-                data-id="<?= (int)$item['id'] ?>"
-                style="padding:8px 18px;">
-            🖨️ Print
-        </button>
-        <button id="btnOpen" class="btn"
+        <button id="btnLaunchODT" class="btn"
                 data-id="<?= (int)$item['id'] ?>"
                 data-brand="<?= htmlspecialchars($item['brand']) ?>"
                 data-model="<?= htmlspecialchars($item['model']) ?>"
-                style="padding:8px 18px;">
-            📂 Open
+                style="padding:8px 18px; background: var(--text-main); color: white;">
+            🏷️ Launch Label
         </button>
         <button id="btnDelete" class="btn btn-danger"
                 data-id="<?= (int)$item['id'] ?>"
@@ -185,18 +180,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // ── PRINT ───────────────────────────────────────────────────────────────
-    document.getElementById('btnPrint').addEventListener('click', () => {
-        const id = document.getElementById('btnPrint').dataset.id;
-        if (window.openPrintConfig) {
-            window.openPrintConfig(id);
-        } else {
-            window.open('print_label.php?id=' + id, '_blank');
-        }
-    });
-
-    // ── OPEN (Flash Launch ODT in LibreOffice) ───────────────────────────────
-    document.getElementById('btnOpen').addEventListener('click', async function() {
+    // ── LAUNCH ODT (Always Regenerate & Open) ───────────────────────────────
+    document.getElementById('btnLaunchODT').addEventListener('click', async function() {
         const btn   = this;
         const id    = btn.dataset.id;
         const brand = btn.dataset.brand;

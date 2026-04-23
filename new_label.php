@@ -60,7 +60,7 @@ try {
             <!-- PRIMARY ACTIONS -->
             <div style="display:flex; flex-direction: column; gap:12px; width: 100%; max-width: 320px;">
                 <button id="btnQuickPrint" class="btn btn-success btn-large" style="gap: 10px; box-shadow: 0 10px 20px rgba(140, 198, 63, 0.3);">
-                    🖨️ Quick Print (1 Copy)
+                    🏷️ Launch Label
                 </button>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">

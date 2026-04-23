@@ -18,8 +18,7 @@ const CONFIG = {
         GET_LABELS: 'api/get_labels.php',
         SEARCH_ITEM: 'api/search_item.php',
         EDIT_LABEL: 'api/edit_label.php',
-        DELETE_LABEL: 'api/delete_label.php',
-        PRINT_LABEL: 'print_label.php'
+        DELETE_LABEL: 'api/delete_label.php'
     }
 };
 
@@ -163,16 +162,23 @@ function buildRow(item) {
     tr.querySelector('.tpl-added').textContent = fmtDate(item.created_at);
 
     // Buttons
-    tr.querySelector('.reprint-btn').dataset.id = item.id;
-    const openBtn = tr.querySelector('.open-label-btn');
-    openBtn.dataset.id = item.id;
-    openBtn.dataset.brand = brand;
-    openBtn.dataset.model = model;
+    const launchBtn = tr.querySelector('.launch-odt-btn');
+    if (launchBtn) {
+        launchBtn.dataset.id = item.id;
+        launchBtn.dataset.brand = brand;
+        launchBtn.dataset.model = model;
+    } else {
+        console.warn("Could not find .launch-odt-btn in template row", item.id);
+    }
     
-    tr.querySelector('.edit-btn').dataset.id = item.id;
+    const editBtn = tr.querySelector('.edit-btn');
+    if (editBtn) editBtn.dataset.id = item.id;
+
     const delBtn = tr.querySelector('.delete-btn');
-    delBtn.dataset.id = item.id;
-    delBtn.dataset.label = `${brand} ${model}`;
+    if (delBtn) {
+        delBtn.dataset.id = item.id;
+        delBtn.dataset.label = `${brand} ${model}`;
+    }
 
     return tr;
 }
@@ -194,9 +200,7 @@ DOM.tbody.addEventListener('click', (e) => {
         onEditClick(id, tr);
     } else if (btn.classList.contains('delete-btn')) {
         onDeleteClick(id, btn.dataset.label);
-    } else if (btn.classList.contains('reprint-btn')) {
-        onReprintClick(id);
-    } else if (btn.classList.contains('open-label-btn')) {
+    } else if (btn.classList.contains('launch-odt-btn')) {
         onOpenClick(btn);
     } else if (btn.classList.contains('save-edit-btn')) {
         saveEdit(tr, id);
@@ -362,7 +366,11 @@ async function onDeleteClick(id, label) {
 // ─── REPRINT & OPEN ──────────────────────────────────────────────────────────
 
 function onReprintClick(id) {
-    window.open(`${CONFIG.API_ENDPOINTS.PRINT_LABEL}?id=${id}`, '_blank');
+    if (window.openPrintConfig) {
+        window.openPrintConfig(id);
+    } else {
+        alert('Print engine not loaded.');
+    }
 }
 
 async function onOpenClick(btn) {

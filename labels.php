@@ -112,8 +112,7 @@ try {
         <td data-label="Added" class="tpl-added text-xs text-secondary">DATE</td>
         <td class="whitespace-nowrap">
             <div class="action-strip">
-                <button class="btn reprint-btn" data-id="" title="Reprint Label">🖨️ Print</button>
-                <button class="btn open-label-btn" data-id="" data-brand="" data-model="" title="Open Folder/File">📂 Open</button>
+                <button class="btn launch-odt-btn" data-id="" data-brand="" data-model="" title="Generate & Open ODT Label" style="background: var(--text-main); color: white;">🏷️ Label</button>
                 <button class="btn edit-btn" data-id="">✏️ Edit</button>
                 <button class="btn btn-danger delete-btn" data-id="" data-label="">🗑 Del</button>
             </div>

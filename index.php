@@ -15,53 +15,58 @@ try {
 }
 ?>
 
-<div class="panel" style="margin-bottom: 30px;">
-    <h1 style="font-size: 1.5rem; margin-bottom: 5px;">Worker Dashboard</h1>
-    <p style="color: var(--text-secondary); font-size: 0.9rem;">Quick tools for inventory intake and location tracking.</p>
+<div class="panel" style="margin-bottom: 30px; text-align: center; background: transparent; border: none; box-shadow: none;">
+    <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: var(--text-main);">Warehouse Control</h1>
+    <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Streamlined management for hardware inventory and professional label generation.</p>
 </div>
 
-<!-- PHASE 1: ACTION TOOLS (PRIMARY) -->
-<div class="action-grid" style="margin-bottom: 25px;">
-    <!-- Search Widget -->
-    <div class="panel" style="border-left: 5px solid var(--accent-color);">
-        <h2 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.3rem;">🔍</span> Quick Locate
-        </h2>
-        <p style="margin-bottom: 15px; font-size: 0.85rem; color: var(--text-secondary);">Find a laptop's location by ID or Brand.</p>
-        <form id="quickSearchForm" class="flex-between">
-            <input type="text" id="quickSearchId" placeholder="ID, Brand, Model..." required style="flex: 1; margin-right: 10px;">
-            <button type="submit" class="btn btn-primary" style="padding: 0 25px;">Find</button>
-        </form>
-        <div id="quickSearchResult" style="margin-top: 15px;"></div>
-    </div>
+<!-- MAIN NAVIGATION GRID -->
+<div class="action-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 40px; max-width: 1000px; margin-left: auto; margin-right: auto;">
     
-    <!-- Action Widget -->
-    <div class="panel" style="border-left: 5px solid var(--text-main);">
-        <h2 style="font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 1.3rem;">⚡</span> Quick Actions
-        </h2>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-            <a href="new_label.php" class="btn btn-success" style="flex-direction: column; height: auto; padding: 15px; font-size: 0.85rem;">
-                <span style="font-size: 1.5rem; margin-bottom: 5px;">🏷️</span>
-                <span>New Label</span>
-            </a>
-            <a href="labels.php" class="btn btn-primary" style="flex-direction: column; height: auto; padding: 15px; font-size: 0.85rem; background: var(--text-main);">
-                <span style="font-size: 1.5rem; margin-bottom: 5px;">📦</span>
-                <span>View Inventory</span>
-            </a>
+    <!-- 1. INVENTORY TRACKER -->
+    <a href="labels.php" class="panel hover-scale" style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; border-top: 6px solid var(--text-main); transition: transform 0.2s, box-shadow 0.2s;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">📦</div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 10px;">Inventory Tracker</h2>
+        <p style="color: var(--text-secondary); text-align: center; font-size: 0.95rem;">Manage, search, and edit all hardware currently in the warehouse.</p>
+        <div style="margin-top: 20px; background: var(--text-main); color: white; padding: 8px 20px; border-radius: 30px; font-weight: 700; font-size: 0.85rem;">
+            <?= $total_inventory ?> Units Active
         </div>
-    </div>
+    </a>
+
+    <!-- 2. PRINT HARDWARE LABEL -->
+    <a href="new_label.php" class="panel hover-scale" style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; border-top: 6px solid var(--accent-color); transition: transform 0.2s, box-shadow 0.2s;">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🏷️</div>
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 10px;">Print Hardware Label</h2>
+        <p style="color: var(--text-secondary); text-align: center; font-size: 0.95rem;">Rapid intake and professional .odt thermal label generation.</p>
+        <div style="margin-top: 20px; background: var(--accent-color); color: white; padding: 8px 20px; border-radius: 30px; font-weight: 700; font-size: 0.85rem;">
+            Generate Label
+        </div>
+    </a>
 </div>
 
-<!-- PHASE 2: SYSTEM STATS -->
-<div class="stat-grid" style="margin-bottom: 30px;">
-    <!-- Hardware -->
-    <div class="panel text-center" style="display: flex; flex-direction: column; justify-content: center; padding: 15px;">
-        <span style="font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: var(--text-secondary);">Warehouse</span>
-        <p style="font-size: 1.8rem; font-weight: 800; margin: 5px 0;"><?= $total_inventory ?></p>
-        <a href="labels.php" style="font-size: 0.75rem; font-weight: 700; color: var(--accent-color);">View All ➔</a>
+<!-- QUICK LOCATE (MINIMAL) -->
+<div class="panel" style="max-width: 1000px; margin: 0 auto; border-radius: 20px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
+        <div>
+            <h3 style="font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.3rem;">🔍</span> Quick Locate
+            </h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Find a device's physical location instantly.</p>
+        </div>
+        <form id="quickSearchForm" style="display: flex; gap: 10px; flex: 1; max-width: 500px;">
+            <input type="text" id="quickSearchId" placeholder="Enter ID, Brand, or Model..." required style="flex: 1; height: 48px; border-radius: 12px;">
+            <button type="submit" class="btn btn-primary" style="padding: 0 25px; height: 48px; border-radius: 12px; font-weight: 700;">Find</button>
+        </form>
     </div>
+    <div id="quickSearchResult" style="margin-top: 20px;"></div>
 </div>
+
+<style>
+    .hover-scale:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+    }
+</style>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -71,7 +76,6 @@ try {
 
         async function performSearch() {
             const query = quickInput.value.trim();
-
             if (!query) {
                 resultDiv.innerHTML = '';
                 return;
@@ -88,63 +92,37 @@ try {
                     return;
                 }
 
-                const results    = json.data.results;
-                const isSingle   = json.data.is_single;
-
+                const results = json.data.results;
                 let html = '';
 
                 results.forEach((item, index) => {
-                    const statusColor = item.status === 'Sold'    ? 'var(--btn-danger-bg)'
-                                      : item.status === 'Pending' ? '#f39c12'
-                                      : 'var(--btn-success-bg)';
-
-                    const condColor   = item.description === 'For Parts'    ? 'var(--btn-danger-bg)'
-                                      : item.description === 'Refurbished'  ? 'var(--btn-success-bg)'
-                                      : '#f39c12';
-
                     html += `
-                        <div style="background:var(--bg-page); border:1px solid var(--border-color); border-radius:var(--border-radius); padding:14px 16px; margin-bottom:10px; transition: all 0.2s; ${index > 0 ? 'opacity:0.7; transform:scale(0.98);' : ''}">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                <span style="font-weight:bold;font-size:${index === 0 ? '1.1rem' : '1rem'};color:var(--accent-color);">
-                                    #${String(item.id).padStart(5,'0')} — ${item.brand} ${item.model} ${item.series ?? ''}
-                                </span>
-                                <span style="background:${statusColor};color:#fff;padding:2px 8px;border-radius:4px;font-size:0.75rem;font-weight:bold;text-transform:uppercase;">
-                                    ${item.status}
-                                </span>
+                        <div style="background:var(--bg-page); border:1px solid var(--border-color); border-radius:12px; padding:15px; margin-bottom:10px; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 800; color: var(--text-main);">#${String(item.id).padStart(5,'0')} — ${item.brand} ${item.model}</div>
+                                <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                    📍 <strong>${item.warehouse_location ?? 'Unassigned'}</strong> | 🧠 ${item.cpu_gen ?? '—'}
+                                </div>
                             </div>
-                            <div style="display:flex;gap:15px;flex-wrap:wrap;font-size:0.85rem;color:var(--text-secondary); margin-bottom:12px;">
-                                <span title="CPU">🧠 ${item.cpu_gen ?? '—'}</span>
-                                <span title="RAM/Storage">💾 ${item.ram ?? 'No RAM'} / ${item.storage ?? 'No Storage'}</span>
-                                <span title="Location">📍 <strong style="color:var(--text-main);">${item.warehouse_location ?? 'Unassigned'}</strong></span>
-                                <span style="background:${condColor};color:#fff;padding:1px 6px;border-radius:3px;font-size:0.75rem;font-weight:bold;">${item.description ?? '—'}</span>
-                            </div>
-
-                            <div class="action-strip" style="justify-content: flex-start; margin-bottom: 10px;">
-                                <button onclick="window.openPrintConfig(${item.id})" class="btn" title="Print/Config Label">🖨️ Print</button>
-                                <button onclick="flashOpenLabel(${item.id}, '${item.brand}', '${item.model}', this)" class="btn" title="Open Label">📂 Open</button>
-                                <a href="hardware_view.php?id=${item.id}" class="btn">✏️ Edit</a>
+                            <div style="display: flex; gap: 8px;">
+                                <a href="hardware_view.php?id=${item.id}" class="btn" style="padding: 5px 15px; font-size: 0.8rem;">View Sheet</a>
+                                <button onclick="flashOpenLabel(${item.id}, '${item.brand}', '${item.model}', this)" class="btn" style="padding: 5px 15px; font-size: 0.8rem; background: var(--text-main); color: white;">📂 Open ODT</button>
                             </div>
                         </div>`;
                 });
 
-                if (!isSingle) {
-                    html = `<div style="margin-bottom:10px;font-size:0.8rem;color:var(--text-secondary);font-style:italic;">Top ${results.length} results matching your search:</div>` + html;
-                }
-
                 resultDiv.innerHTML = html;
 
             } catch (err) {
-                resultDiv.innerHTML = '<span style="color:var(--btn-danger-bg); font-size:0.85rem;">⚠ Network error. Check server connection.</span>';
+                resultDiv.innerHTML = '<span style="color:var(--btn-danger-bg); font-size:0.85rem;">⚠ Network error.</span>';
             }
         }
 
-        // Live search on input
         quickInput.addEventListener('input', () => {
             clearTimeout(searchTimer);
             searchTimer = setTimeout(performSearch, 300);
         });
 
-        // Submit also triggers search immediately
         document.getElementById('quickSearchForm').addEventListener('submit', (e) => {
             e.preventDefault();
             clearTimeout(searchTimer);
