@@ -41,3 +41,17 @@ This map outlines the dual-module structure of the IQA Warehouse Systems.
     - `database.php`: Cross-DB PDO Singleton.
     - `auth.php`: Role-based security.
 - `assets/db/`: SQLite databases (`customers`, `orders`, `users`, `warehouse`).
+
+---
+
+## 📣 Module: Marketing (`/app/marketing/`)
+*Focus: Lead generation, campaign tracking, and outreach automation.*
+
+- `index.php`: Module Router & Dashboard.
+- `config.php`: Local environment settings.
+- `modules/`:
+    - `leads/`: Prospect tracking and status management.
+    - `campaigns/`: Outreach coordination.
+- `includes/`: Shared UI components (header, footer).
+- `data/`: SQLite database and schemas.
+- `docs/`: Technical roadmap and development guidelines.

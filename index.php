@@ -166,6 +166,7 @@
 
         .badge-labels { background: rgba(140, 198, 63, 0.1); color: var(--accent-green); border: 1px solid rgba(140, 198, 63, 0.2); }
         .badge-orders { background: rgba(0, 168, 255, 0.1); color: var(--accent-blue); border: 1px solid rgba(0, 168, 255, 0.2); }
+        .badge-marketing { background: rgba(191, 0, 255, 0.1); color: #bf00ff; border: 1px solid rgba(191, 0, 255, 0.2); }
 
         .footer-note {
             margin-top: 40px;
@@ -230,6 +231,14 @@
             <h2>Order Manager</h2>
             <p>Comprehensive CRM, batch fulfillment, and customer registry with advanced warehouse location tracking.</p>
             <div class="badge badge-orders">Module Active</div>
+        </a>
+
+        <!-- MARKETING MODULE -->
+        <a href="marketing/index.php" class="module-card">
+            <div class="icon-box">📣</div>
+            <h2>Marketing Hub</h2>
+            <p>Lead generation, campaign tracking, and outreach automation for B2B expansion.</p>
+            <div class="badge badge-marketing">Module Initialized</div>
         </a>
     </main>
 
