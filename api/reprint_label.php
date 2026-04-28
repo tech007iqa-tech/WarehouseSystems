@@ -50,48 +50,34 @@ try {
 
     $xml_inner = '';
     for ($i = 0; $i < $qty; $i++) {
-
-        $is_last_copy = ($i === $qty - 1);
+        $is_first_copy = ($i === 0);
 
         // ── PAGE A: Branding / Title Label ───────────────────────────────────
         if ($show_a) {
-            // Line 1: Brand + Model + Series (large, centered, bold)
-            $xml_inner .= '<text:p text:style-name="P3">' . $brand . ' ' . $model . ($series ? ' ' . $series : '') . '</text:p>';
-            // Line 2: CPU Model name (acts as a subtitle on the physical label)
+            // Apply page break only if it's not the very first page of the document
+            $p3_style = $is_first_copy ? 'P3' : 'P3B';
+            
+            // Line 1: Brand + Model + Series
+            $xml_inner .= '<text:p text:style-name="' . $p3_style . '">' . $brand . ' ' . $model . ($series ? ' ' . $series : '') . '</text:p>';
+            
+            // Line 2: CPU Model name
             if ($cpu_specs) {
                 $xml_inner .= '<text:p text:style-name="P3">' . $cpu_specs . '</text:p>';
-            }
-
-            // Always add a page break after Page A (whether Page B follows or next copy)
-            if ($show_b || !$is_last_copy) {
-                $xml_inner .= '<text:p text:style-name="PB"></text:p>';
             }
         }
 
         // ── PAGE B: Technical Specs Label ────────────────────────────────────
         if ($show_b) {
-            $serial = htmlspecialchars($item[$F['SERIAL_NUMBER']] ?? 'N/A', ENT_XML1, 'UTF-8');
-            $status = htmlspecialchars($item[$F['STATUS']] ?? 'In Warehouse', ENT_XML1, 'UTF-8');
+            // If Page A was shown, or if this is copy 2+, we need a break
+            $p5_style = ($show_a || !$is_first_copy) ? 'P5B' : 'P5';
 
-            $xml_inner .= '<text:p text:style-name="P5">Technical Specifications (' . $cpu_gen_display . ')</text:p>';
-            $xml_inner .= '<text:p text:style-name="P5">CPU: ' . $cpu_spec_line . '</text:p>';
-            $xml_inner .= '<text:p text:style-name="P5">RAM: ' . ($ram ?: 'None') . ' | Storage: ' . ($storage ?: 'None') . '</text:p>';
-            $xml_inner .= '<text:p text:style-name="P5">Battery: ' . $battery . ' | BIOS: ' . $bios_state . '</text:p>';
-            $xml_inner .= '<text:p text:style-name="P5">Loc: ' . $warehouse_location . ' | Cond: ' . $description . '</text:p>';
-            $xml_inner .= '<text:p text:style-name="P5">S/N: ' . $serial . ' | Status: ' . $status . '</text:p>';
+            $xml_inner .= '<text:p text:style-name="' . $p5_style . '">CPU: ' . $cpu_spec_line . ' (' . $cpu_gen_display . ')</text:p>';
+            $xml_inner .= '<text:p text:style-name="P5">RAM: ' . ($ram ?: 'None') . ' | Storage: ' . ($storage ?: 'None') . ' | Battery: ' . $battery . '</text:p>';
 
             if ($item[$F['DESCRIPTION']] === 'Refurbished') {
                 $gpu   = htmlspecialchars($item[$F['GPU']]           ?? 'Integrated', ENT_XML1, 'UTF-8');
-                $res   = htmlspecialchars($item[$F['SCREEN_RES']]    ?? '—',         ENT_XML1, 'UTF-8');
                 $os    = htmlspecialchars($item[$F['OS_VERSION']]    ?? '—',         ENT_XML1, 'UTF-8');
-                $grade = htmlspecialchars($item[$F['COSMETIC_GRADE']]?? '—',         ENT_XML1, 'UTF-8');
-                $xml_inner .= '<text:p text:style-name="P5">GPU: ' . $gpu . ' | Res: ' . $res . '</text:p>';
-                $xml_inner .= '<text:p text:style-name="P5">OS: ' . $os . ' | Cosmetic: Grade ' . $grade . '</text:p>';
-            }
-
-            // Page break before the next copy (not after the very last page)
-            if (!$is_last_copy) {
-                $xml_inner .= '<text:p text:style-name="PB"></text:p>';
+                $xml_inner .= '<text:p text:style-name="P5">GPU: ' . $gpu . ' | OS: ' . $os . ' | BIOS: ' . $bios_state . '</text:p>';
             }
         }
     }

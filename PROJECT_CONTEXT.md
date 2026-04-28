@@ -13,7 +13,10 @@
 - **Database:** SQLite3 using PDO (`includes/db.php`). Two `.sqlite` files (labels, audit).
 - **File Generation:** Native PowerShell "Structural Surgery" injecting content into Master Templates.
 - **Printing:**
-  - **Labels (.odt):** High-speed Browser-Native printing via `print_label.php` (Zero-storage/HTML-based).
+  - **Labels (.odt):** High-fidelity thermal labels generated via PowerShell "Structural Surgery". 
+  - **Dual-Label approach:**
+    - **Label A**: Branding (Brand, Model, Series, CPU).
+    - **Label B**: Technical Specs (Consolidated 3-line layout: CPU, RAM/Storage/Battery, and GPU/OS/BIOS).
   - **Windows Launch:** Direct file opening via `api/open_windows_file.php`.
 
 ---
@@ -80,9 +83,7 @@
 ├── index.php               ← Landing (Search & Stats)
 ├── labels.php              ← Warehouse Tracker (Print, Open, Edit)
 ├── new_label.php           ← Rapid Intake Form
-├── hardware_view.php       ← Technical Sheet Editor
-├── print_label.php         ← 2" x 1" HTML Printing
-└── settings.php            ← System Health & Backups
+└── hardware_view.php       ← Technical Sheet Editor
 ```
 
 ---
@@ -92,4 +93,5 @@
 - **Accent Color:** Safety Green (`#8cc63f`).
 - **Mobile First:** iPhone/Safari optimized via CSS Checkbox Hack (sidebar) and 48px touch targets.
 - **Interactivity:** All forms use `fetch()` APIs; no full-page reloads.
-- **Hybrid Printing:** Browser Direct (instant 2"x1" labels) + Windows Launch (persistent .odt files).
+- **Label Strategy:** Dual-label system (Branding + Consolidated Technical Specs).
+- **Automation:** Native PowerShell engine for precise .odt generation on Windows hosts.

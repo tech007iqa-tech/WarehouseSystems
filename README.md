@@ -5,7 +5,7 @@ This application is a local-network warehouse inventory tracker and hardware lab
 
 At its core, the app does two things:
 1. **Inventory Tracking:** Tracks hardware units (Laptops, Gaming Consoles) in the warehouse with precise location tracking, condition grading, and full technical specs.
-2. **Label Printing:** Generates `.odt` printable physical labels for individual hardware units via PowerShell template injection or browser-native 2" x 1" thermal output.
+2. **Label Printing:** Generates high-fidelity `.odt` printable physical labels for individual hardware units via PowerShell template injection, optimized for thermal printers.
 
 ---
 

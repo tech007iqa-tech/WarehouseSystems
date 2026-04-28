@@ -64,12 +64,13 @@ The app avoids heavy PHP frameworks or Composer bundles, using a native **"Struc
 
 ### The Generation Ecosystem:
 1. **Master Template**: A clean ODF file (`templates/label_template.odt`) serves as the structural backbone.
-2. **Structural XML Surgery**: The PowerShell engine (`templates/scripts/generate_odt.ps1`) extracts the original XML from the template and uses **Regex grafting** to inject dynamic data into the `<office:text>` container, preserving 100% of the original metadata, font declarations, and namespaces.
+2. **Structural XML Surgery**: The PowerShell engine (`templates/scripts/generate_odt.ps1`) extracts the original XML from the template and uses **Regex grafting** to inject dynamic data into the `<office:text>` container. It utilizes custom inheriting styles (e.g., `P5B` for Specs with Page Breaks) to ensure precise top-alignment on labels without empty-paragraph artifacts.
 3. **ODF Compliance**: The engine surgically removes `Configurations2/` and `manifest.rdf` to prevent LibreOffice warnings, then rebuilds `manifest.xml` for strict ODF 1.2 ISO compliance.
 
-### Hybrid Printing:
-- **Browser Direct:** Instant, zero-file labels for rapid warehouse use. Strictly **2" x 1"** dimensions via margin-less CSS. Optimized for **1-PDF-file, 2-page** output (Label A: Branding + Label B: Specs).
-- **Windows Launch:** Precise, persistent `.odt` document generation via the Windows application bridge.
+### Label Strategy:
+- **Consolidated Layout:** Technical specifications are grouped into a dense 3-line layout (CPU/Gen, RAM/Storage/Battery, and GPU/OS/BIOS) at 8.5pt font size.
+- **Dual-Phase Output:** Each print generates two pages: a high-visibility Branding label and a technical Specification label.
+- **Persistent Documents:** All generated labels are stored in `exports/labels/` for audit trail compliance.
 
 ---
 

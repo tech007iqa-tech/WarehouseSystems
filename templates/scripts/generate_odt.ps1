@@ -76,12 +76,16 @@ try {
     # The template already defines P3 (22pt title), P5 (11pt specs), and Standard correctly.
     # We ONLY inject PB which is the only style the template does NOT have.
     # Injecting P3/Standard here would create duplicates and LibreOffice ignores the second definition.
-    $PBStyle = '<style:style style:name="PB" style:family="paragraph"><style:paragraph-properties fo:break-before="page"/></style:style>'
+    $PBStyles = @(
+        '<style:style style:name="PB" style:family="paragraph"><style:paragraph-properties fo:break-before="page"/></style:style>',
+        '<style:style style:name="P3B" style:family="paragraph" style:parent-style-name="P3"><style:paragraph-properties fo:break-before="page"/><style:text-properties fo:font-size="22pt" fo:font-weight="bold"/></style:style>',
+        '<style:style style:name="P5B" style:family="paragraph" style:parent-style-name="P5"><style:paragraph-properties fo:break-before="page"/><style:text-properties fo:font-size="8.5pt"/></style:style>'
+    ) -join ""
 
     if ($MasterXML -match '<office:automatic-styles>') {
-        $MasterXML = $MasterXML -replace '<office:automatic-styles>', "<office:automatic-styles>$PBStyle"
+        $MasterXML = $MasterXML -replace '<office:automatic-styles>', "<office:automatic-styles>$PBStyles"
     } else {
-        $MasterXML = $MasterXML -replace '</office:font-face-decls>', "</office:font-face-decls><office:automatic-styles>$PBStyle</office:automatic-styles>"
+        $MasterXML = $MasterXML -replace '</office:font-face-decls>', "</office:font-face-decls><office:automatic-styles>$PBStyles</office:automatic-styles>"
     }
 
     # --- SURGERY: Replace Internal Body ---

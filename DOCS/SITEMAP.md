@@ -11,7 +11,6 @@
 │       ├── forms.js        # Logic for new_label form (Intelligent CPU Intake)
 │       ├── labels.js       # CRUD & Filtering for warehouse tracking
 │       ├── actions.js      # Global Technical Action Bridge (Open/Launch/Reprint)
-│       ├── api.js          # Shared API utilities
 │       ├── hardware_mapping.js  # Field name constants (mirrors PHP)
 │       └── print_engine.js # Quantity & Layout Logic for Printer Direct
 │
@@ -21,7 +20,6 @@
 │
 ├── /templates/             # Master files for PowerShell Injection
 │   ├── label_template.odt  # Master hardware label
-│   ├── label_template.zip  # Backup of template
 │   └── /scripts/           
 │       └── generate_odt.ps1  # Label document generator
 │
@@ -33,7 +31,6 @@
 │   ├── hardware_form.php   # Unified Intake/Edit Component
 │   ├── hardware_mapping.php # Field name constants (HW_FIELDS)
 │   ├── schema_guard.php    # Self-Healing Schema Logic
-│   ├── status_functions.php # System health monitoring
 │   └── audit.php           # Audit trail logging function
 │
 ├── /api/                   # API Endpoints (All return JSON)
@@ -42,7 +39,6 @@
 │   ├── delete_label.php    # POST: Remove hardware record
 │   ├── get_labels.php      # GET: Search/Filter warehouse
 │   ├── search_item.php     # GET: Quick Locate lookup
-│   ├── search_inventory.php # GET: Inventory search
 │   ├── reprint_label.php   # POST: Regenerate/Open ODT
 │   ├── check_file_exists.php # GET: Verify ODT exists on disk
 │   └── open_windows_file.php # POST: Launch file in Windows app
@@ -54,10 +50,7 @@
 ├── labels.php              # Warehouse Table View (main inventory)
 ├── new_label.php           # Add Item Form (CPU Intake)
 ├── hardware_view.php       # Technical Sheet Editor
-├── refurbished_view.php    # Refurbishment Details Form
 ├── print_label.php         # High-Quality 2" x 1" HTML Printing
-├── settings.php            # System Health & Backups
-├── init_db.php             # One-time DB schema setup
 └── 404.php                 # Error page
 ```
 
@@ -67,4 +60,3 @@
 - **New Label (`new_label.php`):** Hardware intake form with Intelligent CPU Auto-fill and Profile Cloning.
 - **Hardware View (`hardware_view.php`):** Deep technical editor with sidebar specs panel.
 - **Print Label (`print_label.php`):** Browser-native 2" x 1" thermal label output.
-- **Settings (`settings.php`):** Database health checks, backups, and system repair tools.
