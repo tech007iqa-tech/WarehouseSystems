@@ -1,4 +1,11 @@
-.vscode/
-db/
-exports/
-update.txt
+orders/assets/db/
+orders/pages/tmp/
+orders/pages/*.log
+orders/pages/.DS_Store
+orders/pages/Thumbs.db
+orders/pages/.vscode/
+orders/.devdbrc
+labels/.vscode/
+labels/db/
+labels/exports/
+labels/update.txt

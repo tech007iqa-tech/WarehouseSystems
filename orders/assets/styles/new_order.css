@@ -1,0 +1,85 @@
+/* Batch Builder Framework Styles */
+
+.builder-back-link {
+    font-size: 0.8rem;
+    text-decoration: none;
+    color: var(--accent-color);
+    font-weight: 700;
+    display: block;
+    margin-bottom: 20px;
+    transition: opacity 0.2s;
+}
+
+.builder-back-link:hover {
+    opacity: 0.8;
+}
+
+.builder-fields-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.item-row-content {
+    display: flex;
+    align-items: center;
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-main {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.item-sub {
+    display: flex;
+    gap: 8px;
+    font-size: 0.75rem;
+    align-items: center;
+}
+
+.cpu-highlight {
+    color: var(--accent-color);
+    font-weight: 700;
+}
+
+.qty-pricing-box {
+    text-align: right;
+}
+
+.qty-unit-cost {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    font-weight: 700;
+}
+
+.builder-footer {
+    padding-top: 20px;
+    border-top: 1px dashed var(--border-color);
+    margin-top: auto;
+}
+
+.btn-checkout-link {
+    text-decoration: none;
+    display: block;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--text-main);
+    color: white;
+    text-align: center;
+    font-weight: 800;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-checkout-link:hover {
+    transform: translateY(-2px);
+    background: #1e293b;
+    box-shadow: var(--shadow-md);
+}

@@ -96,32 +96,86 @@ try {
         throw new Exception($err_msg);
     }
 
-    // 5. Save Temporary XML and call PowerShell Script
-    $temp_xml_path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'reprint_' . time() . '.xml';
-    file_put_contents($temp_xml_path, $xml_content);
+    // 5. GENERATE FLAT XML CONTENT (.fodt)
+    // We define the styles directly in the XML to ensure pixel-perfect 2"x1" output.
+    $flat_xml = '<?xml version="1.0" encoding="UTF-8"?>
+<office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+                 xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0"
+                 xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+                 xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0"
+                 xmlns:officeooo="http://openoffice.org/2009/office"
+                 xmlns:loext="urn:org:documentfoundation:names:experimental:office:xmlns:loext:1.0"
+                 office:version="1.2" office:mimetype="application/vnd.oasis.opendocument.text">
+  <office:automatic-styles>
+    <style:page-layout style:name="pm1">
+      <style:page-layout-properties fo:page-width="2in" fo:page-height="1in" fo:margin-top="0.05in" fo:margin-bottom="0in" fo:margin-left="0.05in" fo:margin-right="0.05in" />
+    </style:page-layout>
+    <style:style style:name="P1" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center" fo:margin-top="0in" fo:margin-bottom="0.02in"/>
+      <style:text-properties fo:font-size="14pt" fo:font-weight="bold" style:font-name="Arial"/>
+    </style:style>
+    <style:style style:name="P1B" style:family="paragraph" style:parent-style-name="P1">
+      <style:paragraph-properties fo:break-before="page"/>
+    </style:style>
+    <style:style style:name="P2" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center" fo:margin-top="0in" fo:margin-bottom="0in"/>
+      <style:text-properties fo:font-size="8.5pt" style:font-name="Arial"/>
+    </style:style>
+    <style:style style:name="P2B" style:family="paragraph" style:parent-style-name="P2">
+      <style:paragraph-properties fo:break-before="page"/>
+    </style:style>
+    <style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss"/>
+  </office:automatic-styles>
+  <office:master-styles>
+    <style:master-page style:name="Standard" style:page-layout-name="pm1"/>
+  </office:master-styles>
+  <office:body>
+    <office:text>';
 
+    // Build the labels (Branding A + Specs B)
+    $labels_xml = "";
+    for ($i = 0; $i < $quantity; $i++) {
+        // Page A: Branding (Use P1B for copies 2+, P1 for first)
+        $brand_style = ($i === 0) ? "P1" : "P1B";
+        $labels_xml .= '<text:p text:style-name="' . $brand_style . '">' . $brand . ' ' . $model . '</text:p>';
+        if ($series) $labels_xml .= '<text:p text:style-name="P2">' . $series . '</text:p>';
+        $labels_xml .= '<text:p text:style-name="P2">' . $cpu_spec_line . '</text:p>';
+
+        // Page B: Technical Specs (Always has a page break)
+        $labels_xml .= '<text:p text:style-name="P2B">CPU: ' . $cpu_spec_line . ' (' . $cpu_gen_display . ')</text:p>';
+        $labels_xml .= '<text:p text:style-name="P2">RAM: ' . ($ram ?: 'None') . ' | Storage: ' . ($storage ?: 'None') . ' | Battery: ' . $battery . '</text:p>';
+        
+        if ($item[$F['DESCRIPTION']] === 'Refurbished') {
+            $gpu = htmlspecialchars($item[$F['GPU']] ?? 'Integrated', ENT_XML1, 'UTF-8');
+            $os  = htmlspecialchars($item[$F['OS_VERSION']] ?? '—', ENT_XML1, 'UTF-8');
+            $labels_xml .= '<text:p text:style-name="P2">GPU: ' . $gpu . ' | OS: ' . $os . ' | BIOS: ' . $bios_state . '</text:p>';
+        }
+    }
+
+    $flat_xml .= $labels_xml . '
+    </office:text>
+  </office:body>
+</office:document>';
+
+    // 6. SAVE AND LAUNCH
     $export_dir = __DIR__ . '/../exports/labels/';
     if (!is_dir($export_dir)) mkdir($export_dir, 0777, true);
 
-    $final_odt_name = "Label_" . $id . "_" . preg_replace('/[^a-zA-Z0-9]/', '', $brand . $model) . ".odt";
+    $safe_brand = preg_replace('/[^a-zA-Z0-9]/', '', $brand);
+    $safe_model = preg_replace('/[^a-zA-Z0-9]/', '', $model);
+    $safe_gen   = preg_replace('/[^a-zA-Z0-9]/', '', $cpu_gen);
+    
+    $final_odt_name = "{$safe_brand}_{$safe_model}_{$safe_gen}_ID{$id}.odt";
     $final_odt_path = realpath($export_dir) . DIRECTORY_SEPARATOR . $final_odt_name;
     
-    $master_template = realpath(__DIR__ . '/../templates/label_template.odt');
-    $ps_script = realpath(__DIR__ . '/../templates/scripts/generate_odt.ps1');
+    file_put_contents($final_odt_path, $flat_xml);
 
-    $cmd = 'powershell.exe -ExecutionPolicy Bypass -File "' . $ps_script . '" -SourceXML "' . $temp_xml_path . '" -OutputODT "' . $final_odt_path . '" -MasterTemplate "' . $master_template . '"';
-    
-    $exec_output = shell_exec($cmd);
-    unlink($temp_xml_path);
-
-    // 5. Response Logic (Download vs Direct Open)
+    // 7. Response Logic (Download vs Direct Open)
     $mode = $_POST['mode'] ?? 'download';
 
-    if (strpos($exec_output, 'SUCCESS') !== false) {
-        
-        // If mode is 'open', trigger Windows to launch the file directly
+    if (file_exists($final_odt_path)) {
         if ($mode === 'open') {
-            $open_cmd = 'powershell.exe -Command "Start-Process \'' . $final_odt_path . '\'"';
+            $open_cmd = "powershell.exe -Command \"Start-Process '$final_odt_path'\"";
             shell_exec($open_cmd);
         }
 
@@ -131,11 +185,7 @@ try {
             'launched'  => ($mode === 'open')
         ]);
     } else {
-        $clean_error = "ODT generation failed.";
-        if (strpos($exec_output, 'ERROR:') !== false) {
-            $clean_error = trim(substr($exec_output, strpos($exec_output, 'ERROR:') + 6));
-        }
-        throw new Exception($clean_error);
+        throw new Exception("ODT generation failed: Output file not created.");
     }
 
 } catch (Exception $e) {

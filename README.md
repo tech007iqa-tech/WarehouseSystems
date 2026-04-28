@@ -1,47 +1,85 @@
-# IQA Metal Inventory & Label System
+# 📦 IQA Warehouse Systems
 
-## 1. Project Overview
-This application is a local-network warehouse inventory tracker and hardware label printer. It was built using a "Vibe Coding" philosophy: clean, direct, and unbloated foundations that any developer or AI agent can immediately understand.
+[![Version](https://img.shields.io/badge/version-2.0.0-green.svg)](https://github.com/)
+[![Tech](https://img.shields.io/badge/Stack-Vanilla_PHP_|_SQLite_|_JS-blue.svg)](https://github.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/)
 
-At its core, the app does two things:
-1. **Inventory Tracking:** Tracks hardware units (Laptops, Gaming Consoles) in the warehouse with precise location tracking, condition grading, and full technical specs.
-2. **Label Printing:** Generates high-fidelity `.odt` printable physical labels for individual hardware units via PowerShell template injection, optimized for thermal printers.
-
----
-
-## 2. The Tech Stack (Strict Rules)
-* **Frontend:** Vanilla HTML5, Vanilla CSS3 (Custom roots, flex/grid layouts), and Vanilla JavaScript (ES6+).
-* **Backend:** PHP 8+
-* **Database:** SQLite3 (Using PDO via `includes/db.php`).
-* **Zero Bloat:** **NO** `node_modules`, **NO** Tailwind CSS or Bootstrap, **NO** PHP Frameworks (Laravel), and **NO** Composer packages.
-
-### Why No Composer? (The PowerShell Injection Pattern)
-This project uses **PowerShell Template Injection** for document generation. PHP generates raw `content.xml` strings and calls local PowerShell scripts to inject that XML inside a boilerplate `.odt` template. This keeps the repository lightweight and optimized for the host Windows environment.
+A premium, high-performance warehouse management ecosystem designed for speed, reliability, and precision. Built for physical warehouse environments where quick hardware intake and accurate label logistics are mission-critical.
 
 ---
 
-## 3. Core Architecture
-The system uses SQLite databases in the `/db/` directory:
+## 🚀 The Modules
 
-1. `db/labels.sqlite`: The master inventory of every individual physical item in the warehouse.
-2. `db/audit.sqlite`: System-wide audit trail tracking all hardware record changes.
+### 🏷️ Inventory Labels (`/labels`)
+*Rapid Hardware Intake & ODT Generation*
+- **Speed Intake**: Optimized forms for rapid technical specs entry.
+- **Thermal Printing**: Generates high-fidelity `.odt` labels via a dependency-free Flat XML engine.
+- **Hardware Specs**: Detailed tracking of CPUs, RAM, Storage, Battery Health, and BIOS status.
+- **Self-Healing**: Native `Schema Guard` ensures database integrity and automatic recovery.
 
-*(See `ARCHITECTURE.md` for the exact schema structures).*
+### 📊 Order Manager (`/orders`)
+*B2B Relationship & Batch Fulfillment*
+- **CRM Hub**: Advanced lead tracking with interaction timelines and status priority.
+- **Batch Logistics**: Manage complex hardware orders with real-time stock allocation.
+- **Warehouse Gates**: Track the operational state of physical zones (Working, Audit, Idle).
+- **Global Registry**: Searchable customer database with session-persistent filters.
 
 ---
 
-## 4. UI Philosophy
-*(See `DESIGN_SYSTEM.md` for exact variables and rules).*
-* The interface uses a robust light mode with high contrast for warehouse environments.
-* Forms are dynamic — if a feature isn't selected, sub-options stay hidden.
-* All operations use JavaScript `fetch()` to prevent full-page reloads.
+## 🛠️ Technology Stack
+
+| Layer | Tech | Description |
+| :--- | :--- | :--- |
+| **Backend** | PHP 8.1+ | Lean, procedural-focused logic with modular routing. |
+| **Database** | SQLite 3 | Zero-config, portable database files with optimistic locking. |
+| **Frontend** | Vanilla JS / CSS3 | Modern "App-like" experience using Glassmorphism & HSL variables. |
+| **Documents** | Flat XML (FODT) | Dependency-free OpenDocument generation for LibreOffice compatibility. |
+| **Automation** | PowerShell | Native Windows integration for direct file launching. |
 
 ---
 
-## Agent Instructions (Read Before Coding)
-If you are an AI Agent waking up in this repository:
-1. **Read `ARCHITECTURE.md`** for database schemas and SQL patterns.
-2. **Read `SITEMAP.md`** for the folder structure.
-3. **Read `DESIGN_SYSTEM.md`** for CSS variables and UI rules.
-4. **Do not install npm or composer packages.** Everything is vanilla.
-5. **Use `HW_FIELDS` mapping** from `includes/hardware_mapping.php` — never hardcode field names.
+## 📂 Project Structure
+
+```text
+├── labels/                # Module: Inventory & Rapid Label Printing
+├── orders/                # Module: CRM, Batching & Fulfillment
+├── DOCS/                  # System-wide Documentation
+│   ├── AI_AGENT_INSTRUCTIONS.md   # Guidelines for AI coding assistants
+│   ├── CODE_REVIEW_CHECKLIST.md   # Quality control standards
+│   └── GLOBAL_SITEMAP.md          # Full project directory map
+├── index.php              # Premium Portal / Landing Page
+└── README.md              # This document
+```
+
+---
+
+## ⚙️ Getting Started
+
+### 1. Requirements
+- **PHP 8.1+** (XAMPP / WAMP recommended for Windows environments).
+- **SQLite3 Extension** enabled in `php.ini`.
+- **LibreOffice** (optional, for viewing/printing generated `.odt` labels).
+
+### 2. Installation
+1. Clone the repository into your web root (e.g., `htdocs/app`).
+2. Ensure the `/db` and `/assets/db` directories have **Write Permissions**.
+3. Access the system via `http://localhost/app/`.
+
+### 3. Usage
+- Start in the **Portal** to choose between label generation or order management.
+- Databases are automatically initialized on the first run via the **Schema Guard** system.
+
+---
+
+## 🔍 Documentation for Reviewers
+If you are an AI assistant or a human code reviewer, please consult the following:
+- [🤖 AI Agent Instructions](DOCS/AI_AGENT_INSTRUCTIONS.md)
+- [🔍 Reviewer Checklist](DOCS/CODE_REVIEW_CHECKLIST.md)
+- [🗺️ Global Sitemap](DOCS/GLOBAL_SITEMAP.md)
+
+---
+
+> [!TIP]
+> Built for durability. Every interaction is audited, every database is self-healing, and every UI element is touch-optimized for warehouse hardware.
+
+&copy; 2026 IQA Metal Inventory Systems

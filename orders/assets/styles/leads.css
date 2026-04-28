@@ -1,0 +1,78 @@
+@import url('orders.css');
+
+/* CRM & Leads Premium Styles */
+
+.tasks-section {
+    animation: slideInDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.task-card {
+    border-left: 4px solid #be123c !important;
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(159, 18, 57, 0.1);
+    border-color: #e11d48 !important;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Modal Split View Adjustments */
+#interaction-history {
+    background-image: linear-gradient(#f8fafc 33%, rgba(248, 250, 252, 0) 0%);
+    background-position: right;
+    background-size: 1px 100%;
+    background-repeat: repeat-y;
+}
+
+/* Scrollbar for History */
+#interaction-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+#interaction-history::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#interaction-history::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+
+/* Reusing Order Table Styles if needed, but leads.php is already dense */
+.lead-row:hover {
+    background-color: #f8fafc !important;
+}
+
+.lead-row td {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* CRM Status Colors */
+.status-idle { background: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+
+@media (max-width: 1000px) {
+    #leadModal .modal-box {
+        flex-direction: column;
+        max-height: 95vh;
+    }
+    
+    #leadModal > div {
+        flex-direction: column !important;
+    }
+    
+    #leadModal div[style*="flex: 0.8"] {
+        border-top: 1px solid #e2e8f0;
+        max-height: 300px;
+    }
+}
