@@ -17,6 +17,7 @@
                 <li><a href="?page=model_templates">Templates</a></li>
                 <li><a href="?page=ad_generator">Ad Generator</a></li>
                 <li><a href="?page=campaigns">Campaigns</a></li>
+                <li><a href="?page=photo_bucket">Photo Bucket</a></li>
                 <li><a href="?page=reports">Reports</a></li>
                 <li><a href="?page=docs">Docs</a></li>
             </ul>

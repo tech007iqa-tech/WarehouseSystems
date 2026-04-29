@@ -56,6 +56,19 @@ function marketing_schema_guard($pdo) {
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
 
+        // 5. Photos Table (Photo Bucket)
+        $pdo->exec("CREATE TABLE IF NOT EXISTS photos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            filename TEXT NOT NULL,
+            original_name TEXT,
+            model_name TEXT,
+            category TEXT,
+            file_path TEXT NOT NULL,
+            file_size INTEGER,
+            mime_type TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+
         // --- Automated Migrations ---
         $stmt_info = $pdo->query("PRAGMA table_info(leads)");
         $col_names = array_column($stmt_info->fetchAll(PDO::FETCH_ASSOC), 'name');
@@ -75,6 +88,8 @@ function marketing_schema_guard($pdo) {
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_leads_customer_id ON leads(customer_id)");
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_templates_model ON model_templates(model_name)");
         $pdo->exec("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_photos_model ON photos(model_name)");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_photos_category ON photos(category)");
 
         return true;
     } catch (Exception $e) {

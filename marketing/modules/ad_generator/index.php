@@ -98,7 +98,7 @@ if ($selectedModel) {
     </section>
 
     <!-- AD PREVIEW -->
-    <section class="card" style="grid-column: span 2;">
+    <section class="card ad-preview-main">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
             <h2>2. Generated Ad Manifest</h2>
             <?php if ($selectedModel): ?>
@@ -116,33 +116,50 @@ if ($selectedModel) {
                 <a href="?page=model_templates&prefill_model=<?php echo urlencode($selectedModel); ?>" style="color: white; text-decoration: underline;">Create one here</a> to generate an ad.
             </div>
         <?php elseif ($generatedAd): ?>
-            <div class="ad-preview-container">
-                <div style="display: grid; grid-template-columns: 1fr 200px; gap: 1.5rem;">
+            <div class="ad-generator-layout">
                     <textarea id="adOutput" readonly><?php echo htmlspecialchars($generatedAd); ?></textarea>
                     
                     <!-- PHOTO BANK INTEGRATION -->
                     <div class="photo-preview-sidebar">
-                        <h4 style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 10px;">Asset Verification</h4>
+                        <h4 style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 10px;">Bucket Assets</h4>
                         <?php
-                        $photoDir = "assets/img/models/" . str_replace(' ', '_', $selectedModel) . "/";
-                        $assets = ['pallet.jpg', 'unit.jpg', 'bios.jpg'];
-                        foreach($assets as $img):
-                            $exists = file_exists($photoDir . $img);
+                        $photoStmt = $marketingDb->prepare("SELECT * FROM photos WHERE model_name = ? ORDER BY created_at DESC LIMIT 3");
+                        $photoStmt->execute([$selectedModel]);
+                        $bucketPhotos = $photoStmt->fetchAll();
+
+                        if (empty($bucketPhotos)):
+                            for($i=0; $i<3; $i++):
                         ?>
-                            <div class="asset-thumb <?php echo $exists ? 'exists' : ''; ?>">
-                                <?php if ($exists): ?>
-                                    <img src="<?php echo $photoDir . $img; ?>" alt="<?php echo $img; ?>" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
-                                <?php else: ?>
-                                    <span>No <?php echo str_replace('.jpg', '', $img); ?></span>
-                                <?php endif; ?>
+                            <div class="asset-thumb">
+                                <span>No Photo</span>
                             </div>
-                        <?php endforeach; ?>
+                        <?php 
+                            endfor;
+                        else:
+                            foreach($bucketPhotos as $photo):
+                        ?>
+                            <div class="asset-thumb exists">
+                                <img src="<?php echo $photo['file_path']; ?>" alt="Stock Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+                            </div>
+                        <?php 
+                            endforeach;
+                            // Fill remaining slots if less than 3
+                            for($i=count($bucketPhotos); $i<3; $i++):
+                        ?>
+                             <div class="asset-thumb">
+                                <span>Empty Slot</span>
+                            </div>
+                        <?php
+                            endfor;
+                        endif; 
+                        ?>
+                        <a href="?page=photo_bucket" style="font-size: 0.7rem; text-align: center; color: var(--accent-primary); text-decoration: none; font-weight: 700; margin-top: 5px;">Go to Bucket →</a>
                     </div>
                 </div>
 
-                <div class="ad-actions">
-                    <button onclick="copyAdToClipboard()" class="btn-action">📋 Copy to Clipboard</button>
-                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem;">
+                <div class="ad-actions" style="margin-top: 1.5rem;">
+                    <button onclick="copyAdToClipboard()" class="btn-action" style="width: 100%;">📋 Copy to Clipboard</button>
+                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem; text-align: center;">
                         This ad is optimized for <?php echo strtoupper($tone); ?> outreach.
                     </p>
                 </div>

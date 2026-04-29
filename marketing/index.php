@@ -9,6 +9,7 @@ $crmDb = get_master_crm_db();
 // Fetch real stats from Master CRM
 $leadCount = $crmDb->query("SELECT COUNT(*) FROM customers WHERE account_status = 'Lead'")->fetchColumn() ?: 0;
 $campaignCount = $marketingDb->query("SELECT COUNT(*) FROM campaigns WHERE status = 'Active'")->fetchColumn() ?: 0;
+$photoCount = $marketingDb->query("SELECT COUNT(*) FROM photos")->fetchColumn() ?: 0;
 
 // Fetch inventory for summary (items with qty > 10)
 if ($labelsDb) {
@@ -47,8 +48,13 @@ if ($page === 'dashboard') {
             <div class="stat"><?php echo $inventoryCount; ?> Models in Bulk</div>
         </section>
 
+        <section class="card photo-summary">
+            <h2>Photo Assets</h2>
+            <div class="stat"><?php echo $photoCount; ?> In Bucket</div>
+        </section>
+
         <!-- SMART OPPORTUNITIES (IDEAS ENGINE) -->
-        <section class="card" style="grid-column: span 3; background: var(--accent-tertiary); border-color: var(--accent-secondary);">
+        <section class="card smart-opportunities">
             <h2 style="color: var(--accent-primary);">💡 Smart Opportunities</h2>
             <div class="opportunities-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem;">
                 <?php
@@ -85,13 +91,28 @@ if ($page === 'dashboard') {
                                 'btn' => 'Create Template'
                             ];
                         } else {
-                            $opportunities[] = [
-                                'type' => 'READY',
-                                'title' => 'Ready to Blast',
-                                'desc' => "Ready for <strong>{$item['model']}</strong> at <span class='badge-customer' style='font-size:0.7rem; padding: 2px 6px;'>📍 {$location}</span>. Generate an ad now!",
-                                'action' => '?page=ad_generator&model=' . urlencode($item['model']),
-                                'btn' => 'Generate Ad'
-                            ];
+                            // Check for Photos
+                            $photoStmt = $marketingDb->prepare("SELECT COUNT(*) FROM photos WHERE model_name = ?");
+                            $photoStmt->execute([$item['model']]);
+                            $hasPhoto = $photoStmt->fetchColumn() > 0;
+
+                            if (!$hasPhoto) {
+                                $opportunities[] = [
+                                    'type' => 'NEED_PHOTO',
+                                    'title' => '📸 Photo Needed',
+                                    'desc' => "Template exists for <strong>{$item['model']}</strong>, but no photos are in the bucket. Photos increase conversion!",
+                                    'action' => '?page=photo_bucket',
+                                    'btn' => 'Upload Photo'
+                                ];
+                            } else {
+                                $opportunities[] = [
+                                    'type' => 'READY',
+                                    'title' => '🚀 Ready to Blast',
+                                    'desc' => "Content and Photos are READY for <strong>{$item['model']}</strong>. Generate an ad now!",
+                                    'action' => '?page=ad_generator&model=' . urlencode($item['model']),
+                                    'btn' => 'Generate Ad'
+                                ];
+                            }
                         }
                     }
                 }
@@ -114,17 +135,18 @@ if ($page === 'dashboard') {
         </section>
 
         <!-- QUICK ACTIONS HUB -->
-        <section class="card quick-actions" style="grid-column: span 1;">
+        <section class="card quick-actions">
             <h2>⚡ Quick Actions</h2>
             <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
                 <a href="?page=leads&action=add" class="btn-action" style="text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">➕ Add New Lead</a>
                 <a href="?page=ad_generator" class="btn-action" style="background: var(--accent-primary); text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">📢 Create Ad</a>
+                <a href="?page=photo_bucket" class="btn-action" style="background: var(--accent-gradient); text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">🖼️ Photo Bucket</a>
                 <a href="?page=model_templates" class="btn-action" style="background: var(--text-main); text-decoration: none; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">📚 Update Specs</a>
             </div>
         </section>
 
         <!-- RECENT ACTIVITY FEED -->
-        <section class="card activity-feed" style="grid-column: span 2;">
+        <section class="card activity-feed">
             <h2>🕒 Recent Marketing Activity</h2>
             <div class="activity-list" style="margin-top: 1rem;">
                 <?php

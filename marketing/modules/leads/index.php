@@ -127,13 +127,13 @@ if ($action === 'edit' && isset($_GET['id'])) {
     </header>
 
     <div class="dashboard-grid">
-        <section class="card" style="grid-column: span 2;">
+        <section class="card lead-details-form">
             <h2>Lead Details</h2>
             <form action="?page=leads&action=update" method="POST" class="standard-form">
                 <input type="hidden" name="id" value="<?php echo $editLead['id']; ?>">
                 <input type="hidden" name="customer_id" value="<?php echo $editLead['customer_id']; ?>">
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div class="form-grid-2col">
                     <div class="form-group">
                         <label>Contact Name</label>
                         <input type="text" name="name" value="<?php echo htmlspecialchars($editLead['name']); ?>" required>
@@ -221,7 +221,7 @@ if ($action === 'edit' && isset($_GET['id'])) {
         </form>
     </section>
 
-    <section class="card" style="grid-column: span 2;">
+    <section class="card lead-pool-table">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
             <h2 style="margin: 0;">Lead & Customer Pool</h2>
             <div style="display: flex; gap: 0.5rem;">
@@ -268,19 +268,19 @@ if ($action === 'edit' && isset($_GET['id'])) {
                             $displayStatus = $isCustomer ? 'CUSTOMER' : strtoupper($lead['status']);
                         ?>
                         <tr class="lead-row" data-status="<?php echo $isCustomer ? 'customer' : 'lead'; ?>">
-                            <td>
+                            <td data-label="Name & ID">
                                 <div style="font-size: 0.7rem; color: var(--text-secondary);"><?php echo $lead['customer_id'] ?? 'LOCAL'; ?></div>
                                 <strong class="searchable-name"><?php echo htmlspecialchars($lead['name']); ?></strong>
                             </td>
-                            <td class="searchable-company"><?php echo htmlspecialchars($lead['company'] ?? '—'); ?></td>
-                            <td>
+                            <td data-label="Company" class="searchable-company"><?php echo htmlspecialchars($lead['company'] ?? '—'); ?></td>
+                            <td data-label="Contact Info">
                                 <a href="mailto:<?php echo $lead['email']; ?>" style="display:block; font-size: 0.85rem; color: var(--accent-primary); text-decoration:none;">✉️ <?php echo htmlspecialchars($lead['email']); ?></a>
                                 <?php if (!empty($lead['phone'])): ?>
                                     <a href="tel:<?php echo $lead['phone']; ?>" style="display:block; font-size: 0.85rem; color: var(--text-dim); text-decoration:none; margin-top: 4px;">📞 <?php echo htmlspecialchars($lead['phone']); ?></a>
                                 <?php endif; ?>
                             </td>
-                            <td><span class="badge <?php echo $badgeClass; ?>"><?php echo $displayStatus; ?></span></td>
-                            <td style="font-size: 0.8rem; color: var(--text-secondary);"><?php echo date('M j, y', strtotime($lead['created_at'])); ?></td>
+                            <td data-label="Status"><span class="badge <?php echo $badgeClass; ?>"><?php echo $displayStatus; ?></span></td>
+                            <td data-label="Added" style="font-size: 0.8rem; color: var(--text-secondary);"><?php echo date('M j, y', strtotime($lead['created_at'])); ?></td>
                             <td style="text-align: right;">
                                 <a href="?page=leads&action=edit&id=<?php echo $lead['id']; ?>" class="btn-small">Edit</a>
                             </td>

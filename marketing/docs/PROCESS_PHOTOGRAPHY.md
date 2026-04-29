@@ -1,18 +1,25 @@
 # Process: Batch Photography Workflow
 
 ## Objective
-Reduce the time spent on listing photos by creating a "Model Photo Bank" that can be reused for future batches of the same hardware.
+Reduce the time spent on listing photos by creating a centralized "Photo Bucket" that allows for rapid reuse of hardware photography across marketing campaigns and manifests.
 
 ## Standard Shots
-Every new model entry should have exactly 3 "Hero Shots":
-1. **The Scale Shot**: The full pallet or a stack of units (proves volume).
-2. **The Detail Shot**: A close-up of a single, cleaned unit (proves quality).
-3. **The Proof Shot**: A clear photo of the BIOS or System Info screen (proves specs).
+While the Photo Bucket supports flexible uploads, the following "Hero Shots" are recommended for every hardware model:
+1. **The Scale Shot** (Category: `Bulk Stock`): A photo of the full pallet or a stack of units (proves volume).
+2. **The Detail Shot** (Category: `Laptop`/`Workstation`): A close-up of a single, cleaned unit (proves quality).
+3. **The Proof Shot** (Category: `Other`): A clear photo of the BIOS or System Info screen (proves specs).
 
-## Storage Convention
-- Files should be stored in `assets/img/models/[model_name]/`.
-- Filenames: `pallet.jpg`, `unit.jpg`, `bios.jpg`.
+## Storage & Management
+- **Centralized Bucket**: All photos are stored in `marketing/assets/photo_bucket/`.
+- **Database Tracking**: metadata is stored in the `photos` table in `marketing.db`.
+- **Model Linking**: Photos can be linked to a hardware model during upload to enable automatic integration with the **Ad Generator** and **Model Templates**.
+
+## System Integration
+- **Ad Generator**: Automatically pulls the latest 3 photos for the selected model.
+- **Model Templates**: Displays a visual indicator of asset availability (📦 Volume, ✨ Quality, 🖼️ Metadata).
+- **One-Click Access**: Use the "Copy Path" button in the Photo Bucket to get the web-ready URL for external listings.
 
 ## Agent Instructions
-- When building the "Model Template" interface, add an image uploader/previewer that looks for these specific filenames.
-- Implement a "Copy to Clipboard" for image paths if the user is listing on external platforms.
+- Maintain the "Schema Guard" pattern for the `photos` table.
+- Ensure all uploaded images are stored with unique filenames to prevent collisions.
+- Optimization: In future versions, consider adding automatic thumbnail generation.

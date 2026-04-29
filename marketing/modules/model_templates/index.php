@@ -121,7 +121,7 @@ if ($action === 'edit' && isset($_GET['id'])) {
     </section>
 
     <!-- TEMPLATE LIST -->
-    <section class="card" style="grid-column: span 2;">
+    <section class="card template-library-list">
         <h2>Existing Templates</h2>
         <div class="template-list">
             <?php
@@ -136,11 +136,14 @@ if ($action === 'edit' && isset($_GET['id'])) {
                 <div class="template-grid">
                     <?php foreach ($templates as $tmpl): 
                         // Photo Bank Check
-                        $photoDir = "assets/img/models/" . str_replace(' ', '_', $tmpl['model_name']) . "/";
-                        $hasPallet = file_exists($photoDir . 'pallet.jpg');
-                        $hasUnit = file_exists($photoDir . 'unit.jpg');
-                        $hasBios = file_exists($photoDir . 'bios.jpg');
-                        $photoCount = ($hasPallet ? 1 : 0) + ($hasUnit ? 1 : 0) + ($hasBios ? 1 : 0);
+                        $photoStmt = $marketingDb->prepare("SELECT category FROM photos WHERE model_name = ?");
+                        $photoStmt->execute([$tmpl['model_name']]);
+                        $foundPhotos = $photoStmt->fetchAll(PDO::FETCH_COLUMN);
+                        
+                        $hasBulk = in_array('Bulk Stock', $foundPhotos);
+                        $hasLaptop = in_array('Laptop', $foundPhotos) || in_array('Workstation', $foundPhotos);
+                        $hasOther = count($foundPhotos) > 0;
+                        $photoCount = count($foundPhotos);
                     ?>
                         <div class="template-card">
                             <div class="tmpl-header">
@@ -150,10 +153,10 @@ if ($action === 'edit' && isset($_GET['id'])) {
                             
                             <!-- PHOTO BANK PREVIEW -->
                             <div class="photo-bank-preview">
-                                <div class="photo-slot <?php echo $hasPallet ? 'filled' : ''; ?>" title="Pallet Shot">📦</div>
-                                <div class="photo-slot <?php echo $hasUnit ? 'filled' : ''; ?>" title="Detail Shot">✨</div>
-                                <div class="photo-slot <?php echo $hasBios ? 'filled' : ''; ?>" title="BIOS Shot">💻</div>
-                                <span class="photo-status"><?php echo $photoCount; ?>/3 Assets</span>
+                                <div class="photo-slot <?php echo $hasBulk ? 'filled' : ''; ?>" title="Bulk/Pallet Shot">📦</div>
+                                <div class="photo-slot <?php echo $hasLaptop ? 'filled' : ''; ?>" title="Detail Shot">✨</div>
+                                <div class="photo-slot <?php echo $hasOther ? 'filled' : ''; ?>" title="Other Assets">🖼️</div>
+                                <span class="photo-status"><?php echo $photoCount; ?> Assets</span>
                             </div>
 
                             <div class="tmpl-body">

@@ -10,3 +10,5 @@ labels/db/
 labels/exports/
 labels/update.txt
 marketing/data
+marketing/assets/photo_bucket/*
+!marketing/assets/photo_bucket/.gitkeep
