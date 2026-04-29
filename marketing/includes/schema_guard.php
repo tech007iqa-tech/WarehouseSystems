@@ -65,9 +65,44 @@ function marketing_schema_guard($pdo) {
             $pdo->exec("ALTER TABLE leads ADD COLUMN last_contacted DATETIME");
         }
 
+        // Add customer_id to track CRM sync
+        if (!in_array('customer_id', $col_names)) {
+            $pdo->exec("ALTER TABLE leads ADD COLUMN customer_id TEXT");
+        }
+
+        // 5. Performance Indexes (Optimization)
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email)");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_leads_customer_id ON leads(customer_id)");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_templates_model ON model_templates(model_name)");
+        $pdo->exec("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_logs(timestamp)");
+
         return true;
     } catch (Exception $e) {
         error_log("Marketing Schema Guard Error: " . $e->getMessage());
+        return false;
+    }
+}
+
+/**
+ * CRM Schema Guard
+ * Ensures the Master CRM (customers.db) is compatible with Marketing leads.
+ */
+function crm_schema_guard($pdo) {
+    try {
+        $stmt_info = $pdo->query("PRAGMA table_info(customers)");
+        $col_names = array_column($stmt_info->fetchAll(PDO::FETCH_ASSOC), 'name');
+
+        // Add lead-specific columns if they don't exist
+        if (!in_array('lead_source', $col_names)) {
+            $pdo->exec("ALTER TABLE customers ADD COLUMN lead_source TEXT DEFAULT 'Manual'");
+        }
+        if (!in_array('account_status', $col_names)) {
+            $pdo->exec("ALTER TABLE customers ADD COLUMN account_status TEXT DEFAULT 'Customer'");
+        }
+        
+        return true;
+    } catch (Exception $e) {
+        error_log("CRM Schema Guard Error: " . $e->getMessage());
         return false;
     }
 }

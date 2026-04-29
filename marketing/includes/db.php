@@ -10,6 +10,12 @@ function get_marketing_db() {
     static $pdo = null;
     if ($pdo === null) {
         try {
+            // Ensure data directory exists
+            $db_dir = dirname(DB_PATH);
+            if (!is_dir($db_dir)) {
+                mkdir($db_dir, 0777, true);
+            }
+
             $pdo = new PDO("sqlite:" . DB_PATH);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
@@ -37,6 +43,24 @@ function get_labels_db() {
         }
     }
     return $pdo;
+}
+
+/**
+ * Master CRM Database Connection (Shared with Orders module)
+ */
+function get_master_crm_db() {
+    static $crm_pdo = null;
+    if ($crm_pdo === null) {
+        try {
+            $crm_pdo = new PDO("sqlite:" . MASTER_CRM_DB_PATH);
+            $crm_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $crm_pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            crm_schema_guard($crm_pdo);
+        } catch (PDOException $e) {
+            die("Master CRM Connection failed: " . $e->getMessage());
+        }
+    }
+    return $crm_pdo;
 }
 
 // Global Audit Logger helper (aligning with project standards)

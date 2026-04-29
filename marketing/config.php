@@ -5,6 +5,7 @@
 
 // Database Configuration
 define('DB_PATH', __DIR__ . '/data/marketing.db');
+define('MASTER_CRM_DB_PATH', __DIR__ . '/../orders/assets/db/customers.db');
 define('LABELS_DB_PATH', __DIR__ . '/../labels/db/labels.sqlite');
 
 // App Paths

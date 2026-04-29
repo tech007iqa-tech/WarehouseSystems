@@ -5,6 +5,8 @@ This map outlines the dual-module structure of the IQA Warehouse Systems.
 ## 📍 Root `/app/`
 - `index.php`: Premium Portal / Landing Page.
 - `DOCS/`: System-wide AI reviewer documentation.
+    - `AI_AGENT_INSTRUCTIONS.md`: Core behavioral guidelines.
+    - `AI_TECHNICAL_DEEP_DIVE.md`: Architectural shortcuts & token-saving map.
 - `labels/`: [Inventory & Label Module]
 - `orders/`: [Order & CRM Module]
 
