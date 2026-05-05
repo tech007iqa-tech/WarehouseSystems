@@ -35,6 +35,7 @@ include 'core/auth.php';
             'warehouse' => ['page' => 'pages/warehouse.php',        'css' => 'warehouse.css'],
             'import_warehouse' => ['page' => 'pages/import_warehouse.php', 'css' => 'warehouse.css'],
             'settings'  => ['page' => 'pages/settings.php',         'css' => 'style.css'],
+            'calendar'  => ['page' => 'pages/calendar.php',         'css' => 'calendar.css'],
             'default'   => ['page' => 'pages/customer_registry.php', 'css' => 'customer_registry.css'],
             'new_order' => ['page' => 'pages/new_order.php',         'css' => 'new_order.css']
         ];
@@ -109,6 +110,9 @@ include 'core/auth.php';
 
         <nav class="breadcrumbs" style="display: flex; gap: 20px; align-items: center;">
             <?php if ($user_role === 'Admin'): ?>
+                <a href="index.php?view=calendar" class="crumb <?= isset($_GET['view']) && $_GET['view'] === 'calendar' ? 'active' : '' ?>" style="margin:0;">
+                    📅 Calendar
+                </a>
                 <a href="index.php?view=leads" class="crumb <?= isset($_GET['view']) && $_GET['view'] === 'leads' ? 'active' : '' ?>" style="margin:0;">
                     🎯 Leads
                 </a>
@@ -128,7 +132,7 @@ include 'core/auth.php';
         </nav>
     </div>
 
-    <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse']) ? 'order-view' : '' ?>" role="main">
+    <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse', 'calendar']) ? 'order-view' : '' ?>" role="main">
         <?php
         // Global State Initialization
         $selected_sector = $_GET['sector'] ?? 'Laptops';
@@ -154,9 +158,11 @@ include 'core/auth.php';
         include $active_route['page'];
         ?>
     </div>
+    <?php if ($active_key !== 'calendar'): ?>
     <footer class="footer" role="contentinfo">
         <p>&copy; <?= date('M Y') ?> IQA Metal | Managed Inventory & Order Fulfillments <a href="../labels/">Labels</a></p>
     </footer>
+    <?php endif; ?>
     <!-- Load view-specific JavaScript -->
     <?php if ($active_key === 'new_order'): ?>
         <script src="assets/js/new_order.js?v=<?= filemtime('assets/js/new_order.js') ?>" defer></script>

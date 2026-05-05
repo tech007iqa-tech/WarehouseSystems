@@ -43,6 +43,7 @@ class Database {
     public static function orders() { return self::getConnection('orders'); }
     public static function warehouse() { return self::getConnection('warehouse'); }
     public static function users() { return self::getConnection('users'); }
+    public static function calendar() { return self::getConnection('calendar'); }
 
     /**
      * Attaches another database to the current connection.

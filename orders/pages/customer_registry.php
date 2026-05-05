@@ -104,9 +104,62 @@ try {
 ?>
 
 <!-- Load dedicated registry styles -->
-
+<style>
+    .dashboard-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: default;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1) !important;
+    }
+</style>
 
 <div class="form-side">
+    <?php
+    // Dashboard Logic: Fetch high-level KPIs
+    $total_pipeline = 0;
+    $active_batches_count = 0;
+    $pending_callbacks_count = 0;
+    $warehouse_audit_count = 0;
+
+    try {
+        // 1. Total Pipeline (Lifetime Value sum)
+        $total_pipeline = $conn_orders->query("SELECT SUM(quantity * unit_price) FROM items")->fetchColumn() ?: 0;
+        
+        // 2. Active Batches
+        $active_batches_count = $conn_orders->query("SELECT COUNT(*) FROM orders WHERE status = 'active'")->fetchColumn();
+        
+        // 3. Pending Callbacks (Today or Overdue)
+        $pending_callbacks_count = $conn->prepare("SELECT COUNT(*) FROM customers WHERE callback_date != '' AND callback_date <= ? AND account_status = 'Lead'");
+        $pending_callbacks_count->execute([date('Y-m-d')]);
+        $pending_callbacks_count = $pending_callbacks_count->fetchColumn();
+
+        // 4. Warehouse Audits
+        $conn_w = Database::warehouse();
+        $warehouse_audit_count = $conn_w->query("SELECT COUNT(*) FROM locations WHERE status IN ('Audit', 'Idle')")->fetchColumn();
+    } catch (Exception $e) {}
+    ?>
+
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
+        <div class="dashboard-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">💰 Total Pipeline</div>
+            <div style="font-size: 1.25rem; font-weight: 900; color: var(--accent-color);">$<?= number_format($total_pipeline, 0) ?></div>
+        </div>
+        <div class="dashboard-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">📦 Active Batches</div>
+            <div style="font-size: 1.25rem; font-weight: 900; color: var(--text-main);"><?= $active_batches_count ?></div>
+        </div>
+        <div class="dashboard-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">📞 Callbacks</div>
+            <div style="font-size: 1.25rem; font-weight: 900; color: <?= $pending_callbacks_count > 0 ? '#ef4444' : 'var(--text-main)' ?>;"><?= $pending_callbacks_count ?></div>
+        </div>
+        <div class="dashboard-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
+            <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">🏬 Zone Alerts</div>
+            <div style="font-size: 1.25rem; font-weight: 900; color: <?= $warehouse_audit_count > 5 ? '#f59e0b' : 'var(--text-main)' ?>;"><?= $warehouse_audit_count ?></div>
+        </div>
+    </div>
+
     <header>
         <h1>Active Customers</h1>
         <p class="subtitle">Select a customer below or register a new one to begin.</p>

@@ -95,23 +95,39 @@ try {
         }
     }
     // 3. Handle System Maintenance (Admin Only)
-    if ($_SESSION['username'] === 'admin' && isset($_POST['action']) && $_POST['action'] === 'cleanup_customers') {
-        $db_cust_file = realpath('assets/db/customers.db');
-        $db_orders_file = realpath('assets/db/orders.db');
-        try {
-            if (!$db_cust_file || !$db_orders_file) throw new Exception("Database files not found.");
-            
-            $conn_m = new PDO("sqlite:" . $db_cust_file);
-            $conn_m->exec("ATTACH DATABASE '" . $db_orders_file . "' AS db_o");
-            
-            // Delete customers with no orders
-            $sql_clean = "DELETE FROM customers WHERE customer_id NOT IN (SELECT DISTINCT customer_id FROM db_o.orders)";
-            $stmt_clean = $conn_m->prepare($sql_clean);
-            $stmt_clean->execute();
-            $removed = $stmt_clean->rowCount();
-            
-            $message = "Cleanup complete! Removed {$removed} customer(s) with 0 orders.";
-        } catch (Exception $e) { $error = "Cleanup failed: " . $e->getMessage(); }
+    if ($_SESSION['username'] === 'admin' && isset($_POST['action'])) {
+        if ($_POST['action'] === 'cleanup_customers') {
+            $db_cust_file = realpath('assets/db/customers.db');
+            $db_orders_file = realpath('assets/db/orders.db');
+            try {
+                if (!$db_cust_file || !$db_orders_file) throw new Exception("Database files not found.");
+                
+                $conn_m = new PDO("sqlite:" . $db_cust_file);
+                $conn_m->exec("ATTACH DATABASE '" . $db_orders_file . "' AS db_o");
+                
+                // Delete customers with no orders
+                $sql_clean = "DELETE FROM customers WHERE customer_id NOT IN (SELECT DISTINCT customer_id FROM db_o.orders)";
+                $stmt_clean = $conn_m->prepare($sql_clean);
+                $stmt_clean->execute();
+                $removed = $stmt_clean->rowCount();
+                
+                $message = "Cleanup complete! Removed {$removed} customer(s) with 0 orders.";
+            } catch (Exception $e) { $error = "Cleanup failed: " . $e->getMessage(); }
+        }
+
+        if ($_POST['action'] === 'optimize_db') {
+            try {
+                $dbs = ['customers', 'orders', 'warehouse', 'users', 'calendar'];
+                $optimized = 0;
+                foreach ($dbs as $db) {
+                    $pdo = Database::getConnection($db);
+                    $pdo->exec("VACUUM");
+                    $pdo->exec("ANALYZE");
+                    $optimized++;
+                }
+                $message = "System performance optimized! Re-indexed {$optimized} core databases.";
+            } catch (Exception $e) { $error = "Optimization failed: " . $e->getMessage(); }
+        }
     }
 } catch (PDOException $e) { $error = "Database error: " . $e->getMessage(); }
 
@@ -306,6 +322,32 @@ try {
                 🗑️ Clean Up 0-Order Customers
             </button>
         </form>
+
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #fecdd3;">
+            <h1 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 15px;">Storage Health</h1>
+            
+            <div style="display: grid; gap: 10px; margin-bottom: 25px;">
+                <?php
+                $dbs = ['customers', 'orders', 'warehouse', 'users', 'calendar'];
+                foreach ($dbs as $db) {
+                    $path = "assets/db/{$db}.db";
+                    $size = file_exists($path) ? round(filesize($path) / 1024, 2) . ' KB' : 'Not Created';
+                    echo "<div style='display:flex; justify-content:space-between; padding:12px 15px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;'>
+                            <span style='font-size:0.8rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase;'>{$db}.db</span>
+                            <span style='font-size:0.85rem; font-weight:700; color:var(--text-main);'>{$size}</span>
+                          </div>";
+                }
+                ?>
+            </div>
+
+            <form method="POST">
+                <input type="hidden" name="action" value="optimize_db">
+                <button type="submit" class="btn-main" style="width: 100%; padding: 16px; border-radius: 12px; background: #0369a1; color: white; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    ⚡ Optimize System Performance
+                </button>
+                <p style="font-size: 0.75rem; color: #64748b; text-align: center; margin-top: 12px;">This will re-index databases and reclaim unused disk space.</p>
+            </form>
+        </div>
     </div>
     <?php endif; ?>
 </div>
