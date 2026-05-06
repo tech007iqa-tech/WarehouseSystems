@@ -1,0 +1,133 @@
+/* -------------------------------------
+   Photo Bucket Compact Grid
+   ------------------------------------- */
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 130px);
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: start;
+}
+
+.photo-card-compact {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+    width: 130px;
+    grid-column: span 1 !important;
+    margin: 0;
+    background: white;
+}
+
+.photo-card-compact:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+    border-color: var(--accent-primary) !important;
+}
+
+.photo-thumb-container {
+    aspect-ratio: 1/1;
+    width: 130px;
+    height: 130px;
+    overflow: hidden;
+    background: #f1f5f9;
+    position: relative;
+}
+
+.photo-thumb-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.photo-card-compact:hover .photo-thumb-container img {
+    transform: scale(1.05);
+}
+
+.photo-actions-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.photo-card-compact:hover .photo-actions-overlay {
+    opacity: 1;
+}
+
+.action-icon-small {
+    width: 32px;
+    height: 32px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    font-size: 0.8rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.action-icon-small:hover {
+    transform: scale(1.1);
+}
+
+.action-icon-small.delete { color: #ef4444; }
+.action-icon-small.view { color: var(--accent-primary); }
+.action-icon-small.download { color: #10b981; }
+
+.photo-meta-compact {
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: white;
+}
+
+.photo-meta-compact h3 {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.photo-meta-compact .category-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.photo-meta-compact .category-row span {
+    font-size: 0.55rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+/* Safari Fix */
+@supports (-webkit-touch-callout: none) {
+    .photo-grid {
+        grid-template-columns: repeat(auto-fill, 130px) !important;
+    }
+}

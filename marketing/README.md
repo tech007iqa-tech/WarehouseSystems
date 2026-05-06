@@ -2,6 +2,11 @@
 
 Welcome to the Marketing Management Application. This project is a modular extension designed to handle lead generation, campaign tracking, and marketing analytics.
 
+## Prerequisites
+- **PHP 7.4+** with SQLite support.
+- **GD Library**: Required for automated thumbnail generation and photo optimization. 
+  - *XAMPP Tip*: Enable `extension=gd` in your `php.ini` file and restart Apache.
+
 ## Quick Start
 1. Review [ARCHITECTURE.md](docs/ARCHITECTURE.md) to understand the project structure.
 2. Follow [DEVELOPMENT_GUIDELINES.md](docs/DEVELOPMENT_GUIDELINES.md) when adding new features.

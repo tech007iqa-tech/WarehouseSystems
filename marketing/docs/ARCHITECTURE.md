@@ -35,4 +35,5 @@ This application is designed to be modular, lightweight, and easy to maintain. I
 ## Technology Stack
 - **Frontend**: HTML5, Vanilla CSS, Modern JavaScript.
 - **Backend**: PHP (Modular logic).
+- **Dependencies**: PHP GD Extension (Required for Image Optimization).
 - **Database**: SQLite (Optimized with performance indexing).

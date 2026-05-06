@@ -19,7 +19,23 @@ While the Photo Bucket supports flexible uploads, the following "Hero Shots" are
 - **Model Templates**: Displays a visual indicator of asset availability (📦 Volume, ✨ Quality, 🖼️ Metadata).
 - **One-Click Access**: Use the "Copy Path" button in the Photo Bucket to get the web-ready URL for external listings.
 
+## Performance & Optimization
+- **Triple-Tier Processing**: The system automatically generates three versions of every photo:
+  1. **Raw Original**: The uncompressed backup of your upload.
+  2. **Optimized Full (WebP)**: A high-performance full-screen version (Max 1920px).
+  3. **Thumbnail (WebP)**: A lightweight 400px preview for the gallery grid.
+- **WebP Compression**: Processed images use the WebP format for superior loading speed.
+
+## Troubleshooting: "Performance Warning"
+If you see a warning about the **GD Library**, thumbnail generation is disabled. 
+1. **The Symptom**: "⚙️ Processing..." labels stay blurred or original high-res photos are used everywhere.
+2. **The Fix**:
+   - Open your `php.ini` file (via XAMPP Config -> PHP).
+   - Search for `;extension=gd`.
+   - Remove the leading semicolon: `extension=gd`.
+   - **Important**: Stop and Start Apache to apply the change.
+
 ## Agent Instructions
 - Maintain the "Schema Guard" pattern for the `photos` table.
-- Ensure all uploaded images are stored with unique filenames to prevent collisions.
-- Optimization: In future versions, consider adding automatic thumbnail generation.
+- Ensure all uploaded images are stored with unique filenames.
+- Always use the `PhotoProcessor` class for image handling.

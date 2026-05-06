@@ -4,6 +4,7 @@
  */
 
 // Handle Actions
+$editTmpl = null;
 $action = $_GET['action'] ?? null;
 
 if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -50,11 +51,30 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$editTmpl = null;
 if ($action === 'edit' && isset($_GET['id'])) {
     $stmt = $marketingDb->prepare("SELECT * FROM model_templates WHERE id = ?");
     $stmt->execute([$_GET['id']]);
     $editTmpl = $stmt->fetch();
+}
+
+if ($action === 'delete' && isset($_GET['id'])) {
+    $id = $_GET['id'];
+    try {
+        // Get name for audit log before deleting
+        $stmt = $marketingDb->prepare("SELECT model_name FROM model_templates WHERE id = ?");
+        $stmt->execute([$id]);
+        $name = $stmt->fetchColumn();
+
+        $stmt = $marketingDb->prepare("DELETE FROM model_templates WHERE id = ?");
+        $stmt->execute([$id]);
+        
+        log_marketing_audit($marketingDb, 'Template', $id, 'DELETED', "Deleted marketing template for: $name");
+        
+        header("Location: ?page=model_templates&success=3");
+        exit;
+    } catch (Exception $e) {
+        $error = "Deletion failed: " . $e->getMessage();
+    }
 }
 ?>
 
@@ -65,7 +85,11 @@ if ($action === 'edit' && isset($_GET['id'])) {
 
 <?php if (isset($_GET['success'])): ?>
     <div class="alert alert-success">
-        <?php echo ($_GET['success'] == '1') ? 'Template created successfully!' : 'Template updated successfully!'; ?>
+        <?php 
+        if ($_GET['success'] == '1') echo 'Template created successfully!';
+        elseif ($_GET['success'] == '2') echo 'Template updated successfully!';
+        elseif ($_GET['success'] == '3') echo 'Template deleted successfully!';
+        ?>
     </div>
 <?php endif; ?>
 
@@ -75,53 +99,59 @@ if ($action === 'edit' && isset($_GET['id'])) {
 
 <div class="dashboard-grid">
     <!-- NEW TEMPLATE FORM -->
-    <section class="card">
+    <section class="card" style="grid-column: span 12;">
         <h2><?php echo $editTmpl ? 'Edit Template' : 'Create New Template'; ?></h2>
         <form action="?page=model_templates&action=<?php echo $editTmpl ? 'update' : 'add'; ?>" method="POST" class="standard-form">
             <?php if ($editTmpl): ?>
                 <input type="hidden" name="id" value="<?php echo $editTmpl['id']; ?>">
             <?php endif; ?>
             
-            <div class="form-group">
-                <label for="model_name">Model Name</label>
-                <?php 
-                    $prefill = $_GET['prefill_model'] ?? ($editTmpl['model_name'] ?? ''); 
-                ?>
-                <input type="text" name="model_name" id="model_name" required value="<?php echo htmlspecialchars($prefill); ?>" placeholder="e.g. Dell Latitude 5490">
-            </div>
-            <div class="form-group">
-                <label for="category">Category</label>
-                <select name="category" id="category">
+            <div class="form-grid-2col">
+                <div class="form-group">
+                    <label for="model_name">Model Name</label>
                     <?php 
-                    $cats = ['Laptop', 'Desktop', 'Server', 'Part'];
-                    foreach($cats as $cat):
-                        $sel = (isset($editTmpl) && $editTmpl['category'] === $cat) ? 'selected' : '';
-                        echo "<option value=\"$cat\" $sel>$cat</option>";
-                    endforeach;
+                        $prefill = $_GET['prefill_model'] ?? ($editTmpl['model_name'] ?? ''); 
                     ?>
-                </select>
+                    <input type="text" name="model_name" id="model_name" required value="<?php echo htmlspecialchars($prefill); ?>" placeholder="e.g. Dell Latitude 5490">
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select name="category" id="category">
+                        <?php 
+                        $cats = ['Laptop', 'Desktop', 'Server', 'Part'];
+                        foreach($cats as $cat):
+                            $sel = (isset($editTmpl) && $editTmpl['category'] === $cat) ? 'selected' : '';
+                            echo "<option value=\"$cat\" $sel>$cat</option>";
+                        endforeach;
+                        ?>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="base_specs">Standard Specifications</label>
-                <?php $preSpecs = $_GET['prefill_specs'] ?? ($editTmpl['base_specs'] ?? ''); ?>
-                <textarea name="base_specs" id="base_specs" rows="4" placeholder="i5-8350U, 8GB RAM, 256GB SSD..."><?php echo htmlspecialchars($preSpecs); ?></textarea>
+
+            <div class="form-grid-2col">
+                <div class="form-group">
+                    <label for="base_specs">Standard Specifications</label>
+                    <?php $preSpecs = $_GET['prefill_specs'] ?? ($editTmpl['base_specs'] ?? ''); ?>
+                    <textarea name="base_specs" id="base_specs" rows="6" placeholder="i5-8350U, 8GB RAM, 256GB SSD..."><?php echo htmlspecialchars($preSpecs); ?></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="marketing_copy">Marketing Copy (The Pitch)</label>
+                    <?php $preCopy = $_GET['prefill_copy'] ?? ($editTmpl['marketing_copy'] ?? ''); ?>
+                    <textarea name="marketing_copy" id="marketing_copy" rows="10" placeholder="Write the ad description here..."><?php echo htmlspecialchars($preCopy); ?></textarea>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="marketing_copy">Marketing Copy (The Pitch)</label>
-                <?php $preCopy = $_GET['prefill_copy'] ?? ($editTmpl['marketing_copy'] ?? ''); ?>
-                <textarea name="marketing_copy" id="marketing_copy" rows="6" placeholder="Write the ad description here..."><?php echo htmlspecialchars($preCopy); ?></textarea>
-            </div>
-            <div style="display: flex; gap: 1rem;">
-                <button type="submit" class="btn-action"><?php echo $editTmpl ? 'Update Template' : 'Save Template'; ?></button>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 0.5rem;">
                 <?php if ($editTmpl): ?>
-                    <a href="?page=model_templates" class="btn-small" style="line-height: 48px;">Cancel</a>
+                    <a href="?page=model_templates" class="btn-small" style="height: 48px;">Cancel</a>
                 <?php endif; ?>
+                <button type="submit" class="btn-action" style="min-width: 200px;"><?php echo $editTmpl ? 'Update Template' : 'Save Template'; ?></button>
             </div>
         </form>
     </section>
 
     <!-- TEMPLATE LIST -->
-    <section class="card template-library-list">
+    <section class="card" style="grid-column: span 12;">
         <h2>Existing Templates</h2>
         <div class="template-list">
             <?php
@@ -160,11 +190,14 @@ if ($action === 'edit' && isset($_GET['id'])) {
                             </div>
 
                             <div class="tmpl-body">
-                                <p class="tmpl-specs"><strong>Specs:</strong> <?php echo htmlspecialchars(mb_strimwidth($tmpl['base_specs'], 0, 100, "...")); ?></p>
+                                <div class="tmpl-specs">
+                                    <?php echo UI::format_specs($tmpl['base_specs']); ?>
+                                </div>
                             </div>
                             <div class="tmpl-footer">
                                 <a href="?page=model_templates&action=edit&id=<?php echo $tmpl['id']; ?>" class="btn-small">Edit</a>
                                 <a href="?page=ad_generator&model=<?php echo urlencode($tmpl['model_name']); ?>" class="btn-small btn-highlight">Create Ad</a>
+                                <a href="?page=model_templates&action=delete&id=<?php echo $tmpl['id']; ?>" class="btn-small" style="color: #ef4444; border-color: #fee2e2;" onclick="return confirm('Are you sure you want to delete this template?');">Delete</a>
                             </div>
                         </div>
                     <?php endforeach; ?>

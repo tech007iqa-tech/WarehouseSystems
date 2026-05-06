@@ -64,12 +64,27 @@ function marketing_schema_guard($pdo) {
             model_name TEXT,
             category TEXT,
             file_path TEXT NOT NULL,
+            thumbnail_path TEXT,
             file_size INTEGER,
             mime_type TEXT,
+            status TEXT DEFAULT 'Ready', -- Ready, Processing, Error
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
 
         // --- Automated Migrations ---
+        $stmt_info = $pdo->query("PRAGMA table_info(photos)");
+        $photo_cols = array_column($stmt_info->fetchAll(PDO::FETCH_ASSOC), 'name');
+
+        if (!in_array('thumbnail_path', $photo_cols)) {
+            $pdo->exec("ALTER TABLE photos ADD COLUMN thumbnail_path TEXT");
+        }
+        if (!in_array('optimized_path', $photo_cols)) {
+            $pdo->exec("ALTER TABLE photos ADD COLUMN optimized_path TEXT");
+        }
+        if (!in_array('status', $photo_cols)) {
+            $pdo->exec("ALTER TABLE photos ADD COLUMN status TEXT DEFAULT 'Ready'");
+        }
+
         $stmt_info = $pdo->query("PRAGMA table_info(leads)");
         $col_names = array_column($stmt_info->fetchAll(PDO::FETCH_ASSOC), 'name');
         

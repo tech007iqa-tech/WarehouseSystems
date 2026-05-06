@@ -191,11 +191,11 @@ main {
 }
 
 .ad-preview-main, .lead-details-form, .lead-pool-table, .template-library-list, .activity-feed {
-    grid-column: span 8;
+    grid-column: span 9; /* Increased from 8 to fill space better */
 }
 
 .quick-actions {
-    grid-column: span 4;
+    grid-column: span 3;
 }
 
 .ad-generator-layout {
@@ -473,8 +473,8 @@ input:focus, select:focus, textarea:focus {
 /* Template Library Specifics */
 .template-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
     margin-top: 1.5rem;
 }
 
@@ -485,14 +485,79 @@ input:focus, select:focus, textarea:focus {
     padding: 1.75rem;
     display: flex;
     flex-direction: column;
+    gap: 1rem;
     box-shadow: var(--shadow-sm);
-    transition: all 0.2s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.template-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--accent-gradient);
+    opacity: 0;
+    transition: opacity 0.3s;
 }
 
 .template-card:hover {
     border-color: var(--accent-primary);
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(168, 85, 247, 0.1);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.template-card:hover::before {
+    opacity: 1;
+}
+
+.tmpl-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+
+.tmpl-header h3 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--text-main);
+    letter-spacing: -0.5px;
+}
+
+.tmpl-badge {
+    background: var(--accent-tertiary);
+    color: var(--accent-primary);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.tmpl-specs {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #f1f5f9;
+}
+
+.tmpl-footer {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.tmpl-footer .btn-small {
+    flex: 1;
 }
 
 
@@ -586,4 +651,69 @@ input:focus, select:focus, textarea:focus {
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+/* --- TOAST NOTIFICATIONS --- */
+#toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toast {
+    min-width: 300px;
+    max-width: 450px;
+    padding: 1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(12px);
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: toastIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    cursor: pointer;
+    border-left: 5px solid var(--accent-primary);
+}
+
+.toast.toast-success { border-left-color: var(--accent-primary); }
+.toast.toast-error { border-left-color: #ef4444; }
+.toast.toast-warning { border-left-color: #f59e0b; }
+.toast.toast-info { border-left-color: #3b82f6; }
+
+.toast-icon {
+    font-size: 1.25rem;
+}
+
+.toast-content {
+    flex: 1;
+}
+
+.toast-title {
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--text-main);
+    display: block;
+}
+
+.toast-message {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(50px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes toastOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(50px); }
+}
+
+.toast.hide {
+    animation: toastOut 0.3s ease forwards;
 }

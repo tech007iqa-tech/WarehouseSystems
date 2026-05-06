@@ -7,84 +7,22 @@
 $marketingDb = get_marketing_db();
 $labelsDb = get_labels_db();
 
-$message = '';
-$messageType = 'success';
+require_once __DIR__ . '/../../includes/photo_processor.php';
+$processor = new PhotoProcessor($marketingDb);
 
-// 1. Handle Upload
-if (isset($_POST['upload_photo'])) {
-    $model_name = $_POST['model_name'] ?? '';
-    $category = $_POST['category'] ?? 'General';
-    
-    if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-        $file_tmp = $_FILES['photo']['tmp_name'];
-        $original_name = $_FILES['photo']['name'];
-        $file_size = $_FILES['photo']['size'];
-        $mime_type = $_FILES['photo']['type'];
-        
-        $extension = pathinfo($original_name, PATHINFO_EXTENSION);
-        $filename = uniqid('img_', true) . '.' . $extension;
-        $target_dir = __DIR__ . '/../../assets/photo_bucket/';
-        $target_path = $target_dir . $filename;
-        
-        if (move_uploaded_file($file_tmp, $target_path)) {
-            try {
-                $stmt = $marketingDb->prepare("INSERT INTO photos (filename, original_name, model_name, category, file_path, file_size, mime_type) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $stmt->execute([$filename, $original_name, $model_name, $category, 'assets/photo_bucket/' . $filename, $file_size, $mime_type]);
-                
-                log_marketing_audit($marketingDb, 'PHOTO', $marketingDb->lastInsertId(), 'UPLOADED', "Uploaded photo: $original_name for $model_name");
-                
-                $message = "Photo uploaded successfully!";
-            } catch (Exception $e) {
-                $message = "DB Error: " . $e->getMessage();
-                $messageType = 'danger';
-            }
-        } else {
-            $message = "Failed to move uploaded file.";
-            $messageType = 'danger';
-        }
-    } else {
-        $message = "Upload error or no file selected.";
-        $messageType = 'danger';
-    }
-}
+require_once __DIR__ . '/functions.php';
 
-// 2. Handle Delete
-if (isset($_GET['delete_photo'])) {
-    $photo_id = (int)$_GET['delete_photo'];
-    
-    try {
-        $stmt = $marketingDb->prepare("SELECT filename FROM photos WHERE id = ?");
-        $stmt->execute([$photo_id]);
-        $photo = $stmt->fetch();
-        
-        if ($photo) {
-            $file_path = __DIR__ . '/../../assets/photo_bucket/' . $photo['filename'];
-            if (file_exists($file_path)) {
-                unlink($file_path);
-            }
-            
-            $stmt = $marketingDb->prepare("DELETE FROM photos WHERE id = ?");
-            $stmt->execute([$photo_id]);
-            
-            log_marketing_audit($marketingDb, 'PHOTO', $photo_id, 'DELETED', "Deleted photo: " . $photo['filename']);
-            $message = "Photo deleted successfully.";
-        }
-    } catch (Exception $e) {
-        $message = "Delete failed: " . $e->getMessage();
-        $messageType = 'danger';
-    }
-}
+// Handle any POST/GET actions
+handle_photo_bucket_actions($marketingDb, $processor, $labelsDb);
 
-// 3. Fetch Photos
+// Fetch Data
 $photos = $marketingDb->query("SELECT * FROM photos ORDER BY created_at DESC")->fetchAll();
-
-// 4. Fetch Models for dropdown (from Labels DB if available)
-$models = [];
-if ($labelsDb) {
-    $models = $labelsDb->query("SELECT DISTINCT model FROM items ORDER BY model ASC")->fetchAll(PDO::FETCH_COLUMN);
-}
+$models = get_photo_bucket_models($marketingDb, $labelsDb);
 
 ?>
+
+<!-- Module Specific Styles -->
+<link rel="stylesheet" href="assets/css/modules/photo_bucket.css">
 
 <header class="page-header">
     <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -92,17 +30,25 @@ if ($labelsDb) {
             <h1>🖼️ Photo Bucket</h1>
             <p>Manage your marketing assets and hardware photography.</p>
         </div>
-        <button onclick="document.getElementById('upload-modal').style.display='flex'" class="btn-action" style="min-width: 180px;">Upload New Photo</button>
+        <div style="display: flex; gap: 10px;">
+            <?php if (extension_loaded('gd')): ?>
+                <a href="?page=photo_bucket&regenerate_thumbnails=1" class="btn-action" style="background: var(--accent-secondary); color: var(--text-main); text-decoration: none; display: flex; align-items: center; justify-content: center; min-width: 180px;">⚙️ Regenerate All</a>
+            <?php endif; ?>
+            <button onclick="document.getElementById('upload-modal').style.display='flex'" class="btn-action" style="min-width: 180px;">Upload New Photo</button>
+        </div>
     </div>
 </header>
 
-<?php if ($message): ?>
-    <div class="alert alert-<?php echo $messageType; ?>">
-        <?php echo $message; ?>
+<?php if (!extension_loaded('gd')): ?>
+    <div class="alert alert-danger" style="background: #fff1f2; color: #9f1239; border-color: #fda4af;">
+        <strong>⚠️ Performance Warning:</strong> The PHP 'GD' library is not enabled on your server. High-resolution photos will be used directly, which may slow down the gallery. Enable 'gd' in your php.ini for automatic thumbnail optimization.
     </div>
+    <?php
+    $marketingDb->exec("UPDATE photos SET status = 'Ready' WHERE status = 'Processing'");
+    ?>
 <?php endif; ?>
 
-<div class="photo-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+<div class="photo-grid">
     <?php if (empty($photos)): ?>
         <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 4rem;">
             <div style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.3;">📸</div>
@@ -111,26 +57,44 @@ if ($labelsDb) {
         </div>
     <?php else: ?>
         <?php foreach ($photos as $photo): ?>
-            <div class="card" style="padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-                <div style="aspect-ratio: 16/10; overflow: hidden; background: #f1f5f9; position: relative;">
-                    <img src="<?php echo $photo['file_path']; ?>" alt="<?php echo htmlspecialchars($photo['original_name']); ?>" style="width: 100%; height: 100%; object-fit: cover;">
-                    <div style="position: absolute; top: 10px; right: 10px;">
+            <div class="photo-card-compact">
+                <div class="photo-thumb-container">
+                    <?php 
+                    $displayImg = (!empty($photo['thumbnail_path']) && file_exists(__DIR__ . '/../../' . $photo['thumbnail_path'])) 
+                                  ? $photo['thumbnail_path'] 
+                                  : $photo['file_path'];
+                    ?>
+                    <img src="<?php echo $displayImg; ?>" alt="<?php echo htmlspecialchars($photo['original_name']); ?>" 
+                         style="<?php echo ($photo['status'] === 'Processing') ? 'filter: blur(8px);' : ''; ?>">
+                    
+                    <?php if ($photo['status'] === 'Processing'): ?>
+                        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.4); font-size: 0.6rem; font-weight: 800; color: var(--accent-primary);">
+                            ⚙️
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="photo-actions-overlay">
                         <a href="?page=photo_bucket&delete_photo=<?php echo $photo['id']; ?>" 
-                           onclick="return confirm('Are you sure you want to delete this photo?')"
-                           style="background: rgba(255, 255, 255, 0.9); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; text-decoration: none; color: #ef4444; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                           🗑️
-                        </a>
+                           onclick="return confirm('Delete this photo?')"
+                           class="action-icon-small delete" title="Delete">🗑️</a>
+                        
+                        <?php 
+                        $fullViewPath = (!empty($photo['optimized_path']) && file_exists(__DIR__ . '/../../' . $photo['optimized_path'])) 
+                                        ? $photo['optimized_path'] 
+                                        : $photo['file_path'];
+                        ?>
+                        <a href="<?php echo $fullViewPath; ?>" target="_blank" class="action-icon-small view" title="View Optimized">👁️</a>
+                        <a href="<?php echo $photo['file_path']; ?>" download class="action-icon-small download" title="Download Raw">📥</a>
                     </div>
                 </div>
-                <div style="padding: 1.25rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-                        <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin: 0;"><?php echo htmlspecialchars($photo['model_name'] ?: 'General Asset'); ?></h3>
-                        <span class="badge-customer" style="font-size: 0.7rem;"><?php echo htmlspecialchars($photo['category']); ?></span>
-                    </div>
-                    <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 1rem;"><?php echo htmlspecialchars($photo['original_name']); ?></p>
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn-action" style="padding: 0 12px; height: 44px; font-size: 0.85rem; flex: 1;" onclick="copyToClipboard('<?php echo $photo['file_path']; ?>')">Copy Path</button>
-                        <a href="<?php echo $photo['file_path']; ?>" target="_blank" class="btn-action" style="padding: 0 12px; height: 44px; font-size: 0.85rem; text-decoration: none; display: flex; align-items: center; justify-content: center; background: var(--text-main);">View Full</a>
+                
+                <div class="photo-meta-compact">
+                    <h3 title="<?php echo htmlspecialchars($photo['model_name'] ?: 'General'); ?>">
+                        <?php echo htmlspecialchars($photo['model_name'] ?: 'General'); ?>
+                    </h3>
+                    <div class="category-row">
+                        <span><?php echo htmlspecialchars($photo['category']); ?></span>
+                        <button onclick="copyToClipboard('<?php echo $fullViewPath; ?>', 'Path')" style="background: none; border: none; cursor: pointer; font-size: 0.6rem; padding: 2px; opacity: 0.5;" title="Copy Path">📋</button>
                     </div>
                 </div>
             </div>
@@ -154,12 +118,13 @@ if ($labelsDb) {
             
             <div class="form-group">
                 <label>Hardware Model (Optional)</label>
-                <select name="model_name">
-                    <option value="">-- No Specific Model --</option>
+                <input type="text" name="model_name" list="model_list" placeholder="Start typing or enter custom model...">
+                <datalist id="model_list">
                     <?php foreach ($models as $model): ?>
-                        <option value="<?php echo htmlspecialchars($model); ?>"><?php echo htmlspecialchars($model); ?></option>
+                        <option value="<?php echo htmlspecialchars($model); ?>">
                     <?php endforeach; ?>
-                </select>
+                </datalist>
+                <small style="font-size: 0.7rem; color: var(--text-dim); display: block; margin-top: 4px;">Suggestions include Active Templates and Warehouse Inventory.</small>
             </div>
             
             <div class="form-group">
@@ -188,20 +153,4 @@ if ($labelsDb) {
         from { opacity: 0; transform: scale(0.9) translateY(20px); }
         to { opacity: 1; transform: scale(1) translateY(0); }
     }
-    
-    .photo-grid .card img {
-        transition: transform 0.5s ease;
-    }
-    
-    .photo-grid .card:hover img {
-        transform: scale(1.05);
-    }
 </style>
-
-<script>
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        alert('Path copied to clipboard: ' + text);
-    });
-}
-</script>

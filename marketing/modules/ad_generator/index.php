@@ -50,7 +50,7 @@ if ($selectedModel) {
         if ($tone === 'urgency') {
             $generatedAd = "⚡ FLASH SALE: {$qty}x " . strtoupper($matchingTemplate['model_name']) . " ⚡\n\n";
             $generatedAd .= "We need to clear space! " . $qty . " units ready for IMMEDIATE palletized shipping.\n\n";
-            $generatedAd .= "🔥 KEY SPECS:\n" . $matchingTemplate['base_specs'] . "\n\n";
+            $generatedAd .= "🔥 KEY SPECS:\n" . UI::format_specs_plain($matchingTemplate['base_specs']) . "\n\n";
             $generatedAd .= "FIRST COME, FIRST SERVED. Reply now for special bulk pricing. 📉";
         } elseif ($tone === 'social') {
             $generatedAd = "✨ Looking for quality " . $matchingTemplate['category'] . "s in bulk? ✨\n\n";
@@ -61,7 +61,7 @@ if ($selectedModel) {
             // Standard Manifest
             $generatedAd = "🔥 INVENTORY ALERT: " . strtoupper($matchingTemplate['model_name']) . " 🔥\n\n";
             $generatedAd .= "We have just processed a batch of " . $qty . " units, now ready for immediate fulfillment!\n\n";
-            $generatedAd .= "📍 SPECIFICATIONS:\n" . $matchingTemplate['base_specs'] . "\n\n";
+            $generatedAd .= "📍 SPECIFICATIONS:\n" . UI::format_specs_plain($matchingTemplate['base_specs']) . "\n\n";
             $generatedAd .= "📝 OVERVIEW:\n" . $matchingTemplate['marketing_copy'] . "\n\n";
             $generatedAd .= "DM for pricing and bulk manifest.";
         }
@@ -139,7 +139,12 @@ if ($selectedModel) {
                             foreach($bucketPhotos as $photo):
                         ?>
                             <div class="asset-thumb exists">
-                                <img src="<?php echo $photo['file_path']; ?>" alt="Stock Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+                                <?php 
+                                $previewImg = (!empty($photo['thumbnail_path']) && file_exists(__DIR__ . '/../../' . $photo['thumbnail_path'])) 
+                                              ? $photo['thumbnail_path'] 
+                                              : $photo['file_path'];
+                                ?>
+                                <img src="<?php echo $previewImg; ?>" alt="Stock Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
                             </div>
                         <?php 
                             endforeach;
@@ -243,8 +248,8 @@ function copyAdToClipboard() {
     border-radius: 12px;
     padding: 1.5rem;
     color: var(--text-main);
-    font-family: 'Inter', sans-serif;
-    font-size: 0.95rem;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 0.9rem;
     line-height: 1.6;
     resize: none;
     outline: none;

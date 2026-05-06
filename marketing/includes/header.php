@@ -5,9 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo APP_NAME; ?> - Management Portal</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="assets/js/app.js" defer></script>
 </head>
 <body>
+    <?php if (isset($_SESSION['notify'])): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                notify("<?php echo $_SESSION['notify']['message']; ?>", "<?php echo $_SESSION['notify']['type']; ?>");
+            });
+        </script>
+        <?php unset($_SESSION['notify']); ?>
+    <?php endif; ?>
     <nav class="main-nav">
         <div class="nav-container">
             <a href="index.php" class="brand"><?php echo APP_NAME; ?></a>
