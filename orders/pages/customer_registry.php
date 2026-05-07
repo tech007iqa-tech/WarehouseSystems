@@ -118,14 +118,24 @@ try {
 <div class="form-side">
     <?php
     // Dashboard Logic: Fetch high-level KPIs
-    $total_pipeline = 0;
+    $pipeline_data = [
+        'Daily'   => 0,
+        'Weekly'  => 0,
+        'Monthly' => 0,
+        'Yearly'  => 0,
+        'Total'   => 0
+    ];
     $active_batches_count = 0;
     $pending_callbacks_count = 0;
     $warehouse_audit_count = 0;
 
     try {
-        // 1. Total Pipeline (Lifetime Value sum)
-        $total_pipeline = $conn_orders->query("SELECT SUM(quantity * unit_price) FROM items")->fetchColumn() ?: 0;
+        // 1. Pipeline Calculations (Joining items and orders for date filtering)
+        $pipeline_data['Daily']   = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.created_at >= date('now', 'localtime')")->fetchColumn() ?: 0;
+        $pipeline_data['Weekly']  = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.created_at >= date('now', '-7 days', 'localtime')")->fetchColumn() ?: 0;
+        $pipeline_data['Monthly'] = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.created_at >= date('now', 'start of month', 'localtime')")->fetchColumn() ?: 0;
+        $pipeline_data['Yearly']  = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.created_at >= date('now', 'start of year', 'localtime')")->fetchColumn() ?: 0;
+        $pipeline_data['Total']   = $conn_orders->query("SELECT SUM(quantity * unit_price) FROM items")->fetchColumn() ?: 0;
         
         // 2. Active Batches
         $active_batches_count = $conn_orders->query("SELECT COUNT(*) FROM orders WHERE status = 'active'")->fetchColumn();
@@ -142,9 +152,25 @@ try {
     ?>
 
     <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
-        <div class="dashboard-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
-            <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">💰 Total Pipeline</div>
-            <div style="font-size: 1.25rem; font-weight: 900; color: var(--accent-color);">$<?= number_format($total_pipeline, 0) ?></div>
+        <div class="dashboard-card pipeline-card" id="pipeline-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">💰 Pipeline</div>
+                <div id="pipeline-period-badge" style="font-size: 0.6rem; font-weight: 800; background: #f0f9ff; color: #0369a1; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Total</div>
+            </div>
+            <div id="pipeline-value" style="font-size: 1.25rem; font-weight: 900; color: var(--accent-color);">$<?= number_format($pipeline_data['Total'], 0) ?></div>
+            
+            <!-- Quick Toggle Controls -->
+            <div class="pipeline-controls" style="margin-top: 10px; display: flex; gap: 4px;">
+                <?php foreach(['Daily', 'Weekly', 'Monthly', 'Yearly', 'Total'] as $period): ?>
+                    <button type="button" onclick="setPipelinePeriod('<?= $period ?>')" 
+                            class="pipeline-btn" 
+                            data-period="<?= $period ?>"
+                            data-value="$<?= number_format($pipeline_data[$period], 0) ?>"
+                            style="flex: 1; height: 20px; font-size: 0.55rem; font-weight: 800; border: 1px solid #e2e8f0; border-radius: 4px; background: white; cursor: pointer; transition: all 0.2s; color: #64748b;">
+                        <?= substr($period, 0, 1) ?>
+                    </button>
+                <?php endforeach; ?>
+            </div>
         </div>
         <div class="dashboard-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
             <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">📦 Active Batches</div>
@@ -313,11 +339,52 @@ try {
                         </div>
                       </div>";
             }
-        }
- else {
+        } else {
             echo "<div class='empty-state' style='padding: 40px;'>No customers registered yet.</div>";
         }
         ?>
+        <script>
+            /**
+             * Updates the pipeline card display and saves preference
+             */
+            function setPipelinePeriod(period) {
+                const valueDisplay = document.getElementById('pipeline-value');
+                const badge = document.getElementById('pipeline-period-badge');
+                const buttons = document.querySelectorAll('.pipeline-btn');
+                
+                // Find the button for this period to get the pre-calculated value
+                const targetBtn = Array.from(buttons).find(btn => btn.getAttribute('data-period') === period);
+                if (!targetBtn) return;
+
+                const value = targetBtn.getAttribute('data-value');
+                
+                // Update UI
+                valueDisplay.innerText = value;
+                badge.innerText = period;
+                
+                // Update button styles
+                buttons.forEach(btn => {
+                    if (btn.getAttribute('data-period') === period) {
+                        btn.style.background = 'var(--text-main)';
+                        btn.style.color = 'white';
+                        btn.style.borderColor = 'var(--text-main)';
+                    } else {
+                        btn.style.background = 'white';
+                        btn.style.color = '#64748b';
+                        btn.style.borderColor = '#e2e8f0';
+                    }
+                });
+
+                // Save preference
+                localStorage.setItem('iqa_pipeline_pref', period);
+            }
+
+            // Initialize preference on load
+            document.addEventListener('DOMContentLoaded', () => {
+                const pref = localStorage.getItem('iqa_pipeline_pref') || 'Total';
+                setPipelinePeriod(pref);
+            });
+        </script>
     </div>
 </div>
 

@@ -106,6 +106,12 @@ try {
         $active_order_id = $row['order_id'] ?? 'ORD-DEFAULT';
     }
 
+    // Fetch order details for metadata (specifically the date)
+    $stmt_o = $conn_items->prepare("SELECT * FROM orders WHERE customer_id = ? AND order_id = ?");
+    $stmt_o->execute([$customer_id, $active_order_id]);
+    $order_data = $stmt_o->fetch(PDO::FETCH_ASSOC);
+    $order_display_date = $order_data ? date('M d, Y', strtotime($order_data['created_at'])) : date('M d, Y');
+
     $stmt = $conn_items->prepare("SELECT * FROM items WHERE customer_id = ? AND order_id = ? ORDER BY id ASC");
     $stmt->execute([$customer_id, $active_order_id]);
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -156,7 +162,7 @@ try {
             </div>
             <div style="text-align: right;">
                 <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Order Date</div>
-                <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;"><?= date('M d, Y') ?></div>
+                <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;"><?= htmlspecialchars($order_display_date) ?></div>
             </div>
         </div>
 
@@ -254,7 +260,7 @@ try {
             'rawItems' => $items,
             'customerName' => $customer['company_name'] ?? 'Account',
             'orderID' => $active_order_id,
-            'orderDate' => date('M d, Y')
+            'orderDate' => $order_display_date
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>
         </script>
         <script>

@@ -245,7 +245,9 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px;">
                 <div>
                     <h2 style="font-weight: 900; font-size: 1.5rem; margin:0; color:var(--text-main);" id="modal-company-name">Company Name</h2>
-                    <span id="modal-customer-id" style="font-size: 0.85rem; color: var(--text-secondary); font-family: monospace; font-weight:700;"></span>
+                    <a id="modal-customer-link" href="#" style="text-decoration:none; display:inline-block;" title="View global batch history">
+                        <span id="modal-customer-id" style="font-size: 0.85rem; color: var(--accent-color); font-family: monospace; font-weight:700; cursor:pointer; border-bottom: 1px dashed var(--accent-color);"></span>
+                    </a>
                 </div>
             </div>
             

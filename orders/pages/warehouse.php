@@ -137,12 +137,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
             $stmt = $conn_wh->prepare("UPDATE inventory SET brand=?, model=?, specs_json=?, quantity=?, last_updated_by=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
             $stmt->execute([$brand, $model, $specs_json, $qty, $current_user, $_POST['item_id']]);
+            $last_id = $_POST['item_id'];
         } else {
             $stmt = $conn_wh->prepare("INSERT INTO inventory (user_owner, sector, location_code, brand, model, specs_json, quantity) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([$current_user, $sector, $loc, $brand, $model, $specs_json, $qty]);
+            $last_id = $conn_wh->lastInsertId();
         }
         $msg = ($_POST['action'] === 'edit_inventory') ? 'updated' : 'added';
-        header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=" . $msg . "#wh-form-title");
+        header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=" . $msg . "&last_id=" . $last_id . "#inventory-list");
         exit();
     }
 }
@@ -186,6 +188,8 @@ if ($selected_loc) {
         $items = $stmt_i->fetchAll(PDO::FETCH_ASSOC);
     }
 }
+
+$highlight_id = $_GET['last_id'] ?? null;
 ?>
 
 <script id="warehouse-state" type="application/json">
@@ -334,14 +338,15 @@ if ($selected_loc) {
                     </div>
                 </div>
                 <div class="inventory-actions">
-                    <div class="search-container">
+                    <div class="search-container" style="flex: 1; max-width: 300px;">
                         <i class="search-icon">🔍</i>
-                        <input type="text" id="wh-search" placeholder="Search items..." aria-label="Search warehouse inventory" onkeyup="filterWarehouse()" class="search-input">
+                        <input type="text" id="wh-search" placeholder="Search items..." aria-label="Search warehouse inventory" onkeyup="syncSearch(this)" onkeydown="if(event.key==='Enter') event.preventDefault()" class="search-input">
                     </div>
+                    <a href="#wh-main-form" class="btn-export" style="background: var(--text-main); color: white; border: none;">NEW Item</a>
                     <button type="button" onclick="downloadWarehouseCSV()" class="btn-export">
                         📊 Export CSV
                     </button>
-                    <button type="button" onclick="window.location.href='index.php?view=import_warehouse'" class="btn-export" style="background: var(--text-main); color: white; border: none;">
+                    <button type="button" onclick="window.location.href='index.php?view=import_warehouse'" class="btn-export" style="background: #1e293b; color: white; border: none;">
                         📥 Import Bulk
                     </button>
                 </div>
@@ -383,17 +388,28 @@ if ($selected_loc) {
                                 </td>
                             </tr>
                         <?php else: ?>
+                            <!-- Dynamic No Results Placeholder -->
+                            <tr id="wh-no-results" class="no-results-row" style="display: none;">
+                                <td colspan="12">
+                                    <div class="no-results-wrapper" style="display: flex; justify-content: center; width: 100%;">
+                                        <div class="no-results-container">
+                                            <div class="no-results-icon">🕵️‍♂️</div>
+                                            <div style="font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em;">No matches found</div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
                             <?php foreach ($items as $item): 
                                 $specs = json_decode($item['specs_json'], true) ?: [];
                                 $created_date = date('m/d/y', strtotime($item['created_at']));
                                 $updated_date = date('m/d/y', strtotime($item['updated_at']));
                             ?>
-                                <tr class="inventory-card" 
+                                <tr class="inventory-card <?= ($highlight_id && $item['id'] == $highlight_id) ? 'highlight-row' : '' ?>" 
                                      data-sector-theme="<?= htmlspecialchars($item['sector']) ?>"
                                      data-brand="<?= htmlspecialchars($item['brand']) ?>"
                                      data-model="<?= htmlspecialchars($item['model']) ?>"
                                      data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
-                                     data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'])) ?>">
+                                     data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
                                     
                                     <td><span class="location-tag"><?= htmlspecialchars($item['location_code']) ?></span></td>
                                     
@@ -483,18 +499,24 @@ if ($selected_loc) {
                     </tbody>
                     <tfoot style="border-top: 2px solid #e2e8f0; background: #f8fafc;">
                         <tr>
-                            <td colspan="2" style="text-align: right; padding: 15px; font-size: 1.1rem; color: #334155; font-weight: 800;">Inventory Total:</td>
+                            <td colspan="2" style="padding: 15px;">
+                                <div class="search-container footer-search" style="max-width: 300px; margin: 0;">
+                                    <i class="search-icon">🔍</i>
+                                    <input type="text" id="wh-search-footer" placeholder="Filter these results..." onkeyup="syncSearch(this)" onkeydown="if(event.key==='Enter') event.preventDefault()" class="search-input" style="height: 40px; font-size: 0.9rem; border-radius: 10px;">
+                                </div>
+                            </td>
+                            <td style="text-align: right; padding: 15px; font-size: 1.1rem; color: #334155; font-weight: 800;">Inventory Total:</td>
                             <td style="padding: 15px;">
                                 <span class="qty-pill" id="table-total-qty" style="background: #1e293b; color: white; font-size: 1.1rem; padding: 6px 12px;">
                                     <?= number_format($total_qty) ?>
                                 </span>
                             </td>
                             <?php if ($selected_sector === 'Laptops' || $selected_sector === 'Gaming'): ?>
-                                <td colspan="6"></td>
+                                <td colspan="5"></td>
                             <?php elseif ($selected_sector === 'Desktops'): ?>
-                                <td colspan="4"></td>
-                            <?php else: ?>
                                 <td colspan="3"></td>
+                            <?php else: ?>
+                                <td colspan="2"></td>
                             <?php endif; ?>
                         </tr>
                     </tfoot>
@@ -509,6 +531,11 @@ if ($selected_loc) {
                 
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 id="wh-form-title" style="font-weight: 800; margin: 0;">📥 Register Stock</h3>
+                    <div id="session-counter" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; color: #15803d; display: none;">
+                        ✨ <span id="session-count-val">0</span> Added this session
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
                     <button type="button" id="btn-clone-last" onclick="fillLastEnteredData()" style="background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; cursor: pointer; color: #475569; transition: all 0.2s;">
                         📋 Clone Last
                     </button>

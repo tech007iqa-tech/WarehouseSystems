@@ -159,3 +159,17 @@ async function transferOrder(event) {
         submitBtn.innerText = origText;
     }
 }
+
+// Handle automatic filtering from URL parameters (e.g., index.php?view=orders&q=CUST-123)
+document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('q');
+    
+    if (query) {
+        const searchInput = document.getElementById('order-search');
+        if (searchInput) {
+            searchInput.value = query;
+            filterOrders(); // Trigger the existing filter logic
+        }
+    }
+});

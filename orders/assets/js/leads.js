@@ -5,6 +5,7 @@
 function openLeadModal(lead) {
     document.getElementById('modal-company-name').innerText = lead.company_name;
     document.getElementById('modal-customer-id').innerText = lead.customer_id;
+    document.getElementById('modal-customer-link').href = `index.php?view=orders&type=completed&q=${encodeURIComponent(lead.customer_id)}`;
     document.getElementById('lead_customer_id').value = lead.customer_id;
     
     document.getElementById('lead_status').value = lead.account_status || 'Lead';
