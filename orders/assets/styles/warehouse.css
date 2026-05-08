@@ -749,7 +749,90 @@
     border: 1px solid #fde68a;
 }
 
-/* End of file */
+/* Bulk Actions */
+.bulk-action-bar {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: var(--accent-gradient);
+    color: white;
+    padding: 15px 25px;
+    margin: 0 0 20px 0;
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    animation: slideDown 0.3s ease forwards;
+}
+.bulk-info { font-weight: 800; font-size: 1.1rem; }
+.bulk-actions { display: flex; gap: 10px; align-items: center; }
+.bulk-actions input { background: white; color: var(--text-main); font-weight: 700; border: none; }
+
+@keyframes slideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Selected Row Highlighting */
+.inventory-table tr.selected-row {
+    background-color: rgba(140, 198, 63, 0.08) !important;
+    border-left: 4px solid var(--accent-color) !important;
+    transition: all 0.2s ease;
+}
+
+.inventory-table tr.selected-row td {
+    border-bottom-color: rgba(140, 198, 63, 0.2);
+}
+
+/* Custom Premium Checkboxes */
+.row-select, #selectAll {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: #ffffff;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.row-select:checked, #selectAll:checked {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.row-select:checked::after, #selectAll:checked::after {
+    content: '✓';
+    color: white;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.row-select:hover, #selectAll:hover {
+    border-color: var(--accent-color);
+    transform: scale(1.05);
+}
+
+[data-theme="dark"] .row-select, [data-theme="dark"] #selectAll {
+    background: var(--bg-surface-2);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .inventory-table tr.selected-row {
+    background-color: rgba(163, 230, 53, 0.1) !important;
+    border-left-color: var(--accent-color) !important;
+}
+
+.match-highlight {
+    background: #f0fdf4 !important;
+    border-left: 4px solid #166534 !important;
+}
 .sector-badge:hover {
     filter: brightness(0.95);
     transform: translateY(-1px);

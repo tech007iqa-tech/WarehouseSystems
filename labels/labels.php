@@ -20,9 +20,28 @@ try {
     <div class="flex-between mb-15">
         <div>
             <h1>📦 Labeled Inventory</h1>
+            <?= UI::csrf_field() ?>
             <p>Master list of hardware configurations. Reuse these for printing labels or building orders.</p>
         </div>
         <a href="new_label.php" class="btn btn-primary">➕ Create New Label Profile</a>
+    </div>
+
+    <!-- Bulk Action Bar (Hidden by default) -->
+    <div id="bulkActionBar" class="bulk-action-bar" style="display:none;">
+        <div class="bulk-info">
+            <span id="selectedCount">0</span> items selected
+        </div>
+        <div class="bulk-actions">
+            <select id="bulkStatus" class="filter-select" style="width: auto;">
+                <option value="">-- Change Status --</option>
+                <option value="Tested">✅ Tested</option>
+                <option value="In Warehouse">📦 In Warehouse</option>
+                <option value="For Parts">🛠️ For Parts</option>
+            </select>
+            <input type="text" id="bulkLocation" placeholder="New Location" style="width: 120px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <button id="applyBulkBtn" class="btn btn-success">Apply to All</button>
+            <button id="cancelBulkBtn" class="btn btn-secondary-outline">Cancel</button>
+        </div>
     </div>
 
     <!-- Filter Controls -->
@@ -50,6 +69,7 @@ try {
         <table class="data-table">
             <thead>
                 <tr>
+                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAll"></th>
                     <th>Brand &amp; Model</th>
                     <th>CPU</th>
                     <th>RAM / Storage</th>
@@ -81,6 +101,7 @@ try {
 <!-- Template A: Display Row (Used by buildRow in labels.js) -->
 <template id="inventoryRowTemplate">
     <tr data-id="">
+        <td style="text-align: center;"><input type="checkbox" class="row-select"></td>
         <td data-label="Model">
             <a href="#" class="tpl-link font-bold text-lg no-underline text-main">BRAND MODEL</a>
             <div class="tpl-series text-sm text-secondary">SERIES</div>
@@ -200,6 +221,31 @@ try {
     .status-refurbished { background: var(--accent-color); }
     .status-untested { background: #f39c12; }
     .edit-mode-row { background: var(--bg-surface-2) !important; }
+
+    /* Bulk Actions */
+    .bulk-action-bar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: var(--accent-gradient);
+        color: white;
+        padding: 15px 25px;
+        margin: -25px -25px 20px -25px;
+        border-radius: 16px 16px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        animation: slideDown 0.3s ease forwards;
+    }
+    .bulk-info { font-weight: 800; font-size: 1.1rem; }
+    .bulk-actions { display: flex; gap: 10px; align-items: center; }
+    .bulk-actions input, .bulk-actions select { background: white; color: var(--text-main); }
+    
+    @keyframes slideDown {
+        from { transform: translateY(-100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
 </style>
 
 <?php require_once 'includes/footer.php'; ?>

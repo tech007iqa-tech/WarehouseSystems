@@ -710,3 +710,117 @@ function incrementSessionCounter() {
     const counter = document.getElementById('session-counter');
     if (counter) counter.style.display = 'block';
 }
+
+// ─── BULK ACTIONS LOGIC ──────────────────────────────────────────────────────
+
+let selectedIds = new Set();
+const DOM = {
+    selectAll: document.getElementById('selectAll'),
+    bulkBar: document.getElementById('bulkActionBar'),
+    selectedCount: document.getElementById('selectedCount'),
+    tbody: document.getElementById('inventory-list')
+};
+
+function updateBulkBar() {
+    const count = selectedIds.size;
+    if (DOM.selectedCount) DOM.selectedCount.textContent = count;
+    if (DOM.bulkBar) DOM.bulkBar.style.display = count > 0 ? 'flex' : 'none';
+}
+
+if (DOM.selectAll) {
+    DOM.selectAll.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const checkboxes = DOM.tbody.querySelectorAll('.row-select');
+        checkboxes.forEach(cb => {
+            cb.checked = isChecked;
+            const tr = cb.closest('tr');
+            const id = tr.dataset.id;
+            if (isChecked) {
+                selectedIds.add(id);
+                tr.classList.add('selected-row');
+            } else {
+                selectedIds.delete(id);
+                tr.classList.remove('selected-row');
+            }
+        });
+        updateBulkBar();
+    });
+}
+
+if (DOM.tbody) {
+    DOM.tbody.addEventListener('change', (e) => {
+        if (e.target.classList.contains('row-select')) {
+            const tr = e.target.closest('tr');
+            const id = tr.dataset.id;
+            if (e.target.checked) {
+                selectedIds.add(id);
+                tr.classList.add('selected-row');
+            } else {
+                selectedIds.delete(id);
+                tr.classList.remove('selected-row');
+                if (DOM.selectAll) DOM.selectAll.checked = false;
+            }
+            updateBulkBar();
+        }
+    });
+}
+
+const cancelBulkBtn = document.getElementById('cancelBulkBtn');
+if (cancelBulkBtn) {
+    cancelBulkBtn.addEventListener('click', () => {
+        selectedIds.clear();
+        if (DOM.selectAll) DOM.selectAll.checked = false;
+        DOM.tbody.querySelectorAll('.row-select').forEach(cb => {
+            cb.checked = false;
+            cb.closest('tr').classList.remove('selected-row');
+        });
+        updateBulkBar();
+    });
+}
+
+const applyBulkBtn = document.getElementById('applyBulkBtn');
+if (applyBulkBtn) {
+    applyBulkBtn.addEventListener('click', async () => {
+        const location = document.getElementById('bulkLocation').value.trim();
+        const price = document.getElementById('bulkPrice').value.trim();
+        
+        if (!location && !price) {
+            alert("Please specify a new location or price to apply.");
+            return;
+        }
+
+        if (!confirm(`Apply changes to ${selectedIds.size} items?`)) return;
+
+        applyBulkBtn.disabled = true;
+        applyBulkBtn.textContent = '⌛ Applying...';
+
+        try {
+            const response = await fetch('api/bulk_update_inventory.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ids: Array.from(selectedIds),
+                    location: location,
+                    price: price,
+                    csrf_token: document.querySelector('input[name="csrf_token"]').value
+                })
+            });
+
+            const json = await response.json();
+            if (json.success) {
+                IQA_Notify.success(`Successfully updated ${selectedIds.size} items!`);
+                selectedIds.clear();
+                if (DOM.selectAll) DOM.selectAll.checked = false;
+                updateBulkBar();
+                window.location.reload(); // Refresh to show new locations/prices
+            } else {
+                IQA_Notify.error(`Error: ${json.error}`);
+            }
+        } catch (err) {
+            IQA_Notify.error("Network error during bulk update.");
+        } finally {
+            applyBulkBtn.disabled = false;
+            applyBulkBtn.textContent = 'Apply Batch Changes';
+        }
+    });
+}

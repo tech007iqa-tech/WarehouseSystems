@@ -4,8 +4,14 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/hardware_mapping.php';
+require_once __DIR__ . '/../../core/Security.php';
 
 try {
+    // 0. Security Check
+    if (!Security::validate($_POST['csrf_token'] ?? '')) {
+        throw new Exception("Security Error: Invalid form submission.");
+    }
+
     // 1. Validation & Sanitization
     if (empty($_POST[HW_FIELDS['BRAND']]) || empty($_POST[HW_FIELDS['MODEL']])) {
         throw new Exception("Brand and Model are required.");

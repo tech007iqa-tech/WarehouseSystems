@@ -1,7 +1,6 @@
 <?php
 require_once 'config.php';
 require_once INCLUDES_PATH . '/db.php';
-require_once INCLUDES_PATH . '/ui_helper.php';
 
 $marketingDb = get_marketing_db();
 $labelsDb = get_labels_db();

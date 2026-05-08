@@ -19,6 +19,9 @@ define('MODULES_PATH', __DIR__ . '/modules');
 define('APP_NAME', 'Marketing Hub');
 define('VERSION', '1.0.0');
 
+// Global Core UI
+require_once __DIR__ . '/../core/UI.php';
+
 // Error Reporting (Development)
 error_reporting(E_ALL);
 ini_set('display_errors', 1);

@@ -226,6 +226,26 @@ $highlight_id = $_GET['last_id'] ?? null;
             <?php endif; ?>
         </div>
     </header>
+    
+    <!-- Bulk Action Bar -->
+    <div id="bulkActionBar" class="bulk-action-bar" style="display:none;">
+        <div class="bulk-info">
+            <span id="selectedCount">0</span> items selected
+        </div>
+        <div class="bulk-actions">
+            <input type="text" id="bulkLocation" placeholder="Move to Zone..." list="gate-loc-datalist" style="width: 150px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <datalist id="gate-loc-datalist">
+                <?php foreach($existing_locs as $l) echo "<option value='".htmlspecialchars($l['location_code'])."'>"; ?>
+            </datalist>
+            <div style="position:relative; display:flex; align-items:center;">
+                <span style="position:absolute; left:10px; font-weight:800; color:var(--text-secondary);">$</span>
+                <input type="number" id="bulkPrice" placeholder="Price" style="width: 100px; padding: 10px 10px 10px 25px; border-radius: 8px; border: 1px solid var(--border-color);">
+            </div>
+            <button id="applyBulkBtn" class="btn btn-success" style="background: white; color: var(--text-main); font-weight: 800; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">Apply Batch Changes</button>
+            <button id="cancelBulkBtn" style="background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: 700;">Cancel</button>
+        </div>
+    </div>
+    <?= UI::csrf_field() ?>
 
     <?php if (!$selected_loc): ?>
         <div class="location-gate">
@@ -357,6 +377,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                 <table class="inventory-table">
                     <thead>
                         <tr>
+                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAll"></th>
                             <th class="col-type">Location</th>
                             <?php if ($selected_sector === 'Master'): ?>
                                 <th>Sector</th>
@@ -407,6 +428,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                                 $updated_date = date('m/d/y', strtotime($item['updated_at']));
                             ?>
                                 <tr class="inventory-card <?= ($highlight_id && $item['id'] == $highlight_id) ? 'highlight-row' : '' ?>" 
+                                     data-id="<?= $item['id'] ?>"
                                      data-sector-theme="<?= htmlspecialchars($item['sector']) ?>"
                                      data-brand="<?= htmlspecialchars($item['brand']) ?>"
                                      data-model="<?= htmlspecialchars($item['model']) ?>"
@@ -414,6 +436,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                                      data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
                                      data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
                                     
+                                    <td style="text-align: center;"><input type="checkbox" class="row-select"></td>
                                     <td><span class="location-tag"><?= htmlspecialchars($item['location_code']) ?></span></td>
                                     
                                     <?php if ($selected_sector === 'Master'): ?>

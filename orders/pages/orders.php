@@ -65,6 +65,26 @@ try {
             </div>
     </header>
 
+    <!-- Bulk Action Bar -->
+    <div id="bulkActionBar" class="bulk-action-bar" style="display:none; background: var(--accent-gradient); color: white; padding: 15px 25px; border-radius: 16px; margin-bottom: 25px; align-items: center; justify-content: space-between; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+        <div class="bulk-info">
+            <span id="selectedCount" style="font-weight: 900;">0</span> items selected
+        </div>
+        <div class="bulk-actions" style="display: flex; gap: 15px; align-items: center;">
+            <select id="bulkStatus" class="filter-select" style="height: 40px; border-radius: 10px; border: none; padding: 0 15px; font-weight: 700; background: white; color: var(--text-main);">
+                <option value="">-- Change Status --</option>
+                <option value="pending">⏳ Pending</option>
+                <option value="paid">💰 Paid</option>
+                <option value="dispatched">🚚 Dispatched</option>
+                <option value="canceled">❌ Canceled</option>
+                <option value="finalized">✅ Finalized</option>
+            </select>
+            <button id="applyBulkBtn" style="background: white; color: var(--text-main); border: none; padding: 10px 20px; border-radius: 10px; font-weight: 800; cursor: pointer;">Apply to Selected</button>
+            <button id="cancelBulkBtn" style="background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: 700;">Cancel</button>
+        </div>
+    </div>
+    <?= UI::csrf_field() ?>
+
     <!-- Live Search Input -->
     <div class="orders-search-wrapper" style="margin-bottom: 25px;">
         <i class="search-icon">🔍</i>
@@ -75,6 +95,7 @@ try {
         <table class="orders-table" style="width: 100%; border-collapse: collapse; text-align: left;">
             <thead>
                 <tr style="background: #1e293b !important;">
+                    <th style="background: #1e293b !important; color: white !important; width: 40px; text-align: center;"><input type="checkbox" id="selectAll"></th>
                     <th style="background: #1e293b !important; color: white !important; padding: 16px 24px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; cursor:pointer; letter-spacing:0.05em; border:none;" onclick="sortOrdersTable(0)">Batch ID ⇅</th>
                     <th style="background: #1e293b !important; color: white !important; padding: 16px 24px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; cursor:pointer; letter-spacing:0.05em; border:none;" onclick="sortOrdersTable(1)">Account / Customer ⇅</th>
                     <th style="background: #1e293b !important; color: white !important; padding: 16px 24px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; cursor:pointer; letter-spacing:0.05em; border:none;" onclick="sortOrdersTable(2)">Date Created ⇅</th>
@@ -90,7 +111,8 @@ try {
                         $search_blob = strtolower($order['order_id'] . " " . $company . " " . $order['customer_id']);
                         $status_class = "status-" . $status;
                     ?>
-                    <tr class="order-row" data-search="<?= htmlspecialchars($search_blob) ?>" style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;">
+                    <tr class="order-row" data-id="<?= $order['order_id'] ?>" data-search="<?= htmlspecialchars($search_blob) ?>" style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;">
+                        <td style="text-align: center;"><input type="checkbox" class="row-select"></td>
                         <td style="padding: 20px 24px;">
                             <div style="font-weight: 800; color: var(--text-main); font-size: 0.95rem; font-family: monospace;"><?= htmlspecialchars($order['order_id']) ?></div>
                         </td>

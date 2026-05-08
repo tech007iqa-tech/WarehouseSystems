@@ -21,6 +21,7 @@ try {
     <!-- MAIN FORM COLUMN -->
     <div class="panel form-panel" style="position: relative;">
         <form id="newLabelForm">
+            <?= UI::csrf_field() ?>
             <?php 
                 $formType = 'add';
                 include 'includes/hardware_form.php'; 

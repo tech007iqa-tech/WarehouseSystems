@@ -1,5 +1,6 @@
 <?php 
 require_once 'core/database.php';
+require_once __DIR__ . '/../core/UI.php';
 include 'core/auth.php'; 
 ?>
 <!DOCTYPE html>
@@ -19,6 +20,9 @@ include 'core/auth.php';
     <noscript>
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap">
     </noscript>
+
+    <!-- Global Component Styles -->
+    <link rel="stylesheet" href="../assets/css/components.css">
 
     <!-- Primary Stylesheet (LCP Priority) -->
     <link rel="stylesheet" href="assets/styles/style.css?v=<?= filemtime('assets/styles/style.css') ?>">
@@ -66,7 +70,8 @@ include 'core/auth.php';
     <script src="assets/js/inventory_data.js?v=<?= filemtime('assets/js/inventory_data.js') ?>" defer></script>
 </head>
 
-<body>
+<body class="modern-theme">
+    <?= UI::theme_toggle() ?>
     <div class="breadcrumb-container" role="banner" style="max-width: 800px; margin: 0 auto 20px auto; width: 100%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">
             <?php if ($user_role === 'Admin'): ?>
@@ -175,6 +180,8 @@ include 'core/auth.php';
     <?php elseif ($active_key === 'orders'): ?>
         <script src="assets/js/orders.js?v=<?= filemtime('assets/js/orders.js') ?>" defer></script>
     <?php endif; ?>
+    <!-- Global Notifications Engine -->
+    <script src="../assets/js/notifications.js"></script>
 </body>
 
 </html>

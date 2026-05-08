@@ -30,6 +30,12 @@ try {
         internal_notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+    
+    // Performance Indexing (Phase 1)
+    $conn->exec("CREATE INDEX IF NOT EXISTS idx_customers_cid ON customers(customer_id)");
+    $conn_orders->exec("CREATE INDEX IF NOT EXISTS idx_orders_cid ON orders(customer_id)");
+    $conn_orders->exec("CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)");
+
 
     // CRM Migration
     $cols = $conn->query("PRAGMA table_info(customers)")->fetchAll(PDO::FETCH_ASSOC);
@@ -131,11 +137,12 @@ try {
 
     try {
         // 1. Pipeline Calculations (Joining items and orders for date filtering)
-        $pipeline_data['Daily']   = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.created_at >= date('now', 'localtime')")->fetchColumn() ?: 0;
-        $pipeline_data['Weekly']  = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.created_at >= date('now', '-7 days', 'localtime')")->fetchColumn() ?: 0;
-        $pipeline_data['Monthly'] = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.created_at >= date('now', 'start of month', 'localtime')")->fetchColumn() ?: 0;
-        $pipeline_data['Yearly']  = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.created_at >= date('now', 'start of year', 'localtime')")->fetchColumn() ?: 0;
-        $pipeline_data['Total']   = $conn_orders->query("SELECT SUM(quantity * unit_price) FROM items")->fetchColumn() ?: 0;
+        // 1. Pipeline Calculations (Joining items and orders for date filtering and status check)
+        $pipeline_data['Daily']   = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid' AND o.created_at >= date('now', 'localtime')")->fetchColumn() ?: 0;
+        $pipeline_data['Weekly']  = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid' AND o.created_at >= date('now', '-7 days', 'localtime')")->fetchColumn() ?: 0;
+        $pipeline_data['Monthly'] = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid' AND o.created_at >= date('now', 'start of month', 'localtime')")->fetchColumn() ?: 0;
+        $pipeline_data['Yearly']  = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid' AND o.created_at >= date('now', 'start of year', 'localtime')")->fetchColumn() ?: 0;
+        $pipeline_data['Total']   = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid'")->fetchColumn() ?: 0;
         
         // 2. Active Batches
         $active_batches_count = $conn_orders->query("SELECT COUNT(*) FROM orders WHERE status = 'active'")->fetchColumn();
@@ -172,18 +179,10 @@ try {
                 <?php endforeach; ?>
             </div>
         </div>
-        <div class="dashboard-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
-            <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">📦 Active Batches</div>
-            <div style="font-size: 1.25rem; font-weight: 900; color: var(--text-main);"><?= $active_batches_count ?></div>
-        </div>
-        <div class="dashboard-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
-            <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">📞 Callbacks</div>
-            <div style="font-size: 1.25rem; font-weight: 900; color: <?= $pending_callbacks_count > 0 ? '#ef4444' : 'var(--text-main)' ?>;"><?= $pending_callbacks_count ?></div>
-        </div>
-        <div class="dashboard-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm);">
-            <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 5px;">🏬 Zone Alerts</div>
-            <div style="font-size: 1.25rem; font-weight: 900; color: <?= $warehouse_audit_count > 5 ? '#f59e0b' : 'var(--text-main)' ?>;"><?= $warehouse_audit_count ?></div>
-        </div>
+        
+        <?= UI::stat_card("Active Batches", $active_batches_count) ?>
+        <?= UI::stat_card("Callbacks", $pending_callbacks_count, $pending_callbacks_count > 0 ? 'text-danger' : '') ?>
+        <?= UI::stat_card("Zone Alerts", $warehouse_audit_count, $warehouse_audit_count > 5 ? 'text-warning' : '') ?>
     </div>
 
     <header>

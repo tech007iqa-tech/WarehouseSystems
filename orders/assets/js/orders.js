@@ -173,3 +173,110 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+// ─── BULK ACTIONS LOGIC ──────────────────────────────────────────────────────
+
+let selectedOrderIds = new Set();
+const OrderDOM = {
+    selectAll: document.getElementById('selectAll'),
+    bulkBar: document.getElementById('bulkActionBar'),
+    selectedCount: document.getElementById('selectedCount'),
+    tbody: document.getElementById('orders-list')
+};
+
+function updateOrderBulkBar() {
+    const count = selectedOrderIds.size;
+    if (OrderDOM.selectedCount) OrderDOM.selectedCount.textContent = count;
+    if (OrderDOM.bulkBar) OrderDOM.bulkBar.style.display = count > 0 ? 'flex' : 'none';
+}
+
+if (OrderDOM.selectAll) {
+    OrderDOM.selectAll.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const checkboxes = OrderDOM.tbody.querySelectorAll('.row-select');
+        checkboxes.forEach(cb => {
+            cb.checked = isChecked;
+            const tr = cb.closest('tr');
+            const id = tr.dataset.id;
+            if (isChecked) {
+                selectedOrderIds.add(id);
+                tr.classList.add('selected-row');
+            } else {
+                selectedOrderIds.delete(id);
+                tr.classList.remove('selected-row');
+            }
+        });
+        updateOrderBulkBar();
+    });
+}
+
+if (OrderDOM.tbody) {
+    OrderDOM.tbody.addEventListener('change', (e) => {
+        if (e.target.classList.contains('row-select')) {
+            const tr = e.target.closest('tr');
+            const id = tr.dataset.id;
+            if (e.target.checked) {
+                selectedOrderIds.add(id);
+                tr.classList.add('selected-row');
+            } else {
+                selectedOrderIds.delete(id);
+                tr.classList.remove('selected-row');
+                if (OrderDOM.selectAll) OrderDOM.selectAll.checked = false;
+            }
+            updateOrderBulkBar();
+        }
+    });
+}
+
+document.getElementById('cancelBulkBtn')?.addEventListener('click', () => {
+    selectedOrderIds.clear();
+    if (OrderDOM.selectAll) OrderDOM.selectAll.checked = false;
+    OrderDOM.tbody.querySelectorAll('.row-select').forEach(cb => {
+        cb.checked = false;
+        cb.closest('tr').classList.remove('selected-row');
+    });
+    updateOrderBulkBar();
+});
+
+document.getElementById('applyBulkBtn')?.addEventListener('click', async () => {
+    const status = document.getElementById('bulkStatus').value;
+    
+    if (!status) {
+        alert("Please select a status to apply.");
+        return;
+    }
+
+    if (!confirm(`Update status to "${status}" for ${selectedOrderIds.size} orders?`)) return;
+
+    const btn = document.getElementById('applyBulkBtn');
+    btn.disabled = true;
+    btn.textContent = '⌛ Updating...';
+
+    try {
+        const response = await fetch('api/bulk_update_orders.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ids: Array.from(selectedOrderIds),
+                status: status,
+                csrf_token: document.querySelector('input[name="csrf_token"]').value
+            })
+        });
+
+        const json = await response.json();
+        if (json.success) {
+            IQA_Notify.success(`Successfully updated ${selectedOrderIds.size} orders!`);
+            selectedOrderIds.clear();
+            if (OrderDOM.selectAll) OrderDOM.selectAll.checked = false;
+            updateOrderBulkBar();
+            window.location.reload(); 
+        } else {
+            IQA_Notify.error(`Error: ${json.error}`);
+        }
+    } catch (err) {
+        IQA_Notify.error("Network error during bulk update.");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Apply to Selected';
+    }
+});

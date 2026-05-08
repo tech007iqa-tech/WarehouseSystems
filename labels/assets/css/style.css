@@ -106,6 +106,57 @@
     background-color: #6366f1;
 }
 
+/* Selected Row Highlight */
+.selected-row {
+    background-color: rgba(140, 198, 63, 0.12) !important;
+    border-left: 4px solid var(--accent-color) !important;
+    transition: background-color 0.2s ease;
+}
+
+[data-theme="dark"] .selected-row {
+    background-color: rgba(163, 230, 53, 0.15) !important;
+    border-left-color: var(--accent-color) !important;
+}
+
+/* Custom Premium Checkboxes */
+.row-select, #selectAll {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background: #ffffff;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.row-select:checked, #selectAll:checked {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.row-select:checked::after, #selectAll:checked::after {
+    content: '✓';
+    color: white;
+    font-size: 14px;
+    font-weight: 900;
+}
+
+.row-select:hover, #selectAll:hover {
+    border-color: var(--accent-color);
+    transform: scale(1.05);
+}
+
+[data-theme="dark"] .row-select, [data-theme="dark"] #selectAll {
+    background: var(--bg-surface-2);
+    border-color: var(--border-color);
+}
+
 /* Indigo */
 .status-pending {
     background-color: #f59e0b;

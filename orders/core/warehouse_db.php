@@ -54,6 +54,10 @@ try {
             $stmt_s->execute($s);
         }
     }
+    
+    // 3. Performance Indexing
+    $conn_wh->exec("CREATE INDEX IF NOT EXISTS idx_inventory_sector ON inventory(sector)");
+    $conn_wh->exec("CREATE INDEX IF NOT EXISTS idx_inventory_brand_model ON inventory(brand, model)");
 
 } catch (PDOException $e) {
     die("Warehouse DB Error: " . $e->getMessage());

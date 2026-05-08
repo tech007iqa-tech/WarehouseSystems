@@ -2,71 +2,55 @@
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
 require_once 'includes/header.php'; 
-
-// Fetch basic stats
-$total_inventory = 0;
-
-try {
-    // Inventory Count
-    $stmt = $pdo_labels->query("SELECT COUNT(id) FROM items WHERE status = 'In Warehouse'");
-    $total_inventory = $stmt->fetchColumn();
-} catch (PDOException $e) {
-    // Silent
-}
 ?>
 
-<div class="panel" style="margin-bottom: 30px; text-align: center; background: transparent; border: none; box-shadow: none;">
-    <h1 style="font-size: 2.5rem; font-weight: 900; margin-bottom: 10px; color: var(--text-main);">Warehouse Control</h1>
-    <p style="color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Streamlined management for hardware inventory and professional label generation.</p>
+<!-- Module Specific CSS -->
+<link rel="stylesheet" href="assets/css/dashboard.css?v=<?= filemtime('assets/css/dashboard.css') ?>">
+
+<?php
+// Fetch basic stats
+$total_inventory = 0;
+try {
+    $stmt = $pdo_labels->query("SELECT COUNT(id) FROM items WHERE status = 'In Warehouse'");
+    $total_inventory = $stmt->fetchColumn();
+} catch (PDOException $e) { /* Silent */ }
+?>
+
+<div class="panel dashboard-header">
+    <h1>Warehouse Control</h1>
+    <p>Streamlined management for hardware inventory and professional label generation.</p>
 </div>
 
 <!-- MAIN NAVIGATION GRID -->
-<div class="action-grid" style="margin-bottom: 40px; max-width: 1000px; margin-left: auto; margin-right: auto;">
+<div class="action-grid action-grid-container">
     
     <!-- 1. INVENTORY TRACKER -->
-    <a href="labels.php" class="panel hover-scale" style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; border-top: 6px solid var(--text-main); transition: transform 0.2s, box-shadow 0.2s;">
-        <div style="font-size: 4rem; margin-bottom: 20px;">📦</div>
-        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 10px;">Inventory Tracker</h2>
-        <p style="color: var(--text-secondary); text-align: center; font-size: 0.95rem;">Manage, search, and edit all hardware currently in the warehouse.</p>
-        <div style="margin-top: 20px; background: var(--text-main); color: white; padding: 8px 20px; border-radius: 30px; font-weight: 700; font-size: 0.85rem;">
-            <?= $total_inventory ?> Units Active
-        </div>
+    <a href="labels.php" class="card-link inventory-card hover-scale">
+        <?= UI::stat_card("Inventory Tracker", $total_inventory . " Units Active", "inventory-stat") ?>
+        <p style="padding: 0 20px; text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-top: -10px;">Manage, search, and edit all hardware currently in the warehouse.</p>
     </a>
 
     <!-- 2. PRINT HARDWARE LABEL -->
-    <a href="new_label.php" class="panel hover-scale" style="text-decoration: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; border-top: 6px solid var(--accent-color); transition: transform 0.2s, box-shadow 0.2s;">
-        <div style="font-size: 4rem; margin-bottom: 20px;">🏷️</div>
-        <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 10px;">Print Hardware Label</h2>
-        <p style="color: var(--text-secondary); text-align: center; font-size: 0.95rem;">Rapid intake and professional .odt thermal label generation.</p>
-        <div style="margin-top: 20px; background: var(--accent-color); color: white; padding: 8px 20px; border-radius: 30px; font-weight: 700; font-size: 0.85rem;">
-            Generate Label
-        </div>
+    <a href="new_label.php" class="card-link print-card hover-scale">
+        <?= UI::stat_card("Hardware Labels", "Generate Label", "print-stat") ?>
+        <p style="padding: 0 20px; text-align: center; color: var(--text-secondary); font-size: 0.9rem; margin-top: -10px;">Rapid intake and professional .odt thermal label generation.</p>
     </a>
 </div>
 
 <!-- QUICK LOCATE (MINIMAL) -->
-<div class="panel" style="max-width: 1000px; margin: 0 auto; border-radius: 20px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px;">
-        <div>
-            <h3 style="font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1.3rem;">🔍</span> Quick Locate
-            </h3>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">Find a device's physical location instantly.</p>
+<div class="panel quick-locate-panel">
+    <div class="quick-locate-header">
+        <div class="quick-locate-title">
+            <h3><span>🔍</span> Quick Locate</h3>
+            <p>Find a device's physical location instantly.</p>
         </div>
-        <form id="quickSearchForm" style="display: flex; gap: 10px; flex: 1; max-width: 500px;">
-            <input type="text" id="quickSearchId" placeholder="Enter ID, Brand, or Model..." required style="flex: 1; height: 48px; border-radius: 12px;">
-            <button type="submit" class="btn btn-primary" style="padding: 0 25px; height: 48px; border-radius: 12px; font-weight: 700;">Find</button>
+        <form id="quickSearchForm" class="quick-search-form">
+            <input type="text" id="quickSearchId" placeholder="Enter ID, Brand, or Model..." required>
+            <button type="submit" class="btn btn-primary">Find</button>
         </form>
     </div>
     <div id="quickSearchResult" style="margin-top: 20px;"></div>
 </div>
-
-<style>
-    .hover-scale:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
-    }
-</style>
 
 <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -97,16 +81,16 @@ try {
 
                 results.forEach((item, index) => {
                     html += `
-                        <div style="background:var(--bg-page); border:1px solid var(--border-color); border-radius:12px; padding:15px; margin-bottom:10px; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <div style="font-weight: 800; color: var(--text-main);">#${String(item.id).padStart(5,'0')} — ${item.brand} ${item.model}</div>
-                                <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                        <div class="search-result-item">
+                            <div class="result-info">
+                                <h4>#${String(item.id).padStart(5,'0')} — ${item.brand} ${item.model}</h4>
+                                <div class="result-meta">
                                     📍 <strong>${item.warehouse_location ?? 'Unassigned'}</strong> | 🧠 ${item.cpu_gen ?? '—'}
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 8px;">
-                                <a href="hardware_view.php?id=${item.id}" class="btn" style="padding: 5px 15px; font-size: 0.8rem;">View Sheet</a>
-                                <button onclick="flashOpenLabel(${item.id}, '${item.brand}', '${item.model}', this)" class="btn" style="padding: 5px 15px; font-size: 0.8rem; background: var(--text-main); color: white;">📂 Open ODT</button>
+                            <div class="result-actions">
+                                <a href="hardware_view.php?id=${item.id}" class="btn">View Sheet</a>
+                                <button onclick="flashOpenLabel(${item.id}, '${item.brand}', '${item.model}', this)" class="btn btn-open-odt">📂 Open ODT</button>
                             </div>
                         </div>`;
                 });

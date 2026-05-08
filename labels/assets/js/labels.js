@@ -26,10 +26,14 @@ const DOM = {
     filterSearch: document.getElementById('filterSearch'),
     filterStatus: document.getElementById('filterStatus'),
     filterMsg: document.getElementById('filterMsg'),
-    tbody: document.getElementById('inventoryTableBody')
+    tbody: document.getElementById('inventoryTableBody'),
+    selectAll: document.getElementById('selectAll'),
+    bulkBar: document.getElementById('bulkActionBar'),
+    selectedCount: document.getElementById('selectedCount')
 };
 
 let filterTimer = null;
+let selectedIds = new Set();
 
 // ─── FILTER BAR ─────────────────────────────────────────────────────────────
 
@@ -167,8 +171,6 @@ function buildRow(item) {
         launchBtn.dataset.id = item.id;
         launchBtn.dataset.brand = brand;
         launchBtn.dataset.model = model;
-    } else {
-        console.warn("Could not find .launch-odt-btn in template row", item.id);
     }
     
     const editBtn = tr.querySelector('.edit-btn');
@@ -178,6 +180,14 @@ function buildRow(item) {
     if (delBtn) {
         delBtn.dataset.id = item.id;
         delBtn.dataset.label = `${brand} ${model}`;
+    }
+
+    // Selection State & Highlighting
+    const checkbox = tr.querySelector('.row-select');
+    if (checkbox) {
+        const isChecked = selectedIds.has(item.id.toString());
+        checkbox.checked = isChecked;
+        if (isChecked) tr.classList.add('selected-row');
     }
 
     return tr;
@@ -416,6 +426,103 @@ function esc(str) {
         }
     }
 })();
+
+// ─── BULK ACTIONS LOGIC ──────────────────────────────────────────────────────
+
+function updateBulkBar() {
+    const count = selectedIds.size;
+    DOM.selectedCount.textContent = count;
+    DOM.bulkBar.style.display = count > 0 ? 'flex' : 'none';
+}
+
+DOM.selectAll.addEventListener('change', (e) => {
+    const isChecked = e.target.checked;
+    const checkboxes = DOM.tbody.querySelectorAll('.row-select');
+    checkboxes.forEach(cb => {
+        cb.checked = isChecked;
+        const tr = cb.closest('tr');
+        const id = tr.dataset.id;
+        if (isChecked) {
+            selectedIds.add(id);
+            tr.classList.add('selected-row');
+        } else {
+            selectedIds.delete(id);
+            tr.classList.remove('selected-row');
+        }
+    });
+    updateBulkBar();
+});
+
+DOM.tbody.addEventListener('change', (e) => {
+    if (e.target.classList.contains('row-select')) {
+        const tr = e.target.closest('tr');
+        const id = tr.dataset.id;
+        if (e.target.checked) {
+            selectedIds.add(id);
+            tr.classList.add('selected-row');
+        } else {
+            selectedIds.delete(id);
+            tr.classList.remove('selected-row');
+            DOM.selectAll.checked = false;
+        }
+        updateBulkBar();
+    }
+});
+
+document.getElementById('cancelBulkBtn').addEventListener('click', () => {
+    selectedIds.clear();
+    DOM.selectAll.checked = false;
+    DOM.tbody.querySelectorAll('.row-select').forEach(cb => {
+        cb.checked = false;
+        cb.closest('tr').classList.remove('selected-row');
+    });
+    updateBulkBar();
+});
+
+document.getElementById('applyBulkBtn').addEventListener('click', async () => {
+    const status = document.getElementById('bulkStatus').value;
+    const location = document.getElementById('bulkLocation').value.trim();
+    
+    if (!status && !location) {
+        alert("Please select a status or enter a location to apply.");
+        return;
+    }
+
+    if (!confirm(`Apply changes to ${selectedIds.size} items?`)) return;
+
+    const btn = document.getElementById('applyBulkBtn');
+    btn.disabled = true;
+    btn.textContent = '⌛ Applying...';
+
+    try {
+        const response = await fetch('api/bulk_update.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ids: Array.from(selectedIds),
+                status: status,
+                location: location,
+                csrf_token: document.querySelector('input[name="csrf_token"]').value
+            })
+        });
+
+        const json = await response.json();
+        if (json.success) {
+            IQA_Notify.success(`Successfully updated ${selectedIds.size} items!`);
+            selectedIds.clear();
+            DOM.selectAll.checked = false;
+            updateBulkBar();
+            runFilter(); // Refresh the list
+        } else {
+            IQA_Notify.error(`Error: ${json.error}`);
+        }
+    } catch (err) {
+        IQA_Notify.error("Network error during bulk update.");
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Apply to All';
+    }
+});
 
 function pad(n, len) { 
     return String(n).padStart(len, '0'); 

@@ -32,7 +32,14 @@ try {
     if (!$has_msg) $conn->exec("ALTER TABLE customers ADD COLUMN message_date TEXT DEFAULT ''");
 
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] === 'register') {
-        // Generate internal customer ID
+        // 1. Simple Security Check
+        if (!Security::validate($_POST['csrf_token'] ?? '')) {
+            $_SESSION['message'] = "<div class='alert error'>Security Error: Invalid form submission. Please try again.</div>";
+            header("Location: index.php?view=register");
+            exit();
+        }
+
+        // 2. Generate internal customer ID
         $internal_id = 'CUST-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
         
         $data = [
@@ -90,6 +97,7 @@ unset($_SESSION['message']);
 
     <form action="" method="POST" class="grid-form">
         <input type="hidden" name="action" value="register">
+        <?= UI::csrf_field() ?>
         
         <div class="form-row">
             <div class="form-group" style="grid-column: span 2;">

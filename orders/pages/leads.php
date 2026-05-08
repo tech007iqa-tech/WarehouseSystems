@@ -34,6 +34,9 @@ try {
         note TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+    
+    // Performance Indexing (Phase 1)
+    $conn->exec("CREATE INDEX IF NOT EXISTS idx_interactions_cid ON interaction_logs(customer_id)");
 
 } catch(Exception $e) {
     // Basic error reporting for schema

@@ -123,6 +123,13 @@ function check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex, $pdo_
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
 
+        // 5. High-Performance Indexing (Phase 1 Optimization)
+        // These ensure searches remain instant even with tens of thousands of items
+        $pdo_labels->exec("CREATE INDEX IF NOT EXISTS idx_items_serial ON items(serial_number)");
+        $pdo_labels->exec("CREATE INDEX IF NOT EXISTS idx_items_brand_model ON items(brand, model)");
+        $pdo_labels->exec("CREATE INDEX IF NOT EXISTS idx_items_status ON items(status)");
+        $pdo_labels->exec("CREATE INDEX IF NOT EXISTS idx_items_location ON items(warehouse_location)");
+
         return true;
     } catch (Exception $e) {
         error_log("Schema Guard Error: " . $e->getMessage());
