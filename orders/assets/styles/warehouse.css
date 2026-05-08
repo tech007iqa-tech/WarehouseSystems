@@ -327,6 +327,16 @@
     font-size: 0.9rem;
 }
 
+.price-pill {
+    background: #f0fdf4;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-weight: 900;
+    color: #166534;
+    font-size: 0.9rem;
+    border: 1px solid #bbf7d0;
+}
+
 .spec-value {
     font-weight: 700;
     font-size: 0.85rem;

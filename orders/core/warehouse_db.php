@@ -32,8 +32,13 @@ try {
     // Migration for last_updated_by
     $cols = $conn_wh->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC);
     $has_updated_by = false;
-    foreach($cols as $c) if($c['name'] === 'last_updated_by') $has_updated_by = true;
+    $has_price = false;
+    foreach($cols as $c) {
+        if($c['name'] === 'last_updated_by') $has_updated_by = true;
+        if($c['name'] === 'price') $has_price = true;
+    }
     if(!$has_updated_by) $conn_wh->exec("ALTER TABLE inventory ADD COLUMN last_updated_by TEXT");
+    if(!$has_price) $conn_wh->exec("ALTER TABLE inventory ADD COLUMN price REAL DEFAULT 0.00");
 
     // Seed default sectors if empty
     $stmt = $conn_wh->query("SELECT COUNT(*) FROM sectors");

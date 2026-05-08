@@ -87,6 +87,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $model = $_POST['model'];
         $loc = $_POST['location_code'];
         $qty = (int)$_POST['quantity'];
+        $price = (float)($_POST['price'] ?? 0.00);
         $sector = $_POST['sector'];
         
         // Dynamic Specs mapping based on sector
@@ -135,12 +136,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 exit();
             }
 
-            $stmt = $conn_wh->prepare("UPDATE inventory SET brand=?, model=?, specs_json=?, quantity=?, last_updated_by=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
-            $stmt->execute([$brand, $model, $specs_json, $qty, $current_user, $_POST['item_id']]);
+            $stmt = $conn_wh->prepare("UPDATE inventory SET brand=?, model=?, specs_json=?, quantity=?, price=?, last_updated_by=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
+            $stmt->execute([$brand, $model, $specs_json, $qty, $price, $current_user, $_POST['item_id']]);
             $last_id = $_POST['item_id'];
         } else {
-            $stmt = $conn_wh->prepare("INSERT INTO inventory (user_owner, sector, location_code, brand, model, specs_json, quantity) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$current_user, $sector, $loc, $brand, $model, $specs_json, $qty]);
+            $stmt = $conn_wh->prepare("INSERT INTO inventory (user_owner, sector, location_code, brand, model, specs_json, quantity, price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$current_user, $sector, $loc, $brand, $model, $specs_json, $qty, $price]);
             $last_id = $conn_wh->lastInsertId();
         }
         $msg = ($_POST['action'] === 'edit_inventory') ? 'updated' : 'added';
@@ -361,6 +362,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                                 <th>Sector</th>
                             <?php endif; ?>
                             <th class="col-main">Make/Model</th>
+                            <th class="col-qty">Price</th>
                             <th class="col-qty">QTY</th>
                             <?php if ($selected_sector === 'Laptops'): ?>
                                 <th>CPU</th>
@@ -408,6 +410,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                                      data-sector-theme="<?= htmlspecialchars($item['sector']) ?>"
                                      data-brand="<?= htmlspecialchars($item['brand']) ?>"
                                      data-model="<?= htmlspecialchars($item['model']) ?>"
+                                     data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
                                      data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
                                      data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
                                     
@@ -425,6 +428,8 @@ $highlight_id = $_GET['last_id'] ?? null;
                                         <div class="cell-make"><?= htmlspecialchars($item['brand']) ?></div>
                                         <div class="cell-model"><?= htmlspecialchars($item['model']) ?></div>
                                     </td>
+
+                                    <td><span class="price-pill">$<?= number_format($item['price'] ?? 0, 0) ?></span></td>
 
                                     <td><span class="qty-pill"><?= (int)$item['quantity'] ?></span></td>
 
@@ -706,6 +711,13 @@ $highlight_id = $_GET['last_id'] ?? null;
                                 <option value="B Grade">B Grade</option>
                                 <option value="C Grade">C Grade</option>
                             </select>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="wh-price">Price</label>
+                            <div style="position:relative; display:flex; align-items:center;">
+                                <span style="position:absolute; left:12px; font-weight:800; color:#64748b;">$</span>
+                                <input type="number" step="1" id="wh-price" name="price" value="" placeholder="150" min="0" required style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px 0 25px; font-weight: 800;">
+                            </div>
                         </div>
                         <div class="form-group" style="flex: 1;">
                             <label for="wh-quantity">Initial Quantity</label>

@@ -281,3 +281,55 @@ function selectWarehouseItem(item) {
     });
 }
 
+/**
+ * Repeats the last successful entry by populating the form from injected JSON state.
+ */
+function repeatLastItem() {
+    const stateEl = document.getElementById('lastItemState');
+    if (!stateEl) return;
+
+    try {
+        const data = JSON.parse(stateEl.textContent);
+        
+        const fields = {
+            'brand': data.brand,
+            'models': data.models,
+            'series': data.series,
+            'cpu': data.cpu,
+            'description': data.description,
+            'qty': data.qty,
+            'price': data.price
+        };
+
+        const brandEl = document.getElementById('brand');
+        if (brandEl && fields.brand) {
+            brandEl.value = fields.brand;
+            // Trigger change to populate datalists
+            brandEl.dispatchEvent(new Event('change'));
+        }
+
+        // Populate other fields
+        Object.entries(fields).forEach(([id, value]) => {
+            if (id === 'brand') return; // Already handled
+            const el = document.getElementById(id);
+            if (el) el.value = value;
+        });
+
+        // Add highlight effect
+        Object.keys(fields).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.borderColor = 'var(--accent-color)';
+                el.style.boxShadow = '0 0 0 4px rgba(140, 198, 63, 0.2)';
+                setTimeout(() => {
+                    el.style.borderColor = '';
+                    el.style.boxShadow = '';
+                }, 1500);
+            }
+        });
+
+    } catch (e) {
+        console.error("Error repeating last item:", e);
+    }
+}
+

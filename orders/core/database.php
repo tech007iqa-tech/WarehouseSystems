@@ -27,6 +27,14 @@ class Database {
                 $conn = new PDO("sqlite:" . $db_path);
                 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 
+                // --- Concurrency Optimizations ---
+                // Enable Write-Ahead Logging for better multi-user performance
+                $conn->exec("PRAGMA journal_mode = WAL;");
+                // Set a 5-second timeout to wait for locks to clear before failing
+                $conn->exec("PRAGMA busy_timeout = 5000;");
+                // Synchronous NORMAL is safer and faster with WAL
+                $conn->exec("PRAGMA synchronous = NORMAL;");
+                
                 // Enable Foreign Keys for SQLite
                 $conn->exec("PRAGMA foreign_keys = ON;");
                 

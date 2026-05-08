@@ -100,7 +100,7 @@ function fillLastEnteredData() {
     if (!form) return;
 
     // Direct mapping for common fields
-    const fields = ['brand', 'model', 'quantity', 'condition', 'notes', 'cpu', 'gpu', 'ram', 'storage', 'battery', 'windows', 'series', 'gen', 'cpu_gen', 'gaming_category'];
+    const fields = ['brand', 'model', 'quantity', 'price', 'condition', 'notes', 'cpu', 'gpu', 'ram', 'storage', 'battery', 'windows', 'series', 'gen', 'cpu_gen', 'gaming_category'];
 
     fields.forEach(f => {
         if (form[f] && data[f] !== undefined) {
@@ -515,6 +515,7 @@ function editWarehouseItem(item) {
     form.brand.value = item.brand;
     form.model.value = item.model;
     form.quantity.value = item.quantity;
+    form.price.value = item.price || '0.00';
 
     // 3. Pre-fill Specs (parsing JSON)
     const specs = JSON.parse(item.specs_json || '{}');
@@ -610,6 +611,8 @@ function downloadWarehouseCSV() {
             const model = card.getAttribute('data-model') || '';
             const qtyElement = card.querySelector('.qty-pill');
             const qty = qtyElement ? qtyElement.innerText.trim() : '0';
+            const price = card.getAttribute('data-price') || '0.00';
+            const total = (parseFloat(price) * parseInt(qty)).toFixed(2);
 
             const locTag = card.querySelector('.location-tag');
             const itemLoc = locTag ? locTag.innerText.trim() : '';
@@ -647,9 +650,9 @@ function downloadWarehouseCSV() {
                 sanitize(specs.series || ""),    // Series
                 sanitize(cpuGen),                // CPU / Gen
                 sanitize(fullDesc),              // Description
-                "0.00",                          // Price (Not stored in warehouse)
+                sanitize(price),                 // Price
                 sanitize(qty),                   // QTY
-                "0.00"                           // Total
+                sanitize(total)                  // Total
             ];
 
             if (isGlobal) rowData.unshift(sanitize(itemLoc));

@@ -81,6 +81,15 @@ try {
 
             if ($stmt->execute([$order_num, $customer_id, $brand, $models, $series, $cpu, $description, $qty, $price])) {
                 $_SESSION['message'] = "<div class='alert success'>Item added to batch <strong>{$order_num}</strong>!</div>";
+                $_SESSION['last_item'] = [
+                    'brand' => $brand,
+                    'models' => $models,
+                    'series' => $series,
+                    'cpu' => $cpu,
+                    'description' => $description,
+                    'qty' => $qty,
+                    'price' => $price
+                ];
             } else {
                 $_SESSION['message'] = "<div class='alert error'>Error adding item.</div>";
             }
@@ -90,7 +99,7 @@ try {
         $cust_param = urlencode($_POST['customer_id'] ?? $current_customer);
         $order_param = urlencode($_POST['order_id'] ?? $current_order);
 
-        $anchor = '';
+        $anchor = '#form-top';
         if (isset($_POST['action']) && in_array($_POST['action'], ['delete', 'update_item'])) {
             $anchor = '#order-summary';
         }
@@ -117,7 +126,7 @@ unset($_SESSION['message']);
 <!-- Load dedicated builder styles -->
 
 
-<div class="form-side">
+<div class="form-side" id="form-top">
     <header>
         <h1>Active Batch Builder</h1>
         <p class="subtitle">Assigning items for <strong><?= htmlspecialchars($customer_name) ?></strong></p>
@@ -131,6 +140,15 @@ unset($_SESSION['message']);
         <input type="hidden" name="order_id" value="<?= htmlspecialchars($current_order) ?>">
 
         <a href="index.php" class="builder-back-link">← Switch Batch / Account</a>
+
+        <?php if (isset($_SESSION['last_item'])): ?>
+            <div id="repeat-container" style="margin-bottom: 20px; <?= strpos($message, 'success') !== false ? '' : 'display:none;' ?>">
+                <button type="button" onclick="repeatLastItem()" class="btn-repeat" style="width: 100%; height: 44px; border-radius: 12px; border: 2px dashed var(--accent-color); background: #f7fee7; color: #3f6212; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
+                    <span>🔁</span> Repeat Last Entry
+                </button>
+                <script type="application/json" id="lastItemState"><?= json_encode($_SESSION['last_item']) ?></script>
+            </div>
+        <?php endif; ?>
 
         <div style="margin-bottom: 20px;">
             <button type="button" onclick="openWarehouseModal()" style="width: 100%; height: 44px; border-radius: 12px; border: 1px solid var(--accent-color); background: #f0fdf4; color: #166534; font-weight: 800; cursor: pointer; transition: all 0.2s;">

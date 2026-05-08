@@ -15,29 +15,40 @@ $orders_db_path = $db_dir . 'orders.sqlite';
 $rolodex_db_path = $db_dir . 'rolodex.sqlite';
 $audit_db_path   = $db_dir . 'audit.sqlite';
 
+/**
+ * Applies concurrency optimizations to a SQLite connection.
+ */
+function apply_sqlite_optimizations($pdo) {
+    $pdo->exec("PRAGMA journal_mode = WAL;");
+    $pdo->exec("PRAGMA busy_timeout = 5000;");
+    $pdo->exec("PRAGMA synchronous = NORMAL;");
+    $pdo->exec("PRAGMA foreign_keys = ON;");
+}
+
 try {
     // 1. Labels Database
     $pdo_labels = new PDO("sqlite:" . $labels_db_path);
     $pdo_labels->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo_labels->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    
-    // Enable Foreign Keys (which we might use later)
-    $pdo_labels->exec('PRAGMA foreign_keys = ON;');
+    apply_sqlite_optimizations($pdo_labels);
 
     // 2. Orders Database
     $pdo_orders = new PDO("sqlite:" . $orders_db_path);
     $pdo_orders->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo_orders->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    apply_sqlite_optimizations($pdo_orders);
 
     // 3. Rolodex Database
     $pdo_rolodex = new PDO("sqlite:" . $rolodex_db_path);
     $pdo_rolodex->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo_rolodex->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    apply_sqlite_optimizations($pdo_rolodex);
 
     // 4. Audit Database
     $pdo_audit = new PDO("sqlite:" . $audit_db_path);
     $pdo_audit->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo_audit->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    apply_sqlite_optimizations($pdo_audit);
 
     // 5. Schema Guard (Self-Healing)
     require_once __DIR__ . '/schema_guard.php';
