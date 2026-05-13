@@ -83,3 +83,52 @@
     background: #1e293b;
     box-shadow: var(--shadow-md);
 }
+
+/* Inline Edit Styles */
+.edit-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.edit-view input {
+    transition: all 0.2s ease;
+    background: #f8fafc;
+}
+
+.edit-view input:focus {
+    outline: none;
+    border-color: var(--accent-color) !important;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(140, 198, 63, 0.1);
+}
+
+.summary-item-row .edit-view {
+    animation: slideInEdit 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInEdit {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.summary-item-row:hover .btn-edit,
+.summary-item-row:hover .btn-copy {
+    opacity: 0.8 !important;
+}
+
+.btn-edit:hover, .btn-copy:hover {
+    opacity: 1 !important;
+    background: #f1f5f9 !important;
+    border-radius: 6px;
+}
+
+.copyable-text {
+    padding-left: 12px;
+}
+
+.col-desc .edit-view {
+    padding-left: 12px;
+}
+
+

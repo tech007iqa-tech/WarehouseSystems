@@ -2,6 +2,59 @@
 require_once 'core/database.php';
 require_once __DIR__ . '/../core/UI.php';
 include 'core/auth.php'; 
+
+// --- ROUTING & LOGIC PHASE (Pre-Output) ---
+$view = $_GET['view'] ?? 'default';
+$is_new_order = isset($_GET['customer_id']);
+
+$routes = [
+    'register'  => ['page' => 'pages/new_customer.php',     'css' => 'customer_registry.css'],
+    'orders'    => ['page' => 'pages/orders.php',           'css' => 'orders.css'],
+    'leads'     => ['page' => 'pages/leads.php',            'css' => 'leads.css'],
+    'warehouse' => ['page' => 'pages/warehouse.php',        'css' => 'warehouse.css'],
+    'import_warehouse' => ['page' => 'pages/import_warehouse.php', 'css' => 'warehouse.css'],
+    'settings'  => ['page' => 'pages/settings.php',         'css' => 'style.css'],
+    'calendar'  => ['page' => 'pages/calendar.php',         'css' => 'calendar.css'],
+    'default'   => ['page' => 'pages/customer_registry.php', 'css' => 'customer_registry.css'],
+    'new_order' => ['page' => 'pages/new_order.php',         'css' => 'new_order.css']
+];
+
+$active_key = $is_new_order ? 'new_order' : (isset($routes[$view]) ? $view : 'default');
+
+// --- ROLE BASED ACCESS CONTROL ---
+$user_role = $_SESSION['role'] ?? 'Operator';
+if ($user_role !== 'Admin') {
+    $allowed_operator_keys = ['warehouse', 'import_warehouse', 'settings'];
+    if (!in_array($active_key, $allowed_operator_keys)) {
+        $active_key = 'warehouse';
+    }
+}
+
+$active_route = $routes[$active_key];
+
+// Global State Initialization
+$selected_sector = $_GET['sector'] ?? 'Laptops';
+$selected_loc = $_GET['loc'] ?? null;
+
+// Order Creation Logic (Move here to prevent headers already sent)
+if (isset($_GET['action']) && $_GET['action'] === 'create_new_order' && isset($_GET['customer_id'])) {
+    $conn_o = Database::orders();
+    $new_order_id = 'ORD-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
+    $stmt = $conn_o->prepare("INSERT INTO orders (order_id, customer_id, status) VALUES (?, ?, 'active')");
+    $stmt->execute([$new_order_id, $_GET['customer_id']]);
+    header("Location: index.php?customer_id=" . urlencode($_GET['customer_id']) . "&order_id=" . $new_order_id);
+    exit();
+}
+
+if ($is_new_order) {
+    $current_customer = $_GET['customer_id'];
+    $current_order = $_GET['order_id'] ?? null;
+}
+
+// BUFFERS the page content so sub-pages can still do redirects or set headers if needed (though top-level is better)
+ob_start();
+include $active_route['page'];
+$page_content = ob_get_clean();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,7 +63,7 @@ include 'core/auth.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Entry | IQA Metal</title>
-    <meta name="description" content="IQA Metal Order Management and Warehouse Control System. Efficiently manage batches,      , and customer fulfillments.">
+    <meta name="description" content="IQA Metal Order Management and Warehouse Control System. Efficiently manage batches, and customer fulfillments.">
 
     <!-- Optimize Third-Party Connections (Non-blocking Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,35 +82,6 @@ include 'core/auth.php';
 
     <!-- Conditional Style Discovery -->
     <?php
-        $view = $_GET['view'] ?? 'default';
-        $is_new_order = isset($_GET['customer_id']);
-        
-        $routes = [
-            'register'  => ['page' => 'pages/new_customer.php',     'css' => 'customer_registry.css'],
-            'orders'    => ['page' => 'pages/orders.php',           'css' => 'orders.css'],
-            'leads'     => ['page' => 'pages/leads.php',            'css' => 'leads.css'],
-            'warehouse' => ['page' => 'pages/warehouse.php',        'css' => 'warehouse.css'],
-            'import_warehouse' => ['page' => 'pages/import_warehouse.php', 'css' => 'warehouse.css'],
-            'settings'  => ['page' => 'pages/settings.php',         'css' => 'style.css'],
-            'calendar'  => ['page' => 'pages/calendar.php',         'css' => 'calendar.css'],
-            'default'   => ['page' => 'pages/customer_registry.php', 'css' => 'customer_registry.css'],
-            'new_order' => ['page' => 'pages/new_order.php',         'css' => 'new_order.css']
-        ];
-
-        $active_key = $is_new_order ? 'new_order' : (isset($routes[$view]) ? $view : 'default');
-        
-        // --- ROLE BASED ACCESS CONTROL ---
-        $user_role = $_SESSION['role'] ?? 'Operator';
-        if ($user_role !== 'Admin') {
-            // Restrict operators to only Warehouse and Personal Settings
-            $allowed_operator_keys = ['warehouse', 'import_warehouse', 'settings'];
-            if (!in_array($active_key, $allowed_operator_keys)) {
-                $active_key = 'warehouse';
-            }
-        }
-        
-        $active_route = $routes[$active_key];
-
         if ($active_route['css'] !== 'style.css') {
             $css_path = 'assets/styles/' . $active_route['css'];
             echo '<link rel="stylesheet" href="'.$css_path.'?v='.filemtime($css_path).'">';
@@ -138,30 +162,7 @@ include 'core/auth.php';
     </div>
 
     <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse', 'calendar']) ? 'order-view' : '' ?>" role="main">
-        <?php
-        // Global State Initialization
-        $selected_sector = $_GET['sector'] ?? 'Laptops';
-        $selected_loc = $_GET['loc'] ?? null;
-
-        // Order Creation Logic
-        if (isset($_GET['action']) && $_GET['action'] === 'create_new_order' && isset($_GET['customer_id'])) {
-            $conn_o = Database::orders();
-            $new_order_id = 'ORD-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
-
-            $stmt = $conn_o->prepare("INSERT INTO orders (order_id, customer_id, status) VALUES (?, ?, 'active')");
-            $stmt->execute([$new_order_id, $_GET['customer_id']]);
-
-            header("Location: index.php?customer_id=" . urlencode($_GET['customer_id']) . "&order_id=" . $new_order_id);
-            exit();
-        }
-
-        if ($is_new_order) {
-            $current_customer = $_GET['customer_id'];
-            $current_order = $_GET['order_id'] ?? null;
-        }
-
-        include $active_route['page'];
-        ?>
+        <?= $page_content ?>
     </div>
     <?php if ($active_key !== 'calendar'): ?>
     <footer class="footer" role="contentinfo">

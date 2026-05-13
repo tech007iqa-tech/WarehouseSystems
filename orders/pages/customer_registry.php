@@ -109,6 +109,10 @@ try {
 }
 ?>
 
+<script id="crm-state" type="application/json">
+    <?= json_encode(['csrf_token' => Security::getToken()]) ?>
+</script>
+
 <!-- Load dedicated registry styles -->
 <style>
     .dashboard-card {
@@ -185,10 +189,7 @@ try {
         <?= UI::stat_card("Zone Alerts", $warehouse_audit_count, $warehouse_audit_count > 5 ? 'text-warning' : '') ?>
     </div>
 
-    <header>
-        <h1>Active Customers</h1>
-        <p class="subtitle">Select a customer below or register a new one to begin.</p>
-    </header>
+    </div>
 
     <?php if (isset($_GET['msg']) && $_GET['msg'] === 'customer_deleted'): ?>
         <div id="status-msg" style="background: #fef2f2; color: #991b1b; padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: 700; border: 1px solid #fecdd3; display: flex; justify-content: space-between; align-items: center;">
@@ -404,6 +405,35 @@ try {
         <button class="close-btn" onclick="closeProfile()">✖</button>
         <div id="profile-content">
             <!-- Dynamically populated -->
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div id="import-modal" class="modal-overlay" onclick="closeImportModal()">
+    <div class="profile-modal-box" onclick="event.stopPropagation()" style="max-width: 800px; width: 95%;">
+        <button class="close-btn" onclick="closeImportModal()">✖</button>
+        <div style="padding: 20px;">
+            <h2 style="font-weight: 900; margin-bottom: 10px;">📋 Import Batch from Clipboard</h2>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px;">
+                Paste your data below. Format: <code style="background: #f1f5f9; padding: 2px 4px; border-radius: 4px;">Type [Tab] Brand [Tab] Model [Tab] Series [Tab] CPU [Tab] Description [Tab] Price [Tab] QTY</code>
+            </p>
+            
+            <textarea id="import-paste-area" placeholder="Paste rows here..." style="width: 100%; height: 300px; border-radius: 12px; border: 2px solid #e2e8f0; padding: 15px; font-family: monospace; font-size: 0.85rem; resize: none; margin-bottom: 20px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+            
+            <div id="import-preview" style="margin-bottom: 20px; display: none;">
+                <h3 style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px;">Preview: <span id="import-row-count">0</span> rows detected</h3>
+                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.7rem; background: #f8fafc;">
+                    <table style="width: 100%; border-collapse: collapse; table-layout: fixed;" id="import-preview-table">
+                        <!-- Populated by JS -->
+                    </table>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="button" onclick="processImport()" id="btn-submit-import" class="btn-main" style="flex: 2; height: 50px; background: var(--text-main); color: white; border: none; border-radius: 12px; font-weight: 800; cursor: pointer;">🚀 Start Bulk Import</button>
+                <button type="button" onclick="closeImportModal()" class="btn-main" style="flex: 1; height: 50px; background: #f1f5f9; color: #64748b; border: none; border-radius: 12px; font-weight: 700; cursor: pointer;">Cancel</button>
+            </div>
         </div>
     </div>
 </div>

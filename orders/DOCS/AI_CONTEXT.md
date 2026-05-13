@@ -17,9 +17,12 @@ This codebase is a **PHP/SQLite** monolith with a custom routing engine. Focus o
 **Implementation**: Use `Database::attach($pdo, 'other_db', 'alias')`. 
 **Example**: `SELECT * FROM orders o LEFT JOIN cust_db.customers c ON ...`
 
-### 3. AJAX Live Sync
-**Pattern**: Edit modals that save without refresh.
-**Implementation**: Check `assets/js/checkout.js` and `api/update_order_status.php`. Use `fetch()` with `FormData` and update DOM nodes directly on success.
+### 3. AJAX Live Sync & Bulk Intake
+**Pattern**: Edit modals that save without refresh and bulk spreadsheet imports.
+**Implementation**: 
+- Check `assets/js/checkout.js` and `api/update_order_status.php`.
+- **Bulk Import**: See `assets/js/customer_registry.js` (`processImport`) and `api/bulk_update_orders.php`. 
+- **Sanitization**: All bulk price data MUST be sanitized using `preg_replace('/[^-0-9.]/', '', $val)` to handle formatted currency inputs ($, commas).
 
 ### 4. iOS Safari Constraints
 **Pattern**: Mobile-first premium feel.

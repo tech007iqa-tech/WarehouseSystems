@@ -154,4 +154,3 @@ try {
 } catch (Exception $e) {
     send_json_response(false, null, $e->getMessage());
 }
-?>

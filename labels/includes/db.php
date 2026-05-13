@@ -68,4 +68,3 @@ try {
     // Fallback for direct HTML view
     die("Database Connection Error: " . $e->getMessage());
 }
-?>

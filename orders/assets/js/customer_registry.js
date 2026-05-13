@@ -180,10 +180,13 @@ function renderDetailView(data) {
                 <div class="detail-value" style="font-size: 0.9rem; white-space: pre-wrap; color: var(--text-secondary); line-height: 1.5; font-weight: 500; margin-top: 6px;">${data.internal_notes ? escapeHTML(data.internal_notes) : '<i style="opacity:0.4;">No internal notes recorded.</i>'}</div>
             </div>
 
-            <div style="padding-top: 20px; padding-bottom: 20px;">
-                <a href="index.php?customer_id=${encodeURIComponent(data.customer_id)}&action=create_new_order" class="btn-register" style="display:flex; align-items:center; justify-content:center; gap: 10px; height: 54px; font-size: 1rem;">
+            <div style="padding-top: 20px; padding-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <a href="index.php?customer_id=${encodeURIComponent(data.customer_id)}&action=create_new_order" class="btn-register" style="display:flex; align-items:center; justify-content:center; gap: 10px; height: 54px; font-size: 1rem; margin: 0;">
                     <span>+</span> Create New Fresh Batch
                 </a>
+                <button type="button" onclick="openImportModal('${escapeHTML(data.customer_id)}')" class="btn-register" style="display:flex; align-items:center; justify-content:center; gap: 10px; height: 54px; font-size: 1rem; background: #f8fafc; color: var(--text-main); border: 1px dashed #cbd5e1; margin: 0;">
+                    <span>📋</span> Import from Clipboard
+                </button>
             </div>
         </div>
     `;
@@ -398,3 +401,107 @@ window.addEventListener('load', () => {
         }
     }
 });
+
+/**
+ * Import Modal Logic
+ */
+let activeImportCustomerId = null;
+
+function openImportModal(customerId) {
+    activeImportCustomerId = customerId;
+    const modal = document.getElementById('import-modal');
+    const area = document.getElementById('import-paste-area');
+    if (modal) {
+        modal.classList.add('active');
+        if (area) {
+            area.value = '';
+            area.focus();
+        }
+    }
+}
+
+function closeImportModal() {
+    const modal = document.getElementById('import-modal');
+    if (modal) modal.classList.remove('active');
+    activeImportCustomerId = null;
+}
+
+// Listen for paste to show preview
+document.getElementById('import-paste-area')?.addEventListener('input', function() {
+    const text = this.value;
+    const rows = text.trim().split('\n');
+    const preview = document.getElementById('import-preview');
+    const table = document.getElementById('import-preview-table');
+    const count = document.getElementById('import-row-count');
+
+    if (!text.trim()) {
+        preview.style.display = 'none';
+        return;
+    }
+
+    preview.style.display = 'block';
+    count.innerText = rows.length;
+
+    let html = `<thead><tr style="background:#f1f5f9; text-align:left; position:sticky; top:0; z-index:1; box-shadow:0 1px 0 #e2e8f0;"><th style="padding:8px 10px; width:25%;">Brand</th><th style="padding:8px 10px; width:45%;">Model</th><th style="padding:8px 10px; width:15%;">Qty</th><th style="padding:8px 10px; width:15%;">Price</th></tr></thead><tbody>`;
+    
+    rows.slice(0, 50).forEach(row => {
+        const cols = row.split('\t');
+        if (cols.length >= 2) {
+            // Format: Type Brand Model Series CPU Description Price QTY
+            const brand = cols[1] || '—';
+            const model = cols[2] || '—';
+            const price = cols[6] || '0';
+            const qty = cols[7] || '1';
+            html += `<tr><td style="padding:6px 10px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(brand)}</td><td style="padding:6px 10px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(model)}</td><td style="padding:6px 10px; border-top:1px solid #eee;">${escapeHTML(qty)}</td><td style="padding:6px 10px; border-top:1px solid #eee; font-weight:700; color:var(--accent-color);">$${escapeHTML(price)}</td></tr>`;
+        }
+    });
+    if (rows.length > 50) html += `<tr><td colspan="4" style="text-align:center; padding:10px; color:#94a3b8; font-style:italic; background:white;">... and ${rows.length - 50} more rows</td></tr>`;
+    html += '</tbody>';
+    table.innerHTML = html;
+});
+
+async function processImport() {
+    const area = document.getElementById('import-paste-area');
+    const btn = document.getElementById('btn-submit-import');
+    if (!area || !area.value.trim() || !activeImportCustomerId) return;
+
+    const originalBtnText = btn.innerHTML;
+    btn.innerHTML = '⏳ Processing...';
+    btn.disabled = true;
+
+    // Get CSRF Token
+    const stateEl = document.getElementById('crm-state');
+    const csrfToken = stateEl ? JSON.parse(stateEl.textContent).csrf_token : '';
+
+    const rows = area.value.trim().split('\n').map(r => r.split('\t'));
+    
+    try {
+        const response = await fetch('api/bulk_update_orders.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'bulk_import',
+                csrf_token: csrfToken,
+                customer_id: activeImportCustomerId,
+                rows: rows
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            btn.innerHTML = '✅ Success!';
+            setTimeout(() => {
+                window.location.href = `index.php?customer_id=${encodeURIComponent(activeImportCustomerId)}&order_id=${encodeURIComponent(result.order_id)}`;
+            }, 1000);
+        } else {
+            alert("Import failed: " + (result.error || "Unknown error"));
+            btn.innerHTML = originalBtnText;
+            btn.disabled = false;
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Network error during import.");
+        btn.innerHTML = originalBtnText;
+        btn.disabled = false;
+    }
+}

@@ -1,6 +1,8 @@
 <?php
 // includes/header.php
 // This snippet forms the top half of the HTML document and persistent Sidebar menu.
+require_once __DIR__ . '/../../core/Security.php';
+Security::init();
 ?>
 <!DOCTYPE html>
 <html lang="en">

@@ -62,8 +62,14 @@ try {
             $update_id = $_POST['update_id'] ?? 0;
             $qty = $_POST['update_qty'] ?? 1;
             $price = $_POST['update_price'] ?? 0.00;
-            $stmt = $conn->prepare("UPDATE items SET quantity = ?, unit_price = ? WHERE id = ?");
-            if ($stmt->execute([$qty, $price, $update_id])) {
+            $brand = $_POST['update_brand'] ?? '';
+            $model = $_POST['update_model'] ?? '';
+            $series = $_POST['update_series'] ?? '';
+            $cpu = $_POST['update_cpu'] ?? '';
+            $desc = $_POST['update_desc'] ?? '';
+            
+            $stmt = $conn->prepare("UPDATE items SET brand=?, model=?, series=?, cpu=?, description=?, quantity=?, unit_price=? WHERE id=?");
+            if ($stmt->execute([$brand, $model, $series, $cpu, $desc, $qty, $price, $update_id])) {
                 $_SESSION['message'] = "<div class='alert success'>Item updated.</div>";
             }
         } else {
@@ -127,10 +133,6 @@ unset($_SESSION['message']);
 
 
 <div class="form-side" id="form-top">
-    <header>
-        <h1>Active Batch Builder</h1>
-        <p class="subtitle">Assigning items for <strong><?= htmlspecialchars($customer_name) ?></strong></p>
-    </header>
 
     <?php echo $message; ?>
 
@@ -242,10 +244,13 @@ unset($_SESSION['message']);
                     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                     if (count($items) > 0) {
+                        $total_qty = 0;
                         foreach($items as $row) {
+                            $total_qty += $row['quantity'];
+                            $edit_form_id = "edit-form-" . $row['id'];
                             echo "<tr class='summary-item-row'>
                                     <td class='col-desc' style='padding-left: 0;'>
-                                        <div style='display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;'>
+                                        <div class='static-view' style='display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;'>
                                             <div class='copyable-text' style='flex: 1;'>
                                                 <div style='font-weight: 700;'>" . htmlspecialchars($row['brand'] . " " . $row['model']) . "</div>
                                                 <div style='font-size: 0.825rem; color: var(--text-secondary);'>" . htmlspecialchars($row['series']) . " | <span style='color: var(--accent-color); font-weight:800;'>" . htmlspecialchars($row['cpu'] ?? '') . "</span> | " . htmlspecialchars($row['description']) . "</div>
@@ -254,11 +259,41 @@ unset($_SESSION['message']);
                                                 <button type='button' class='btn-copy no-print' onclick='copyEntry(this)' title='Copy Description' style='background: none; border: none; cursor: pointer; padding: 4px; font-size: 0.8rem; opacity: 0.3; transition: opacity 0.2s; flex-shrink: 0;'>
                                                     📋
                                                 </button>
-                                                <button type='button' class='btn-edit no-print' onclick='toggleInlineEdit(this)' title='Edit Quantity/Price' style='background: none; border: none; cursor: pointer; padding: 4px; font-size: 0.8rem; opacity: 0.3; transition: opacity 0.2s; flex-shrink: 0;'>
+                                                <button type='button' class='btn-edit no-print' onclick='toggleInlineEdit(this)' title='Edit Entry' style='background: none; border: none; cursor: pointer; padding: 4px; font-size: 0.8rem; opacity: 0.3; transition: opacity 0.2s; flex-shrink: 0;'>
                                                     ✏️
                                                 </button>
                                             </div>
                                         </div>
+                                        
+                                        <form method='POST' class='edit-view' style='display:none;' id='{$edit_form_id}'>
+                                            <input type='hidden' name='action' value='update_item'>
+                                            <input type='hidden' name='update_id' value='{$row['id']}'>
+                                            <input type='hidden' name='customer_id' value='" . htmlspecialchars($current_customer) . "'>
+                                            <input type='hidden' name='order_id' value='" . htmlspecialchars($current_order) . "'>
+                                            
+                                            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;'>
+                                                <div class='edit-field-group'>
+                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Brand</label>
+                                                    <input type='text' name='update_brand' value='" . htmlspecialchars($row['brand']) . "' required style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
+                                                </div>
+                                                <div class='edit-field-group'>
+                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Model</label>
+                                                    <input type='text' name='update_model' value='" . htmlspecialchars($row['model']) . "' required style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
+                                                </div>
+                                                <div class='edit-field-group'>
+                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Series</label>
+                                                    <input type='text' name='update_series' value='" . htmlspecialchars($row['series']) . "' required style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
+                                                </div>
+                                                <div class='edit-field-group'>
+                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>CPU</label>
+                                                    <input type='text' name='update_cpu' value='" . htmlspecialchars($row['cpu'] ?? '') . "' style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
+                                                </div>
+                                            </div>
+                                            <div class='edit-field-group'>
+                                                <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Condition / Description</label>
+                                                <input type='text' name='update_desc' value='" . htmlspecialchars($row['description']) . "' style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
+                                            </div>
+                                        </form>
                                     </td>
                                     <td>
                                         <div class='static-view qty-pricing-box' style='display:flex; flex-direction:column; align-items:flex-end; gap:4px;'>
@@ -267,25 +302,26 @@ unset($_SESSION['message']);
                                                 $" . number_format($row['unit_price'] ?? 0, 2) . "
                                             </div>
                                         </div>
-                                        <form method='POST' class='edit-view' style='display:none;'>
-                                            <input type='hidden' name='action' value='update_item'>
-                                            <input type='hidden' name='update_id' value='{$row['id']}'>
-                                            <input type='hidden' name='customer_id' value='" . htmlspecialchars($current_customer) . "'>
-                                            <input type='hidden' name='order_id' value='" . htmlspecialchars($current_order) . "'>
-                                            <div class='qty-pricing-box' style='display:flex; gap: 8px; align-items:center;'>
-                                                <input type='number' name='update_qty' value='" . htmlspecialchars($row['quantity']) . "' min='1' style='width: 75px; height: 32px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--border-color); font-weight: 700;' onchange='this.form.submit()'>
-                                                <div style='display:flex; align-items:center;'>
-                                                    <span style='margin-right: 4px; font-weight:700;'>$</span>
-                                                    <input type='number' step='0.01' name='update_price' value='" . number_format($row['unit_price'] ?? 0, 2, '.', '') . "' min='0' style='width: 85px; height: 32px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--border-color); font-weight: 700;' onchange='this.form.submit()'>
+                                        <div class='edit-view' style='display:none;'>
+                                            <div style='display: flex; flex-direction: column; gap: 8px;'>
+                                                <div class='edit-field-group'>
+                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Qty</label>
+                                                    <input type='number' name='update_qty' form='{$edit_form_id}' value='" . htmlspecialchars($row['quantity']) . "' min='1' style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-weight:700;'>
                                                 </div>
+                                                <div class='edit-field-group'>
+                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Price ($)</label>
+                                                    <input type='number' step='0.01' name='update_price' form='{$edit_form_id}' value='" . number_format($row['unit_price'] ?? 0, 2, '.', '') . "' min='0' style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-weight:700;'>
+                                                </div>
+                                                <button type='submit' form='{$edit_form_id}' style='width:100%; height:32px; background:var(--text-main); color:white; border:none; border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);'>SAVE</button>
                                             </div>
-                                            <button type='submit' style='margin-top: 6px; width: 100%; border: none; background: #e2e8f0; color: var(--text-main); border-radius: 6px; cursor: pointer; height: 26px; font-size: 0.75rem; font-weight: 800;'>Done</button>
-                                        </form>
+                                        </div>
                                     </td>
                                     <td class='action-cell'>
                                         <form method='POST' style='display:inline;' onsubmit=\"return confirm('Remove this item?');\">
                                             <input type='hidden' name='action' value='delete'>
                                             <input type='hidden' name='delete_id' value='{$row['id']}'>
+                                            <input type='hidden' name='customer_id' value='" . htmlspecialchars($current_customer) . "'>
+                                            <input type='hidden' name='order_id' value='" . htmlspecialchars($current_order) . "'>
                                             <button type='submit' class='btn-delete' title='Remove Item'>&times;</button>
                                         </form>
                                     </td>
@@ -301,6 +337,19 @@ unset($_SESSION['message']);
                     }
                     ?>
                 </tbody>
+                <?php if (count($items) > 0): ?>
+                <tfoot style="border-top: 2px solid #e2e8f0; background: #f8fafc;">
+                    <tr>
+                        <td style="text-align: right; padding: 15px; font-size: 0.9rem; color: #64748b; font-weight: 800;">Batch Total:</td>
+                        <td style="padding: 15px; text-align: right;">
+                            <span style="background: var(--text-main); color: white; padding: 4px 12px; border-radius: 8px; font-weight: 900; font-size: 1rem;">
+                                <?= number_format($total_qty) ?> Units
+                            </span>
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+                <?php endif; ?>
             </table>
         </div>
 

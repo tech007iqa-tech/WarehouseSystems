@@ -105,14 +105,17 @@ function toggleInlineEdit(btn) {
     const row = btn.closest('tr');
     if (!row) return;
 
-    const staticView = row.querySelector('.static-view');
-    const editView = row.querySelector('.edit-view');
+    const staticViews = row.querySelectorAll('.static-view');
+    const editViews = row.querySelectorAll('.edit-view');
 
-    if (staticView && editView) {
-        const isEditing = staticView.style.display === 'none';
-        staticView.style.display = isEditing ? 'flex' : 'none';
-        editView.style.display = isEditing ? 'none' : 'block';
+    if (staticViews.length > 0 && editViews.length > 0) {
+        const isEditing = staticViews[0].style.display === 'none';
+        
+        staticViews.forEach(v => v.style.display = isEditing ? 'flex' : 'none');
+        editViews.forEach(v => v.style.display = isEditing ? 'none' : 'block');
+        
         btn.style.opacity = isEditing ? '0.3' : '1';
+        btn.innerHTML = isEditing ? '✏️' : '❌'; // Toggle icon to close/cancel
     }
 }
 

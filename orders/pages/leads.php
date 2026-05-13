@@ -83,28 +83,6 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
 ?>
 
 <div class="orders-container">
-    <header class="orders-header" style="flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 30px;">
-        <div>
-            <h1>CRM & Lead Hub</h1>
-            <p class="subtitle orders-subtitle" style="margin:0;">Track relationships, manage follow-ups, and convert leads into active accounts.</p>
-        </div>
-        
-        <!-- Conversion Stats Header -->
-        <div style="display: flex; gap: 20px;">
-            <?php 
-                $lead_count = count(array_filter($all_leads, fn($l) => strtolower($l['account_status'] ?? '') === 'lead'));
-                $total_pipeline = array_sum(array_column($all_leads, 'total_balance'));
-            ?>
-            <div style="background: white; padding: 12px 20px; border-radius: 16px; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">
-                <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Active Leads</div>
-                <div style="font-size: 1.2rem; font-weight: 900; color: var(--accent-color);"><?= $lead_count ?></div>
-            </div>
-            <div style="background: white; padding: 12px 20px; border-radius: 16px; border: 1px solid var(--border-color); text-align: center; box-shadow: var(--shadow-sm);">
-                <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Pipeline Value</div>
-                <div style="font-size: 1.2rem; font-weight: 900; color: var(--text-main);">$<?= number_format($total_pipeline, 0) ?></div>
-            </div>
-        </div>
-    </header>
 
     <?php if (count($call_today) > 0): ?>
     <!-- Urgent Follow-ups Section -->

@@ -88,10 +88,6 @@ unset($_SESSION['message']);
 ?>
 
 <div class="form-side" style="grid-column: span 2;">
-    <header>
-        <h1>Register New Customer</h1>
-        <p class="subtitle">Complete the company details below. An ID will be assigned automatically.</p>
-    </header>
 
     <?php echo $message; ?>
 

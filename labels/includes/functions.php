@@ -86,4 +86,3 @@ function ensure_system_folders() {
         file_put_contents($htaccess, "Options -Indexes\n<Files \"*.php\">\n    Order allow,deny\n    Deny from all\n</Files>");
     }
 }
-?>

@@ -62,6 +62,13 @@ try {
             $stmt->execute([(float)$val, $qty, (int)$id, $customer_id]);
         }
 
+        // Update Order Date if provided
+        if (isset($_POST['order_date'])) {
+            $new_date = $_POST['order_date'] . ' ' . date('H:i:s', strtotime($order_data['created_at'] ?? 'now'));
+            $stmt_od = $conn_items->prepare("UPDATE orders SET created_at = ? WHERE order_id = ?");
+            $stmt_od->execute([$new_date, $order_id]);
+        }
+
         // 2. Determine if we should also finalize the status
         $is_finalize = (isset($_POST['finalize_order']) && $_POST['finalize_order'] === 'true') || 
                        (isset($_POST['finalize_status']) && $_POST['finalize_status'] === 'true');
@@ -162,7 +169,13 @@ try {
             </div>
             <div style="text-align: right;">
                 <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Order Date</div>
-                <div style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;"><?= htmlspecialchars($order_display_date) ?></div>
+                <div class="no-print">
+                    <input type="date" name="order_date" value="<?= date('Y-m-d', strtotime($order_data['created_at'])) ?>" style="font-weight: 700; color: var(--text-main); font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; background: white; cursor: pointer; text-align: right;">
+                    <input type="hidden" name="order_id" value="<?= htmlspecialchars($active_order_id) ?>">
+                </div>
+                <div class="print-only" style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">
+                    <?= htmlspecialchars($order_display_date) ?>
+                </div>
             </div>
         </div>
 

@@ -36,9 +36,9 @@ Comprehensive management of physical inventory zones and stock levels.
 
 ### 4. 📦 Batch Builder & Verification (`pages/new_order.php`, `checkout.php`)
 The core hardware intake and manifest generation workflow.
-- **Cascading Intake**: Intelligent dropdowns filter specific Series and Models based on the selected Brand (Dell, HP, etc.).
-- **Live Order Summary**: A searchable, real-time list of added hardware with inline ✏️ editing for quantity and pricing.
-- **Checkout Manifest**: A professional verification screen with search-filtered item rows.
+- **Live Order Summary**: A searchable, real-time list of added hardware with full-entry inline ✏️ editing (Brand, Model, Series, CPU, etc.) and a **Batch Total QTY** counter for rapid stock verification.
+- **Bulk Clipboard Import**: A high-speed intake tool allowing users to paste tab-separated rows directly from spreadsheets (Type, Brand, Model, Series, CPU, Price, QTY). Features automated header detection and price sanitization ($/comma stripping).
+- **Checkout Manifest**: A professional verification screen with search-filtered item rows and editable **Order Dates** (backdating/postdating support).
 - **Interactive Row Editor**: Clicking any manifest row opens a glassmorphism modal for full metadata editing with **AJAX Live Sync**—changes update the main UI instantly without a refresh.
 - **Thermal Labeling**: Integrated generation of 2"×1" labels in Flat ODT format, compatible with standard thermal printers.
 

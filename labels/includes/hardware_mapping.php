@@ -44,4 +44,3 @@ if (!defined('HW_FIELDS')) {
         'LOCATION'          => 'warehouse_location'
     ]);
 }
-?>
