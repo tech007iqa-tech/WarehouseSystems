@@ -17,9 +17,31 @@ try {
     $conn_items = Database::orders();
     $conn_cust = Database::customers();
 
+    // 1. Fetch customer details
+    $stmt = $conn_cust->prepare("SELECT * FROM customers WHERE customer_id = ?");
+    $stmt->execute([$customer_id]);
+    $customer = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // 2. Determine active order ID
+    $active_order_id = $_GET['order_id'] ?? $_POST['order_id'] ?? null;
+    if (!$active_order_id) {
+        $stmt = $conn_items->prepare("SELECT order_id FROM orders WHERE customer_id = ? ORDER BY id DESC LIMIT 1");
+        $stmt->execute([$customer_id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $active_order_id = $row['order_id'] ?? 'ORD-DEFAULT';
+    }
+
+    // 3. Fetch order details (specifically for the date)
+    $stmt_o = $conn_items->prepare("SELECT * FROM orders WHERE customer_id = ? AND order_id = ?");
+    $stmt_o->execute([$customer_id, $active_order_id]);
+    $order_data = $stmt_o->fetch(PDO::FETCH_ASSOC);
+    $order_display_date = $order_data ? date('M d, Y', strtotime($order_data['created_at'])) : date('M d, Y');
+
+    // --- HANDLE POST ACTIONS ---
+
     // Handle Order Transfer
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] === 'transfer_order') {
-        $order_id = $_POST['order_id'];
+        $order_id = $_POST['order_id'] ?? $active_order_id;
         $new_customer_id = $_POST['new_customer_id'];
 
         // Update orders table
@@ -36,7 +58,7 @@ try {
 
     // Handle Full Item Metadata & Finalization
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $order_id = $_GET['order_id'] ?? ($_POST['order_id'] ?? 'ORD-DEFAULT');
+        $order_id = $active_order_id; 
 
         // Check if it's a specific single item update (Modal Save) or bulk save
         if (isset($_POST['action']) && $_POST['action'] === 'save_single_item') {
@@ -64,7 +86,10 @@ try {
 
         // Update Order Date if provided
         if (isset($_POST['order_date'])) {
-            $new_date = $_POST['order_date'] . ' ' . date('H:i:s', strtotime($order_data['created_at'] ?? 'now'));
+            // Use time from existing record or fallback to current time
+            $existing_time = $order_data ? date('H:i:s', strtotime($order_data['created_at'])) : date('H:i:s');
+            $new_date = $_POST['order_date'] . ' ' . $existing_time;
+            
             $stmt_od = $conn_items->prepare("UPDATE orders SET created_at = ? WHERE order_id = ?");
             $stmt_od->execute([$new_date, $order_id]);
         }
@@ -91,33 +116,6 @@ try {
         }
         exit();
     }
-
-    // Migration Check (for order_id support)
-    $cols = $conn_items->query("PRAGMA table_info(items)")->fetchAll(PDO::FETCH_ASSOC);
-    $has_id = false;
-    foreach($cols as $c) if ($c['name'] === 'order_id') $has_id = true;
-    if (!$has_id) $conn_items->exec("ALTER TABLE items ADD COLUMN order_id TEXT NOT NULL DEFAULT 'ORD-DEFAULT'");
-
-    // Fetch customer details
-    $stmt = $conn_cust->prepare("SELECT * FROM customers WHERE customer_id = ?");
-    $stmt->execute([$customer_id]);
-    $customer = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    // Fetch items for specific order_id (with fallback to latest order for the account)
-    $active_order_id = $_GET['order_id'] ?? null;
-    
-    if (!$active_order_id) {
-        $stmt = $conn_items->prepare("SELECT order_id FROM orders WHERE customer_id = ? ORDER BY id DESC LIMIT 1");
-        $stmt->execute([$customer_id]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $active_order_id = $row['order_id'] ?? 'ORD-DEFAULT';
-    }
-
-    // Fetch order details for metadata (specifically the date)
-    $stmt_o = $conn_items->prepare("SELECT * FROM orders WHERE customer_id = ? AND order_id = ?");
-    $stmt_o->execute([$customer_id, $active_order_id]);
-    $order_data = $stmt_o->fetch(PDO::FETCH_ASSOC);
-    $order_display_date = $order_data ? date('M d, Y', strtotime($order_data['created_at'])) : date('M d, Y');
 
     $stmt = $conn_items->prepare("SELECT * FROM items WHERE customer_id = ? AND order_id = ? ORDER BY id ASC");
     $stmt->execute([$customer_id, $active_order_id]);
@@ -157,29 +155,29 @@ try {
             </div>
         </div>
 
-        <div style="border-bottom: 1px dashed var(--border-color); padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
-            <div>
-                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Billing Account</div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="font-weight: 700; color: var(--text-main); font-size: 1.1rem;"><?= htmlspecialchars($customer['company_name'] ?? 'Account Not Found') ?></div>
-                    <button type="button" onclick="openTransferModal()" class="no-print" style="background: #f1f5f9; border: none; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; color: #475569;">
-                        ⇄ Transfer
-                    </button>
-                </div>
-            </div>
-            <div style="text-align: right;">
-                <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Order Date</div>
-                <div class="no-print">
-                    <input type="date" name="order_date" value="<?= date('Y-m-d', strtotime($order_data['created_at'])) ?>" style="font-weight: 700; color: var(--text-main); font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; background: white; cursor: pointer; text-align: right;">
-                    <input type="hidden" name="order_id" value="<?= htmlspecialchars($active_order_id) ?>">
-                </div>
-                <div class="print-only" style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">
-                    <?= htmlspecialchars($order_display_date) ?>
-                </div>
-            </div>
-        </div>
-
         <form method="POST" id="checkout-form">
+            <div style="border-bottom: 1px dashed var(--border-color); padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Billing Account</div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="font-weight: 700; color: var(--text-main); font-size: 1.1rem;"><?= htmlspecialchars($customer['company_name'] ?? 'Account Not Found') ?></div>
+                        <button type="button" onclick="openTransferModal()" class="no-print" style="background: #f1f5f9; border: none; padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; cursor: pointer; color: #475569;">
+                            ⇄ Transfer
+                        </button>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Order Date</div>
+                    <div class="no-print">
+                        <input type="date" name="order_date" value="<?= date('Y-m-d', strtotime($order_data['created_at'] ?? 'now')) ?>" style="font-weight: 700; color: var(--text-main); font-size: 0.9rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; background: white; cursor: pointer; text-align: right;">
+                        <input type="hidden" name="order_id" value="<?= htmlspecialchars($active_order_id) ?>">
+                    </div>
+                    <div class="print-only" style="font-weight: 700; color: var(--text-main); font-size: 0.9rem;">
+                        <?= htmlspecialchars($order_display_date) ?>
+                    </div>
+                </div>
+            </div>
+
             <input type="hidden" name="action" value="update_items">
             <table class="receipt-table">
                 <thead>
