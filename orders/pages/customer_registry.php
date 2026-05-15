@@ -7,47 +7,12 @@ try {
     $conn = Database::customers();
     $conn_orders = Database::orders();
 
-    // Create orders table if first run
-    $conn_orders->exec("CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id TEXT NOT NULL UNIQUE,
-        customer_id TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'draft',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if (!Security::validate($_POST['csrf_token'] ?? '')) {
+            die("Security Error: CSRF Token Invalid.");
+        }
 
-    // Initial schema (redundant if already created)
-    $conn->exec("CREATE TABLE IF NOT EXISTS customers (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        customer_id TEXT NOT NULL UNIQUE,
-        company_name TEXT NOT NULL,
-        website TEXT,
-        contact_person TEXT,
-        address TEXT,
-        email TEXT,
-        phone TEXT,
-        shipping_address TEXT,
-        internal_notes TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-    
-    // Performance Indexing (Phase 1)
-    $conn->exec("CREATE INDEX IF NOT EXISTS idx_customers_cid ON customers(customer_id)");
-    $conn_orders->exec("CREATE INDEX IF NOT EXISTS idx_orders_cid ON orders(customer_id)");
-    $conn_orders->exec("CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)");
-
-
-    // CRM Migration
-    $cols = $conn->query("PRAGMA table_info(customers)")->fetchAll(PDO::FETCH_ASSOC);
-    $has_cb = false; $has_msg = false;
-    foreach($cols as $c) {
-        if ($c['name'] === 'callback_date') $has_cb = true;
-        if ($c['name'] === 'message_date') $has_msg = true;
-    }
-    if (!$has_cb) $conn->exec("ALTER TABLE customers ADD COLUMN callback_date TEXT DEFAULT ''");
-    if (!$has_msg) $conn->exec("ALTER TABLE customers ADD COLUMN message_date TEXT DEFAULT ''");
-
-    if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] === 'edit_customer') {
+        if (isset($_POST['action']) && $_POST['action'] === 'edit_customer') {
         $stmt = $conn->prepare("UPDATE customers SET
             company_name = ?, website = ?, contact_person = ?, address = ?,
             email = ?, phone = ?, shipping_address = ?, internal_notes = ?,
@@ -103,6 +68,7 @@ try {
         header("Location: index.php?msg=order_deleted");
         exit();
     }
+} // End POST handler
 
 } catch (PDOException $e) {
     die("Database Connection failed: " . $e->getMessage());
@@ -240,26 +206,40 @@ try {
         }
         $sort_param = $_GET['sort'] ?? $_SESSION['cust_sort_pref'] ?? 'date_desc';
         
-        // Fetch All Customers with Aggregated Order Data using Cross-DB Join
+        // Fetch All Customers with Aggregated Order Data using Integrated Query
         try {
-            Database::attach($conn, 'orders', 'orders_db');
-            
             $sql = "
                 SELECT c.*, 
-                    (SELECT COUNT(*) FROM orders_db.orders o WHERE o.customer_id = c.customer_id) as total_orders,
-                    (SELECT SUM(i.quantity * i.unit_price) FROM orders_db.items i WHERE i.customer_id = c.customer_id) as lifetime_value,
-                    (SELECT MAX(o.created_at) FROM orders_db.orders o WHERE o.customer_id = c.customer_id) as last_order_date,
-                    (SELECT COUNT(*) FROM orders_db.orders o WHERE o.customer_id = c.customer_id AND o.status IN ('finalized', 'paid', 'dispatched', 'canceled')) as completed_count,
-                    (SELECT COUNT(*) FROM orders_db.orders o WHERE o.customer_id = c.customer_id AND o.status NOT IN ('finalized', 'paid', 'dispatched', 'canceled')) as active_count
+                    COALESCE(o_stats.total_orders, 0) as total_orders,
+                    COALESCE(i_stats.lifetime_value, 0) as lifetime_value,
+                    COALESCE(o_stats.last_order_date, '0000-00-00 00:00:00') as last_order_date,
+                    COALESCE(o_stats.completed_count, 0) as completed_count,
+                    COALESCE(o_stats.active_count, 0) as active_count
                 FROM customers c
+                LEFT JOIN (
+                    SELECT customer_id, 
+                           COUNT(*) as total_orders,
+                           MAX(created_at) as last_order_date,
+                           SUM(CASE WHEN status IN ('finalized', 'paid', 'dispatched', 'canceled') THEN 1 ELSE 0 END) as completed_count,
+                           SUM(CASE WHEN status NOT IN ('finalized', 'paid', 'dispatched', 'canceled') THEN 1 ELSE 0 END) as active_count
+                    FROM orders_db.orders
+                    GROUP BY customer_id
+                ) o_stats ON c.customer_id = o_stats.customer_id
+                LEFT JOIN (
+                    SELECT customer_id, SUM(quantity * unit_price) as lifetime_value
+                    FROM orders_db.items
+                    GROUP BY customer_id
+                ) i_stats ON c.customer_id = i_stats.customer_id
             ";
+            
+            $stmt = Database::queryIntegrated('customers', ['orders_db' => 'orders'], $sql);
+            $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
         } catch (Exception $e) {
-            // Fallback if orders DB is not available
-            $sql = "SELECT *, 0 as total_orders, 0 as lifetime_value, '0000-00-00 00:00:00' as last_order_date, 0 as completed_count, 0 as active_count FROM customers";
+            // Fallback if integrated query fails
+            $stmt = $conn->query("SELECT *, 0 as total_orders, 0 as lifetime_value, '0000-00-00 00:00:00' as last_order_date, 0 as completed_count, 0 as active_count FROM customers");
+            $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
-        
-        $stmt = $conn->query($sql);
-        $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Fetch Detailed Orders List for all customers in one go
         $order_map = [];

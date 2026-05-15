@@ -19,13 +19,15 @@ class UI {
      * Renders a premium Glassmorphic Stat Card
      */
     public static function stat_card($title, $value, $class = '', $id = '') {
-        $id_attr = $id ? "id='{$id}'" : "";
+        $id_attr = $id ? "id='" . htmlspecialchars($id) . "'" : "";
+        $title_esc = htmlspecialchars($title);
+        $value_esc = htmlspecialchars($value);
         return "
-        <div {$id_attr} class='panel stat-card {$class}'>
+        <div {$id_attr} class='panel stat-card " . htmlspecialchars($class) . "'>
             <div class='stat-header'>
-                <span class='stat-title'>{$title}</span>
+                <span class='stat-title'>{$title_esc}</span>
             </div>
-            <div class='stat-value'>{$value}</div>
+            <div class='stat-value'>{$value_esc}</div>
         </div>";
     }
 
@@ -34,18 +36,18 @@ class UI {
      */
     public static function badge($text, $type = 'default') {
         $type_class = "badge-" . strtolower(str_replace(' ', '-', $type));
-        return "<span class='badge {$type_class}'>{$text}</span>";
+        return "<span class='badge " . htmlspecialchars($type_class) . "'>" . htmlspecialchars($text) . "</span>";
     }
 
     /**
      * Renders a Premium Action Button
      */
     public static function button($text, $link = '#', $icon = '', $class = 'btn-primary') {
-        $icon_html = $icon ? "<span class='btn-icon'>{$icon}</span>" : "";
+        $icon_html = $icon ? "<span class='btn-icon'>" . $icon . "</span>" : "";
         return "
-        <a href='{$link}' class='btn {$class}'>
+        <a href='" . htmlspecialchars($link) . "' class='btn " . htmlspecialchars($class) . "'>
             {$icon_html}
-            <span class='btn-text'>{$text}</span>
+            <span class='btn-text'>" . htmlspecialchars($text) . "</span>
         </a>";
     }
 
@@ -54,9 +56,9 @@ class UI {
      */
     public static function action_button($text, $link, $emoji, $style = '') {
         return "
-        <a href='{$link}' class='btn action-hub-btn' style='{$style}'>
-            <span style='margin-right: 12px; font-size: 1.2rem;'>{$emoji}</span>
-            {$text}
+        <a href='" . htmlspecialchars($link) . "' class='btn action-hub-btn' style='" . htmlspecialchars($style) . "'>
+            <span style='margin-right: 12px; font-size: 1.2rem;'>" . htmlspecialchars($emoji) . "</span>
+            " . htmlspecialchars($text) . "
         </a>";
     }
 
@@ -69,12 +71,12 @@ class UI {
         if ($type === 'NEED_TEMPLATE') $icon = '📝';
         
         return "
-        <div class='opportunity-card opp-{$type}'>
+        <div class='opportunity-card opp-" . htmlspecialchars($type) . "'>
             <div class='opp-icon'>{$icon}</div>
             <div class='opp-content'>
-                <h3>{$title}</h3>
-                <p>{$desc}</p>
-                <a href='{$link}' class='btn btn-small'>{$btn_text}</a>
+                <h3>" . htmlspecialchars($title) . "</h3>
+                <p>" . htmlspecialchars($desc) . "</p>
+                <a href='" . htmlspecialchars($link) . "' class='btn btn-small'>" . htmlspecialchars($btn_text) . "</a>
             </div>
         </div>";
     }
@@ -85,10 +87,10 @@ class UI {
     public static function activity_item($icon, $title, $subtitle) {
         return "
         <div class='activity-item'>
-            <div class='activity-icon'>{$icon}</div>
+            <div class='activity-icon'>" . $icon . "</div>
             <div class='activity-details'>
                 <div class='activity-title'>".htmlspecialchars($title)."</div>
-                <div class='activity-subtitle'>{$subtitle}</div>
+                <div class='activity-subtitle'>".htmlspecialchars($subtitle)."</div>
             </div>
         </div>";
     }
@@ -165,5 +167,25 @@ class UI {
                 })();
             </script>
         </div>";
+    }
+
+    /**
+     * Renders any pending notifications from Session or URL
+     */
+    public static function render_notifications() {
+        $msg = $_SESSION['notification_msg'] ?? null;
+        $type = $_SESSION['notification_type'] ?? 'info';
+        unset($_SESSION['notification_msg'], $_SESSION['notification_type']);
+
+        $script = "";
+        if ($msg) {
+            $msg_esc = addslashes(htmlspecialchars($msg));
+            $script .= "IQA_Notify.show('{$msg_esc}', '" . addslashes(htmlspecialchars($type)) . "');";
+        }
+
+        if ($script) {
+            return "<script>document.addEventListener('DOMContentLoaded', () => { {$script} });</script>";
+        }
+        return "";
     }
 }

@@ -11,6 +11,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 try {
+    if (!Security::validate($_POST['csrf_token'] ?? '')) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Security Error: CSRF Token Invalid']);
+        exit();
+    }
     $conn = Database::customers();
 
     $customer_id = $_POST['customer_id'] ?? null;

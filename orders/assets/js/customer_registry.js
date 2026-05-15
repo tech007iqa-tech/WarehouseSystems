@@ -65,6 +65,26 @@ const escapeHTML = (str) => {
 };
 
 /**
+ * Gets the CSRF token from the crm-state script tag
+ * @returns {string}
+ */
+const getCsrfToken = () => {
+    const stateEl = document.getElementById('crm-state');
+    if (!stateEl) return '';
+    try {
+        return JSON.parse(stateEl.textContent).csrf_token;
+    } catch (e) {
+        return '';
+    }
+};
+
+/**
+ * Renders a hidden CSRF field for forms
+ * @returns {string}
+ */
+const csrfField = () => `<input type="hidden" name="csrf_token" value="${getCsrfToken()}">`;
+
+/**
  * Renders the detail view in the sidebar
  * @param {Customer} data
  */
@@ -140,6 +160,7 @@ function renderDetailView(data) {
                                 </div>
                             </a>
                             <form method="POST" onsubmit="return confirm('Delete this batch permanently?')" style="margin:0;">
+                                ${csrfField()}
                                 <input type="hidden" name="action" value="delete_order">
                                 <input type="hidden" name="order_id" value="${o.order_id}">
                                 <button type="submit" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.2rem; opacity:0.3; transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">🗑️</button>
@@ -166,6 +187,7 @@ function renderDetailView(data) {
                                 </div>
                             </a>
                             <form method="POST" onsubmit="return confirm('Delete this completed order permanently?')" style="margin:0;">
+                                ${csrfField()}
                                 <input type="hidden" name="action" value="delete_order">
                                 <input type="hidden" name="order_id" value="${o.order_id}">
                                 <button type="submit" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.2rem; opacity:0.1; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.6" onmouseout="this.style.opacity=0.1">🗑️</button>
@@ -210,6 +232,7 @@ function renderEditView(data) {
 
     side.innerHTML = `
         <form method="POST" class="detail-box">
+            ${csrfField()}
             <input type="hidden" name="action" value="edit_customer">
             <input type="hidden" name="customer_id" value="${data.customer_id}">
 
@@ -276,6 +299,7 @@ function renderEditView(data) {
 
         <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #fee2e2;">
             <form method="POST" onsubmit="return confirm('⚠️ DANGER ZONE: This will permanently delete this customer and ALL their order history. This cannot be undone. Proceed?')">
+                ${csrfField()}
                 <input type="hidden" name="action" value="delete_customer">
                 <input type="hidden" name="customer_id" value="${data.customer_id}">
                 <button type="submit" style="width:100%; padding:12px; border-radius:12px; background:#fef2f2; color:#b91c1c; font-weight:700; border:1px solid #fecdd3; cursor:pointer; font-size:0.85rem; transition: all 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='#fef2f2'">

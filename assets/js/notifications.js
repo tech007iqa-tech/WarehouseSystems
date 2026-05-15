@@ -53,7 +53,7 @@ class Notifications {
         }, 400);
     }
 
-    // Shortcut methods
+// Shortcut methods
     success(msg, dur) { this.show(msg, 'success', dur); }
     error(msg, dur) { this.show(msg, 'error', dur); }
     warn(msg, dur) { this.show(msg, 'warning', dur); }
@@ -68,7 +68,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('msg')) {
         const msg = urlParams.get('msg');
-        if (msg === 'customer_deleted') IQA_Notify.success('Customer deleted successfully');
-        if (msg === 'order_deleted') IQA_Notify.success('Order removed from registry');
+        
+        const messages = {
+            'added': 'New entry successfully added ✨',
+            'updated': 'Changes saved successfully 💾',
+            'deleted': 'Item removed from database 🗑️',
+            'customer_deleted': 'Customer profile permanently deleted',
+            'order_deleted': 'Order removed from registry',
+            'order_finalized': 'Order manifest finalized and archived ✅',
+            'item_removed': 'Item removed from batch',
+            'zone_deleted': 'Warehouse zone cleared 🧹',
+            'error': 'An unexpected error occurred ⚠️',
+            'unauthorized': 'Security access denied 🚫'
+        };
+
+        if (messages[msg]) {
+            IQA_Notify.show(messages[msg], msg.includes('error') || msg === 'unauthorized' ? 'error' : 'success');
+        }
+
+        // Clean URL without refresh
+        const url = new URL(window.location);
+        url.searchParams.delete('msg');
+        window.history.replaceState({}, '', url.pathname + url.search);
     }
 });

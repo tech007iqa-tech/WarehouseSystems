@@ -5,13 +5,17 @@ function filterOrders() {
     const input = document.getElementById('order-search');
     if (!input) return;
 
-    const filter = input.value.toLowerCase();
+    const terms = input.value.toLowerCase().split(' ').filter(t => t.trim() !== '');
     const rows = document.getElementsByClassName('order-row');
     let hasResults = false;
 
     for (let i = 0; i < rows.length; i++) {
-        const searchBlob = rows[i].getAttribute('data-search') || "";
-        if (searchBlob.includes(filter)) {
+        const searchBlob = (rows[i].getAttribute('data-search') || "").toLowerCase();
+        
+        // Every term must be present (AND logic)
+        const isMatch = terms.every(term => searchBlob.includes(term));
+
+        if (isMatch) {
             rows[i].style.display = "";
             hasResults = true;
         } else {
@@ -94,6 +98,9 @@ async function updateOrderStatus(select, orderId) {
         const formData = new FormData();
         formData.append('order_id', orderId);
         formData.append('new_status', newStatus);
+        
+        const csrfEl = document.querySelector('input[name="csrf_token"]');
+        if (csrfEl) formData.append('csrf_token', csrfEl.value);
 
         const response = await fetch('api/update_order_status.php', {
             method: 'POST',
@@ -138,6 +145,9 @@ async function transferOrder(event) {
         submitBtn.innerText = 'Transferring...';
 
         const formData = new FormData(form);
+        const csrfEl = document.querySelector('input[name="csrf_token"]');
+        if (csrfEl && !formData.has('csrf_token')) formData.append('csrf_token', csrfEl.value);
+        
         const response = await fetch('api/transfer_order.php', {
             method: 'POST',
             body: formData

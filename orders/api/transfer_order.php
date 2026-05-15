@@ -4,6 +4,12 @@ include '../core/auth.php';
 
 header('Content-Type: application/json');
 
+if (!Security::validate($_POST['csrf_token'] ?? '')) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Security Error: CSRF Token Invalid']);
+    exit();
+}
+
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
     echo json_encode(['error' => 'Method Not Allowed']);
@@ -33,6 +39,8 @@ try {
     $stmt_i->execute([$new_cust_id, $ord_id]);
 
     $conn->commit();
+
+    Audit::log('TRANSFER_ORDER', $ord_id, "Order transferred to Customer: " . $new_cust_id, 'orders');
 
     echo json_encode(['status' => 'success', 'message' => 'Order transferred successfully']);
 } catch (PDOException $e) {

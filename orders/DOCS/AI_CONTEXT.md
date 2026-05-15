@@ -12,19 +12,38 @@ This codebase is a **PHP/SQLite** monolith with a custom routing engine. Focus o
 **Pattern**: Do NOT use global JS variables.
 **Implementation**: Look for `<script type="application/json" id="...State">` in PHP files. Use `JSON.parse(document.getElementById('...State').textContent)` in JS.
 
-### 2. Cross-DB Joining
-**Pattern**: Joins across `customers.db` and `orders.db`.
-**Implementation**: Use `Database::attach($pdo, 'other_db', 'alias')`. 
-**Example**: `SELECT * FROM orders o LEFT JOIN cust_db.customers c ON ...`
+### 2. Integrated Cross-DB Queries
+**Pattern**: Efficiently querying across multiple databases (e.g., `customers` + `orders`).
+**Implementation**: Prefer `Database::queryIntegrated($primary, $attachments, $sql, $params)` over manual `ATTACH`. 
+**Example**: `Database::queryIntegrated('customers', ['o' => 'orders'], "SELECT ... FROM customers LEFT JOIN o.orders ...")`.
 
-### 3. AJAX Live Sync & Bulk Intake
+### 3. Centralized Schema Management (Self-Healing)
+**Pattern**: Do NOT write `CREATE TABLE` or `ALTER TABLE` in individual pages.
+**Implementation**: Add the blueprint to `core/Schema.php`. `Database::getConnection()` calls `Schema::ensure()` automatically. 
+**Migrations**: Add new columns to `Schema::runMigrations()`. This ensures all DBs are synchronized on the next load.
+
+### 4. Audit & Accountability
+**Pattern**: Log all sensitive actions (deletes, status changes, transfers).
+**Implementation**: Use `Audit::log($action, $target_id, $details, $module)`. 
+**Visibility**: Admins can view these in Settings via `Audit::getRecent()`.
+
+### 5. Data Security & Backups
+**Pattern**: One-click ZIP export of all system databases.
+**Implementation**: Handled by `api/generate_backup.php`. It uses `ZipArchive` to package `assets/db/*.db` files. 
+**Auditing**: Every backup generation MUST be logged using `Audit::log('SYSTEM_BACKUP', ...)`.
+
+### 6. Intelligent Vocabulary
+**Pattern**: Auto-completing inventory intake based on historical data.
+**Implementation**: Use `api/get_vocabulary.php` to fetch unique brands/models/CPUs. `assets/js/vocabulary.js` populates global `<datalist>` elements.
+
+### 6. AJAX Live Sync & Bulk Intake
 **Pattern**: Edit modals that save without refresh and bulk spreadsheet imports.
 **Implementation**: 
 - Check `assets/js/checkout.js` and `api/update_order_status.php`.
 - **Bulk Import**: See `assets/js/customer_registry.js` (`processImport`) and `api/bulk_update_orders.php`. 
 - **Sanitization**: All bulk price data MUST be sanitized using `preg_replace('/[^-0-9.]/', '', $val)` to handle formatted currency inputs ($, commas).
 
-### 4. iOS Safari Constraints
+### 7. iOS Safari Constraints
 **Pattern**: Mobile-first premium feel.
 **Implementation**: 
 - Use `16px` font on all inputs to avoid zoom.
@@ -38,6 +57,7 @@ This codebase is a **PHP/SQLite** monolith with a custom routing engine. Focus o
 
 ## ⚠️ Common Gotchas
 - **Permissions**: `assets/db/` must be writable.
+- **CSRF**: Ensure `<?= UI::csrf_field() ?>` is present in forms. AJAX calls must include the `csrf_token` in POST body/FormData.
 - **Paths**: `index.php` handles inclusions, so relative paths in sub-files can be tricky. Use `core/database.php` as the reference for relative paths.
 - **Concurrency**: Warehouse items use `updated_at` for optimistic locking. Always check for `CONCURRENCY_ERROR` in JS.
 

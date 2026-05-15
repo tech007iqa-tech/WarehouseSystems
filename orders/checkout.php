@@ -1,5 +1,6 @@
 <?php 
 require_once 'core/database.php';
+require_once __DIR__ . '/../core/UI.php';
 include 'core/auth.php'; 
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -38,6 +39,11 @@ try {
     $order_display_date = $order_data ? date('M d, Y', strtotime($order_data['created_at'])) : date('M d, Y');
 
     // --- HANDLE POST ACTIONS ---
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if (!Security::validate($_POST['csrf_token'] ?? '')) {
+            die("Security Error: CSRF Token Invalid.");
+        }
+    }
 
     // Handle Order Transfer
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] === 'transfer_order') {
@@ -156,6 +162,7 @@ try {
         </div>
 
         <form method="POST" id="checkout-form">
+            <?= UI::csrf_field() ?>
             <div style="border-bottom: 1px dashed var(--border-color); padding-bottom: 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end;">
                 <div>
                     <div style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 4px;">Billing Account</div>
@@ -358,6 +365,7 @@ try {
             <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px;">Relocate this entire order and all its items to a different customer account.</p>
             
             <form method="POST">
+                <?= UI::csrf_field() ?>
                 <input type="hidden" name="action" value="transfer_order">
                 <input type="hidden" name="order_id" value="<?= htmlspecialchars($active_order_id) ?>">
                 

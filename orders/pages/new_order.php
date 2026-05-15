@@ -7,51 +7,55 @@ try {
     // Create connection to SQLite database
     $conn = Database::orders();
 
-    // NEW! Ensure orders table exists for tracking multiple batches
-    $conn->exec("CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id TEXT NOT NULL UNIQUE,
-        customer_id TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'draft',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
+    if (!Database::isSchemaVerified('orders', 'items')) {
+        // NEW! Ensure orders table exists for tracking multiple batches
+        $conn->exec("CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id TEXT NOT NULL UNIQUE,
+            customer_id TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'draft',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
 
-    // Ensure items table supports grouping by order_id
-    $conn->exec("CREATE TABLE IF NOT EXISTS items (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        order_id TEXT NOT NULL DEFAULT 'ORD-DEFAULT',
-        customer_id TEXT NOT NULL,
-        brand TEXT NOT NULL,
-        model TEXT NOT NULL,
-        series TEXT NOT NULL,
-        description TEXT NOT NULL,
-        quantity INTEGER NOT NULL,
-        unit_price REAL DEFAULT 0.00,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
+        // Ensure items table supports grouping by order_id
+        $conn->exec("CREATE TABLE IF NOT EXISTS items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id TEXT NOT NULL DEFAULT 'ORD-DEFAULT',
+            customer_id TEXT NOT NULL,
+            brand TEXT NOT NULL,
+            model TEXT NOT NULL,
+            series TEXT NOT NULL,
+            description TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            unit_price REAL DEFAULT 0.00,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
 
-    // Migration: Check if we need to add order_id to existing table
-    $columns = $conn->query("PRAGMA table_info(items)")->fetchAll(PDO::FETCH_ASSOC);
-    $has_order_id = false;
-    foreach($columns as $col) {
-        if ($col['name'] === 'order_id') $has_order_id = true;
-    }
+        // Migration: Check if we need to add order_id, cpu, etc.
+        $columns = $conn->query("PRAGMA table_info(items)")->fetchAll(PDO::FETCH_ASSOC);
+        $has_order_id = false;
+        $has_cpu = false;
+        foreach($columns as $col) {
+            if ($col['name'] === 'order_id') $has_order_id = true;
+            if ($col['name'] === 'cpu') $has_cpu = true;
+        }
 
-    if (!$has_order_id) {
-        $conn->exec("ALTER TABLE items ADD COLUMN order_id TEXT NOT NULL DEFAULT 'ORD-DEFAULT'");
-    }
+        if (!$has_order_id) {
+            $conn->exec("ALTER TABLE items ADD COLUMN order_id TEXT NOT NULL DEFAULT 'ORD-DEFAULT'");
+        }
+        if (!$has_cpu) {
+            $conn->exec("ALTER TABLE items ADD COLUMN cpu TEXT DEFAULT ''");
+        }
 
-    // Migration Check (for CPU/Gen support)
-    $has_cpu = false;
-    foreach($columns as $col) {
-        if ($col['name'] === 'cpu') $has_cpu = true;
-    }
-    if (!$has_cpu) {
-        $conn->exec("ALTER TABLE items ADD COLUMN cpu TEXT DEFAULT ''");
+        Database::markSchemaVerified('orders', 'items');
     }
 
     // Handle Form Submission
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        if (!Security::validate($_POST['csrf_token'] ?? '')) {
+            die("Security Error: CSRF Token Invalid.");
+        }
+
         if (isset($_POST['action']) && $_POST['action'] === 'delete') {
             $delete_id = $_POST['delete_id'] ?? 0;
             $stmt = $conn->prepare("DELETE FROM items WHERE id = ?");
@@ -69,323 +73,255 @@ try {
             $desc = $_POST['update_desc'] ?? '';
             
             $stmt = $conn->prepare("UPDATE items SET brand=?, model=?, series=?, cpu=?, description=?, quantity=?, unit_price=? WHERE id=?");
-            if ($stmt->execute([$brand, $model, $series, $cpu, $desc, $qty, $price, $update_id])) {
-                $_SESSION['message'] = "<div class='alert success'>Item updated.</div>";
+            if ($stmt->execute([$brand, $model, $series, $cpu, $desc, (int)$qty, (float)$price, (int)$update_id])) {
+                $_SESSION['message'] = "<div class='alert success'>Item details updated.</div>";
             }
         } else {
-            $brand = $_POST['brand'] ?? '';
-            $models = $_POST['models'] ?? '';
-            $series = $_POST['series'] ?? '';
+            // Standard Add Logic
+            $customer_id = $_POST['customer_id'];
+            $order_id = $_POST['order_id'];
+            $brand = $_POST['brand'];
+            $model = $_POST['model'];
+            $series = $_POST['series'];
             $cpu = $_POST['cpu'] ?? '';
-            $description = $_POST['description'] ?? '';
-            $qty = $_POST['qty'] ?? 1;
-            $price = $_POST['price'] ?? 0.00;
-            $order_num = $_POST['order_id'] ?? 'ORD-DEFAULT';
-            $customer_id = $_POST['customer_id'] ?? 'Anonymous';
+            $desc = $_POST['description'];
+            $qty = (int)$_POST['quantity'];
+            $price = (float)($_POST['unit_price'] ?? 0.00);
 
             $stmt = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-
-            if ($stmt->execute([$order_num, $customer_id, $brand, $models, $series, $cpu, $description, $qty, $price])) {
-                $_SESSION['message'] = "<div class='alert success'>Item added to batch <strong>{$order_num}</strong>!</div>";
-                $_SESSION['last_item'] = [
-                    'brand' => $brand,
-                    'models' => $models,
-                    'series' => $series,
-                    'cpu' => $cpu,
-                    'description' => $description,
-                    'qty' => $qty,
-                    'price' => $price
-                ];
-            } else {
-                $_SESSION['message'] = "<div class='alert error'>Error adding item.</div>";
+            if ($stmt->execute([$order_id, $customer_id, $brand, $model, $series, $cpu, $desc, $qty, $price])) {
+                // Return to top of batch builder with success message
+                header("Location: index.php?customer_id=" . urlencode($customer_id) . "&order_id=" . urlencode($order_id) . "&msg=added#batch-builder-top");
+                exit();
             }
         }
-
-        // PRG Pattern
-        $cust_param = urlencode($_POST['customer_id'] ?? $current_customer);
-        $order_param = urlencode($_POST['order_id'] ?? $current_order);
-
-        $anchor = '#form-top';
-        if (isset($_POST['action']) && in_array($_POST['action'], ['delete', 'update_item'])) {
-            $anchor = '#order-summary';
-        }
-
-        header("Location: index.php?customer_id=" . $cust_param . "&order_id=" . $order_param . $anchor);
-        exit();
     }
-} catch(PDOException $e) {
+} catch (PDOException $e) {
     die("Database Connection failed: " . $e->getMessage());
 }
 
+$current_customer = $_GET['customer_id'] ?? null;
+$current_order = $_GET['order_id'] ?? 'ORD-DEFAULT';
+
+// Fetch current order items
+$stmt = $conn->prepare("SELECT * FROM items WHERE order_id = ? AND customer_id = ? ORDER BY id DESC");
+$stmt->execute([$current_order, $current_customer]);
+$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch total units for this batch
+$total_units = 0;
+foreach($items as $item) $total_units += $item['quantity'];
+
 $message = $_SESSION['message'] ?? "";
 unset($_SESSION['message']);
-    // Fetch customer details for header
-    $customer_name = 'Customer';
-    try {
-        $c_db = Database::customers();
-        $c_stmt = $c_db->prepare("SELECT company_name FROM customers WHERE customer_id = ?");
-        $c_stmt->execute([$current_customer]);
-        $customer_name = $c_stmt->fetchColumn() ?: $current_customer;
-    } catch(Exception $e) {}
 ?>
 
-<!-- Load dedicated builder styles -->
-
-
-<div class="form-side" id="form-top">
-
-    <?php echo $message; ?>
-
-    <form action="" method="POST">
-        <!-- Hidden Context -->
-        <input type="hidden" name="customer_id" value="<?= htmlspecialchars($current_customer) ?>">
-        <input type="hidden" name="order_id" value="<?= htmlspecialchars($current_order) ?>">
-
-        <a href="index.php" class="builder-back-link">← Switch Batch / Account</a>
-
-        <?php if (isset($_SESSION['last_item'])): ?>
-            <div id="repeat-container" style="margin-bottom: 20px; <?= strpos($message, 'success') !== false ? '' : 'display:none;' ?>">
-                <button type="button" onclick="repeatLastItem()" class="btn-repeat" style="width: 100%; height: 44px; border-radius: 12px; border: 2px dashed var(--accent-color); background: #f7fee7; color: #3f6212; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;">
-                    <span>🔁</span> Repeat Last Entry
-                </button>
-                <script type="application/json" id="lastItemState"><?= json_encode($_SESSION['last_item']) ?></script>
+<div class="new-order-layout">
+    <!-- Sidebar: Customer & Batch Info -->
+    <aside class="order-sidebar">
+        <div class="sidebar-card">
+            <h2 id="batch-builder-top">Batch Builder</h2>
+            <div class="batch-meta">
+                <div class="meta-item">
+                    <span class="label">Order ID:</span>
+                    <span class="value"><?= htmlspecialchars($current_order) ?></span>
+                </div>
+                <div class="meta-item">
+                    <span class="label">Total Units:</span>
+                    <span class="value counter" id="sidebar-total-qty"><?= $total_units ?></span>
+                </div>
             </div>
-        <?php endif; ?>
-
-        <div style="margin-bottom: 20px;">
-            <button type="button" onclick="openWarehouseModal()" style="width: 100%; height: 44px; border-radius: 12px; border: 1px solid var(--accent-color); background: #f0fdf4; color: #166534; font-weight: 800; cursor: pointer; transition: all 0.2s;">
-                🔍 Pick from Warehouse Stock
-            </button>
+            
+            <a href="checkout.php?customer_id=<?= urlencode($current_customer) ?>&order_id=<?= urlencode($current_order) ?>" class="btn-finalize">
+                Finalize & Checkout →
+            </a>
         </div>
+    </aside>
 
-        <!-- Brand Selection Dropdown -->
-        <div class="form-group">
-            <label for="brand">Choose Brand*</label>
-            <select id="brand" name="brand" required aria-label="Brand Selection">
-                <option value="" selected disabled>— Select Brand —</option>
-                <option value="Dell">Dell</option>
-                <option value="HP">HP</option>
-                <option value="Lenovo">Lenovo</option>
-                <option value="Apple">Apple</option>
-                <option value="Microsoft">Microsoft</option>
-                <option value="MSI">MSI</option>
-                <option value="Asus">Asus</option>
-                <option value="Acer">Acer</option>
-                <option value="Samsung">Samsung</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
+    <!-- Main Content: Entry Form & Summary -->
+    <main class="order-main">
+        <?php echo $message; ?>
 
-        <!-- Main Models Searchable Selection -->
-        <div class="form-group">
-            <label for="models">Main Models*</label>
-            <input list="model-options" id="models" name="models" placeholder="Type or select model..." required aria-label="Models Selection">
-            <datalist id="model-options"></datalist>
-        </div>
+        <section class="entry-form-section card">
+            <h3>Add Items to Batch</h3>
+            <form method="POST" class="batch-form">
+                <input type="hidden" name="customer_id" value="<?= htmlspecialchars($current_customer) ?>">
+                <input type="hidden" name="order_id" value="<?= htmlspecialchars($current_order) ?>">
+                <?= UI::csrf_field() ?>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Brand</label>
+                        <input type="text" name="brand" list="brand-options" placeholder="Dell, HP..." required>
+                    </div>
+                    <div class="form-group">
+                        <label>Model</label>
+                        <input type="text" name="model" list="model-options" placeholder="Latitude 5400..." required>
+                    </div>
+                </div>
 
-        <!-- Series Searchable Selection -->
-        <div class="form-group">
-            <label for="series">Series / Project ID*</label>
-            <input list="series-options" id="series" name="series" placeholder="Type or select series..." required aria-label="Series Selection">
-            <datalist id="series-options"></datalist>
-        </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Series / Project</label>
+                        <input type="text" name="series" placeholder="IQA-2024-001">
+                    </div>
+                    <div class="form-group">
+                        <label>CPU / Gen</label>
+                        <input type="text" name="cpu" list="cpu-options" placeholder="i5-8350U">
+                    </div>
+                </div>
 
-        <!-- CPU Selection -->
-        <div class="form-group">
-            <label for="cpu">CPU / Gen*</label>
-            <input list="cpu-options" id="cpu" name="cpu" placeholder="e.g. Core i7 11th Gen" required aria-label="CPU Selection">
-            <datalist id="cpu-options"></datalist>
-        </div>
+                <div class="form-group">
+                    <label>Description / Condition</label>
+                    <textarea name="description" placeholder="Used, No major defects..."></textarea>
+                </div>
 
-        <!-- Working Status Description -->
-        <div class="form-group">
-            <label for="description">Condition / Comments*</label>
-            <input list="desc-options" id="description" name="description" placeholder="e.g. Working, Screen Damage" required aria-label="Condition Selection">
-            <datalist id="desc-options">
-                <option value="Tested">
-                <option value="Untested">
-                <option value="Parts">
-            </datalist>
-        </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" name="quantity" value="1" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Unit Price ($)</label>
+                        <input type="number" name="unit_price" value="0.00" step="0.01">
+                    </div>
+                </div>
 
-        <!-- Quantity and Price -->
-        <div class="builder-fields-row">
-            <div class="form-group">
-                <label for="qty">Quantity*</label>
-                <input type="number" id="qty" name="qty" placeholder="1" value="1" min="1" required>
+                <button type="submit" class="btn-add">Add to Batch</button>
+            </form>
+        </section>
+
+        <section class="summary-section card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                <h3>Current Batch Summary</h3>
+                <div class="search-box">
+                    <input type="text" id="summary-search" placeholder="Filter items..." onkeyup="filterSummary()">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="price">Unit Price ($)*</label>
-                <input type="number" id="price" name="price" placeholder="0.00" step="0.01" min="0" required>
-            </div>
-        </div>
-        <input type="submit" value="Add to Order">
-    </form>
-</div>
 
-<div class="summary-side">
-    <section class="item-list" id="order-summary">
-        <h2>Order Summary</h2>
-        <div style="margin-bottom: 15px;">
-            <input type="text" id="summary-search" onkeyup="filterSummary()" placeholder="Search added items..." aria-label="Search items in this order" style="width: 100%; height: 40px; padding: 0 15px; border-radius: 10px; border: 1px solid var(--border-color); font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-        </div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="col-desc" style="padding-left: 0;">Item Description</th>
-                        <th>Qty</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    $stmt = $conn->prepare("SELECT * FROM items WHERE customer_id = ? AND order_id = ? ORDER BY id DESC");
-                    $stmt->execute([$current_customer, $current_order]);
-                    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                    if (count($items) > 0) {
-                        $total_qty = 0;
-                        foreach($items as $row) {
-                            $total_qty += $row['quantity'];
-                            $edit_form_id = "edit-form-" . $row['id'];
-                            echo "<tr class='summary-item-row'>
-                                    <td class='col-desc' style='padding-left: 0;'>
-                                        <div class='static-view' style='display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;'>
-                                            <div class='copyable-text' style='flex: 1;'>
-                                                <div style='font-weight: 700;'>" . htmlspecialchars($row['brand'] . " " . $row['model']) . "</div>
-                                                <div style='font-size: 0.825rem; color: var(--text-secondary);'>" . htmlspecialchars($row['series']) . " | <span style='color: var(--accent-color); font-weight:800;'>" . htmlspecialchars($row['cpu'] ?? '') . "</span> | " . htmlspecialchars($row['description']) . "</div>
-                                            </div>
-                                            <div style='display: flex; flex-direction: column; gap: 4px; align-items: center;'>
-                                                <button type='button' class='btn-copy no-print' onclick='copyEntry(this)' title='Copy Description' style='background: none; border: none; cursor: pointer; padding: 4px; font-size: 0.8rem; opacity: 0.3; transition: opacity 0.2s; flex-shrink: 0;'>
-                                                    📋
-                                                </button>
-                                                <button type='button' class='btn-edit no-print' onclick='toggleInlineEdit(this)' title='Edit Entry' style='background: none; border: none; cursor: pointer; padding: 4px; font-size: 0.8rem; opacity: 0.3; transition: opacity 0.2s; flex-shrink: 0;'>
-                                                    ✏️
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <form method='POST' class='edit-view' style='display:none;' id='{$edit_form_id}'>
-                                            <input type='hidden' name='action' value='update_item'>
-                                            <input type='hidden' name='update_id' value='{$row['id']}'>
-                                            <input type='hidden' name='customer_id' value='" . htmlspecialchars($current_customer) . "'>
-                                            <input type='hidden' name='order_id' value='" . htmlspecialchars($current_order) . "'>
-                                            
-                                            <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;'>
-                                                <div class='edit-field-group'>
-                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Brand</label>
-                                                    <input type='text' name='update_brand' value='" . htmlspecialchars($row['brand']) . "' required style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
-                                                </div>
-                                                <div class='edit-field-group'>
-                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Model</label>
-                                                    <input type='text' name='update_model' value='" . htmlspecialchars($row['model']) . "' required style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
-                                                </div>
-                                                <div class='edit-field-group'>
-                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Series</label>
-                                                    <input type='text' name='update_series' value='" . htmlspecialchars($row['series']) . "' required style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
-                                                </div>
-                                                <div class='edit-field-group'>
-                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>CPU</label>
-                                                    <input type='text' name='update_cpu' value='" . htmlspecialchars($row['cpu'] ?? '') . "' style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
-                                                </div>
-                                            </div>
-                                            <div class='edit-field-group'>
-                                                <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Condition / Description</label>
-                                                <input type='text' name='update_desc' value='" . htmlspecialchars($row['description']) . "' style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-size:13px; font-weight:700;'>
-                                            </div>
-                                        </form>
-                                    </td>
+            <div class="summary-table-wrapper">
+                <table class="summary-table">
+                    <thead>
+                        <tr>
+                            <th>Item Details</th>
+                            <th style="text-align:center;">Qty</th>
+                            <th style="text-align:right;">Price</th>
+                            <th style="text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="summary-list">
+                        <?php if (empty($items)): ?>
+                            <tr class="empty-row">
+                                <td colspan="4" style="text-align:center; padding: 40px; color: #94a3b8;">No items added yet.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($items as $item): ?>
+                                <tr class="summary-row" data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['series'])) ?>">
                                     <td>
-                                        <div class='static-view qty-pricing-box' style='display:flex; flex-direction:column; align-items:flex-end; gap:4px;'>
-                                            <span class='qty-chip' style='background:#f1f5f9; padding:4px 8px; border-radius:6px; font-weight:800; font-size:0.8rem; color:#475569;'>" . htmlspecialchars($row['quantity']) . "x</span>
-                                            <div class='qty-unit-cost' style='font-weight:700; color:var(--text-main); font-size:1rem;'>
-                                                $" . number_format($row['unit_price'] ?? 0, 2) . "
-                                            </div>
-                                        </div>
-                                        <div class='edit-view' style='display:none;'>
-                                            <div style='display: flex; flex-direction: column; gap: 8px;'>
-                                                <div class='edit-field-group'>
-                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Qty</label>
-                                                    <input type='number' name='update_qty' form='{$edit_form_id}' value='" . htmlspecialchars($row['quantity']) . "' min='1' style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-weight:700;'>
-                                                </div>
-                                                <div class='edit-field-group'>
-                                                    <label style='display:block; font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase;'>Price ($)</label>
-                                                    <input type='number' step='0.01' name='update_price' form='{$edit_form_id}' value='" . number_format($row['unit_price'] ?? 0, 2, '.', '') . "' min='0' style='width:100%; height:32px; padding:0 8px; border-radius:6px; border:1px solid var(--border-color); font-weight:700;'>
-                                                </div>
-                                                <button type='submit' form='{$edit_form_id}' style='width:100%; height:32px; background:var(--text-main); color:white; border:none; border-radius:8px; font-weight:900; font-size:0.75rem; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1);'>SAVE</button>
-                                            </div>
+                                        <div class="item-primary"><?= htmlspecialchars($item['brand']) ?> <?= htmlspecialchars($item['model']) ?></div>
+                                        <div class="item-secondary"><?= htmlspecialchars($item['series']) ?> | <?= htmlspecialchars($item['cpu']) ?></div>
+                                    </td>
+                                    <td style="text-align:center; font-weight:700;"><?= $item['quantity'] ?></td>
+                                    <td style="text-align:right;">$<?= number_format($item['unit_price'], 2) ?></td>
+                                    <td style="text-align:right;">
+                                        <div class="action-buttons">
+                                            <button type="button" class="btn-edit" onclick="openEditModal(<?= htmlspecialchars(json_encode($item)) ?>)">✎</button>
+                                            <form method="POST" style="display:inline;" onsubmit="return confirm('Remove this item?');">
+                                                <input type="hidden" name="action" value="delete">
+                                                <input type="hidden" name="delete_id" value="<?= $item['id'] ?>">
+                                                <?= UI::csrf_field() ?>
+                                                <button type="submit" class="btn-delete">🗑</button>
+                                            </form>
                                         </div>
                                     </td>
-                                    <td class='action-cell'>
-                                        <form method='POST' style='display:inline;' onsubmit=\"return confirm('Remove this item?');\">
-                                            <input type='hidden' name='action' value='delete'>
-                                            <input type='hidden' name='delete_id' value='{$row['id']}'>
-                                            <input type='hidden' name='customer_id' value='" . htmlspecialchars($current_customer) . "'>
-                                            <input type='hidden' name='order_id' value='" . htmlspecialchars($current_order) . "'>
-                                            <button type='submit' class='btn-delete' title='Remove Item'>&times;</button>
-                                        </form>
-                                    </td>
-                                  </tr>";
-                        }
-                    } else {
-                        echo "<tr><td colspan='3'>
-                                <div class='empty-state'>
-                                    <p>Your order is empty</p>
-                                    <small>Add items from the left to start building your order.</small>
-                                </div>
-                              </td></tr>";
-                    }
-                    ?>
-                </tbody>
-                <?php if (count($items) > 0): ?>
-                <tfoot style="border-top: 2px solid #e2e8f0; background: #f8fafc;">
-                    <tr>
-                        <td style="text-align: right; padding: 15px; font-size: 0.9rem; color: #64748b; font-weight: 800;">Batch Total:</td>
-                        <td style="padding: 15px; text-align: right;">
-                            <span style="background: var(--text-main); color: white; padding: 4px 12px; border-radius: 8px; font-weight: 900; font-size: 1rem;">
-                                <?= number_format($total_qty) ?> Units
-                            </span>
-                        </td>
-                        <td></td>
-                    </tr>
-                </tfoot>
-                <?php endif; ?>
-            </table>
-        </div>
-
-        <?php if (count($items) > 0): ?>
-            <div class="builder-footer">
-                <a href="checkout.php?customer_id=<?= urlencode($current_customer) ?>&order_id=<?= urlencode($current_order) ?>" class="btn-checkout-link">
-                    Complete & Checkout
-                </a>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
-        <?php endif; ?>
-    </section>
+        </section>
+    </main>
 </div>
 
-<!-- Warehouse Picker Modal -->
-<div id="wh-modal" class="modal-overlay no-print" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;" onclick="if(event.target===this) closeWarehouseModal()">
-    <div style="background:white; border-radius:24px; width:90%; max-width:800px; max-height:85vh; padding:30px; display:flex; flex-direction:column; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h2 style="font-weight:900;">🏬 Pick from Warehouse</h2>
-            <button type="button" onclick="closeWarehouseModal()" style="background:none; border:none; font-size:2rem; cursor:pointer;">&times;</button>
-        </div>
+<!-- Edit Modal -->
+<div id="editModal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closeEditModal()">
+    <div class="modal-card">
+        <h3>Edit Item</h3>
+        <form method="POST">
+            <input type="hidden" name="action" value="update_item">
+            <input type="hidden" name="update_id" id="edit-id">
+            <?= UI::csrf_field() ?>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Brand</label>
+                    <input type="text" name="update_brand" id="edit-brand" required>
+                </div>
+                <div class="form-group">
+                    <label>Model</label>
+                    <input type="text" name="update_model" id="edit-model" required>
+                </div>
+            </div>
 
-        <div style="margin-bottom:20px; display:flex; gap:10px;">
-            <input type="text" id="wh-modal-search" onkeyup="searchWarehouseItems()" placeholder="Search by Brand, Model, or Location..." style="flex:1; height:48px; border-radius:12px; border:1px solid #ddd; padding:0 20px; font-size:1rem;">
-            <select id="wh-modal-sector" onchange="searchWarehouseItems()" style="height:48px; border-radius:12px; border:1px solid #ddd; padding:0 15px; font-weight:700;">
-                <option value="Laptops">Laptops</option>
-                <option value="Gaming">Gaming</option>
-                <option value="Desktops">Desktops</option>
-                <option value="Electronics">Electronics</option>
-            </select>
-        </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Series</label>
+                    <input type="text" name="update_series" id="edit-series">
+                </div>
+                <div class="form-group">
+                    <label>CPU</label>
+                    <input type="text" name="update_cpu" id="edit-cpu">
+                </div>
+            </div>
 
-        <div id="wh-results" style="flex:1; overflow-y:auto; display:grid; grid-template-columns:1fr 1fr; gap:15px; padding-right:10px;">
-            <!-- Results populated via JS -->
-            <div style="grid-column:1/-1; padding:40px; text-align:center; color:#94a3b8;">Type above to search stock...</div>
-        </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea name="update_desc" id="edit-desc"></textarea>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" name="update_qty" id="edit-qty" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Price</label>
+                    <input type="number" name="update_price" id="edit-price" step="0.01">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button type="submit" class="btn-save">Save Changes</button>
+            </div>
+        </form>
     </div>
 </div>
 
+<script>
+function openEditModal(item) {
+    document.getElementById('edit-id').value = item.id;
+    document.getElementById('edit-brand').value = item.brand;
+    document.getElementById('edit-model').value = item.model;
+    document.getElementById('edit-series').value = item.series;
+    document.getElementById('edit-cpu').value = item.cpu;
+    document.getElementById('edit-desc').value = item.description;
+    document.getElementById('edit-qty').value = item.quantity;
+    document.getElementById('edit-price').value = item.unit_price;
+    document.getElementById('editModal').style.display = 'flex';
+}
 
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+function filterSummary() {
+    const query = document.getElementById('summary-search').value.toLowerCase();
+    const rows = document.querySelectorAll('.summary-row');
+    rows.forEach(row => {
+        const text = row.getAttribute('data-search');
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
+}
+</script>

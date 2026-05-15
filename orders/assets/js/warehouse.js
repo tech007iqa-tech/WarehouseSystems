@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Session Counter Logic
     initSessionCounter();
+    if (window.location.search.includes('msg=added')) {
+        incrementSessionCounter();
+    }
 
     // Re-apply persistent search
     const savedSearch = sessionStorage.getItem('wh_active_search');
@@ -25,29 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (searchIn) searchIn.value = savedSearch;
         if (footerIn) footerIn.value = savedSearch;
         filterWarehouse();
-    }
-
-    // Auto-hide success messages
-    const msgBanner = document.getElementById('wh-msg-banner');
-    if (msgBanner) {
-        // Increment counter if it's an "added" message
-        if (window.location.search.includes('msg=added')) {
-            incrementSessionCounter();
-        }
-
-        setTimeout(() => {
-            msgBanner.style.opacity = '0';
-            msgBanner.style.transform = 'translateY(-10px)';
-            setTimeout(() => msgBanner.remove(), 500);
-
-            // Clean URL and Hash without refresh
-            const url = new URL(window.location);
-            if (url.searchParams.has('msg')) {
-                url.searchParams.delete('msg');
-                url.searchParams.delete('last_id'); // Also clean the highlight ID
-                window.history.replaceState({}, '', url.pathname + url.search);
-            }
-        }, 1500); // Snappy dismissal (1.5s)
     }
 
     // Immediately strip hash to prevent "jumping" during search DOM updates
@@ -795,14 +775,15 @@ if (applyBulkBtn) {
         applyBulkBtn.textContent = '⌛ Applying...';
 
         try {
+            const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
             const response = await fetch('api/bulk_update_inventory.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    csrf_token: csrfToken,
                     ids: Array.from(selectedIds),
                     location: location,
-                    price: price,
-                    csrf_token: document.querySelector('input[name="csrf_token"]').value
+                    price: price
                 })
             });
 

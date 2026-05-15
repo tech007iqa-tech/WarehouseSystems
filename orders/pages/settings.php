@@ -5,14 +5,7 @@ $message = '';
 $error = '';
 
 try {
-    $conn_u = new PDO("sqlite:" . $db_file);
-    $conn_u->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // Migration: ensure display_name column exists
-    $cols = $conn_u->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC);
-    if (!in_array('display_name', array_column($cols, 'name'))) {
-        $conn_u->exec("ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''");
-    }
+    $conn_u = Database::users();
 
     // 1. Handle Password Change (All Users)
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] === 'change_password') {
@@ -324,6 +317,19 @@ try {
         </form>
 
         <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #fecdd3;">
+            <h1 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 15px;">Data Security & Backups</h1>
+            
+            <div style="background: #f0f9ff; border: 1px solid #e0f2fe; padding: 20px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 20px;">
+                <div style="font-size: 2rem;">🛡️</div>
+                <div>
+                    <h3 style="font-size: 0.9rem; color: #0369a1; margin-bottom: 4px;">One-Click System Backup</h3>
+                    <p style="font-size: 0.8rem; color: #075985; line-height: 1.4;">Download a compressed ZIP archive containing all customers, orders, warehouse inventory, and system logs.</p>
+                </div>
+                <a href="api/generate_backup.php" class="btn-main" style="background: #0369a1; color: white; padding: 12px 20px; font-size: 0.85rem; white-space: nowrap;">
+                    Download ZIP
+                </a>
+            </div>
+
             <h1 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 15px;">Storage Health</h1>
             
             <div style="display: grid; gap: 10px; margin-bottom: 25px;">
@@ -348,6 +354,53 @@ try {
                 <p style="font-size: 0.75rem; color: #64748b; text-align: center; margin-top: 12px;">This will re-index databases and reclaim unused disk space.</p>
             </form>
         </div>
+    </div>
+    <?php endif; ?>
+    <!-- 5. SYSTEM ACTIVITY LOG (ADMIN ONLY) -->
+    <?php if ($_SESSION['username'] === 'admin'): ?>
+    <div class="settings-card" style="max-width: 800px; width: 95%;">
+        <div class="settings-header">
+            <h1>System Activity Log</h1>
+            <p class="subtitle">A permanent record of sensitive actions performed by staff members.</p>
+        </div>
+
+        <div class="audit-log-container" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 12px; background: #fafafa;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 1;">
+                    <tr>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color);">Time</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color);">Staff</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color);">Action</th>
+                        <th style="padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color);">Target</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php 
+                    $logs = Audit::getRecent(20);
+                    if (empty($logs)): ?>
+                        <tr><td colspan="4" style="padding: 40px; text-align: center; color: #94a3b8;">No activity recorded yet.</td></tr>
+                    <?php else: 
+                        foreach($logs as $l): 
+                            $badge_color = strpos($l['action'], 'DELETE') !== false ? '#ef4444' : '#3b82f6';
+                    ?>
+                        <tr style="border-bottom: 1px solid #eee; background: white;">
+                            <td style="padding: 12px; color: #64748b; white-space: nowrap;"><?= date('M d, H:i', strtotime($l['timestamp'])) ?></td>
+                            <td style="padding: 12px; font-weight: 700;"><?= htmlspecialchars($l['user_name']) ?></td>
+                            <td style="padding: 12px;">
+                                <span style="background: <?= $badge_color ?>; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">
+                                    <?= htmlspecialchars($l['action']) ?>
+                                </span>
+                            </td>
+                            <td style="padding: 12px;">
+                                <div style="font-weight: 700;"><?= htmlspecialchars($l['target_id']) ?></div>
+                                <div style="font-size: 0.7rem; color: #94a3b8;"><?= htmlspecialchars($l['details']) ?></div>
+                            </td>
+                        </tr>
+                    <?php endforeach; endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <p style="font-size: 0.7rem; color: #94a3b8; margin-top: 15px; text-align: center;">The audit log is read-only and cannot be modified by staff.</p>
     </div>
     <?php endif; ?>
 </div>

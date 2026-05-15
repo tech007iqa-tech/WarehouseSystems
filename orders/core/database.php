@@ -28,15 +28,14 @@ class Database {
                 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 
                 // --- Concurrency Optimizations ---
-                // Enable Write-Ahead Logging for better multi-user performance
                 $conn->exec("PRAGMA journal_mode = WAL;");
-                // Set a 5-second timeout to wait for locks to clear before failing
                 $conn->exec("PRAGMA busy_timeout = 5000;");
-                // Synchronous NORMAL is safer and faster with WAL
                 $conn->exec("PRAGMA synchronous = NORMAL;");
-                
-                // Enable Foreign Keys for SQLite
                 $conn->exec("PRAGMA foreign_keys = ON;");
+                
+                // --- Self-Healing Schema Integration ---
+                require_once __DIR__ . '/Schema.php';
+                Schema::ensure($conn, $db_name);
                 
                 self::$instances[$db_name] = $conn;
             } catch (PDOException $e) {
@@ -64,6 +63,48 @@ class Database {
     public static function attach(PDO $conn, $db_to_attach, $alias) {
         $db_path = self::$db_dir . '/' . $db_to_attach . '.db';
         $conn->exec("ATTACH DATABASE '{$db_path}' AS {$alias}");
+    }
+
+    /**
+     * Executes a query on a primary database while automatically attaching 
+     * multiple supporting databases for cross-DB joins.
+     * 
+     * @param string $primary_db The name of the primary DB (e.g., 'orders')
+     * @param array $attachments Key-value pairs of [alias => db_name]
+     * @param string $sql The SQL query to execute
+     * @param array $params Optional positional parameters
+     * @return PDOStatement
+     */
+    /**
+     * Executes a query on a primary database while automatically attaching 
+     * multiple supporting databases for cross-DB joins.
+     */
+    public static function queryIntegrated($primary_db, $attachments, $sql, $params = []) {
+        $conn = self::getConnection($primary_db);
+        foreach ($attachments as $alias => $name) {
+            try {
+                self::attach($conn, $name, $alias);
+            } catch (Exception $e) { }
+        }
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+        return $stmt;
+    }
+
+    /**
+     * Schema Caching: Checks if a table/schema has been verified in this session.
+     */
+    public static function isSchemaVerified($db, $table) {
+        if (session_status() === PHP_SESSION_NONE) return false;
+        return isset($_SESSION['verified_schemas'][$db][$table]);
+    }
+
+    /**
+     * Schema Caching: Marks a table/schema as verified.
+     */
+    public static function markSchemaVerified($db, $table) {
+        if (session_status() === PHP_SESSION_NONE) return;
+        $_SESSION['verified_schemas'][$db][$table] = true;
     }
 }
 ?>

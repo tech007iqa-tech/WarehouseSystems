@@ -34,7 +34,13 @@ Comprehensive management of physical inventory zones and stock levels.
 - **Optimistic Concurrency**: Prevents "last-writer-wins" data loss. The system verifies `updated_at` timestamps before every save to ensure multiple operators aren't overwriting the same zone.
 - **Smart Mapping Exports**: CSV exports automatically map categories based on sector (e.g., Laptops include Battery Health metadata).
 
-### 4. 📦 Batch Builder & Verification (`pages/new_order.php`, `checkout.php`)
+### 4. 🛡️ Data Security & Backups (`api/generate_backup.php`)
+Ensures long-term data safety and portability for the entire business database.
+- **One-Click Export**: Administrators can instantly generate a compressed ZIP archive containing every database file in the system.
+- **On-the-Fly Generation**: The system uses memory-efficient streaming to package files, ensuring zero impact on server storage.
+- **Audit Integration**: Every backup event is permanently logged in the System Activity Log for security oversight.
+
+### 5. 📦 Batch Builder & Verification (`pages/new_order.php`, `checkout.php`)
 The core hardware intake and manifest generation workflow.
 - **Live Order Summary**: A searchable, real-time list of added hardware with full-entry inline ✏️ editing (Brand, Model, Series, CPU, etc.) and a **Batch Total QTY** counter for rapid stock verification.
 - **Bulk Clipboard Import**: A high-speed intake tool allowing users to paste tab-separated rows directly from spreadsheets (Type, Brand, Model, Series, CPU, Price, QTY). Features automated header detection and price sanitization ($/comma stripping).
@@ -46,22 +52,36 @@ The core hardware intake and manifest generation workflow.
 
 ## 🛠 Technical Architecture
 
-### 1. Database Singleton & Cross-DB Joining
-Managed via `core/database.php`, the system uses modular SQLite databases to ensure portability and minimize file-lock contention.
-- **ATTACH DATABASE Pattern**: The system performs engine-level joins between `customers.db` and `orders.db` for lightning-fast lookups of customer LTV and balance history.
-- **PDO Singleton**: Ensures only one active connection per database file exists during the request lifecycle.
+### 1. Centralized Schema & Self-Healing Architecture
+The system employs a **Blueprint-first** approach managed via `core/Schema.php`. 
+- **Auto-Provisioning**: Upon every database connection (`getConnection`), the system verifies all tables and columns against the central blueprint. 
+- **Graceful Migrations**: Schema evolutions (adding new columns like `price` or `updated_at`) are handled globally, ensuring all operator nodes are in sync without manual DB scripts.
 
-### 2. Frontend State & UI Design
+### 2. Integrated Query Engine & Cross-DB Joins
+Managed via `core/database.php`, the system performs engine-level joins across modular SQLite databases.
+- **Unified Joins**: The `Database::queryIntegrated()` helper allows for seamless retrieval of data across `customers.db`, `orders.db`, and `warehouse.db` in a single SQL operation.
+- **Aggregated Performance**: Dashboard KPIs (Lifetime Value, Order Counts) are calculated using high-speed grouped JOINs rather than nested PHP loops, maintaining O(1) performance as data scales.
+
+### 3. Intelligent Vocabulary Service
+To ensure data consistency and reduce intake errors, the system maintains a "Self-Learning" vocabulary.
+- **Dynamic Suggestions**: Every brand, model, and CPU entered into the system becomes a suggestion for future entries across the entire platform.
+- **Real-time Aggregation**: The `api/get_vocabulary.php` service scans both inventory and historical orders to provide 100% accurate auto-completion.
+
+### 4. Audit & System Accountability
+A global logging layer (`core/Audit.php`) tracks every sensitive operation.
+- **Immutable Record**: Actions such as deleting customers, transferring orders, or changing fulfillment states are recorded with a user ID, timestamp, and IP address.
+- **Admin Oversight**: Administrators can access the **System Activity Log** in settings for full operational transparency.
+
+### 5. Frontend State & UI Design
 - **Decoupled JSON State**: State is passed from PHP to JS via `<script type="application/json">` blocks, preventing global variable collisions and ensuring data integrity.
+- **Design System**: Built on Vanilla CSS variables with a focus on glassmorphism and modern typography (Outfit/Inter).
 - **iOS Safari Optimizations**:
     - **Zoom Prevention**: All inputs use `16px` font enforcement to block iOS auto-zoom on focus.
     - **Dynamic Viewports**: Layouts use `100dvh` to fit perfectly behind the Safari toolbar.
-    - **Momentum Scrolling**: Large lists and modals use native-feel scrolling.
-- **Design System**: Built on Vanilla CSS variables with a focus on glassmorphism and modern typography (Outfit/Inter).
 
-### 3. Security & Access Control
+### 6. Security & Access Control
 - **RBAC Guard**: Sessions are verified in `core/auth.php`. Administrators have full system access, while **Operators** are strictly locked to the Warehouse Portal.
-- **PRG Pattern**: Implements the **Post/Redirect/Get** pattern to ensure page refreshes never trigger duplicate transactions or stock updates.
+- **Global CSRF Enforcement**: Every state-changing request (AJAX or Form) is verified against a session-locked token generated by `core/Security.php`.
 
 ---
 

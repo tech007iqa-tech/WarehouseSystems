@@ -92,10 +92,12 @@ $page_content = ob_get_clean();
 
     <!-- Logic Initialization (Deferred) -->
     <script src="assets/js/inventory_data.js?v=<?= filemtime('assets/js/inventory_data.js') ?>" defer></script>
+    <script src="assets/js/vocabulary.js?v=<?= filemtime('assets/js/vocabulary.js') ?>" defer></script>
 </head>
 
 <body class="modern-theme">
     <?= UI::theme_toggle() ?>
+    <?= UI::render_notifications() ?>
     <div class="breadcrumb-container" role="banner" style="max-width: 800px; margin: 0 auto 20px auto; width: 100%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">
             <?php if ($user_role === 'Admin'): ?>

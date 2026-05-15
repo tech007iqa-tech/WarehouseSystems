@@ -233,6 +233,7 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
             </div>
             
             <form id="lead-form" onsubmit="saveLead(event)">
+                <?= UI::csrf_field() ?>
                 <input type="hidden" id="lead_customer_id" name="customer_id">
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
@@ -318,6 +319,7 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
         </div>
 
         <form onsubmit="quickAddLead(event)">
+            <?= UI::csrf_field() ?>
             <div class="form-group" style="margin-bottom: 20px;">
                 <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Company Name</label>
                 <input type="text" name="company_name" placeholder="e.g. Acme Corp" required>

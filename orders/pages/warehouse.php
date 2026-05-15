@@ -8,6 +8,10 @@ $selected_loc = $_GET['loc'] ?? null;
 
 // Handle Add/Edit/Delete Item
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
+    if (!Security::validate($_POST['csrf_token'] ?? '')) {
+        die("Security Error: CSRF Token Invalid.");
+    }
+
     if ($_POST['action'] === 'delete_inventory' && isset($_POST['item_id'])) {
         $stmt = $conn_wh->prepare("DELETE FROM inventory WHERE id=?");
         $stmt->execute([$_POST['item_id']]);
@@ -482,7 +486,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                                     <td>
                                         <div class="notes-cell-wrapper">
                                             <div class="status-row">
-                                                <span class="status-badge status-<?= $item['status'] ?>"><?= $item['status'] ?></span>
+                                                <span class="status-badge status-<?= htmlspecialchars($item['status']) ?>"><?= htmlspecialchars($item['status']) ?></span>
                                                 <span class="condition-label"><?= htmlspecialchars($specs['condition'] ?? 'Used') ?></span>
                                                 <?php if ($item['sector'] === 'Laptops'): ?>
                                                     <span class="battery-badge <?= empty($specs['battery']) ? 'missing' : '' ?>" title="Battery Status">
@@ -517,6 +521,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                                                 <input type="hidden" name="item_id" value="<?= (int)$item['id'] ?>">
                                                 <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
                                                 <input type="hidden" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>">
+                                                <?= UI::csrf_field() ?>
                                                 <button type="submit" class="row-action-btn btn-delete" title="Delete Entry">🗑️</button>
                                             </form>
                                         </div>
@@ -569,6 +574,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                     </button>
                 </div>
                 <form method="POST" action="" id="wh-main-form">
+                    <?= UI::csrf_field() ?>
                     <input type="hidden" name="action" id="wh-form-action" value="add_inventory">
                     <input type="hidden" name="item_id" id="wh-edit-id" value="">
                     <input type="hidden" name="last_updated_at" id="wh-last-updated" value="">
@@ -590,23 +596,6 @@ $highlight_id = $_GET['last_id'] ?? null;
                             <input type="text" name="model" list="model-options" id="wh-model" placeholder="Latitude" required style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
                             <datalist id="model-options"></datalist>
                         </div></div>
-                        <?php if (isset($_GET['msg'])): ?>
-                    <div class="msg-banner <?= strpos($_GET['msg'], 'ERROR') !== false ? 'error' : '' ?>" id="wh-msg-banner" style="background: <?= strpos($_GET['msg'], 'ERROR') !== false ? '#fef2f2' : '#f0fdf4' ?>; border: 1px solid <?= strpos($_GET['msg'], 'ERROR') !== false ? '#fecaca' : '#bbf7d0' ?>; color: <?= strpos($_GET['msg'], 'ERROR') !== false ? '#991b1b' : '#15803d' ?>; padding: 12px 15px; border-radius: 12px; margin-bottom: 20px; font-size: 0.85rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; animation: slideDown 0.3s ease; transition: opacity 0.5s ease, transform 0.5s ease;">
-                        <span><?= strpos($_GET['msg'], 'ERROR') !== false ? '⚠️' : '✅' ?></span>
-                        <span style="flex: 1; margin: 0 10px;">
-                            <?php 
-                                if($_GET['msg'] === 'added') echo "Stock registered successfully!";
-                                elseif($_GET['msg'] === 'updated') echo "Entry updated successfully!";
-                                elseif($_GET['msg'] === 'deleted') echo "Entry removed from stock.";
-                                elseif($_GET['msg'] === 'zone_renamed') echo "Working zone renamed successfully!";
-                                elseif($_GET['msg'] === 'zone_deleted') echo "Working zone and all its items have been deleted.";
-                                elseif($_GET['msg'] === 'CONCURRENCY_ERROR') echo "<strong>COLLISION:</strong> Record updated by another user. Please refresh and try again.";
-                                else echo htmlspecialchars($_GET['msg']);
-                            ?>
-                        </span>
-                        <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#15803d; cursor:pointer; font-size:1.2rem; line-height:1; padding:0 5px; opacity:0.5;">&times;</button>
-                    </div>
-                <?php endif; ?>
                     
 
                     <!-- Sector Specific Fields -->
@@ -615,7 +604,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                                 <div class="form-group" style="flex: 1;">
                                     <label for="wh-spec-cpu">CPU</label>
-                                    <input type="text" id="wh-spec-cpu" name="cpu" placeholder="Core i7-1185G7" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                    <input type="text" id="wh-spec-cpu" name="cpu" list="cpu-options" placeholder="Core i7-1185G7" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
                                 </div>
                                 <div class="form-group" style="flex: 1;">
                                     <label for="wh-spec-gpu">GPU</label>
@@ -777,6 +766,7 @@ $highlight_id = $_GET['last_id'] ?? null;
 <div id="rename-modal" class="modal-overlay no-print" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;" onclick="if(event.target===this) closeRenameModal()">
     <div style="background:white; border-radius:24px; width:95%; max-width:450px; padding:35px; box-shadow:var(--shadow-lg); position:relative;">
         <form method="POST" id="delete-zone-form" onsubmit="return confirm('CRITICAL ACTION: This will PERMANENTLY DELETE ALL ITEMS in this zone. This cannot be undone. Proceed?');">
+            <?= UI::csrf_field() ?>
             <input type="hidden" name="action" value="delete_zone">
             <input type="hidden" name="old_loc" id="delete-zone-loc">
             <button type="submit" class="btn-hidden-delete" title="Hidden: Delete Zone" style="position:absolute; top:20px; right:20px; background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.1; transition:opacity 0.3s, transform 0.2s; padding:5px;">🗑️</button>
@@ -786,6 +776,7 @@ $highlight_id = $_GET['last_id'] ?? null;
         <p style="font-size:0.85rem; color:#64748b; margin-bottom:25px;">Update the name or operational status of this location.</p>
         
         <form method="POST">
+            <?= UI::csrf_field() ?>
             <input type="hidden" name="action" value="rename_zone">
             <input type="hidden" name="old_loc" id="rename-old-loc">
             
