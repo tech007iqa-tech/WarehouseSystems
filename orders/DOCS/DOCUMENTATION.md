@@ -42,8 +42,9 @@ Ensures long-term data safety and portability for the entire business database.
 
 ### 5. 📦 Batch Builder & Verification (`pages/new_order.php`, `checkout.php`)
 The core hardware intake and manifest generation workflow.
-- **Live Order Summary**: A searchable, real-time list of added hardware with full-entry inline ✏️ editing (Brand, Model, Series, CPU, etc.) and a **Batch Total QTY** counter for rapid stock verification.
-- **Bulk Clipboard Import**: A high-speed intake tool allowing users to paste tab-separated rows directly from spreadsheets (Type, Brand, Model, Series, CPU, Price, QTY). Features automated header detection and price sanitization ($/comma stripping).
+- **Live Order Summary**: A searchable, **AJAX-powered** list of added hardware. Items are added instantly without page reloads. Features full-entry inline ✏️ editing and a dynamic **Batch Total QTY** counter that updates in real-time.
+- **Repeat Last Entry**: A "One-Click" productivity tool that pre-fills the intake form with the specs of the previous entry, significantly accelerating repetitive data entry tasks.
+- **Bulk Clipboard Import**: A high-speed intake tool allowing users to paste tab-separated rows directly from spreadsheets. Features automated header detection and robust **Input Guard** sanitization ($/comma stripping).
 - **Checkout Manifest**: A professional verification screen with search-filtered item rows and editable **Order Dates** (backdating/postdating support).
 - **Interactive Row Editor**: Clicking any manifest row opens a glassmorphism modal for full metadata editing with **AJAX Live Sync**—changes update the main UI instantly without a refresh.
 - **Thermal Labeling**: Integrated generation of 2"×1" labels in Flat ODT format, compatible with standard thermal printers.
@@ -60,16 +61,17 @@ The system employs a **Blueprint-first** approach managed via `core/Schema.php`.
 ### 2. Integrated Query Engine & Cross-DB Joins
 Managed via `core/database.php`, the system performs engine-level joins across modular SQLite databases.
 - **Unified Joins**: The `Database::queryIntegrated()` helper allows for seamless retrieval of data across `customers.db`, `orders.db`, and `warehouse.db` in a single SQL operation.
-- **Aggregated Performance**: Dashboard KPIs (Lifetime Value, Order Counts) are calculated using high-speed grouped JOINs rather than nested PHP loops, maintaining O(1) performance as data scales.
+- **Aggregated Performance**: Dashboard KPIs (Lifetime Value, Order Counts) and list views are accelerated by **Engine-level Indexes** (e.g., `idx_items_order`), ensuring snappy performance even with thousands of records.
 
-### 3. Intelligent Vocabulary Service
-To ensure data consistency and reduce intake errors, the system maintains a "Self-Learning" vocabulary.
-- **Dynamic Suggestions**: Every brand, model, and CPU entered into the system becomes a suggestion for future entries across the entire platform.
-- **Real-time Aggregation**: The `api/get_vocabulary.php` service scans both inventory and historical orders to provide 100% accurate auto-completion.
+### 3. Intelligent Vocabulary & Caching
+To ensure data consistency and reduce intake errors, the system maintains a "Self-Learning" vocabulary with **Instant-Load Caching**.
+- **Dynamic Suggestions**: Every brand, model, and CPU entered into the system becomes a suggestion for future entries.
+- **sessionStorage Caching**: Vocabulary is cached in the browser's session storage. On page load, datalists are populated instantly from the cache, while a silent background sync ensures data stays fresh for the next navigation.
 
 ### 4. Audit & System Accountability
-A global logging layer (`core/Audit.php`) tracks every sensitive operation.
-- **Immutable Record**: Actions such as deleting customers, transferring orders, or changing fulfillment states are recorded with a user ID, timestamp, and IP address.
+A global logging layer (`core/Audit.php`) tracks every sensitive operation with built-in **DB Resilience**.
+- **Immutable Record**: Actions such as deleting customers or changing fulfillment states are recorded with a user ID, timestamp, and IP address.
+- **File-based Fallback**: If the SQLite database is temporarily unavailable (e.g., file locking), the system automatically writes logs to `orders/logs/audit_fallback.log`, ensuring no activity goes untracked.
 - **Admin Oversight**: Administrators can access the **System Activity Log** in settings for full operational transparency.
 
 ### 5. Frontend State & UI Design

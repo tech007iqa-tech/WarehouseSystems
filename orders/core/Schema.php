@@ -34,15 +34,15 @@ class Schema {
             )",
             'items' => "CREATE TABLE IF NOT EXISTS items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                order_id TEXT,
-                customer_id TEXT,
-                brand TEXT,
-                model TEXT,
-                series TEXT,
-                cpu TEXT,
-                description TEXT,
-                quantity INTEGER,
-                unit_price REAL,
+                order_id TEXT NOT NULL DEFAULT 'ORD-DEFAULT',
+                customer_id TEXT NOT NULL,
+                brand TEXT NOT NULL,
+                model TEXT NOT NULL,
+                series TEXT NOT NULL,
+                cpu TEXT DEFAULT '',
+                description TEXT NOT NULL,
+                quantity INTEGER NOT NULL,
+                unit_price REAL DEFAULT 0.00,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )"
         ],
@@ -157,32 +157,43 @@ class Schema {
     }
 
     /**
-     * Handles specific column additions for existing tables.
+     * Handles specific column additions and index creation for existing tables.
      */
     private static function runMigrations($conn, $db_name, $table) {
-        // Migration: Add updated_at to orders if missing
+        // --- Order & Item Indexes ---
+        if ($db_name === 'orders' && $table === 'items') {
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_items_order ON items(order_id)");
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_items_customer ON items(customer_id)");
+        }
+
+        // --- Warehouse Indexes ---
+        if ($db_name === 'warehouse' && $table === 'inventory') {
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_inv_sector ON inventory(sector)");
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_inv_brand ON inventory(brand)");
+            
+            $cols = $conn->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC);
+            if (!in_array('price', array_column($cols, 'name'))) {
+                $conn->exec("ALTER TABLE inventory ADD COLUMN price REAL DEFAULT 0");
+            }
+        }
+
+        // --- Audit & User Indexes ---
+        if ($db_name === 'users' && $table === 'audit_log') {
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON audit_log(timestamp)");
+        }
+
         if ($db_name === 'orders' && $table === 'orders') {
             $cols = $conn->query("PRAGMA table_info(orders)")->fetchAll(PDO::FETCH_ASSOC);
             if (!in_array('updated_at', array_column($cols, 'name'))) {
-                // SQLite Limitation: Cannot ADD COLUMN with non-constant default (CURRENT_TIMESTAMP)
                 $conn->exec("ALTER TABLE orders ADD COLUMN updated_at DATETIME");
                 $conn->exec("UPDATE orders SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL");
             }
         }
 
-        // Example: Add display_name to users if missing
         if ($db_name === 'users' && $table === 'users') {
             $cols = $conn->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC);
             if (!in_array('display_name', array_column($cols, 'name'))) {
                 $conn->exec("ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''");
-            }
-        }
-        
-        // Example: Add price to warehouse inventory if missing
-        if ($db_name === 'warehouse' && $table === 'inventory') {
-            $cols = $conn->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC);
-            if (!in_array('price', array_column($cols, 'name'))) {
-                $conn->exec("ALTER TABLE inventory ADD COLUMN price REAL DEFAULT 0");
             }
         }
     }

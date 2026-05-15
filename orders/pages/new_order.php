@@ -7,49 +7,6 @@ try {
     // Create connection to SQLite database
     $conn = Database::orders();
 
-    if (!Database::isSchemaVerified('orders', 'items')) {
-        // NEW! Ensure orders table exists for tracking multiple batches
-        $conn->exec("CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_id TEXT NOT NULL UNIQUE,
-            customer_id TEXT NOT NULL,
-            status TEXT NOT NULL DEFAULT 'draft',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-
-        // Ensure items table supports grouping by order_id
-        $conn->exec("CREATE TABLE IF NOT EXISTS items (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            order_id TEXT NOT NULL DEFAULT 'ORD-DEFAULT',
-            customer_id TEXT NOT NULL,
-            brand TEXT NOT NULL,
-            model TEXT NOT NULL,
-            series TEXT NOT NULL,
-            description TEXT NOT NULL,
-            quantity INTEGER NOT NULL,
-            unit_price REAL DEFAULT 0.00,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-
-        // Migration: Check if we need to add order_id, cpu, etc.
-        $columns = $conn->query("PRAGMA table_info(items)")->fetchAll(PDO::FETCH_ASSOC);
-        $has_order_id = false;
-        $has_cpu = false;
-        foreach($columns as $col) {
-            if ($col['name'] === 'order_id') $has_order_id = true;
-            if ($col['name'] === 'cpu') $has_cpu = true;
-        }
-
-        if (!$has_order_id) {
-            $conn->exec("ALTER TABLE items ADD COLUMN order_id TEXT NOT NULL DEFAULT 'ORD-DEFAULT'");
-        }
-        if (!$has_cpu) {
-            $conn->exec("ALTER TABLE items ADD COLUMN cpu TEXT DEFAULT ''");
-        }
-
-        Database::markSchemaVerified('orders', 'items');
-    }
-
     // Handle Form Submission
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (!Security::validate($_POST['csrf_token'] ?? '')) {
@@ -64,8 +21,8 @@ try {
             }
         } elseif (isset($_POST['action']) && $_POST['action'] === 'update_item') {
             $update_id = $_POST['update_id'] ?? 0;
-            $qty = $_POST['update_qty'] ?? 1;
-            $price = $_POST['update_price'] ?? 0.00;
+            $qty = Security::sanitize_int($_POST['update_qty'] ?? 1);
+            $price = Security::sanitize_float($_POST['update_price'] ?? 0.00);
             $brand = $_POST['update_brand'] ?? '';
             $model = $_POST['update_model'] ?? '';
             $series = $_POST['update_series'] ?? '';
@@ -75,24 +32,6 @@ try {
             $stmt = $conn->prepare("UPDATE items SET brand=?, model=?, series=?, cpu=?, description=?, quantity=?, unit_price=? WHERE id=?");
             if ($stmt->execute([$brand, $model, $series, $cpu, $desc, (int)$qty, (float)$price, (int)$update_id])) {
                 $_SESSION['message'] = "<div class='alert success'>Item details updated.</div>";
-            }
-        } else {
-            // Standard Add Logic
-            $customer_id = $_POST['customer_id'];
-            $order_id = $_POST['order_id'];
-            $brand = $_POST['brand'];
-            $model = $_POST['model'];
-            $series = $_POST['series'];
-            $cpu = $_POST['cpu'] ?? '';
-            $desc = $_POST['description'];
-            $qty = (int)$_POST['quantity'];
-            $price = (float)($_POST['unit_price'] ?? 0.00);
-
-            $stmt = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            if ($stmt->execute([$order_id, $customer_id, $brand, $model, $series, $cpu, $desc, $qty, $price])) {
-                // Return to top of batch builder with success message
-                header("Location: index.php?customer_id=" . urlencode($customer_id) . "&order_id=" . urlencode($order_id) . "&msg=added#batch-builder-top");
-                exit();
             }
         }
     }
@@ -144,7 +83,7 @@ unset($_SESSION['message']);
 
         <section class="entry-form-section card">
             <h3>Add Items to Batch</h3>
-            <form method="POST" class="batch-form">
+            <form id="ajax-batch-form" class="batch-form" onsubmit="handleBatchSubmit(event)">
                 <input type="hidden" name="customer_id" value="<?= htmlspecialchars($current_customer) ?>">
                 <input type="hidden" name="order_id" value="<?= htmlspecialchars($current_order) ?>">
                 <?= UI::csrf_field() ?>
@@ -187,9 +126,19 @@ unset($_SESSION['message']);
                     </div>
                 </div>
 
-                <button type="submit" class="btn-add">Add to Batch</button>
+                <div class="form-actions" style="display: flex; gap: 10px;">
+                    <button type="submit" class="btn-add" style="flex: 2;">Add to Batch</button>
+                    <?php if (isset($_SESSION['last_entry'])): ?>
+                        <button type="button" class="btn-repeat" onclick="repeatLastEntry()" title="Fill with last entry" style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem;">✨ Repeat Last</button>
+                    <?php endif; ?>
+                </div>
             </form>
         </section>
+
+        <!-- Inject Last Entry State -->
+        <script type="application/json" id="lastEntryState">
+            <?= json_encode($_SESSION['last_entry'] ?? null) ?>
+        </script>
 
         <section class="summary-section card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
@@ -323,5 +272,104 @@ function filterSummary() {
         const text = row.getAttribute('data-search');
         row.style.display = text.includes(query) ? '' : 'none';
     });
+}
+
+function repeatLastEntry() {
+    const stateEl = document.getElementById('lastEntryState');
+    if (!stateEl) return;
+    
+    const lastEntry = JSON.parse(stateEl.textContent);
+    if (!lastEntry) return;
+
+    const form = document.querySelector('.batch-form');
+    if (!form) return;
+
+    // Map keys to form names
+    const fields = {
+        'brand': lastEntry.brand,
+        'model': lastEntry.model,
+        'series': lastEntry.series,
+        'cpu': lastEntry.cpu
+    };
+
+    Object.keys(fields).forEach(key => {
+        const input = form.querySelector(`[name="${key}"]`);
+        if (input) {
+            input.value = fields[key];
+            // Visual feedback
+            input.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            setTimeout(() => { input.style.backgroundColor = ''; }, 600);
+        }
+    });
+}
+
+async function handleBatchSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const btn = form.querySelector('.btn-add');
+    const originalText = btn.textContent;
+
+    // Loading State
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch('api/add_order_item.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // 1. Update Table
+            const tbody = document.getElementById('summary-list');
+            const emptyRow = tbody.querySelector('.empty-row');
+            if (emptyRow) emptyRow.remove();
+
+            tbody.insertAdjacentHTML('afterbegin', result.row_html);
+
+            // 2. Update Sidebar Total
+            const counter = document.getElementById('sidebar-total-qty');
+            if (counter) {
+                counter.textContent = result.new_total;
+                counter.classList.add('pulse');
+                setTimeout(() => counter.classList.remove('pulse'), 500);
+            }
+
+            // 3. Update "Repeat Last" state
+            const stateEl = document.getElementById('lastEntryState');
+            if (stateEl) stateEl.textContent = JSON.stringify(result.last_entry);
+            
+            // Show the repeat button if it was hidden
+            const repeatBtn = document.querySelector('.btn-repeat');
+            if (!repeatBtn) {
+                // If it's the first item, we might need to refresh or dynamically inject the button
+                // For simplicity, we assume the button container handles this or user refreshes.
+                // But let's be thorough:
+                location.hash = '#batch-builder-top'; // Jump to top
+            }
+
+            // 4. Reset Form (except for fields we might want to keep)
+            form.querySelector('[name="model"]').value = '';
+            form.querySelector('[name="cpu"]').value = '';
+            form.querySelector('[name="description"]').value = '';
+            form.querySelector('[name="quantity"]').value = '1';
+            
+            // Focus brand for next entry
+            form.querySelector('[name="brand"]').focus();
+
+        } else {
+            alert('Error: ' + (result.error || 'Unknown error'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Critical error saving item.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
 }
 </script>

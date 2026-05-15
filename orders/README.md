@@ -6,13 +6,13 @@ A modern, responsive PHP/SQLite application for managing warehouse hardware inve
 
 ## ✨ Key Features
 
--   **📅 Integrated Admin Calendar**: Professional scheduling with weekly/monthly views, smart event suggestions from Leads/Orders, and business-hour enforcement (8 AM – 5 PM).
+-   **📦 High-Speed Batch Builder**: AJAX-powered hardware intake with **Repeat Last Entry** shortcuts and real-time counter synchronization.
+-   **📅 Integrated Admin Calendar**: Professional scheduling with weekly/monthly views, smart event suggestions, and business-hour enforcement.
 -   **🎯 CRM & Relationship Hub**: Lead management with automated balance tracking, interaction logging, and priority follow-up logic.
--   **🏬 Warehouse Control**: Real-time stock management with operational zone status tracking (Working, Audit, Idle) and optimistic concurrency control.
--   **📦 Batch Builder**: Hardware intake system with brand-specific series filtering and zero-click fulfillment workflows.
--   **🔒 Role-Based Access (RBAC)**: Secure partitioning between Administrators (Full Access) and Warehouse Operators (Inventory Only).
+-   **🏬 Warehouse Control**: Real-time stock management with operational zone status tracking and optimistic concurrency control.
+-   **🛡️ Hardened Security**: Global CSRF protection and robust **Input Guards** that sanitize currency/numeric formatting automatically.
+-   **🚀 Intelligence & Caching**: "Self-Learning" vocabulary with `sessionStorage` caching for instant-load autocomplete.
 -   **📄 Thermal Labeling**: Native 2×1 ODT label generation using Flat XML (no external dependencies).
--   **🚀 High Performance**: Utilizes SQLite `ATTACH DATABASE` for engine-level cross-DB joins and session-based state persistence.
 
 ---
 

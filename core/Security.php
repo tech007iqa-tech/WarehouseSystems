@@ -32,4 +32,22 @@ class Security {
         self::init();
         return !empty($token) && hash_equals($_SESSION['csrf_token'], $token);
     }
+
+    /**
+     * Sanitizes currency/decimal strings (e.g., "$1,200.50" -> 1200.50)
+     */
+    public static function sanitize_float($val) {
+        if (is_numeric($val)) return (float)$val;
+        $clean = preg_replace('/[^-0-9.]/', '', $val);
+        return (float)$clean;
+    }
+
+    /**
+     * Sanitizes integer strings (e.g., "1,000" -> 1000)
+     */
+    public static function sanitize_int($val) {
+        if (is_numeric($val)) return (int)$val;
+        $clean = preg_replace('/[^0-9]/', '', $val);
+        return (int)$clean;
+    }
 }

@@ -11,13 +11,32 @@ const IQA_Vocabulary = {
     },
 
     async init() {
+        // --- 1. Check Session Cache ---
+        const cached = sessionStorage.getItem('iqa_vocabulary');
+        if (cached) {
+            try {
+                this.data = JSON.parse(cached);
+                this.populateAll();
+                console.log("IQA Intelligence: Vocabulary loaded from cache.");
+                
+                // Optional: Fetch fresh in background to sync for next time
+                this.sync(); 
+                return;
+            } catch (e) { sessionStorage.removeItem('iqa_vocabulary'); }
+        }
+
+        await this.sync();
+    },
+
+    async sync() {
         try {
             const response = await fetch('api/get_vocabulary.php');
             if (!response.ok) throw new Error('Vocabulary fetch failed');
             
             this.data = await response.json();
+            sessionStorage.setItem('iqa_vocabulary', JSON.stringify(this.data));
             this.populateAll();
-            console.log("IQA Intelligence: Vocabulary Synced.");
+            console.log("IQA Intelligence: Vocabulary Synced & Cached.");
         } catch (err) {
             console.warn("IQA Intelligence: Fallback to static inventory data.", err);
         }

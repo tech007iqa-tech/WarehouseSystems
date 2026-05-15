@@ -28,22 +28,26 @@ This codebase is a **PHP/SQLite** monolith with a custom routing engine. Focus o
 **Visibility**: Admins can view these in Settings via `Audit::getRecent()`.
 
 ### 5. Data Security & Backups
-**Pattern**: One-click ZIP export of all system databases.
-**Implementation**: Handled by `api/generate_backup.php`. It uses `ZipArchive` to package `assets/db/*.db` files. 
-**Auditing**: Every backup generation MUST be logged using `Audit::log('SYSTEM_BACKUP', ...)`.
-
-### 6. Intelligent Vocabulary
-**Pattern**: Auto-completing inventory intake based on historical data.
-**Implementation**: Use `api/get_vocabulary.php` to fetch unique brands/models/CPUs. `assets/js/vocabulary.js` populates global `<datalist>` elements.
-
-### 6. AJAX Live Sync & Bulk Intake
-**Pattern**: Edit modals that save without refresh and bulk spreadsheet imports.
+**Pattern**: One-click ZIP export of all system databases and robust input sanitization.
 **Implementation**: 
-- Check `assets/js/checkout.js` and `api/update_order_status.php`.
-- **Bulk Import**: See `assets/js/customer_registry.js` (`processImport`) and `api/bulk_update_orders.php`. 
-- **Sanitization**: All bulk price data MUST be sanitized using `preg_replace('/[^-0-9.]/', '', $val)` to handle formatted currency inputs ($, commas).
+- **Backups**: Handled by `api/generate_backup.php`. 
+- **Sanitization**: Use `Security::sanitize_float($val)` and `Security::sanitize_int($val)` for all numeric/currency inputs to handle "dirty" data ($, commas).
+- **Auditing**: Every backup and sensitive change MUST be logged. `Audit::log()` now includes a **File-based Fallback** in `orders/logs/` if the database is locked.
 
-### 7. iOS Safari Constraints
+### 6. Intelligent Vocabulary & Caching
+**Pattern**: Auto-completing intake based on historical data with instant UI feedback.
+**Implementation**: 
+- Use `api/get_vocabulary.php` for data.
+- **Caching**: `assets/js/vocabulary.js` uses `sessionStorage` to cache vocabulary, ensuring instant population of datalists without waiting for the network.
+
+### 7. AJAX Live Sync & High-Speed Intake
+**Pattern**: Instant data entry without page reloads.
+**Implementation**: 
+- **Batch Intake**: See `api/add_order_item.php` and `handleBatchSubmit` in `pages/new_order.php`. 
+- **Feedback**: AJAX responses should return both the updated data and the HTML fragment for the new row to minimize client-side logic.
+- **Concurrency**: Warehouse items use `updated_at` for optimistic locking. Always check for `CONCURRENCY_ERROR` in JS.
+
+### 8. iOS Safari Constraints
 **Pattern**: Mobile-first premium feel.
 **Implementation**: 
 - Use `16px` font on all inputs to avoid zoom.

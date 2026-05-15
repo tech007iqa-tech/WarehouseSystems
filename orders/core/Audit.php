@@ -32,8 +32,17 @@ class Audit {
             ]);
 
         } catch (Exception $e) {
-            // Silently fail to prevent breaking the main flow if logging fails
-            error_log("Audit Logging Failed: " . $e->getMessage());
+            // --- Fallback: File-based Logging ---
+            $log_dir = __DIR__ . '/../logs';
+            if (!is_dir($log_dir)) mkdir($log_dir, 0777, true);
+            
+            $log_file = $log_dir . '/audit_fallback.log';
+            $timestamp = date('Y-m-d H:i:s');
+            $user = $_SESSION['username'] ?? 'Anonymous';
+            $log_entry = "[{$timestamp}] [FAILBACK] User: {$user} | Action: {$action} | Target: {$target_id} | Error: " . $e->getMessage() . PHP_EOL;
+            
+            file_put_contents($log_file, $log_entry, FILE_APPEND);
+            error_log("Audit Logging Failed, wrote to fallback log: " . $e->getMessage());
         }
     }
 
