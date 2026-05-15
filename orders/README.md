@@ -65,8 +65,10 @@ A modern, responsive PHP/SQLite application for managing warehouse hardware inve
 
 1.  **Server**: PHP 8.x + SQLite3 extension enabled.
 2.  **Permissions**: Ensure `assets/db/` is writable by the web server.
-3.  **Authentication**: Use the login portal; operators are auto-redirected to the Warehouse Portal.
+3.  **Authentication**: Use the login portal; operators are auto-redirected to the Warehouse Portal. admin:admin123
 4.  **Labels**: Ensure the system has an `.odt` handler (e.g., LibreOffice) for label printing.
+
+
 
 ---
 
