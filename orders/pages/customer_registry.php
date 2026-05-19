@@ -390,8 +390,8 @@ try {
 </div>
 
 <!-- Import Modal -->
-<div id="import-modal" class="modal-overlay" onclick="closeImportModal()">
-    <div class="profile-modal-box" onclick="event.stopPropagation()" style="max-width: 800px; width: 95%;">
+<div id="import-modal" class="modal-overlay" style="overflow-y: auto; align-items: flex-start; padding: 20px 10px;" onclick="closeImportModal()">
+    <div class="profile-modal-box" onclick="event.stopPropagation()" style="max-width: 800px; width: 95%; margin: auto;">
         <button class="close-btn" onclick="closeImportModal()">✖</button>
         <div style="padding: 20px;">
             <h2 style="font-weight: 900; margin-bottom: 10px;">📋 Import Batch from Clipboard</h2>
@@ -402,6 +402,7 @@ try {
             <textarea id="import-paste-area" placeholder="Paste rows here..." style="width: 100%; height: 300px; border-radius: 12px; border: 2px solid #e2e8f0; padding: 15px; font-family: monospace; font-size: 0.85rem; resize: none; margin-bottom: 20px; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
             
             <div id="import-preview" style="margin-bottom: 20px; display: none;">
+                <div id="import-mapping-info"></div>
                 <h3 style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px;">Preview: <span id="import-row-count">0</span> rows detected</h3>
                 <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.7rem; background: #f8fafc;">
                     <table style="width: 100%; border-collapse: collapse; table-layout: fixed;" id="import-preview-table">

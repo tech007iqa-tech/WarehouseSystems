@@ -49,6 +49,13 @@ The core hardware intake and manifest generation workflow.
 - **Interactive Row Editor**: Clicking any manifest row opens a glassmorphism modal for full metadata editing with **AJAX Live Sync**—changes update the main UI instantly without a refresh.
 - **Thermal Labeling**: Integrated generation of 2"×1" labels in Flat ODT format, compatible with standard thermal printers.
 
+### 6. 📈 Historical Trends Engine (`pages/trends.php`)
+A Business Intelligence (BI) dashboard providing live market analytics directly from past transactions.
+- **Dynamic Queries & Filters**: Taps directly into `orders.db` to extract demand velocity, pricing fluctuations, CPU generation dominance, and customer purchasing behavior. Features global **Date Filters** (30 Days, YTD, All Time) altering the SQL queries instantly.
+- **Uncapped Data & Client-Side Sorting**: SQL limits have been removed to expose all historical records in bounded, scrollable lists. Interactive dropdowns utilize lightweight vanilla JS and `data-*` attributes to instantly sort the data (e.g., by Volume, Price, or Date) without page reloads.
+- **Inventory Cross-Referencing**: Uses `Database::queryIntegrated()` to attach `warehouse.db` to sales velocity metrics. It dynamically surfaces exact stock locations (e.g., `Zone-A`) and flags hardware currently processing in Audit or Working states.
+- **Interactive UI**: A four-tab glassmorphic interface (Model Demand, Pricing Curves, CPU Generations, Customer Insights) providing deep operational insights, supplemented by Top-10 pure-CSS vertical bar charts.
+
 ---
 
 ## 🛠 Technical Architecture
@@ -77,6 +84,7 @@ A global logging layer (`core/Audit.php`) tracks every sensitive operation with 
 ### 5. Frontend State & UI Design
 - **Decoupled JSON State**: State is passed from PHP to JS via `<script type="application/json">` blocks, preventing global variable collisions and ensuring data integrity.
 - **Design System**: Built on Vanilla CSS variables with a focus on glassmorphism and modern typography (Outfit/Inter).
+- **Navigation Console**: A consolidated Hamburger dropdown (`☰`) replaces traditional breadcrumbs. It auto-dismisses, is responsive, and enforces RBAC (gating admin links from operators).
 - **iOS Safari Optimizations**:
     - **Zoom Prevention**: All inputs use `16px` font enforcement to block iOS auto-zoom on focus.
     - **Dynamic Viewports**: Layouts use `100dvh` to fit perfectly behind the Safari toolbar.

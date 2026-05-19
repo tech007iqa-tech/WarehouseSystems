@@ -66,8 +66,9 @@ try {
             $labels_xml .= '<text:p text:style-name="' . $p2_style . '">CPU: ' . $cpu_spec_line . ' (' . $cpu_gen_display . ')</text:p>';
             $labels_xml .= '<text:p text:style-name="P2">RAM: ' . ($ram ?: 'None') . ' | Storage: ' . ($storage ?: 'None') . ' | Battery: ' . $battery . '</text:p>';
 
-            if ($item[$F['DESCRIPTION']] === 'Refurbished') {
-                $gpu = htmlspecialchars($item[$F['GPU']] ?? 'Integrated', ENT_XML1, 'UTF-8');
+            $gpu_val = trim($item[$F['GPU']] ?? '');
+            if ($gpu_val !== '' || $item[$F['DESCRIPTION']] === 'Refurbished') {
+                $gpu = htmlspecialchars($gpu_val !== '' ? $gpu_val : 'Integrated', ENT_XML1, 'UTF-8');
                 $os  = htmlspecialchars($item[$F['OS_VERSION']] ?? '—', ENT_XML1, 'UTF-8');
                 $labels_xml .= '<text:p text:style-name="P2">GPU: ' . $gpu . ' | OS: ' . $os . ' | BIOS: ' . $bios_state . '</text:p>';
             }

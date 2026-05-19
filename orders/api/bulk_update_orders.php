@@ -14,58 +14,88 @@ try {
 
     if (isset($input['action']) && $input['action'] === 'bulk_import') {
         $customer_id = $input['customer_id'] ?? null;
+        $order_id = $input['order_id'] ?? null;
         $rows = $input['rows'] ?? [];
+        $items = $input['items'] ?? [];
 
-        if (!$customer_id || empty($rows)) {
-            throw new Exception("Missing customer data or rows.");
+        if (!$customer_id || (empty($rows) && empty($items))) {
+            throw new Exception("Missing customer data, rows, or items.");
         }
 
         $conn = Database::orders();
         $conn->beginTransaction();
 
         try {
-            // 1. Create Order
-            $order_id = 'ORD-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
-            $stmt_o = $conn->prepare("INSERT INTO orders (order_id, customer_id, status) VALUES (?, ?, 'active')");
-            $stmt_o->execute([$order_id, $customer_id]);
+            // 1. Create Order if not provided
+            if (!$order_id) {
+                $order_id = 'ORD-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
+                $stmt_o = $conn->prepare("INSERT INTO orders (order_id, customer_id, status) VALUES (?, ?, 'active')");
+                $stmt_o->execute([$order_id, $customer_id]);
+            }
 
             // 2. Insert Items
-            // Format: Type Brand Model Series CPU Description Price QTY
             $stmt_i = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
-            foreach ($rows as $cols) {
-                if (count($cols) < 2) continue; // Skip empty/invalid rows
+            if (isset($input['items']) && is_array($input['items'])) {
+                foreach ($input['items'] as $item) {
+                    $brand = trim($item['brand'] ?? 'Generic');
+                    $model = trim($item['model'] ?? 'Bulk Item');
+                    $series = trim($item['series'] ?? 'N/A');
+                    $cpu = trim($item['cpu'] ?? '');
+                    $description = trim($item['description'] ?? '');
+                    $qty = (int)($item['quantity'] ?? 1);
+                    $price = (float)($item['unit_price'] ?? 0);
 
-                // Skip Header Row if pasted
-                if (strtolower(trim($cols[0])) === 'type' || strtolower(trim($cols[1])) === 'brand') {
-                    continue;
+                    if (empty($brand) && empty($model)) continue;
+
+                    $stmt_i->execute([
+                        $order_id,
+                        $customer_id,
+                        $brand,
+                        $model,
+                        $series,
+                        $cpu,
+                        $description,
+                        $qty,
+                        $price
+                    ]);
                 }
+            } else {
+                // Fallback for legacy rows format
+                foreach ($rows as $cols) {
+                    if (count($cols) < 2) continue; // Skip empty/invalid rows
 
-                $brand = trim($cols[1] ?? 'Generic');
-                $model = trim($cols[2] ?? 'Bulk Item');
-                $series = trim($cols[3] ?? 'N/A');
-                $cpu = trim($cols[4] ?? '');
-                $description = trim($cols[5] ?? '');
-                
-                // Sanitize Price: Remove $ and , then convert to float
-                $raw_price = trim($cols[6] ?? '0');
-                $price = (float)preg_replace('/[^-0-9.]/', '', $raw_price);
-                
-                $qty = (int)($cols[7] ?? 1);
+                    // Skip Header Row if pasted
+                    if (strtolower(trim($cols[0])) === 'type' || strtolower(trim($cols[1])) === 'brand') {
+                        continue;
+                    }
 
-                if (empty($brand) && empty($model)) continue;
+                    $brand = trim($cols[1] ?? 'Generic');
+                    $model = trim($cols[2] ?? 'Bulk Item');
+                    $series = trim($cols[3] ?? 'N/A');
+                    $cpu = trim($cols[4] ?? '');
+                    $description = trim($cols[5] ?? '');
+                    
+                    // Sanitize Price: Remove $ and , then convert to float
+                    $raw_price = trim($cols[6] ?? '0');
+                    $price = (float)preg_replace('/[^-0-9.]/', '', $raw_price);
+                    
+                    $qty = (int)($cols[7] ?? 1);
 
-                $stmt_i->execute([
-                    $order_id,
-                    $customer_id,
-                    $brand,
-                    $model,
-                    $series,
-                    $cpu,
-                    $description,
-                    $qty,
-                    $price
-                ]);
+                    if (empty($brand) && empty($model)) continue;
+
+                    $stmt_i->execute([
+                        $order_id,
+                        $customer_id,
+                        $brand,
+                        $model,
+                        $series,
+                        $cpu,
+                        $description,
+                        $qty,
+                        $price
+                    ]);
+                }
             }
 
             $conn->commit();

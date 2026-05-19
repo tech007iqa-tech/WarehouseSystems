@@ -16,7 +16,8 @@ $routes = [
     'settings'  => ['page' => 'pages/settings.php',         'css' => 'style.css'],
     'calendar'  => ['page' => 'pages/calendar.php',         'css' => 'calendar.css'],
     'default'   => ['page' => 'pages/customer_registry.php', 'css' => 'customer_registry.css'],
-    'new_order' => ['page' => 'pages/new_order.php',         'css' => 'new_order.css']
+    'new_order' => ['page' => 'pages/new_order.php',         'css' => 'new_order.css'],
+    'trends'    => ['page' => 'pages/trends.php',            'css' => 'trends.css']
 ];
 
 $active_key = $is_new_order ? 'new_order' : (isset($routes[$view]) ? $view : 'default');
@@ -139,28 +140,60 @@ $page_content = ob_get_clean();
             <?php endif; ?>
         </nav>
 
-        <nav class="breadcrumbs" style="display: flex; gap: 20px; align-items: center;">
-            <?php if ($user_role === 'Admin'): ?>
-                <a href="index.php?view=calendar" class="crumb <?= isset($_GET['view']) && $_GET['view'] === 'calendar' ? 'active' : '' ?>" style="margin:0;">
-                    📅 Calendar
+        <!-- Consolidated Hamburger Navigation Menu -->
+        <div class="nav-hamburger-container" style="position: relative; z-index: 100;">
+            <button type="button" class="btn-hamburger" onclick="toggleNavDropdown(event)" aria-label="Toggle navigation menu" style="width: 44px; height: 40px; border-radius: 12px; background: white; border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; transition: all 0.2s; box-shadow: var(--shadow-sm);">
+                ☰
+            </button>
+            <div id="nav-dropdown-menu" class="nav-dropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: var(--shadow-lg); width: 220px; padding: 8px; flex-direction: column; gap: 4px; animation: fadeInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+                <?php if ($user_role === 'Admin'): ?>
+                    <a href="index.php?view=calendar" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'calendar' ? 'active' : '' ?>">
+                        <span>📅</span> Calendar
+                    </a>
+                    <a href="index.php?view=leads" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'leads' ? 'active' : '' ?>">
+                        <span>🎯</span> Leads
+                    </a>
+                <?php endif; ?>
+                
+                <a href="index.php?view=warehouse" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'warehouse' ? 'active' : '' ?>">
+                    <span>🏬</span> Warehouse
                 </a>
-                <a href="index.php?view=leads" class="crumb <?= isset($_GET['view']) && $_GET['view'] === 'leads' ? 'active' : '' ?>" style="margin:0;">
-                    🎯 Leads
-                </a>
-            <?php endif; ?>
-            
-            <a href="index.php?view=warehouse" class="crumb <?= isset($_GET['view']) && $_GET['view'] === 'warehouse' ? 'active' : '' ?>" style="margin:0;">
-                🏬 Warehouse
-            </a>
 
-            <?php if ($user_role === 'Admin'): ?>
-                <a href="index.php?view=orders" class="crumb <?= isset($_GET['view']) && $_GET['view'] === 'orders' ? 'active' : '' ?>" style="margin:0;">
-                    📦 All Orders
-                </a>
-            <?php endif; ?>
+                <?php if ($user_role === 'Admin'): ?>
+                    <a href="index.php?view=orders" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'orders' ? 'active' : '' ?>">
+                        <span>📦</span> All Orders
+                    </a>
+                    <a href="index.php?view=trends" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'trends' ? 'active' : '' ?>">
+                        <span>📈</span> Trends Analysis
+                    </a>
+                <?php endif; ?>
 
-            <a href="index.php?view=settings" class="crumb icon-only <?= isset($_GET['view']) && $_GET['view'] === 'settings' ? 'active' : '' ?>" style="margin:0;" title="Settings">⚙️</a>
-        </nav>
+                <a href="index.php?view=settings" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'settings' ? 'active' : '' ?>">
+                    <span>⚙️</span> Settings
+                </a>
+            </div>
+        </div>
+
+        <script>
+        function toggleNavDropdown(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('nav-dropdown-menu');
+            if (menu) {
+                const isOpen = menu.style.display === 'flex';
+                menu.style.display = isOpen ? 'none' : 'flex';
+                
+                if (!isOpen) {
+                    const closeMenu = (e) => {
+                        if (!menu.contains(e.target)) {
+                            menu.style.display = 'none';
+                            document.removeEventListener('click', closeMenu);
+                        }
+                    };
+                    document.addEventListener('click', closeMenu);
+                }
+            }
+        }
+        </script>
     </div>
 
     <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse', 'calendar']) ? 'order-view' : '' ?>" role="main">
