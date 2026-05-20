@@ -32,8 +32,8 @@
     --bg-surface-2: #334155;
     --border-color: #334155;
     --text-main: #f8fafc;
-    --text-secondary: #94a3b8;
-    --text-dim: #64748b;
+    --text-secondary: #cbd5e1;
+    --text-dim: #94a3b8;
     
     --accent-color: #a3e635; /* Vibrant Lime */
     --accent-gradient: linear-gradient(135deg, #a3e635 0%, #84cc16 100%);
@@ -43,6 +43,10 @@
     --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
     
     --btn-success-bg: #15803d;
+}
+
+[data-theme="dark"] .search-icon {
+    color: var(--text-dim) !important;
 }
 
 *, *::before, *::after {
@@ -575,10 +579,7 @@ tr:hover .btn-delete {
 
 /* Theme Toggle */
 .theme-toggle-wrapper {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
+    display: inline-block;
 }
 
 .theme-btn {

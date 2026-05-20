@@ -57,10 +57,11 @@ try {
             'new_total' => $total_units,
             'last_entry' => $_SESSION['last_entry'],
             'row_html' => "
-                <tr class='summary-row flash-new' data-search='".htmlspecialchars(strtolower("$brand $model $series"))."'>
+                <tr class='summary-row flash-new' data-id='{$new_id}' data-desc='".htmlspecialchars($desc)."' data-qty='{$qty}' data-price='{$price}' data-search='".htmlspecialchars(strtolower("$brand $model $series"))."'>
                     <td>
                         <div class='item-primary'>".htmlspecialchars($brand)." ".htmlspecialchars($model)."</div>
                         <div class='item-secondary'>".htmlspecialchars($series)." | ".htmlspecialchars($cpu)."</div>
+                        ".(!empty(trim($desc)) ? "<div class='item-description' style='font-size: 0.75rem; color: #64748b; margin-top: 4px;'>".nl2br(htmlspecialchars($desc))."</div>" : "")."
                     </td>
                     <td style='text-align:center; font-weight:700;'>{$qty}</td>
                     <td style='text-align:right;'>\${$formatted_price}</td>

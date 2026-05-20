@@ -138,33 +138,39 @@ class UI {
         return nl2br(htmlspecialchars($text));
     }
 
+    public static function theme_init_script() {
+        return "
+        <script>
+            (function() {
+                const theme = localStorage.getItem('iqa_theme') || 'light';
+                document.documentElement.setAttribute('data-theme', theme);
+            })();
+        </script>";
+    }
+
     /**
      * Renders a Dark Mode Toggle Switch
      */
     public static function theme_toggle() {
         return "
         <div class='theme-toggle-wrapper'>
-            <button id='themeToggle' class='theme-btn' title='Toggle Dark Mode'>
+            <button id='themeToggle' class='theme-btn' title='Toggle Dark Mode' type='button'>
                 <span class='theme-icon-sun'>☀️</span>
                 <span class='theme-icon-moon'>🌙</span>
             </button>
             <script>
-                (function() {
-                    const theme = localStorage.getItem('iqa_theme') || 'light';
-                    document.documentElement.setAttribute('data-theme', theme);
+                document.addEventListener('DOMContentLoaded', () => {
+                    const btn = document.getElementById('themeToggle');
+                    if (!btn) return;
                     
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const btn = document.getElementById('themeToggle');
-                        if (!btn) return;
-                        
-                        btn.addEventListener('click', () => {
-                            const current = document.documentElement.getAttribute('data-theme');
-                            const next = current === 'dark' ? 'light' : 'dark';
-                            document.documentElement.setAttribute('data-theme', next);
-                            localStorage.setItem('iqa_theme', next);
-                        });
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const current = document.documentElement.getAttribute('data-theme');
+                        const next = current === 'dark' ? 'light' : 'dark';
+                        document.documentElement.setAttribute('data-theme', next);
+                        localStorage.setItem('iqa_theme', next);
                     });
-                })();
+                });
             </script>
         </div>";
     }

@@ -170,6 +170,15 @@ function renderDetailView(data) {
                 </div>
             </div>
 
+            <div style="padding-top: 20px; padding-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
+                <a href="index.php?customer_id=${encodeURIComponent(data.customer_id)}&action=create_new_order" class="btn-register" style="display:flex; align-items:center; justify-content:center; gap: 10px; height: 54px; font-size: 1rem; margin: 0;">
+                    <span>+</span> Create New Fresh Batch
+                </a>
+                <button type="button" onclick="openImportModal('${escapeHTML(data.customer_id)}')" class="btn-register" style="display:flex; align-items:center; justify-content:center; gap: 10px; height: 54px; font-size: 1rem; background: #f8fafc; color: var(--text-main); border: 1px dashed #cbd5e1; margin: 0;">
+                    <span>📋</span> Import from Clipboard
+                </button>
+            </div>
+
             <div class="detail-item">
                 <div class="detail-label">Fulfillment History</div>
                 <div id="side-completed" style="display: flex; flex-direction: column; gap: 10px;">
@@ -202,14 +211,6 @@ function renderDetailView(data) {
                 <div class="detail-value" style="font-size: 0.9rem; white-space: pre-wrap; color: var(--text-secondary); line-height: 1.5; font-weight: 500; margin-top: 6px;">${data.internal_notes ? escapeHTML(data.internal_notes) : '<i style="opacity:0.4;">No internal notes recorded.</i>'}</div>
             </div>
 
-            <div style="padding-top: 20px; padding-bottom: 20px; display: flex; flex-direction: column; gap: 10px;">
-                <a href="index.php?customer_id=${encodeURIComponent(data.customer_id)}&action=create_new_order" class="btn-register" style="display:flex; align-items:center; justify-content:center; gap: 10px; height: 54px; font-size: 1rem; margin: 0;">
-                    <span>+</span> Create New Fresh Batch
-                </a>
-                <button type="button" onclick="openImportModal('${escapeHTML(data.customer_id)}')" class="btn-register" style="display:flex; align-items:center; justify-content:center; gap: 10px; height: 54px; font-size: 1rem; background: #f8fafc; color: var(--text-main); border: 1px dashed #cbd5e1; margin: 0;">
-                    <span>📋</span> Import from Clipboard
-                </button>
-            </div>
         </div>
     `;
 }

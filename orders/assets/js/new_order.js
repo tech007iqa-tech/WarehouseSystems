@@ -55,6 +55,29 @@ function initSummarySearch() {
     }
 }
 
+/**
+ * Simple Tag Writer: Appends clicked keyword to description field.
+ */
+function toggleDescriptionKeyword(keyword) {
+    const descArea = document.getElementById('description');
+    if (!descArea) return;
+
+    let val = descArea.value.trim();
+    if (val) {
+        if (val.endsWith(',')) {
+            descArea.value = val + ' ' + keyword;
+        } else {
+            descArea.value = val + ', ' + keyword;
+        }
+    } else {
+        descArea.value = keyword;
+    }
+    descArea.focus();
+    descArea.dispatchEvent(new Event('input'));
+}
+
+window.toggleDescriptionKeyword = toggleDescriptionKeyword;
+
 /* ============================================================
    3. Summary & Item Actions
    ============================================================ */
@@ -123,16 +146,13 @@ function toggleInlineEdit(btn) {
  * Filters the current order summary table
  */
 function filterSummary() {
-    const input = document.getElementById('summary-search');
-    if (!input) return;
-
-    const filter = input.value.toLowerCase();
-    const rows = document.getElementsByClassName('summary-item-row');
-
-    for (let i = 0; i < rows.length; i++) {
-        const text = rows[i].innerText.toLowerCase();
-        rows[i].style.display = text.includes(filter) ? "" : "none";
-    }
+    const queryEl = document.getElementById('summary-search');
+    const query = queryEl ? queryEl.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.summary-row');
+    rows.forEach(row => {
+        const text = row.getAttribute('data-search') || '';
+        row.style.display = text.includes(query) ? '' : 'none';
+    });
 }
 
 /* ============================================================
@@ -219,8 +239,9 @@ function selectWarehouseItem(item) {
     const descEl = document.getElementById('description');
 
     if (brandEl) {
-        // Modernized Selection: Find matching option case-insensitively
-        const options = Array.from(brandEl.options);
+        // Modernized Selection: Find matching option case-insensitively from brand-options datalist
+        const brandOptionsEl = document.getElementById('brand-options');
+        const options = brandOptionsEl ? Array.from(brandOptionsEl.options) : [];
         const match = options.find(opt => opt.value.toLowerCase() === (item.brand || "").toLowerCase());
 
         if (match) {
@@ -228,11 +249,10 @@ function selectWarehouseItem(item) {
         } else {
             // Check for partial matches (e.g., "Microsoft Gaming" -> "Microsoft", "HP Laptop" -> "HP")
             const partialMatch = options.find(opt => opt.value.length >= 2 && (item.brand || "").toLowerCase().includes(opt.value.toLowerCase()));
-            brandEl.value = partialMatch ? partialMatch.value : "Other";
+            brandEl.value = partialMatch ? partialMatch.value : (item.brand || "Other");
         }
 
         // IMPORTANT: Manually trigger the change event to populate datalists (models/series options)
-        // This will clear the model/series inputs but that's fine as we set them immediately after.
         brandEl.dispatchEvent(new Event('change'));
     }
 

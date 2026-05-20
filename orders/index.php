@@ -97,7 +97,7 @@ $page_content = ob_get_clean();
 </head>
 
 <body class="modern-theme">
-    <?= UI::theme_toggle() ?>
+    <?= UI::theme_init_script() ?>
     <?= UI::render_notifications() ?>
     <div class="breadcrumb-container" role="banner" style="max-width: 800px; margin: 0 auto 20px auto; width: 100%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">

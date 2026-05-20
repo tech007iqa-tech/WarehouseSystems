@@ -236,3 +236,23 @@
         transform: translateY(0);
     }
 }
+
+/* Dark Mode Overrides for Tabs */
+[data-theme="dark"] .orders-tabs {
+    background: var(--bg-surface-2);
+}
+
+[data-theme="dark"] .orders-tab-link {
+    color: var(--text-dim);
+}
+
+[data-theme="dark"] .orders-tab-link:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-main);
+}
+
+[data-theme="dark"] .orders-tab-link.active {
+    background: var(--bg-panel);
+    color: var(--text-main);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}

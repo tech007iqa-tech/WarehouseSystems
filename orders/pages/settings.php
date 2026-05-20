@@ -158,6 +158,21 @@ try {
         <div class="status-msg msg-error" style="width:100%; max-width:500px; margin-top:20px;"><?= $error ?></div>
     <?php endif; ?>
 
+    <!-- 0. APPEARANCE CARD -->
+    <div class="settings-card">
+        <div class="settings-header">
+            <h1>Appearance</h1>
+            <p class="subtitle">Customize the look and feel of the application.</p>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 16px 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div>
+                <strong style="display: block; color: var(--text-main); margin-bottom: 4px;">Dark Mode</strong>
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">Toggle between light and dark themes.</span>
+            </div>
+            <?= UI::theme_toggle() ?>
+        </div>
+    </div>
+
     <!-- 1. PERSONAL SECURITY CARD -->
     <div class="settings-card">
         <div class="settings-header" style="display:flex; justify-content:space-between; align-items:flex-start;">

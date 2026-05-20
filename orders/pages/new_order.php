@@ -119,38 +119,49 @@ unset($_SESSION['message']);
                 <div class="form-row">
                     <div class="form-group">
                         <label>Brand</label>
-                        <input type="text" name="brand" list="brand-options" placeholder="Dell, HP..." required>
+                        <input type="text" id="brand" name="brand" list="brand-options" placeholder="Dell, HP..." required>
                     </div>
                     <div class="form-group">
                         <label>Model</label>
-                        <input type="text" name="model" list="model-options" placeholder="Latitude 5400..." required>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <span id="apple-prefix" style="display: none; position: absolute; left: 12px; color: var(--text-main); font-weight: 700; pointer-events: none;">A-</span>
+                            <input type="text" id="models" name="model" list="model-options" placeholder="A1465..." required style="width: 100%; transition: padding 0.2s;">
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Series / Project</label>
-                        <input type="text" name="series" placeholder="IQA-2024-001">
+                        <input type="text" id="series" name="series" list="series-options" placeholder="IQA-2024-001">
+                        <datalist id="series-options"></datalist>
                     </div>
                     <div class="form-group">
                         <label>CPU / Gen</label>
-                        <input type="text" name="cpu" list="cpu-options" placeholder="i5-8350U">
+                        <input type="text" id="cpu" name="cpu" list="cpu-options" placeholder="i5-8350U">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label>Description / Condition</label>
-                    <textarea name="description" placeholder="Used, No major defects..."></textarea>
+                    <textarea id="description" name="description" placeholder="Used, No major defects..."></textarea>
+                    <!-- Premium Interactive Keyword Chips -->
+                    <div class="keyword-chips-container">
+                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Tested')" data-keyword="Tested">Tested</span>
+                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Untested')" data-keyword="Untested">Untested</span>
+                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Working')" data-keyword="Working">Working</span>
+                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Parts')" data-keyword="Parts">Parts</span>
+                    </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label>Quantity</label>
-                        <input type="number" name="quantity" value="1" min="1" required>
+                        <input type="number" id="qty" name="quantity" value="1" min="1" required>
                     </div>
                     <div class="form-group">
                         <label>Unit Price ($)</label>
-                        <input type="number" name="unit_price" value="0.00" step="0.01">
+                        <input type="number" id="price" name="unit_price" value="0.00" step="0.01">
                     </div>
                 </div>
 
@@ -172,8 +183,16 @@ unset($_SESSION['message']);
         <section class="summary-section card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
                 <h3>Current Batch Summary</h3>
-                <div class="search-box">
-                    <input type="text" id="summary-search" placeholder="Filter items..." onkeyup="filterSummary()">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <select id="summary-sort" onchange="sortSummary()" style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
+                        <option value="newest">Newest Added</option>
+                        <option value="desc_asc">Description</option>
+                        <option value="qty_desc">Quantity (High-Low)</option>
+                        <option value="price_desc">Price (High-Low)</option>
+                    </select>
+                    <div class="search-box" style="max-width: 160px; width: 100%;">
+                        <input type="text" id="summary-search" placeholder="Filter items..." onkeyup="filterSummary()" style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; width: 100%;">
+                    </div>
                 </div>
             </div>
 
@@ -194,10 +213,13 @@ unset($_SESSION['message']);
                             </tr>
                         <?php else: ?>
                             <?php foreach ($items as $item): ?>
-                                <tr class="summary-row" data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['series'])) ?>">
+                                <tr class="summary-row" data-id="<?= $item['id'] ?>" data-desc="<?= htmlspecialchars($item['description']) ?>" data-qty="<?= $item['quantity'] ?>" data-price="<?= $item['unit_price'] ?>" data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['series'])) ?>">
                                     <td>
                                         <div class="item-primary"><?= htmlspecialchars($item['brand']) ?> <?= htmlspecialchars($item['model']) ?></div>
                                         <div class="item-secondary"><?= htmlspecialchars($item['series']) ?> | <?= htmlspecialchars($item['cpu']) ?></div>
+                                        <?php if(!empty(trim($item['description']))): ?>
+                                            <div class="item-description" style="font-size: 0.75rem; color: #64748b; margin-top: 4px;"><?= nl2br(htmlspecialchars($item['description'])) ?></div>
+                                        <?php endif; ?>
                                     </td>
                                     <td style="text-align:center; font-weight:700;"><?= $item['quantity'] ?></td>
                                     <td style="text-align:right;">$<?= number_format($item['unit_price'], 2) ?></td>
@@ -278,6 +300,61 @@ unset($_SESSION['message']);
 </div>
 
 <script>
+function toggleDescriptionKeyword(keyword) {
+    const descArea = document.getElementById('description');
+    if (!descArea) return;
+
+    let val = descArea.value.trim();
+    if (val) {
+        if (val.endsWith(',')) {
+            descArea.value = val + ' ' + keyword;
+        } else {
+            descArea.value = val + ', ' + keyword;
+        }
+    } else {
+        descArea.value = keyword;
+    }
+    descArea.focus();
+    descArea.dispatchEvent(new Event('input'));
+}
+window.toggleDescriptionKeyword = toggleDescriptionKeyword;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('ajax-batch-form');
+    if (!form) return;
+    
+    const brandInput = form.querySelector('[name="brand"]');
+    const modelInput = form.querySelector('[name="model"]');
+    const seriesInput = form.querySelector('[name="series"]');
+    const cpuInput = form.querySelector('[name="cpu"]');
+    const applePrefix = document.getElementById('apple-prefix');
+
+    const updateAppleUI = () => {
+        if (brandInput.value.trim().toLowerCase() === 'apple') {
+            if (applePrefix) applePrefix.style.display = 'block';
+            if (modelInput) modelInput.style.paddingLeft = '32px';
+            
+            if (!seriesInput.value) seriesInput.value = '-';
+            if (!cpuInput.value) cpuInput.value = '-';
+            
+            // Clean up any existing 'A' or 'A-' they might have typed
+            if (modelInput && modelInput.value.toUpperCase().startsWith('A-')) {
+                modelInput.value = modelInput.value.substring(2);
+            } else if (modelInput && modelInput.value.toUpperCase().startsWith('A')) {
+                modelInput.value = modelInput.value.substring(1);
+            }
+        } else {
+            if (applePrefix) applePrefix.style.display = 'none';
+            if (modelInput) modelInput.style.paddingLeft = '';
+        }
+    };
+
+    if (brandInput) {
+        brandInput.addEventListener('change', updateAppleUI);
+        brandInput.addEventListener('input', updateAppleUI);
+    }
+});
+
 function openEditModal(item) {
     document.getElementById('edit-id').value = item.id;
     document.getElementById('edit-brand').value = item.brand;
@@ -301,6 +378,35 @@ function filterSummary() {
         const text = row.getAttribute('data-search');
         row.style.display = text.includes(query) ? '' : 'none';
     });
+}
+
+function sortSummary() {
+    const sortBy = document.getElementById('summary-sort').value;
+    const tbody = document.getElementById('summary-list');
+    const rows = Array.from(tbody.querySelectorAll('.summary-row'));
+
+    rows.sort((a, b) => {
+        if (sortBy === 'newest') {
+            return parseInt(b.getAttribute('data-id')) - parseInt(a.getAttribute('data-id'));
+        } else if (sortBy === 'desc_asc') {
+            const descA = a.getAttribute('data-desc').toLowerCase();
+            const descB = b.getAttribute('data-desc').toLowerCase();
+            const cmp = descB.localeCompare(descA);
+            if (cmp !== 0) {
+                return cmp;
+            }
+            // Secondary sort: lower prices first (ascending)
+            return parseFloat(a.getAttribute('data-price')) - parseFloat(b.getAttribute('data-price'));
+        } else if (sortBy === 'qty_desc') {
+            return parseInt(b.getAttribute('data-qty')) - parseInt(a.getAttribute('data-qty'));
+        } else if (sortBy === 'price_desc') {
+            return parseFloat(b.getAttribute('data-price')) - parseFloat(a.getAttribute('data-price'));
+        }
+        return 0;
+    });
+
+    // Re-append rows in sorted order
+    rows.forEach(row => tbody.appendChild(row));
 }
 
 function repeatLastEntry() {
@@ -343,6 +449,19 @@ async function handleBatchSubmit(event) {
     btn.textContent = 'Adding...';
 
     const formData = new FormData(form);
+    
+    // Ensure the model actually gets the A- prefix if brand is Apple
+    if (formData.get('brand').trim().toLowerCase() === 'apple') {
+        let currentModel = formData.get('model').trim();
+        if (!currentModel.toUpperCase().startsWith('A-')) {
+            if (currentModel.toUpperCase().startsWith('A')) {
+                currentModel = 'A-' + currentModel.substring(1);
+            } else {
+                currentModel = 'A-' + currentModel;
+            }
+        }
+        formData.set('model', currentModel);
+    }
 
     try {
         const response = await fetch('api/add_order_item.php', {
@@ -384,7 +503,11 @@ async function handleBatchSubmit(event) {
             // 4. Reset Form (except for fields we might want to keep)
             form.querySelector('[name="model"]').value = '';
             form.querySelector('[name="cpu"]').value = '';
-            form.querySelector('[name="description"]').value = '';
+            const descEl = form.querySelector('[name="description"]');
+            if (descEl) {
+                descEl.value = '';
+                descEl.dispatchEvent(new Event('input'));
+            }
             form.querySelector('[name="quantity"]').value = '1';
             
             // Focus brand for next entry
@@ -707,55 +830,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!text.trim()) {
                 preview.style.display = 'none';
-                return;
-            }
-
-            const { items, mapping } = parsePastedText(text);
-
-            preview.style.display = 'block';
-            count.innerText = items.length;
-
-            const activeMappings = [];
-            if (mapping.brand !== -1) activeMappings.push(`<b>Brand</b> (Col ${mapping.brand + 1})`);
-            if (mapping.model !== -1) activeMappings.push(`<b>Model</b> (Col ${mapping.model + 1})`);
-            if (mapping.series !== -1) activeMappings.push(`<b>Series</b> (Col ${mapping.series + 1})`);
-            if (mapping.cpu !== -1) activeMappings.push(`<b>CPU</b> (Col ${mapping.cpu + 1})`);
-            if (mapping.description !== -1) activeMappings.push(`<b>Description</b> (Col ${mapping.description + 1})`);
-            if (mapping.price !== -1) activeMappings.push(`<b>Price</b> (Col ${mapping.price + 1})`);
-            if (mapping.qty !== -1) activeMappings.push(`<b>Qty</b> (Col ${mapping.qty + 1})`);
-
-            const headerMsg = mapping.hasHeader 
-                ? `✨ Auto-detected header row in <b>${mapping.delimiterName}</b> format.` 
-                : `⚡ No header found. Fallback mapping used in <b>${mapping.delimiterName}</b> format.`;
-
-            if (mappingInfo) {
-                mappingInfo.innerHTML = `
-                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:12px; border-radius:12px; font-size:0.75rem; margin-bottom:15px; line-height:1.5; text-align:left;">
-                        <div>${headerMsg}</div>
-                        <div style="margin-top:6px; opacity:0.9;">Mapping: ${activeMappings.join(' | ')}</div>
-                    </div>
-                `;
-            }
-
-            let html = `<thead><tr style="background:#f1f5f9; text-align:left; position:sticky; top:0; z-index:1; box-shadow:0 1px 0 #e2e8f0;"><th style="padding:8px 10px; width:20%;">Brand</th><th style="padding:8px 10px; width:30%;">Model</th><th style="padding:8px 10px; width:25%;">Specs</th><th style="padding:8px 10px; width:10%;">Qty</th><th style="padding:8px 10px; width:15%;">Price</th></tr></thead><tbody>`;
-            
-            items.slice(0, 50).forEach(item => {
-                const specs = [item.series, item.cpu].filter(v => v && v !== 'N/A').join(' / ') || item.description || '—';
-                html += `<tr>
-                    <td style="padding:6px 10px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left;">${escapeHTML(item.brand)}</td>
-                    <td style="padding:6px 10px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left;">${escapeHTML(item.model)}</td>
-                    <td style="padding:6px 10px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#64748b; text-align:left;" title="${escapeHTML(specs)}">${escapeHTML(specs)}</td>
-                    <td style="padding:6px 10px; border-top:1px solid #eee; text-align:left;">${item.quantity}</td>
-                    <td style="padding:6px 10px; border-top:1px solid #eee; font-weight:700; color:var(--accent-color); text-align:left;">$${item.unit_price.toFixed(2)}</td>
-                </tr>`;
-            });
-
-            if (items.length > 50) {
-                html += `<tr><td colspan="5" style="text-align:center; padding:10px; color:#94a3b8; font-style:italic; background:white;">... and ${items.length - 50} more rows</td></tr>`;
-            }
-            html += '</tbody>';
-            table.innerHTML = html;
-        });
-    }
-});
-</script>
