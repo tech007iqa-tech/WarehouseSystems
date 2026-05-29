@@ -13,12 +13,14 @@ class Schema {
         'customers' => [
             'customers' => "CREATE TABLE IF NOT EXISTS customers (
                 customer_id TEXT PRIMARY KEY,
-                company_name TEXT,
-                contact_name TEXT,
+                company_name TEXT NOT NULL,
+                contact_person TEXT,
+                website TEXT,
                 email TEXT,
                 phone TEXT,
                 address TEXT,
-                sector TEXT,
+                shipping_address TEXT,
+                internal_notes TEXT,
                 callback_date TEXT DEFAULT '',
                 message_date TEXT DEFAULT '',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -115,6 +117,8 @@ class Schema {
 
     /**
      * Ensures all tables for a specific database exist and are up to date.
+     * Migrations always run (they are idempotent), bypassing the session cache
+     * so a stale session never silently skips a column addition.
      * 
      * @param PDO $conn The connection to the database
      * @param string $db_name The name of the database (e.g., 'orders')
@@ -123,18 +127,55 @@ class Schema {
         if (!isset(self::$blueprints[$db_name])) return;
 
         foreach (self::$blueprints[$db_name] as $table => $sql) {
-            if (!Database::isSchemaVerified($db_name, $table)) {
-                $conn->exec($sql);
-                
-                // --- Handle Specific Column Evolutions (Migrations) ---
-                self::runMigrations($conn, $db_name, $table);
-                
-                // --- Initial Data Seeding ---
-                self::seed($conn, $db_name, $table);
+            // Always CREATE TABLE IF NOT EXISTS (safe no-op when table exists)
+            $conn->exec($sql);
 
+            // Always run migrations — idempotent PRAGMA checks mean no harm.
+            // This MUST NOT be gated by the session cache so a stale session
+            // cannot silently skip adding a new column.
+            self::runMigrations($conn, $db_name, $table);
+
+            if (!Database::isSchemaVerified($db_name, $table)) {
+                // --- Initial Data Seeding (once per session) ---
+                self::seed($conn, $db_name, $table);
                 Database::markSchemaVerified($db_name, $table);
             }
         }
+    }
+
+    /**
+     * Forces a full schema repair across every database.
+     * Called by the Settings integrity button. Clears the session schema cache
+     * so every table is re-checked on the next request.
+     *
+     * @return array  ['fixed' => [...], 'errors' => [...]]
+     */
+    public static function repairAll() {
+        // Wipe session cache so ensure() re-inspects every table
+        if (session_status() !== PHP_SESSION_NONE) {
+            unset($_SESSION['verified_schemas']);
+        }
+
+        $report = ['fixed' => [], 'errors' => []];
+        $db_names = array_keys(self::$blueprints);
+
+        foreach ($db_names as $db_name) {
+            try {
+                $conn = Database::getConnection($db_name);
+                foreach (self::$blueprints[$db_name] as $table => $sql) {
+                    try {
+                        $conn->exec($sql);
+                        self::runMigrations($conn, $db_name, $table);
+                        $report['fixed'][] = "{$db_name}.{$table}";
+                    } catch (Exception $e) {
+                        $report['errors'][] = "{$db_name}.{$table}: " . $e->getMessage();
+                    }
+                }
+            } catch (Exception $e) {
+                $report['errors'][] = "{$db_name}: " . $e->getMessage();
+            }
+        }
+        return $report;
     }
 
     /**
@@ -160,6 +201,26 @@ class Schema {
      * Handles specific column additions and index creation for existing tables.
      */
     private static function runMigrations($conn, $db_name, $table) {
+        // --- Customers Schema Evolution ---
+        // Handles DBs created from the old stale blueprint that lacked several columns.
+        if ($db_name === 'customers' && $table === 'customers') {
+            $cols = array_column(
+                $conn->query("PRAGMA table_info(customers)")->fetchAll(PDO::FETCH_ASSOC),
+                'name'
+            );
+            $migrations = [
+                'website'          => "ALTER TABLE customers ADD COLUMN website TEXT DEFAULT ''",
+                'contact_person'   => "ALTER TABLE customers ADD COLUMN contact_person TEXT DEFAULT ''",
+                'shipping_address' => "ALTER TABLE customers ADD COLUMN shipping_address TEXT DEFAULT ''",
+                'internal_notes'   => "ALTER TABLE customers ADD COLUMN internal_notes TEXT DEFAULT ''",
+            ];
+            foreach ($migrations as $col => $sql) {
+                if (!in_array($col, $cols)) {
+                    $conn->exec($sql);
+                }
+            }
+        }
+
         // --- Order & Item Indexes ---
         if ($db_name === 'orders' && $table === 'items') {
             $conn->exec("CREATE INDEX IF NOT EXISTS idx_items_order ON items(order_id)");

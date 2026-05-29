@@ -121,6 +121,19 @@ try {
                 $message = "System performance optimized! Re-indexed {$optimized} core databases.";
             } catch (Exception $e) { $error = "Optimization failed: " . $e->getMessage(); }
         }
+
+        if ($_POST['action'] === 'integrity_check') {
+            require_once __DIR__ . '/../core/Schema.php';
+            $report = Schema::repairAll();
+            $fixed_count = count($report['fixed']);
+            $err_count   = count($report['errors']);
+            if ($err_count === 0) {
+                $message = "✅ Integrity check complete. {$fixed_count} table(s) verified/repaired. No errors.";
+            } else {
+                $message = "⚠️ Integrity check done. {$fixed_count} table(s) OK. {$err_count} error(s): " . implode(' | ', $report['errors']);
+            }
+            $_SESSION['integrity_report'] = $report;
+        }
     }
 } catch (PDOException $e) { $error = "Database error: " . $e->getMessage(); }
 
@@ -330,6 +343,34 @@ try {
                 🗑️ Clean Up 0-Order Customers
             </button>
         </form>
+
+        <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #fecdd3;">
+            <h1 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 6px;">Schema Integrity Check</h1>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 18px;">Use this if the system was deployed fresh and columns are missing from an existing database. This is safe to run at any time — it only <em>adds</em> what's missing, never deletes data.</p>
+
+            <?php
+            $integrity_report = $_SESSION['integrity_report'] ?? null;
+            unset($_SESSION['integrity_report']);
+            if ($integrity_report): ?>
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px 20px; margin-bottom: 18px; font-size: 0.78rem; font-family: monospace; color: #166534; max-height: 180px; overflow-y: auto;">
+                <strong style="display:block; margin-bottom: 8px; font-size:0.85rem;">Repair Report</strong>
+                <?php foreach ($integrity_report['fixed'] as $t): ?>
+                    <div style="padding: 2px 0;">✓ <?= htmlspecialchars($t) ?></div>
+                <?php endforeach; ?>
+                <?php foreach ($integrity_report['errors'] as $e): ?>
+                    <div style="color:#b91c1c; padding: 2px 0;">✗ <?= htmlspecialchars($e) ?></div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
+            <form method="POST">
+                <input type="hidden" name="action" value="integrity_check">
+                <button type="submit" id="btn-integrity-check" class="btn-main" style="width: 100%; padding: 16px; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.95rem;">
+                    🔧 Run Schema Integrity Check
+                </button>
+                <p style="font-size: 0.75rem; color: #64748b; text-align: center; margin-top: 10px;">Inspects all tables across every database and applies any missing column migrations.</p>
+            </form>
+        </div>
 
         <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #fecdd3;">
             <h1 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 15px;">Data Security & Backups</h1>

@@ -211,6 +211,7 @@ $page_content = ob_get_clean();
         <script src="assets/js/warehouse.js?v=<?= filemtime('assets/js/warehouse.js') ?>" defer></script>
     <?php elseif ($active_key === 'default' || $active_key === 'register'): ?>
         <script src="assets/js/customer_registry.js?v=<?= filemtime('assets/js/customer_registry.js') ?>" defer></script>
+        <script src="assets/js/pipeline.js?v=<?= filemtime('assets/js/pipeline.js') ?>" defer></script>
     <?php elseif ($active_key === 'leads' && file_exists('assets/js/leads.js')): ?>
         <script src="assets/js/leads.js?v=<?= filemtime('assets/js/leads.js') ?>" defer></script>
     <?php elseif ($active_key === 'orders'): ?>

@@ -94,30 +94,67 @@ try {
 <div class="form-side">
     <?php
     // Dashboard Logic: Fetch high-level KPIs
-    $pipeline_data = [
-        'Daily'   => 0,
-        'Weekly'  => 0,
-        'Monthly' => 0,
-        'Yearly'  => 0,
-        'Total'   => 0
-    ];
+    $pipeline_data  = ['Daily' => 0, 'Weekly' => 0, 'Monthly' => 0, 'Yearly' => 0];
+    $pipeline_orders = ['Daily' => [], 'Weekly' => [], 'Monthly' => [], 'Yearly' => []];
     $active_batches_count = 0;
     $pending_callbacks_count = 0;
     $warehouse_audit_count = 0;
 
     try {
-        // 1. Pipeline Calculations (Joining items and orders for date filtering)
-        // 1. Pipeline Calculations (Joining items and orders for date filtering and status check)
-        $pipeline_data['Daily']   = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid' AND o.created_at >= date('now', 'localtime')")->fetchColumn() ?: 0;
-        $pipeline_data['Weekly']  = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid' AND o.created_at >= date('now', '-7 days', 'localtime')")->fetchColumn() ?: 0;
-        $pipeline_data['Monthly'] = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid' AND o.created_at >= date('now', 'start of month', 'localtime')")->fetchColumn() ?: 0;
-        $pipeline_data['Yearly']  = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid' AND o.created_at >= date('now', 'start of year', 'localtime')")->fetchColumn() ?: 0;
-        $pipeline_data['Total']   = $conn_orders->query("SELECT SUM(i.quantity * i.unit_price) FROM items i JOIN orders o ON i.order_id = o.order_id WHERE o.status = 'paid'")->fetchColumn() ?: 0;
-        
+        // Per-period date boundaries
+        // Monday of the current business week (ISO: N=1 Mon … 7 Sun)
+        $days_since_monday = (int) date('N') - 1;   // 0 on Mon, 4 on Fri, 6 on Sun
+        $this_monday = date('Y-m-d', strtotime("-{$days_since_monday} days"));
+
+        $periods = [
+            'Daily'  => "date('now', 'localtime')",
+            'Weekly' => "'{$this_monday}'",           // Mon of current work-week
+            'Monthly'=> "date('now', 'start of month', 'localtime')",
+            'Yearly' => "date('now', 'start of year', 'localtime')",
+        ];
+
+        // Completed order statuses — matches the rest of the app (orders.php, customer_registry.php)
+        $done_statuses = "'paid', 'finalized', 'dispatched'";
+
+        // Attach customers DB so we can pull company names in one query
+        Database::attach($conn_orders, 'customers', 'cust_db');
+
+        foreach ($periods as $label => $since) {
+            // Aggregate value — use created_at (updated_at is NULL on many rows)
+            $pipeline_data[$label] = $conn_orders->query(
+                "SELECT COALESCE(SUM(i.quantity * i.unit_price), 0)
+                 FROM items i
+                 JOIN orders o ON i.order_id = o.order_id
+                 WHERE o.status IN ({$done_statuses})
+                   AND o.created_at >= {$since}"
+            )->fetchColumn() ?: 0;
+
+            // Per-order breakdown (latest 30)
+            $rows = $conn_orders->query(
+                "SELECT o.order_id,
+                        o.customer_id,
+                        o.status,
+                        o.created_at,
+                        COALESCE(c.company_name, o.customer_id) AS company_name,
+                        COALESCE(SUM(i.quantity * i.unit_price), 0) AS order_value,
+                        COALESCE(SUM(i.quantity), 0) AS total_qty
+                 FROM orders o
+                 LEFT JOIN items i ON i.order_id = o.order_id
+                 LEFT JOIN cust_db.customers c ON c.customer_id = o.customer_id
+                 WHERE o.status IN ({$done_statuses})
+                   AND o.created_at >= {$since}
+                 GROUP BY o.order_id
+                 ORDER BY o.created_at DESC
+                 LIMIT 30"
+            )->fetchAll(PDO::FETCH_ASSOC);
+
+            $pipeline_orders[$label] = $rows;
+        }
+
         // 2. Active Batches
         $active_batches_count = $conn_orders->query("SELECT COUNT(*) FROM orders WHERE status = 'active'")->fetchColumn();
-        
-        // 3. Pending Callbacks (Today or Overdue)
+
+        // 3. Pending Callbacks
         $pending_callbacks_count = $conn->prepare("SELECT COUNT(*) FROM customers WHERE callback_date != '' AND callback_date <= ? AND account_status = 'Lead'");
         $pending_callbacks_count->execute([date('Y-m-d')]);
         $pending_callbacks_count = $pending_callbacks_count->fetchColumn();
@@ -128,26 +165,55 @@ try {
     } catch (Exception $e) {}
     ?>
 
+    <?php
+    // Embed order summaries as JSON for JS consumption
+    $pipeline_json = json_encode([
+        'values' => array_map(fn($v) => '$' . number_format($v, 0), $pipeline_data),
+        'orders' => $pipeline_orders,
+    ], JSON_HEX_TAG);
+    ?>
+    <script id="pipeline-data" type="application/json"><?= $pipeline_json ?></script>
+
     <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
-        <div class="dashboard-card pipeline-card" id="pipeline-card" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); position: relative; overflow: hidden;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <!-- Pipeline card spans full width so the order list has room -->
+        <div class="dashboard-card pipeline-card" id="pipeline-card"
+             style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); position: relative; grid-column: 1 / -1;">
+
+            <!-- Top row: label + active period badge -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">💰 Pipeline</div>
-                <div id="pipeline-period-badge" style="font-size: 0.6rem; font-weight: 800; background: #f0f9ff; color: #0369a1; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">Total</div>
+                <div id="pipeline-period-badge" 
+                     style="font-size: 0.65rem; font-weight: 800; background: #f0f9ff; color: #0369a1; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; transition: all 0.2s; border: 1px solid #e0f2fe; display: flex; align-items: center; gap: 4px;"
+                     onmouseover="this.style.background='#e0f2fe'; this.style.borderColor='#bae6fd';" 
+                     onmouseout="this.style.background='#f0f9ff'; this.style.borderColor='#e0f2fe';"
+                     title="Click to view details">
+                     Monthly <span style="font-size: 0.55rem; opacity: 0.7;">🔍</span>
+                </div>
             </div>
-            <div id="pipeline-value" style="font-size: 1.25rem; font-weight: 900; color: var(--accent-color);">$<?= number_format($pipeline_data['Total'], 0) ?></div>
-            
-            <!-- Quick Toggle Controls -->
-            <div class="pipeline-controls" style="margin-top: 10px; display: flex; gap: 4px;">
-                <?php foreach(['Daily', 'Weekly', 'Monthly', 'Yearly', 'Total'] as $period): ?>
-                    <button type="button" onclick="setPipelinePeriod('<?= $period ?>')" 
-                            class="pipeline-btn" 
+
+            <!-- Value + order count on same line -->
+            <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px;">
+                <div id="pipeline-value" style="font-size: 1.5rem; font-weight: 900; color: var(--accent-color); transition: opacity 0.2s;">$0</div>
+                <div id="pipeline-count" style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);"></div>
+            </div>
+
+            <!-- D / W / M / Y toggle buttons -->
+            <div class="pipeline-controls" style="display: flex; gap: 6px; margin-bottom: 14px;">
+                <?php foreach(['Daily' => 'D', 'Weekly' => 'W', 'Monthly' => 'M', 'Yearly' => 'Y'] as $period => $label): ?>
+                    <button type="button"
+                            onclick="setPipelinePeriod('<?= $period ?>')"
+                            class="pipeline-btn"
+                            id="pipbtn-<?= $period ?>"
                             data-period="<?= $period ?>"
-                            data-value="$<?= number_format($pipeline_data[$period], 0) ?>"
-                            style="flex: 1; height: 20px; font-size: 0.55rem; font-weight: 800; border: 1px solid #e2e8f0; border-radius: 4px; background: white; cursor: pointer; transition: all 0.2s; color: #64748b;">
-                        <?= substr($period, 0, 1) ?>
+                            style="width: 36px; height: 28px; font-size: 0.7rem; font-weight: 800;
+                                   border: 1px solid #e2e8f0; border-radius: 6px; background: white;
+                                   cursor: pointer; transition: all 0.18s; color: #64748b;">
+                        <?= $label ?>
                     </button>
                 <?php endforeach; ?>
             </div>
+
+            <!-- Note: Click the period badge above to expand/view detailed orders list -->
         </div>
         
         <?= UI::stat_card("Active Batches", $active_batches_count) ?>
@@ -323,48 +389,7 @@ try {
             echo "<div class='empty-state' style='padding: 40px;'>No customers registered yet.</div>";
         }
         ?>
-        <script>
-            /**
-             * Updates the pipeline card display and saves preference
-             */
-            function setPipelinePeriod(period) {
-                const valueDisplay = document.getElementById('pipeline-value');
-                const badge = document.getElementById('pipeline-period-badge');
-                const buttons = document.querySelectorAll('.pipeline-btn');
-                
-                // Find the button for this period to get the pre-calculated value
-                const targetBtn = Array.from(buttons).find(btn => btn.getAttribute('data-period') === period);
-                if (!targetBtn) return;
-
-                const value = targetBtn.getAttribute('data-value');
-                
-                // Update UI
-                valueDisplay.innerText = value;
-                badge.innerText = period;
-                
-                // Update button styles
-                buttons.forEach(btn => {
-                    if (btn.getAttribute('data-period') === period) {
-                        btn.style.background = 'var(--text-main)';
-                        btn.style.color = 'white';
-                        btn.style.borderColor = 'var(--text-main)';
-                    } else {
-                        btn.style.background = 'white';
-                        btn.style.color = '#64748b';
-                        btn.style.borderColor = '#e2e8f0';
-                    }
-                });
-
-                // Save preference
-                localStorage.setItem('iqa_pipeline_pref', period);
-            }
-
-            // Initialize preference on load
-            document.addEventListener('DOMContentLoaded', () => {
-                const pref = localStorage.getItem('iqa_pipeline_pref') || 'Total';
-                setPipelinePeriod(pref);
-            });
-        </script>
+        <!-- Pipeline logic moved to external assets/js/pipeline.js -->
     </div>
 </div>
 
