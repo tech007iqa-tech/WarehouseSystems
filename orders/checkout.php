@@ -74,7 +74,7 @@ try {
                 WHERE id = ? AND customer_id = ?");
             $stmt->execute([
                 $_POST['brand'], $_POST['model'], $_POST['series'], $_POST['cpu'], $_POST['description'],
-                (int)$_POST['quantity'], (float)$_POST['unit_price'], (int)$_POST['item_id'], $customer_id
+                (float)$_POST['quantity'], (float)$_POST['unit_price'], (int)$_POST['item_id'], $customer_id
             ]);
             echo json_encode(['status' => 'success']);
             exit();
@@ -86,7 +86,7 @@ try {
 
         $stmt = $conn_items->prepare("UPDATE items SET unit_price = ?, quantity = ? WHERE id = ? AND customer_id = ?");
         foreach($prices as $id => $val) {
-            $qty = (int)($qtys[$id] ?? 0);
+            $qty = (float)($qtys[$id] ?? 0);
             $stmt->execute([(float)$val, $qty, (int)$id, $customer_id]);
         }
 
@@ -153,7 +153,9 @@ try {
         <h1 class="print-only" style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Order Manifest</h1>
 
         <div class="header-success no-print" style="text-align: center; margin-bottom: 30px;">
-            <div class="icon-check">✓</div>
+            <a href="index.php" onclick="return confirm('Are you sure you want to leave checkout? Any unsaved changes on this manifest will be lost.')" style="text-decoration: none; display: inline-block; outline: none; -webkit-tap-highlight-color: transparent;">
+                <div class="icon-check" style="cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='scale(1.1)';" onmouseout="this.style.transform='scale(1)';">✓</div>
+            </a>
             <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Final Batch Verification</h1>
             <p class="subtitle">Review quantities and pricing for this manifest before final submission.</p>
             <div style="margin-top: 20px; max-width: 500px; margin-left: auto; margin-right: auto;">
@@ -201,7 +203,7 @@ try {
                     $grand_total = 0;
                     if (count($items) > 0):
                         foreach($items as $index => $item):
-                            $qty = $item['quantity'];
+                            $qty = (float)$item['quantity'];
                             $price = $item['unit_price'] ?? 0;
                             $subtotal = $qty * $price;
                             $total_items += $qty;
@@ -220,8 +222,8 @@ try {
                             </div>
                         </td>
                         <td class="col-qty" style="text-align: center;">
-                            <span class="print-only" style="font-weight: 700;"><?= (int)$qty ?></span>
-                            <input type="number" name="quantities[<?= $item['id'] ?>]" aria-label="Item Quantity" value="<?= (int)$qty ?>" min="1" class="qty-input no-print" oninput="recalculateTotals()" style="width: 70px; text-align: center; height: 38px; border: 1px solid var(--border-color); border-radius: 8px; font-weight: 700;">
+                            <span class="print-only" style="font-weight: 700;"><?= (float)$qty ?></span>
+                            <input type="number" name="quantities[<?= $item['id'] ?>]" aria-label="Item Quantity" value="<?= (float)$qty ?>" step="any" min="0" class="qty-input no-print" oninput="recalculateTotals()" style="width: 70px; text-align: center; height: 38px; border: 1px solid var(--border-color); border-radius: 8px; font-weight: 700;">
                         </td>
                         <td class="col-price" style="text-align: right;">
                             <span class="print-only">$<?= number_format($price, 2) ?></span>
@@ -243,7 +245,7 @@ try {
                     <tr class="row-total">
                         <td class="total-label" style="padding-left: 0; font-weight: 800;">Total Amount Due</td>
                         <td class="total-qty" style="text-align: center; font-weight: 800; color: var(--text-main);">
-                            <span id="total-qty-display"><?= (int)$total_items ?></span>
+                            <span id="total-qty-display"><?= (float)$total_items ?></span>
                         </td>
                         <td class="total-empty"></td>
                         <td class="total-amount" style="text-align: right; color: var(--accent-color); padding-right: 0; font-weight: 800;">
@@ -332,7 +334,7 @@ try {
                 </div>
                 <div class="form-group">
                     <label for="modal-qty">Quantity</label>
-                    <input type="number" id="modal-qty">
+                    <input type="number" id="modal-qty" step="any" min="0">
                 </div>
                 <div class="form-group">
                     <label for="modal-price">Unit Price ($)</label>

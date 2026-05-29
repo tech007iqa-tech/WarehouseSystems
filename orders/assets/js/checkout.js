@@ -120,7 +120,7 @@ function downloadCSV() {
         const qtyIn = row.querySelector('.qty-input');
         const priceIn = row.querySelector('.price-input');
 
-        const liveQty = qtyIn ? parseInt(qtyIn.value) || 0 : 0;
+        const liveQty = qtyIn ? parseFloat(qtyIn.value) || 0 : 0;
         const livePrice = priceIn ? parseFloat(priceIn.value) || 0 : 0;
         const rowTotal = liveQty * livePrice;
 
@@ -355,7 +355,7 @@ async function saveItemChanges() {
             if (state.rawItems && state.rawItems[idx]) {
                 Object.assign(state.rawItems[idx], {
                     brand, model, series, cpu, description: desc,
-                    quantity: parseInt(qty), unit_price: price
+                    quantity: parseFloat(qty), unit_price: price
                 });
             }
 

@@ -28,7 +28,7 @@ try {
     $series = $_POST['series'] ?? '';
     $cpu = $_POST['cpu'] ?? '';
     $desc = $_POST['description'] ?? '';
-    $qty = Security::sanitize_int($_POST['quantity']);
+    $qty = Security::sanitize_float($_POST['quantity']);
     $price = Security::sanitize_float($_POST['unit_price'] ?? 0.00);
 
     $stmt = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -41,7 +41,8 @@ try {
             'brand' => $brand,
             'model' => $model,
             'series' => $series,
-            'cpu' => $cpu
+            'cpu' => $cpu,
+            'description' => $desc
         ];
 
         // Fetch new total units

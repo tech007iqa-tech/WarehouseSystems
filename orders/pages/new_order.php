@@ -17,11 +17,12 @@ try {
             $delete_id = $_POST['delete_id'] ?? 0;
             $stmt = $conn->prepare("DELETE FROM items WHERE id = ?");
             if ($stmt->execute([$delete_id])) {
-                $_SESSION['message'] = "<div class='alert success'>Item removed from order.</div>";
+                $_SESSION['notification_msg'] = "Item removed from order. 🗑️";
+                $_SESSION['notification_type'] = "success";
             }
         } elseif (isset($_POST['action']) && $_POST['action'] === 'update_item') {
             $update_id = $_POST['update_id'] ?? 0;
-            $qty = Security::sanitize_int($_POST['update_qty'] ?? 1);
+            $qty = Security::sanitize_float($_POST['update_qty'] ?? 1);
             $price = Security::sanitize_float($_POST['update_price'] ?? 0.00);
             $brand = $_POST['update_brand'] ?? '';
             $model = $_POST['update_model'] ?? '';
@@ -30,10 +31,16 @@ try {
             $desc = $_POST['update_desc'] ?? '';
             
             $stmt = $conn->prepare("UPDATE items SET brand=?, model=?, series=?, cpu=?, description=?, quantity=?, unit_price=? WHERE id=?");
-            if ($stmt->execute([$brand, $model, $series, $cpu, $desc, (int)$qty, (float)$price, (int)$update_id])) {
-                $_SESSION['message'] = "<div class='alert success'>Item details updated.</div>";
+            if ($stmt->execute([$brand, $model, $series, $cpu, $desc, (float)$qty, (float)$price, (int)$update_id])) {
+                $_SESSION['notification_msg'] = "Item details updated. 💾";
+                $_SESSION['notification_type'] = "success";
             }
         }
+
+        $current_customer = $_GET['customer_id'] ?? null;
+        $current_order = $_GET['order_id'] ?? 'ORD-DEFAULT';
+        header("Location: index.php?customer_id=" . urlencode($current_customer) . "&order_id=" . urlencode($current_order) . "#summary-list");
+        exit();
     }
 } catch (PDOException $e) {
     die("Database Connection failed: " . $e->getMessage());
@@ -64,8 +71,6 @@ $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $total_units = 0;
 foreach($items as $item) $total_units += $item['quantity'];
 
-$message = $_SESSION['message'] ?? "";
-unset($_SESSION['message']);
 ?>
 
 <div class="new-order-layout">
@@ -107,7 +112,7 @@ unset($_SESSION['message']);
 
     <!-- Main Content: Entry Form & Summary -->
     <main class="order-main">
-        <?php echo $message; ?>
+
 
         <section class="entry-form-section card">
             <h3>Add Items to Batch</h3>
@@ -157,20 +162,18 @@ unset($_SESSION['message']);
                 <div class="form-row">
                     <div class="form-group">
                         <label>Quantity</label>
-                        <input type="number" id="qty" name="quantity" value="1" min="1" required>
+                        <input type="number" id="qty" name="quantity" placeholder="1" step="any" min="0" required>
                     </div>
                     <div class="form-group">
                         <label>Unit Price ($)</label>
-                        <input type="number" id="price" name="unit_price" value="0.00" step="0.01">
+                        <input type="number" id="price" name="unit_price" placeholder="0.00" step="0.01">
                     </div>
                 </div>
 
                 <div class="form-actions" style="display: flex; gap: 10px;">
                     <button type="submit" class="btn-add" style="flex: 2;">Add to Batch</button>
                     <button type="button" class="btn-repeat" onclick="openImportModal('<?= htmlspecialchars($current_customer) ?>', '<?= htmlspecialchars($current_order) ?>')" title="Import from Clipboard" style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px;">📋 Import</button>
-                    <?php if (isset($_SESSION['last_entry'])): ?>
-                        <button type="button" class="btn-repeat" onclick="repeatLastEntry()" title="Fill with last entry" style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem;">✨ Repeat Last</button>
-                    <?php endif; ?>
+                    <button type="button" id="btn-repeat-last" class="btn-repeat" onclick="repeatLastEntry()" title="Fill with last entry" style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem; <?= isset($_SESSION['last_entry']) ? '' : 'display: none;' ?>">✨ Repeat Last</button>
                 </div>
             </form>
         </section>
@@ -283,7 +286,7 @@ unset($_SESSION['message']);
             <div class="form-row">
                 <div class="form-group">
                     <label>Quantity</label>
-                    <input type="number" name="update_qty" id="edit-qty" min="1" required>
+                    <input type="number" name="update_qty" id="edit-qty" step="any" min="0" required>
                 </div>
                 <div class="form-group">
                     <label>Price</label>
@@ -365,6 +368,7 @@ function openEditModal(item) {
     document.getElementById('edit-qty').value = item.quantity;
     document.getElementById('edit-price').value = item.unit_price;
     document.getElementById('editModal').style.display = 'flex';
+    location.hash = '#summary-list'; // Jump to batch-builder-top
 }
 
 function closeEditModal() {
@@ -424,7 +428,8 @@ function repeatLastEntry() {
         'brand': lastEntry.brand,
         'model': lastEntry.model,
         'series': lastEntry.series,
-        'cpu': lastEntry.cpu
+        'cpu': lastEntry.cpu,
+        'description': lastEntry.description || ''
     };
 
     Object.keys(fields).forEach(key => {
@@ -434,6 +439,9 @@ function repeatLastEntry() {
             // Visual feedback
             input.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
             setTimeout(() => { input.style.backgroundColor = ''; }, 600);
+            if (key === 'description') {
+                input.dispatchEvent(new Event('input'));
+            }
         }
     });
 }
@@ -472,12 +480,23 @@ async function handleBatchSubmit(event) {
         const result = await response.json();
 
         if (result.success) {
+            // 0. Trigger glassmorphic success toast notification
+            if (window.IQA_Notify) {
+                window.IQA_Notify.success('New entry successfully added ✨');
+            }
+
             // 1. Update Table
             const tbody = document.getElementById('summary-list');
             const emptyRow = tbody.querySelector('.empty-row');
             if (emptyRow) emptyRow.remove();
 
             tbody.insertAdjacentHTML('afterbegin', result.row_html);
+
+            // Remove flash-new once animation ends so it can replay next time
+            const newRow = tbody.querySelector('.flash-new');
+            if (newRow) {
+                newRow.addEventListener('animationend', () => newRow.classList.remove('flash-new'), { once: true });
+            }
 
             // 2. Update Sidebar Total
             const counter = document.getElementById('sidebar-total-qty');
@@ -489,29 +508,28 @@ async function handleBatchSubmit(event) {
 
             // 3. Update "Repeat Last" state
             const stateEl = document.getElementById('lastEntryState');
-            if (stateEl) stateEl.textContent = JSON.stringify(result.last_entry);
-            
-            // Show the repeat button if it was hidden
-            const repeatBtn = document.querySelector('.btn-repeat');
-            if (!repeatBtn) {
-                // If it's the first item, we might need to refresh or dynamically inject the button
-                // For simplicity, we assume the button container handles this or user refreshes.
-                // But let's be thorough:
-                location.hash = '#batch-builder-top'; // Jump to top
+            if (stateEl) {
+                stateEl.textContent = JSON.stringify(result.last_entry);
+                const repeatBtn = document.getElementById('btn-repeat-last');
+                if (repeatBtn) {
+                    repeatBtn.style.display = '';
+                }
             }
 
-            // 4. Reset Form (except for fields we might want to keep)
-            form.querySelector('[name="model"]').value = '';
-            form.querySelector('[name="cpu"]').value = '';
+            // 4. Fully Reset Form
+            form.reset();
             const descEl = form.querySelector('[name="description"]');
             if (descEl) {
                 descEl.value = '';
                 descEl.dispatchEvent(new Event('input'));
             }
-            form.querySelector('[name="quantity"]').value = '1';
             
-            // Focus brand for next entry
-            form.querySelector('[name="brand"]').focus();
+            // Trigger brand change event to reset specific UI (like Apple prefix UI)
+            const brandEl = form.querySelector('[name="brand"]');
+            if (brandEl) {
+                brandEl.dispatchEvent(new Event('change'));
+                brandEl.focus();
+            }
 
         } else {
             alert('Error: ' + (result.error || 'Unknown error'));
@@ -803,6 +821,7 @@ async function processImport() {
         if (result.success) {
             btn.innerHTML = '✅ Success!';
             setTimeout(() => {
+                window.location.href = 'index.php?customer_id=' + encodeURIComponent(activeImportCustomerId) + '&order_id=' + encodeURIComponent(activeImportOrderId) + '#batch-builder-top';
                 window.location.reload();
             }, 1000);
         } else {
@@ -830,3 +849,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!text.trim()) {
                 preview.style.display = 'none';
+                return;
+            }
+
+            const { items, mapping } = parsePastedText(text);
+
+            // Show detected row count
+            count.textContent = items.length;
+
+            // Show mapping badge info
+            const detectedCols = [];
+            if (mapping.brand !== -1) detectedCols.push('Brand');
+            if (mapping.model !== -1) detectedCols.push('Model');
+            if (mapping.series !== -1) detectedCols.push('Series');
+            if (mapping.cpu !== -1) detectedCols.push('CPU');
+            if (mapping.description !== -1) detectedCols.push('Desc');
+            if (mapping.price !== -1) detectedCols.push('Price');
+            if (mapping.qty !== -1) detectedCols.push('Qty');
+
+            mappingInfo.innerHTML = `
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; font-size:0.7rem;">
+                    <span style="background:#f1f5f9; padding:3px 10px; border-radius:20px; font-weight:700; color:#475569;">📌 ${escapeHTML(mapping.delimiterName)}</span>
+                    ${mapping.hasHeader ? '<span style="background:#dcfce7; padding:3px 10px; border-radius:20px; font-weight:700; color:#16a34a;">✅ Header Detected</span>' : '<span style="background:#fef9c3; padding:3px 10px; border-radius:20px; font-weight:700; color:#854d0e;">⚠️ No Header (Auto-Mapped)</span>'}
+                    ${detectedCols.map(c => `<span style="background:#e0f2fe; padding:3px 10px; border-radius:20px; font-weight:600; color:#0369a1;">${escapeHTML(c)}</span>`).join('')}
+                </div>`;
+
+            // Build preview table
+            if (items.length === 0) {
+                preview.style.display = 'none';
+                return;
+            }
+
+            preview.style.display = 'block';
+
+            const headers = ['Brand', 'Model', 'Series', 'CPU', 'Description', 'Price', 'Qty'];
+            table.innerHTML = `
+                <thead>
+                    <tr style="background:#f8fafc;">${headers.map(h => `<th style="padding:8px 10px; font-size:0.65rem; font-weight:800; text-transform:uppercase; color:#94a3b8; text-align:left; border-bottom:1px solid #e2e8f0;">${h}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${items.slice(0, 20).map(item => `
+                        <tr>
+                            <td style="padding:7px 10px; border-bottom:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(item.brand)}</td>
+                            <td style="padding:7px 10px; border-bottom:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(item.model)}</td>
+                            <td style="padding:7px 10px; border-bottom:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(item.series)}</td>
+                            <td style="padding:7px 10px; border-bottom:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(item.cpu)}</td>
+                            <td style="padding:7px 10px; border-bottom:1px solid #f1f5f9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(item.description)}</td>
+                            <td style="padding:7px 10px; border-bottom:1px solid #f1f5f9; text-align:right;">${item.unit_price > 0 ? '$' + item.unit_price.toFixed(2) : '—'}</td>
+                            <td style="padding:7px 10px; border-bottom:1px solid #f1f5f9; text-align:center; font-weight:700;">${item.quantity}</td>
+                        </tr>`).join('')}
+                    ${items.length > 20 ? `<tr><td colspan="7" style="padding:8px 10px; text-align:center; font-size:0.7rem; color:#94a3b8;">… and ${items.length - 20} more rows</td></tr>` : ''}
+                </tbody>`;
+        });
+    }
+});
+</script>
+

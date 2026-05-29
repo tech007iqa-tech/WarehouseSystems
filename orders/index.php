@@ -201,7 +201,7 @@ $page_content = ob_get_clean();
     </div>
     <?php if ($active_key !== 'calendar'): ?>
     <footer class="footer" role="contentinfo">
-        <p>&copy; <?= date('M Y') ?> IQA Metal | Managed Inventory & Order Fulfillments <a href="../labels/">Labels</a></p>
+        <p><a href="#">&copy; <?= date('M Y') ?> IQA Metal</a> | Managed Inventory & Order Fulfillments <a href="../labels/">Labels</a></p>
     </footer>
     <?php endif; ?>
     <!-- Load view-specific JavaScript -->
