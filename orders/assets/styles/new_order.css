@@ -365,7 +365,7 @@
     .new-order-layout {
         grid-template-columns: 1fr;
     }
-    
+
     .order-sidebar {
         position: static;
         order: 2;

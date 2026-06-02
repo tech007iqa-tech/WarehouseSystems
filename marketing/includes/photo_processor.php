@@ -21,7 +21,7 @@ class PhotoProcessor {
         // Check for GD library before processing
         if (!extension_loaded('gd')) {
             $this->updateStatus($photoId, 'Ready');
-            return true; 
+            return true;
         }
 
         $stmt = $this->pdo->prepare("SELECT * FROM photos WHERE id = ?");
@@ -52,8 +52,8 @@ class PhotoProcessor {
         if ($tSuccess || $oSuccess) {
             $stmt = $this->pdo->prepare("UPDATE photos SET thumbnail_path = ?, optimized_path = ?, status = 'Ready' WHERE id = ?");
             $stmt->execute([
-                $tSuccess ? $thumbRelativePath : null, 
-                $oSuccess ? $optRelativePath : null, 
+                $tSuccess ? $thumbRelativePath : null,
+                $oSuccess ? $optRelativePath : null,
                 $photoId
             ]);
             return true;
@@ -87,7 +87,7 @@ class PhotoProcessor {
 
         $width = $info[0];
         $height = $info[1];
-        
+
         if ($square) {
             $newWidth = $newHeight = $maxWidth;
             $srcX = 0; $srcY = 0;
@@ -111,7 +111,7 @@ class PhotoProcessor {
         }
 
         $tmpImg = imagecreatetruecolor($newWidth, $newHeight);
-        
+
         // Preserve transparency
         imagealphablending($tmpImg, false);
         imagesavealpha($tmpImg, true);

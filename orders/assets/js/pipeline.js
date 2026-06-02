@@ -235,7 +235,7 @@
                     </div>
                     <button class="pipe-modal-close" id="pipe-modal-close-btn" type="button">✕</button>
                 </div>
-                
+
                 <div class="pipe-kpis">
                     <div class="pipe-kpi-card">
                         <span class="pipe-kpi-label">Total Value</span>
@@ -331,10 +331,10 @@
             const badge = `<span style="background:${s.bg};color:${s.color};font-size:0.62rem;font-weight:800;padding:3px 8px;border-radius:6px;text-transform:uppercase;letter-spacing:0.02em;">${s.label}</span>`;
             const val = parseFloat(o.order_value) || 0;
             const qty = parseInt(o.total_qty) || 0;
-            
+
             // Choose link destination based on status
             const isCompleted = ['finalized', 'paid', 'dispatched', 'canceled'].includes(o.status.toLowerCase());
-            const targetUrl = isCompleted 
+            const targetUrl = isCompleted
                 ? `checkout.php?customer_id=${encodeURIComponent(o.customer_id)}&order_id=${encodeURIComponent(o.order_id)}`
                 : `index.php?customer_id=${encodeURIComponent(o.customer_id)}&order_id=${encodeURIComponent(o.order_id)}`;
 

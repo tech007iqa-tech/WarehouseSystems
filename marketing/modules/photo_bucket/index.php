@@ -59,14 +59,14 @@ $models = get_photo_bucket_models($marketingDb, $labelsDb);
         <?php foreach ($photos as $photo): ?>
             <div class="photo-card-compact">
                 <div class="photo-thumb-container">
-                    <?php 
-                    $displayImg = (!empty($photo['thumbnail_path']) && file_exists(__DIR__ . '/../../' . $photo['thumbnail_path'])) 
-                                  ? $photo['thumbnail_path'] 
+                    <?php
+                    $displayImg = (!empty($photo['thumbnail_path']) && file_exists(__DIR__ . '/../../' . $photo['thumbnail_path']))
+                                  ? $photo['thumbnail_path']
                                   : $photo['file_path'];
                     ?>
-                    <img src="<?php echo $displayImg; ?>" alt="<?php echo htmlspecialchars($photo['original_name']); ?>" 
+                    <img src="<?php echo $displayImg; ?>" alt="<?php echo htmlspecialchars($photo['original_name']); ?>"
                          style="<?php echo ($photo['status'] === 'Processing') ? 'filter: blur(8px);' : ''; ?>">
-                    
+
                     <?php if ($photo['status'] === 'Processing'): ?>
                         <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.4); font-size: 0.6rem; font-weight: 800; color: var(--accent-primary);">
                             ⚙️
@@ -74,20 +74,20 @@ $models = get_photo_bucket_models($marketingDb, $labelsDb);
                     <?php endif; ?>
 
                     <div class="photo-actions-overlay">
-                        <a href="?page=photo_bucket&delete_photo=<?php echo $photo['id']; ?>" 
+                        <a href="?page=photo_bucket&delete_photo=<?php echo $photo['id']; ?>"
                            onclick="return confirm('Delete this photo?')"
                            class="action-icon-small delete" title="Delete">🗑️</a>
-                        
-                        <?php 
-                        $fullViewPath = (!empty($photo['optimized_path']) && file_exists(__DIR__ . '/../../' . $photo['optimized_path'])) 
-                                        ? $photo['optimized_path'] 
+
+                        <?php
+                        $fullViewPath = (!empty($photo['optimized_path']) && file_exists(__DIR__ . '/../../' . $photo['optimized_path']))
+                                        ? $photo['optimized_path']
                                         : $photo['file_path'];
                         ?>
                         <a href="<?php echo $fullViewPath; ?>" target="_blank" class="action-icon-small view" title="View Optimized">👁️</a>
                         <a href="<?php echo $photo['file_path']; ?>" download class="action-icon-small download" title="Download Raw">📥</a>
                     </div>
                 </div>
-                
+
                 <div class="photo-meta-compact">
                     <h3 title="<?php echo htmlspecialchars($photo['model_name'] ?: 'General'); ?>">
                         <?php echo htmlspecialchars($photo['model_name'] ?: 'General'); ?>
@@ -109,15 +109,15 @@ $models = get_photo_bucket_models($marketingDb, $labelsDb);
             <h2 style="margin: 0;">Upload Marketing Photo</h2>
             <button onclick="document.getElementById('upload-modal').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dim);">×</button>
         </div>
-        
+
         <form action="?page=photo_bucket" method="POST" enctype="multipart/form-data" class="standard-form">
             <div class="form-group">
-                <label>Select Photo</label>
+                <label for="photo">Select Photo</label>
                 <input type="file" name="photo" accept="image/*" required>
             </div>
-            
+
             <div class="form-group">
-                <label>Hardware Model (Optional)</label>
+                <label for="model_name">Hardware Model (Optional)</label>
                 <input type="text" name="model_name" list="model_list" placeholder="Start typing or enter custom model...">
                 <datalist id="model_list">
                     <?php foreach ($models as $model): ?>
@@ -126,9 +126,9 @@ $models = get_photo_bucket_models($marketingDb, $labelsDb);
                 </datalist>
                 <small style="font-size: 0.7rem; color: var(--text-dim); display: block; margin-top: 4px;">Suggestions include Active Templates and Warehouse Inventory.</small>
             </div>
-            
+
             <div class="form-group">
-                <label>Category</label>
+                <label for="category">Category</label>
                 <select name="category">
                     <option value="Laptop">Laptop</option>
                     <option value="Workstation">Workstation</option>
@@ -139,7 +139,7 @@ $models = get_photo_bucket_models($marketingDb, $labelsDb);
                     <option value="Other">Other</option>
                 </select>
             </div>
-            
+
             <div style="display: flex; gap: 1rem; margin-top: 1rem;">
                 <button type="submit" name="upload_photo" class="btn-action" style="flex: 2;">Upload to Bucket</button>
                 <button type="button" onclick="document.getElementById('upload-modal').style.display='none'" class="btn-action" style="flex: 1; background: var(--text-dim);">Cancel</button>

@@ -30,7 +30,7 @@
     --border-radius-lg: 16px;
     --border-radius-md: 10px;
     --input-padding: 12px 16px;
-    
+
     --font-main: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -218,7 +218,7 @@ main {
 }
 
 @media (max-width: 1024px) {
-    .card, .quick-actions, .activity-feed, .smart-opportunities, .ad-preview-main, 
+    .card, .quick-actions, .activity-feed, .smart-opportunities, .ad-preview-main,
     .lead-details-form, .lead-pool-table, .template-library-list {
         grid-column: span 12;
     }
@@ -450,9 +450,9 @@ input:focus, select:focus, textarea:focus {
     border: 1px solid #fecaca;
 }
 
-.badge-new, .badge-lead { 
-    background: #f0fdf4; 
-    color: #166534; 
+.badge-new, .badge-lead {
+    background: #f0fdf4;
+    color: #166534;
     padding: 0.25rem 0.75rem;
     border: 1px solid #bbf7d0;
     border-radius: 1rem;
@@ -460,9 +460,9 @@ input:focus, select:focus, textarea:focus {
     font-weight: 700;
 }
 
-.badge-customer { 
-    background: #eff6ff; 
-    color: #1e40af; 
+.badge-customer {
+    background: #eff6ff;
+    color: #1e40af;
     padding: 0.25rem 0.75rem;
     border: 1px solid #bfdbfe;
     border-radius: 1rem;
@@ -582,26 +582,26 @@ input:focus, select:focus, textarea:focus {
     main { padding: 1.5rem 1rem; }
     .nav-container { padding: 0 1rem; height: auto; flex-direction: column; padding-bottom: 1rem; }
     .brand { margin: 1.5rem 0; }
-    .nav-links { 
-        display: flex; 
-        width: 100%; 
-        overflow-x: auto; 
+    .nav-links {
+        display: flex;
+        width: 100%;
+        overflow-x: auto;
         padding: 5px 0;
         -webkit-overflow-scrolling: touch;
         gap: 0.5rem;
     }
-    .nav-links a { 
-        white-space: nowrap; 
-        font-size: 0.8rem; 
+    .nav-links a {
+        white-space: nowrap;
+        font-size: 0.8rem;
         padding: 8px 12px;
         background: #f1f5f9;
     }
     .nav-links li:first-child a { margin-left: 0; }
-    
+
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .photo-grid {
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
         gap: 1rem !important;

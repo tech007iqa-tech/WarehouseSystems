@@ -31,7 +31,7 @@ $files = glob($docsDir . '/*.md');
     <section class="card" style="position: sticky; top: 100px; padding: 1.5rem;">
         <h2 style="font-size: 0.8rem; text-transform: uppercase; margin-bottom: 1.5rem;">Documentation</h2>
         <nav class="docs-nav">
-            <?php foreach ($files as $file): 
+            <?php foreach ($files as $file):
                 $basename = basename($file);
                 $title = str_replace(['_', '.md'], [' ', ''], $basename);
                 $active = ($selectedDoc === $basename) ? 'active' : '';
@@ -47,7 +47,7 @@ $files = glob($docsDir . '/*.md');
     <section class="card" style="min-height: 600px; padding: 3rem;">
         <?php if ($docContent): ?>
             <div class="markdown-view">
-                <?php 
+                <?php
                     // Basic Markdown-to-HTML conversion for headings and lists
                     $html = htmlspecialchars($docContent);
                     $html = preg_replace('/^# (.*)$/m', '<h1>$1</h1>', $html);
@@ -55,7 +55,7 @@ $files = glob($docsDir . '/*.md');
                     $html = preg_replace('/^### (.*)$/m', '<h3>$1</h3>', $html);
                     $html = preg_replace('/^- (.*)$/m', '<li>$1</li>', $html);
                     $html = preg_replace('/\n\n/', '<p></p>', $html);
-                    echo nl2br($html); 
+                    echo nl2br($html);
                 ?>
             </div>
         <?php else: ?>

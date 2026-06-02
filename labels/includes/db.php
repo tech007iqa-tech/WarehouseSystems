@@ -64,7 +64,7 @@ try {
         echo json_encode(['success' => false, 'error' => 'Database connection failed: ' . $e->getMessage()]);
         exit;
     }
-    
+
     // Fallback for direct HTML view
     die("Database Connection Error: " . $e->getMessage());
 }

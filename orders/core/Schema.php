@@ -60,7 +60,7 @@ class Schema {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_owner TEXT NOT NULL,
                 sector TEXT NOT NULL,
-                location_code TEXT DEFAULT 'ZONE-0', 
+                location_code TEXT DEFAULT 'ZONE-0',
                 brand TEXT NOT NULL,
                 model TEXT NOT NULL,
                 specs_json TEXT,
@@ -119,7 +119,7 @@ class Schema {
      * Ensures all tables for a specific database exist and are up to date.
      * Migrations always run (they are idempotent), bypassing the session cache
      * so a stale session never silently skips a column addition.
-     * 
+     *
      * @param PDO $conn The connection to the database
      * @param string $db_name The name of the database (e.g., 'orders')
      */
@@ -231,7 +231,7 @@ class Schema {
         if ($db_name === 'warehouse' && $table === 'inventory') {
             $conn->exec("CREATE INDEX IF NOT EXISTS idx_inv_sector ON inventory(sector)");
             $conn->exec("CREATE INDEX IF NOT EXISTS idx_inv_brand ON inventory(brand)");
-            
+
             $cols = $conn->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC);
             if (!in_array('price', array_column($cols, 'name'))) {
                 $conn->exec("ALTER TABLE inventory ADD COLUMN price REAL DEFAULT 0");

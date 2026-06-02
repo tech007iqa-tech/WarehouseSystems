@@ -41,7 +41,7 @@ try {
 
         // 2. Generate internal customer ID
         $internal_id = 'CUST-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
-        
+
         $data = [
             ':cid' => $internal_id,
             ':company' => $_POST['company_name'],
@@ -55,17 +55,17 @@ try {
             ':cb_date' => $_POST['callback_date'] ?? '',
             ':msg_date' => $_POST['message_date'] ?? ''
         ];
-        
-        $sql = "INSERT INTO customers (customer_id, company_name, website, contact_person, address, email, phone, shipping_address, internal_notes, callback_date, message_date) 
+
+        $sql = "INSERT INTO customers (customer_id, company_name, website, contact_person, address, email, phone, shipping_address, internal_notes, callback_date, message_date)
                 VALUES (:cid, :company, :web, :contact, :addr, :email, :phone, :ship, :notes, :cb_date, :msg_date)";
-        
+
         $stmt = $conn->prepare($sql);
         try {
             if ($stmt->execute($data)) {
                 // AUTOMATIC FRESH BATCH CREATION
                 $conn_o = Database::orders();
                 $new_order_id = 'ORD-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
-                
+
                 $stmt_o = $conn_o->prepare("INSERT INTO orders (order_id, customer_id, status) VALUES (?, ?, 'active')");
                 $stmt_o->execute([$new_order_id, $internal_id]);
 
@@ -94,7 +94,7 @@ unset($_SESSION['message']);
     <form action="" method="POST" class="grid-form">
         <input type="hidden" name="action" value="register">
         <?= UI::csrf_field() ?>
-        
+
         <div class="form-row">
             <div class="form-group" style="grid-column: span 2;">
                 <label for="company_name">Company Name*</label>

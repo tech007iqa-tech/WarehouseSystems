@@ -12,10 +12,10 @@ try {
 
     // 1. Fetch from Warehouse
     $conn_wh = Database::warehouse();
-    
+
     $wh_brands = $conn_wh->query("SELECT DISTINCT brand FROM inventory WHERE brand != ''")->fetchAll(PDO::FETCH_COLUMN);
     $wh_models = $conn_wh->query("SELECT DISTINCT model FROM inventory WHERE model != ''")->fetchAll(PDO::FETCH_COLUMN);
-    
+
     // For CPUs, we need to parse specs_json
     $wh_specs = $conn_wh->query("SELECT specs_json FROM inventory WHERE specs_json != ''")->fetchAll(PDO::FETCH_COLUMN);
     $wh_cpus = [];
@@ -27,7 +27,7 @@ try {
 
     // 2. Fetch from Orders/Items (Historical)
     $conn_o = Database::orders();
-    
+
     $o_brands = $conn_o->query("SELECT DISTINCT brand FROM items WHERE brand != ''")->fetchAll(PDO::FETCH_COLUMN);
     $o_models = $conn_o->query("SELECT DISTINCT model FROM items WHERE model != ''")->fetchAll(PDO::FETCH_COLUMN);
     $o_cpus   = $conn_o->query("SELECT DISTINCT cpu FROM items WHERE cpu != ''")->fetchAll(PDO::FETCH_COLUMN);

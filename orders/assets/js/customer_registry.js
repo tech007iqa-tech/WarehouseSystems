@@ -407,7 +407,7 @@ function closeProfile() {
  */
 window.addEventListener('load', () => {
     const targetId = localStorage.getItem('active_customer_id');
-    
+
     if (targetId) {
         localStorage.removeItem('active_customer_id');
         const cards = document.getElementsByClassName('cust-card');
@@ -482,7 +482,7 @@ function parsePastedText(text) {
                 return s;
             });
         }
-        
+
         // CSV splits with quotes
         const result = [];
         let cur = '';
@@ -588,7 +588,7 @@ function parsePastedText(text) {
         const series = seriesIdx !== -1 ? (cols[seriesIdx] || '').trim() : 'N/A';
         const cpu = cpuIdx !== -1 ? (cols[cpuIdx] || '').trim() : '';
         const description = descIdx !== -1 ? (cols[descIdx] || '').trim() : '';
-        
+
         let price = 0;
         if (priceIdx !== -1 && cols[priceIdx]) {
             const parsedPrice = parseFloat(cols[priceIdx].toString().replace(/[^-0-9.]/g, ''));
@@ -657,8 +657,8 @@ document.getElementById('import-paste-area')?.addEventListener('input', function
     if (mapping.price !== -1) activeMappings.push(`<b>Price</b> (Col ${mapping.price + 1})`);
     if (mapping.qty !== -1) activeMappings.push(`<b>Qty</b> (Col ${mapping.qty + 1})`);
 
-    const headerMsg = mapping.hasHeader 
-        ? `✨ Auto-detected header row in <b>${mapping.delimiterName}</b> format.` 
+    const headerMsg = mapping.hasHeader
+        ? `✨ Auto-detected header row in <b>${mapping.delimiterName}</b> format.`
         : `⚡ No header found. Fallback mapping used in <b>${mapping.delimiterName}</b> format.`;
 
     if (mappingInfo) {
@@ -671,7 +671,7 @@ document.getElementById('import-paste-area')?.addEventListener('input', function
     }
 
     let html = `<thead><tr style="background:#f1f5f9; text-align:left; position:sticky; top:0; z-index:1; box-shadow:0 1px 0 #e2e8f0;"><th style="padding:8px 10px; width:20%;">Brand</th><th style="padding:8px 10px; width:30%;">Model</th><th style="padding:8px 10px; width:25%;">Specs</th><th style="padding:8px 10px; width:10%;">Qty</th><th style="padding:8px 10px; width:15%;">Price</th></tr></thead><tbody>`;
-    
+
     items.slice(0, 50).forEach(item => {
         const specs = [item.series, item.cpu].filter(v => v && v !== 'N/A').join(' / ') || item.description || '—';
         html += `<tr>
@@ -709,7 +709,7 @@ async function processImport() {
         btn.disabled = false;
         return;
     }
-    
+
     try {
         const response = await fetch('api/bulk_update_orders.php', {
             method: 'POST',

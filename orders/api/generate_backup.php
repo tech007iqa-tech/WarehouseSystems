@@ -25,7 +25,7 @@ if (extension_loaded('zip')) {
     // PREFERRED: ZIP Archive
     $backup_name = "IQA_Backup_{$timestamp}.zip";
     $temp_file = sys_get_temp_dir() . '/' . $backup_name;
-    
+
     $zip = new ZipArchive();
     if ($zip->open($temp_file, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
         foreach ($files as $file) $zip->addFile($file, basename($file));
@@ -36,7 +36,7 @@ if (extension_loaded('zip')) {
     // FALLBACK: TAR Archive (Built-in to PHP Phar extension)
     $backup_name = "IQA_Backup_{$timestamp}.tar";
     $temp_file = sys_get_temp_dir() . '/' . $backup_name;
-    
+
     try {
         $tar = new PharData($temp_file);
         foreach ($files as $file) $tar->addFile($file, basename($file));
@@ -53,13 +53,13 @@ if (extension_loaded('zip')) {
  */
 function stream_backup($path, $name, $type) {
     Audit::log('SYSTEM_BACKUP', 'ALL_DATABASES', "Backup generated: " . $name, 'system');
-    
+
     header('Content-Type: ' . $type);
     header('Content-Disposition: attachment; filename="' . $name . '"');
     header('Content-Length: ' . filesize($path));
     header('Pragma: no-cache');
     header('Expires: 0');
-    
+
     readfile($path);
     unlink($path);
     exit();

@@ -27,7 +27,7 @@ try {
     $cpu_speed          = sanitize_text($_POST[HW_FIELDS['CPU_SPEED']]          ?? null);
     $ram                = sanitize_text($_POST[HW_FIELDS['RAM']]                ?? null);
     $storage            = sanitize_text($_POST[HW_FIELDS['STORAGE']]            ?? null);
-    
+
     // Technical Sheet Fields
     $gpu                = sanitize_text($_POST[HW_FIELDS['GPU']]                ?? null);
     $screen_res         = sanitize_text($_POST[HW_FIELDS['SCREEN_RES']]         ?? null);
@@ -38,7 +38,7 @@ try {
     $os_version         = sanitize_text($_POST[HW_FIELDS['OS_VERSION']]         ?? null);
     $cosmetic_grade     = sanitize_text($_POST[HW_FIELDS['COSMETIC_GRADE']]     ?? null);
     $work_notes         = sanitize_text($_POST[HW_FIELDS['WORK_NOTES']]         ?? null);
-    
+
     $bios_state         = sanitize_text($_POST[HW_FIELDS['BIOS_STATE']]         ?? 'Unknown');
     $description        = sanitize_text($_POST[HW_FIELDS['DESCRIPTION']]        ?? 'Untested');
     $warehouse_location = sanitize_text($_POST[HW_FIELDS['LOCATION']]           ?? null);
@@ -46,26 +46,26 @@ try {
     // 2. Check for Duplicates (Avoid redundant Label Profiles)
     // We check if an item with exact technical specs and location already exists.
     $check_stmt = $pdo_labels->prepare("
-        SELECT id FROM items 
-        WHERE " . HW_FIELDS['BRAND'] . " = :brand 
-        AND " . HW_FIELDS['MODEL'] . " = :model 
+        SELECT id FROM items
+        WHERE " . HW_FIELDS['BRAND'] . " = :brand
+        AND " . HW_FIELDS['MODEL'] . " = :model
         AND (" . HW_FIELDS['SERIES'] . " = :series OR (" . HW_FIELDS['SERIES'] . " IS NULL AND :series_null IS NULL))
         AND (" . HW_FIELDS['SERIAL_NUMBER'] . " = :sn OR (" . HW_FIELDS['SERIAL_NUMBER'] . " IS NULL AND :sn_null IS NULL))
         AND (" . HW_FIELDS['CPU_SPECS'] . " = :cpu_specs OR (" . HW_FIELDS['CPU_SPECS'] . " IS NULL AND :cpu_specs_null IS NULL))
-        AND " . HW_FIELDS['BIOS_STATE'] . " = :bios_state 
-        AND " . HW_FIELDS['DESCRIPTION'] . " = :description 
+        AND " . HW_FIELDS['BIOS_STATE'] . " = :bios_state
+        AND " . HW_FIELDS['DESCRIPTION'] . " = :description
         AND (" . HW_FIELDS['LOCATION'] . " = :location OR (" . HW_FIELDS['LOCATION'] . " IS NULL AND :location_null IS NULL))
         AND " . HW_FIELDS['STATUS'] . " = 'In Warehouse'
         LIMIT 1
     ");
 
     $check_stmt->execute([
-        ':brand'     => $brand, 
-        ':model'     => $model, 
+        ':brand'     => $brand,
+        ':model'     => $model,
         ':series'    => $series, ':series_null' => $series,
         ':sn'        => $serial_number, ':sn_null' => $serial_number,
         ':cpu_specs' => $cpu_specs, ':cpu_specs_null' => $cpu_specs,
-        ':bios_state'=> $bios_state, 
+        ':bios_state'=> $bios_state,
         ':description'=> $description,
         ':location'  => $warehouse_location, ':location_null' => $warehouse_location
     ]);
@@ -80,32 +80,32 @@ try {
         $is_duplicate = false;
         $stmt = $pdo_labels->prepare("
             INSERT INTO items (
-                " . HW_FIELDS['BRAND'] . ", 
-                " . HW_FIELDS['MODEL'] . ", 
-                " . HW_FIELDS['SERIES'] . ", 
-                " . HW_FIELDS['SERIAL_NUMBER'] . ", 
-                " . HW_FIELDS['CPU_GEN'] . ", 
-                " . HW_FIELDS['CPU_SPECS'] . ", 
-                " . HW_FIELDS['CPU_CORES'] . ", 
-                " . HW_FIELDS['CPU_SPEED'] . ", 
-                " . HW_FIELDS['RAM'] . ", 
-                " . HW_FIELDS['STORAGE'] . ", 
-                " . HW_FIELDS['GPU'] . ", 
-                " . HW_FIELDS['SCREEN_RES'] . ", 
-                " . HW_FIELDS['BATTERY'] . ", 
-                " . HW_FIELDS['BATTERY_SPECS'] . ", 
-                " . HW_FIELDS['WEBCAM'] . ", 
-                " . HW_FIELDS['BACKLIT_KB'] . ", 
-                " . HW_FIELDS['OS_VERSION'] . ", 
-                " . HW_FIELDS['COSMETIC_GRADE'] . ", 
+                " . HW_FIELDS['BRAND'] . ",
+                " . HW_FIELDS['MODEL'] . ",
+                " . HW_FIELDS['SERIES'] . ",
+                " . HW_FIELDS['SERIAL_NUMBER'] . ",
+                " . HW_FIELDS['CPU_GEN'] . ",
+                " . HW_FIELDS['CPU_SPECS'] . ",
+                " . HW_FIELDS['CPU_CORES'] . ",
+                " . HW_FIELDS['CPU_SPEED'] . ",
+                " . HW_FIELDS['RAM'] . ",
+                " . HW_FIELDS['STORAGE'] . ",
+                " . HW_FIELDS['GPU'] . ",
+                " . HW_FIELDS['SCREEN_RES'] . ",
+                " . HW_FIELDS['BATTERY'] . ",
+                " . HW_FIELDS['BATTERY_SPECS'] . ",
+                " . HW_FIELDS['WEBCAM'] . ",
+                " . HW_FIELDS['BACKLIT_KB'] . ",
+                " . HW_FIELDS['OS_VERSION'] . ",
+                " . HW_FIELDS['COSMETIC_GRADE'] . ",
                 " . HW_FIELDS['WORK_NOTES'] . ",
-                " . HW_FIELDS['BIOS_STATE'] . ", 
-                " . HW_FIELDS['DESCRIPTION'] . ", 
-                " . HW_FIELDS['LOCATION'] . ", 
+                " . HW_FIELDS['BIOS_STATE'] . ",
+                " . HW_FIELDS['DESCRIPTION'] . ",
+                " . HW_FIELDS['LOCATION'] . ",
                 " . HW_FIELDS['STATUS'] . "
             ) VALUES (
-                :brand, :model, :series, :sn, :cpu_gen, :cpu_specs, :cpu_cores, :cpu_speed, 
-                :ram, :storage, :gpu, :screen_res, :battery, :battery_specs, :webcam, 
+                :brand, :model, :series, :sn, :cpu_gen, :cpu_specs, :cpu_cores, :cpu_speed,
+                :ram, :storage, :gpu, :screen_res, :battery, :battery_specs, :webcam,
                 :backlit_kb, :os_version, :cosmetic_grade, :work_notes,
                 :bios_state, :description, :location, 'In Warehouse'
             )

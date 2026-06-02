@@ -120,10 +120,10 @@ try {
     $safe_brand = preg_replace('/[^a-zA-Z0-9]/', '', $brand);
     $safe_model = preg_replace('/[^a-zA-Z0-9]/', '', $model);
     $safe_gen   = preg_replace('/[^a-zA-Z0-9]/', '', $cpu_gen);
-    
+
     $final_odt_name = "{$safe_brand}_{$safe_model}_{$safe_gen}_ID{$id}.odt";
     $final_odt_path = realpath($export_dir) . DIRECTORY_SEPARATOR . $final_odt_name;
-    
+
     file_put_contents($final_odt_path, $flat_xml);
 
     // 7. Response Logic (Download vs Direct Open)

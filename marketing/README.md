@@ -4,7 +4,7 @@ Welcome to the Marketing Management Application. This project is a modular exten
 
 ## Prerequisites
 - **PHP 7.4+** with SQLite support.
-- **GD Library**: Required for automated thumbnail generation and photo optimization. 
+- **GD Library**: Required for automated thumbnail generation and photo optimization.
   - *XAMPP Tip*: Enable `extension=gd` in your `php.ini` file and restart Apache.
 
 ## Quick Start

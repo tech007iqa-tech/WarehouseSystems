@@ -33,15 +33,15 @@ try {
             $word = trim($word);
             if ($word === '') continue;
             $paramKey = ":q" . $i;
-            $conditions[] = "({$F['BRAND']} LIKE $paramKey OR {$F['MODEL']} LIKE $paramKey OR {$F['SERIES']} LIKE $paramKey 
-                              OR {$F['CPU_GEN']} LIKE $paramKey OR {$F['CPU_SPECS']} LIKE $paramKey 
+            $conditions[] = "({$F['BRAND']} LIKE $paramKey OR {$F['MODEL']} LIKE $paramKey OR {$F['SERIES']} LIKE $paramKey
+                              OR {$F['CPU_GEN']} LIKE $paramKey OR {$F['CPU_SPECS']} LIKE $paramKey
                               OR {$F['CPU_CORES']} LIKE $paramKey OR {$F['CPU_SPEED']} LIKE $paramKey
-                              OR {$F['DESCRIPTION']} LIKE $paramKey OR {$F['LOCATION']} LIKE $paramKey 
+                              OR {$F['DESCRIPTION']} LIKE $paramKey OR {$F['LOCATION']} LIKE $paramKey
                               OR CAST(id AS TEXT) LIKE $paramKey)";
             $params[$paramKey] = '%' . $word . '%';
             $i++;
         }
-        
+
         if (!empty($conditions)) {
             $where = "WHERE " . implode(' AND ', $conditions);
             $stmt = $pdo_labels->prepare("SELECT * FROM items $where ORDER BY created_at DESC LIMIT 5");

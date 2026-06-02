@@ -1,7 +1,7 @@
-<?php 
+<?php
 require_once 'core/database.php';
 require_once __DIR__ . '/../core/UI.php';
-include 'core/auth.php'; 
+include 'core/auth.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -26,7 +26,7 @@ try {
     // 2. Determine active order ID
     $active_order_id = $_GET['order_id'] ?? $_POST['order_id'] ?? null;
     if (!$active_order_id) {
-        $stmt = $conn_items->prepare("SELECT order_id FROM orders WHERE customer_id = ? ORDER BY id DESC LIMIT 1");
+        $stmt = $conn_items->prepare("SELECT order_id FROM orders WHERE customer_id = ? ORDER BY created_at DESC LIMIT 1");
         $stmt->execute([$customer_id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $active_order_id = $row['order_id'] ?? 'ORD-DEFAULT';
@@ -64,13 +64,13 @@ try {
 
     // Handle Full Item Metadata & Finalization
     if ($_SERVER["REQUEST_METHOD"] == "POST") {
-        $order_id = $active_order_id; 
+        $order_id = $active_order_id;
 
         // Check if it's a specific single item update (Modal Save) or bulk save
         if (isset($_POST['action']) && $_POST['action'] === 'save_single_item') {
-            $stmt = $conn_items->prepare("UPDATE items SET 
-                brand = ?, model = ?, series = ?, cpu = ?, description = ?, 
-                quantity = ?, unit_price = ? 
+            $stmt = $conn_items->prepare("UPDATE items SET
+                brand = ?, model = ?, series = ?, cpu = ?, description = ?,
+                quantity = ?, unit_price = ?
                 WHERE id = ? AND customer_id = ?");
             $stmt->execute([
                 $_POST['brand'], $_POST['model'], $_POST['series'], $_POST['cpu'], $_POST['description'],
@@ -95,13 +95,13 @@ try {
             // Use time from existing record or fallback to current time
             $existing_time = $order_data ? date('H:i:s', strtotime($order_data['created_at'])) : date('H:i:s');
             $new_date = $_POST['order_date'] . ' ' . $existing_time;
-            
+
             $stmt_od = $conn_items->prepare("UPDATE orders SET created_at = ? WHERE order_id = ?");
             $stmt_od->execute([$new_date, $order_id]);
         }
 
         // 2. Determine if we should also finalize the status
-        $is_finalize = (isset($_POST['finalize_order']) && $_POST['finalize_order'] === 'true') || 
+        $is_finalize = (isset($_POST['finalize_order']) && $_POST['finalize_order'] === 'true') ||
                        (isset($_POST['finalize_status']) && $_POST['finalize_status'] === 'true');
 
         if ($is_finalize) {
@@ -268,7 +268,7 @@ try {
                         📊 CSV Form
                     </button>
                 </div>
-                
+
                 <button type="submit" name="finalize_order" value="true" class="btn-main" style="border: none; cursor: pointer; text-decoration:none; display:flex; align-items:center; justify-content:center; background: var(--accent-color); color: white; border-radius: 14px; font-weight: 800; height: 54px; box-shadow: 0 4px 12px rgba(140, 198, 63, 0.2);">
                     ✅ Finalize & Finish Batch
                 </button>
@@ -307,10 +307,10 @@ try {
                 <h3 style="font-weight: 800; font-size: 1.25rem;">📝 Edit Item</h3>
                 <button type="button" onclick="closeEditModal()" style="background:none; border:none; cursor:pointer; font-size:1.5rem; opacity:0.5;">&times;</button>
             </div>
-            
+
             <input type="hidden" id="modal-item-id">
             <input type="hidden" id="modal-item-index">
-            
+
             <div class="modal-grid">
                 <div class="form-group">
                     <label for="modal-brand">Brand</label>
@@ -365,12 +365,12 @@ try {
                 <button type="button" onclick="closeTransferModal()" style="background:none; border:none; cursor:pointer; font-size:1.5rem; opacity:0.5;">&times;</button>
             </div>
             <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px;">Relocate this entire order and all its items to a different customer account.</p>
-            
+
             <form method="POST">
                 <?= UI::csrf_field() ?>
                 <input type="hidden" name="action" value="transfer_order">
                 <input type="hidden" name="order_id" value="<?= htmlspecialchars($active_order_id) ?>">
-                
+
                 <div class="form-group" style="margin-bottom: 25px;">
                     <label for="new_customer_id">Target Customer Account</label>
                     <select name="new_customer_id" id="new_customer_id" required style="width: 100%; height: 48px; border-radius: 12px; border: 1px solid var(--border-color); padding: 0 15px; font-weight: 600;">

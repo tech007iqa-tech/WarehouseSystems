@@ -16,10 +16,10 @@ By following these design patterns, the codebase remains consistent, fast, and e
 ```js
 document.getElementById('myForm').addEventListener('submit', async (e) => {
     e.preventDefault(); // Stop page reload
-    
+
     const formData = new FormData(e.target);
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    
+
     try {
         submitBtn.disabled = true;
         submitBtn.textContent = 'Processing...';

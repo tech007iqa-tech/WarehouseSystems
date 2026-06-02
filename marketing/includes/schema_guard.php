@@ -87,7 +87,7 @@ function marketing_schema_guard($pdo) {
 
         $stmt_info = $pdo->query("PRAGMA table_info(leads)");
         $col_names = array_column($stmt_info->fetchAll(PDO::FETCH_ASSOC), 'name');
-        
+
         // Example migration: if we need to add a 'last_contacted' column
         if (!in_array('last_contacted', $col_names)) {
             $pdo->exec("ALTER TABLE leads ADD COLUMN last_contacted DATETIME");
@@ -129,7 +129,7 @@ function crm_schema_guard($pdo) {
         if (!in_array('account_status', $col_names)) {
             $pdo->exec("ALTER TABLE customers ADD COLUMN account_status TEXT DEFAULT 'Customer'");
         }
-        
+
         return true;
     } catch (Exception $e) {
         error_log("CRM Schema Guard Error: " . $e->getMessage());

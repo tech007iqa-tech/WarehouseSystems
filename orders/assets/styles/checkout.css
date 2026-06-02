@@ -100,9 +100,9 @@
     }
 
     .header-success h1 { font-size: 1.3rem; }
-    
+
     .receipt-table thead { display: none; }
-    
+
     .receipt-table tr {
         display: flex;
         flex-wrap: wrap;
@@ -233,16 +233,16 @@
 }
 
 @media print {
-    body { 
-        background: white !important; 
-        padding: 0 !important; 
+    body {
+        background: white !important;
+        padding: 0 !important;
         margin: 0 !important;
         display: block !important;
         min-height: auto !important;
     }
     .no-print { display: none !important; }
     .print-only { display: block !important; }
-    
+
     .receipt-card {
         box-shadow: none !important;
         max-width: 100% !important;

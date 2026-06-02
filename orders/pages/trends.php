@@ -11,35 +11,35 @@ if ($filter === '30d') {
 
 try {
     $db = Database::orders();
-    
+
     // 1. Fetch Sales Velocity (Top Brands/Models) + Inventory Check
     $velocity = Database::queryIntegrated('orders', ['w' => 'warehouse'], "
         SELECT items.brand, items.model, items.series, items.cpu, items.description, SUM(items.quantity) as total_qty, ROUND(AVG(items.unit_price), 2) as avg_price,
                (SELECT SUM(quantity) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status = 'stocked') as in_stock,
                (SELECT GROUP_CONCAT(DISTINCT location_code) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status = 'stocked') as stock_locations,
                (SELECT SUM(quantity) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status != 'stocked') as incoming_stock
-        FROM items 
+        FROM items
         WHERE 1=1 $date_condition
         GROUP BY items.brand, items.model, items.series, items.cpu, items.description
-        ORDER BY total_qty DESC 
+        ORDER BY total_qty DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
 
     // 2. Fetch Pricing Trends over Time
     $price_history = $db->query("
         SELECT strftime('%Y-%m', created_at) as sales_month, ROUND(AVG(unit_price), 2) as avg_price, SUM(quantity) as total_qty
-        FROM items 
+        FROM items
         WHERE 1=1 " . str_replace("items.created_at", "created_at", $date_condition) . "
-        GROUP BY sales_month 
-        ORDER BY sales_month DESC 
+        GROUP BY sales_month
+        ORDER BY sales_month DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
 
     // 3. Fetch CPU Architectures Distribution
     $cpu_distribution = $db->query("
         SELECT cpu, SUM(quantity) as total_qty, ROUND(AVG(unit_price), 2) as avg_price
-        FROM items 
+        FROM items
         WHERE cpu IS NOT NULL AND cpu != '' " . str_replace("items.created_at", "created_at", $date_condition) . "
-        GROUP BY cpu 
-        ORDER BY total_qty DESC 
+        GROUP BY cpu
+        ORDER BY total_qty DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
 
     // 4. Summary metrics
@@ -51,16 +51,16 @@ try {
 
     // 5. Customer Insights
     $customer_insights = Database::queryIntegrated('orders', ['c' => 'customers'], "
-        SELECT c.customers.company_name, 
-               COUNT(DISTINCT items.order_id) as total_orders, 
-               SUM(items.quantity) as total_units_bought, 
-               MIN(items.created_at) as first_order_date, 
+        SELECT c.customers.company_name,
+               COUNT(DISTINCT items.order_id) as total_orders,
+               SUM(items.quantity) as total_units_bought,
+               MIN(items.created_at) as first_order_date,
                MAX(items.created_at) as last_order_date
-        FROM items 
+        FROM items
         JOIN c.customers ON items.customer_id = c.customers.customer_id
         WHERE 1=1 $date_condition
-        GROUP BY items.customer_id 
-        ORDER BY total_units_bought DESC 
+        GROUP BY items.customer_id
+        ORDER BY total_units_bought DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (Exception $e) {
@@ -171,16 +171,16 @@ if (!$totals || $totals['total_qty'] == 0) {
     <!-- Tab 1: Demand Velocity (Best-selling Laptops) -->
     <div id="tab-velocity" class="tab-content active">
         <div class="trends-grid" style="display: flex; flex-direction: column;">
-            
+
             <!-- CSS Bar Chart Visualization -->
             <div class="trend-card">
                 <h2 style="font-weight: 800; font-size: 1.1rem; margin-top: 0;">📊 Volume Share</h2>
-                <?php 
+                <?php
                 $chart_velocity = array_slice($velocity, 0, 10);
                 $max_qty = count($chart_velocity) > 0 ? max(array_column($chart_velocity, 'total_qty')) : 1;
                 ?>
                 <div class="chart-placeholder" style="margin-top: 10px;">
-                    <?php foreach ($chart_velocity as $item): 
+                    <?php foreach ($chart_velocity as $item):
                         $height = ($item['total_qty'] / $max_qty) * 100;
                     ?>
                         <div class="bar-container">
@@ -198,7 +198,7 @@ if (!$totals || $totals['total_qty'] == 0) {
                         🥇 Top Moving Models
                     </h2>
                     <div style="display: flex; gap: 12px; align-items: center;">
-                        <label style="font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer; color: var(--text-main);">
+                        <label for="inStockOnly" style="font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 4px; cursor: pointer; color: var(--text-main);">
                             <input type="checkbox" onchange="toggleInStock('list-velocity', this.checked)"> In Stock Only
                         </label>
                         <select class="sort-select" onchange="sortTrendsList('list-velocity', this.value.split('|')[0], this.value.split('|')[1])" style="padding: 4px; border-radius: 4px; font-size: 0.8rem; background: var(--bg-surface); color: var(--text-main); border: 1px solid var(--border-color);">
@@ -217,7 +217,7 @@ if (!$totals || $totals['total_qty'] == 0) {
                                 <strong><?= htmlspecialchars($item['brand']) ?></strong> <?= htmlspecialchars($item['model']) ?>
                                 <?php if (!empty($item['series']) || !empty($item['cpu']) || !empty($item['description'])): ?>
                                     <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px; margin-left: 28px;">
-                                        <?= htmlspecialchars($item['series'] ?? '') ?> 
+                                        <?= htmlspecialchars($item['series'] ?? '') ?>
                                         <?= !empty($item['cpu']) ? '• ' . htmlspecialchars($item['cpu']) : '' ?>
                                         <?= !empty($item['description']) ? '• ' . htmlspecialchars($item['description']) : '' ?>
                                     </div>
@@ -231,7 +231,7 @@ if (!$totals || $totals['total_qty'] == 0) {
                                             <?php if (isset($item['incoming_stock']) && $item['incoming_stock'] > 0): ?>
                                                 <span style="font-size: 0.7rem; color: #f59e0b; font-weight: 600;" title="Items currently in Audit or Working status">⏳ <?= $item['incoming_stock'] ?> processing</span>
                                             <?php endif; ?>
-                                            
+
                                             <?php if (isset($item['in_stock']) && $item['in_stock'] > 0): ?>
                                                 <span style="font-size: 0.75rem; color: #10b981; font-weight: 700;">🟢 <?= $item['in_stock'] ?> in stock <?= !empty($item['stock_locations']) ? '<span style="font-weight: 400; opacity: 0.8;">(' . htmlspecialchars($item['stock_locations']) . ')</span>' : '' ?></span>
                                             <?php else: ?>
@@ -279,12 +279,12 @@ if (!$totals || $totals['total_qty'] == 0) {
 
             <div class="trend-card" style="flex: 0.8;">
                 <h2 style="font-weight: 800; font-size: 1.1rem; margin-top: 0;">📈 Valuation Trend Curve</h2>
-                <?php 
+                <?php
                 $chart_history = array_slice($price_history, 0, 10);
                 $max_price = count($chart_history) > 0 ? max(array_column($chart_history, 'avg_price')) : 1;
                 ?>
                 <div class="chart-placeholder" style="margin-top: 10px;">
-                    <?php foreach (array_reverse($chart_history) as $history): 
+                    <?php foreach (array_reverse($chart_history) as $history):
                         $height = ($history['avg_price'] / $max_price) * 100;
                     ?>
                         <div class="bar-container">
@@ -326,12 +326,12 @@ if (!$totals || $totals['total_qty'] == 0) {
 
             <div class="trend-card" style="flex: 0.8;">
                 <h2 style="font-weight: 800; font-size: 1.1rem; margin-top: 0;">📊 Processor Share</h2>
-                <?php 
+                <?php
                 $chart_cpu = array_slice($cpu_distribution, 0, 10);
                 $max_cpu = count($chart_cpu) > 0 ? max(array_column($chart_cpu, 'total_qty')) : 1;
                 ?>
                 <div class="chart-placeholder" style="margin-top: 10px;">
-                    <?php foreach ($chart_cpu as $cpu): 
+                    <?php foreach ($chart_cpu as $cpu):
                         $height = ($cpu['total_qty'] / $max_cpu) * 100;
                     ?>
                         <div class="bar-container">
@@ -358,7 +358,7 @@ if (!$totals || $totals['total_qty'] == 0) {
                     </select>
                 </div>
                 <div id="list-customers" style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px; max-height: 50vh; overflow-y: auto; padding-right: 10px;">
-                    <?php foreach ($customer_insights as $idx => $cust): 
+                    <?php foreach ($customer_insights as $idx => $cust):
                         $last_order = new DateTime($cust['last_order_date']);
                         $now = new DateTime();
                         $days_since = $now->diff($last_order)->days;
@@ -411,13 +411,13 @@ function switchTrendsTab(tabId) {
 function sortTrendsList(listId, sortBy, order) {
     const list = document.getElementById(listId);
     if (!list) return;
-    
+
     const items = Array.from(list.children);
-    
+
     items.sort((a, b) => {
         let valA = a.getAttribute('data-' + sortBy);
         let valB = b.getAttribute('data-' + sortBy);
-        
+
         // Try parsing as float if it's numeric
         if (!isNaN(parseFloat(valA)) && !isNaN(parseFloat(valB))) {
             valA = parseFloat(valA);
@@ -426,12 +426,12 @@ function sortTrendsList(listId, sortBy, order) {
             valA = valA.toLowerCase();
             valB = valB.toLowerCase();
         }
-        
+
         if (valA < valB) return order === 'asc' ? -1 : 1;
         if (valA > valB) return order === 'asc' ? 1 : -1;
         return 0;
     });
-    
+
     // Clear and re-append
     list.innerHTML = '';
     items.forEach(item => list.appendChild(item));
@@ -440,7 +440,7 @@ function sortTrendsList(listId, sortBy, order) {
 function toggleInStock(listId, isChecked) {
     const list = document.getElementById(listId);
     if (!list) return;
-    
+
     const items = Array.from(list.children);
     items.forEach(item => {
         const inStock = parseInt(item.getAttribute('data-instock') || '0', 10);

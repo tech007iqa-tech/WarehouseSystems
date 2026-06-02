@@ -36,14 +36,14 @@ try {
 
             $paramKey = ":q" . $i;
             $search_term = '%' . $word . '%';
-            
+
             $conditions[] = "({$F['BRAND']} LIKE $paramKey OR {$F['MODEL']} LIKE $paramKey OR {$F['SERIES']} LIKE $paramKey
-                              OR {$F['CPU_GEN']} LIKE $paramKey OR {$F['CPU_SPECS']} LIKE $paramKey 
+                              OR {$F['CPU_GEN']} LIKE $paramKey OR {$F['CPU_SPECS']} LIKE $paramKey
                               OR {$F['CPU_CORES']} LIKE $paramKey OR {$F['CPU_SPEED']} LIKE $paramKey
                               OR {$F['DESCRIPTION']} LIKE $paramKey OR {$F['LOCATION']} LIKE $paramKey
                               OR buyer_name LIKE $paramKey OR buyer_order_num LIKE $paramKey
                               OR CAST(id AS TEXT) LIKE $paramKey)";
-            
+
             $params[$paramKey] = $search_term;
             $i++;
         }

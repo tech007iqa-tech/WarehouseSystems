@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'delete_inventory' && isset($_POST['item_id'])) {
         $stmt = $conn_wh->prepare("DELETE FROM inventory WHERE id=?");
         $stmt->execute([$_POST['item_id']]);
-        
+
         $sector = $_GET['sector'] ?? $_POST['sector'] ?? 'Laptops';
         $loc = $_GET['loc'] ?? $_POST['location_code'] ?? '';
         header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=deleted#wh-form-title");
@@ -26,24 +26,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $old_loc = $_POST['old_loc'];
         $new_loc = trim($_POST['new_loc']);
         $new_status = $_POST['location_status'] ?? 'Idle';
-        
+
         if (!empty($new_loc)) {
             $conn_wh->beginTransaction();
             try {
                 // Update items
                 $stmt = $conn_wh->prepare("UPDATE inventory SET location_code = ? WHERE location_code = ?");
                 $stmt->execute([$new_loc, $old_loc]);
-                
+
                 // Update or Create location entry
                 $stmt_loc = $conn_wh->prepare("INSERT OR REPLACE INTO locations (location_code, status, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
                 $stmt_loc->execute([$new_loc, $new_status]);
-                
+
                 // If renamed, delete old location entry if it's different
                 if ($new_loc !== $old_loc) {
                     $stmt_del = $conn_wh->prepare("DELETE FROM locations WHERE location_code = ?");
                     $stmt_del->execute([$old_loc]);
                 }
-                
+
                 $conn_wh->commit();
                 header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=zone_updated");
                 exit();
@@ -72,11 +72,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             // Bulk delete items
             $stmt = $conn_wh->prepare("DELETE FROM inventory WHERE location_code = ?");
             $stmt->execute([$old_loc]);
-            
+
             // Delete location tracking
             $stmt_loc = $conn_wh->prepare("DELETE FROM locations WHERE location_code = ?");
             $stmt_loc->execute([$old_loc]);
-            
+
             $conn_wh->commit();
             header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=zone_deleted");
             exit();
@@ -93,12 +93,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $qty = (int)$_POST['quantity'];
         $price = (float)($_POST['price'] ?? 0.00);
         $sector = $_POST['sector'];
-        
+
         // Dynamic Specs mapping based on sector
         $specs = [];
         if ($sector === 'Laptops') {
             $specs = [
-                'cpu' => $_POST['cpu'] ?? '', 
+                'cpu' => $_POST['cpu'] ?? '',
                 'gpu' => $_POST['gpu'] ?? '',
                 'ram' => $_POST['ram'] ?? '',
                 'storage' => $_POST['storage'] ?? '',
@@ -156,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
 // Fetch All Unique Locations with Status
 $stmt_locs = $conn_wh->query("
-    SELECT l.*, 
+    SELECT l.*,
         (SELECT COUNT(*) FROM inventory i WHERE i.location_code = l.location_code) as item_count,
         ls.color as status_color
     FROM locations l
@@ -209,7 +209,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                 <h1>Warehouse Control Center</h1>
                 <p class="subtitle">Managing stock and locations across all inventory sectors.</p>
             </div>
-            <?php if ($selected_loc): 
+            <?php if ($selected_loc):
                 $active_l_stmt = $conn_wh->prepare("SELECT l.*, ls.color FROM locations l LEFT JOIN location_statuses ls ON l.status = ls.name WHERE l.location_code = ?");
                 $active_l_stmt->execute([$selected_loc]);
                 $active_l = $active_l_stmt->fetch(PDO::FETCH_ASSOC);
@@ -230,7 +230,7 @@ $highlight_id = $_GET['last_id'] ?? null;
             <?php endif; ?>
         </div>
     </header>
-    
+
     <!-- Bulk Action Bar -->
     <div id="bulkActionBar" class="bulk-action-bar" style="display:none;">
         <div class="bulk-info">
@@ -275,17 +275,17 @@ $highlight_id = $_GET['last_id'] ?? null;
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="loc-grid" id="gate-loc-grid">
-                        <?php foreach ($existing_locs as $loc): 
+                        <?php foreach ($existing_locs as $loc):
                             $l_name = $loc['location_code'];
                             $l_status = $loc['status'];
                             $l_color = $loc['status_color'] ?: '#94a3b8';
                             $l_count = (int)$loc['item_count'];
                         ?>
                             <div class="loc-item-wrapper" style="position:relative;">
-                                <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=<?= urlencode($l_name) ?>" 
-                                   class="loc-item gate-loc-item" 
+                                <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=<?= urlencode($l_name) ?>"
+                                   class="loc-item gate-loc-item"
                                    data-loc-name="<?= htmlspecialchars(strtolower($l_name)) ?>"
                                    data-status="<?= htmlspecialchars(strtolower($l_status)) ?>"
                                    data-count="<?= $l_count ?>">
@@ -297,7 +297,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                                 <button type="button" onclick='openRenameModal(<?= json_encode($loc) ?>)' class="btn-rename-zone" style="position:absolute; bottom:5px; right:5px; background:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:0.7rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.1); opacity:0; transition:0.2s;">✏️</button>
                             </div>
                         <?php endforeach; ?>
-                        
+
                         <div class="loc-item new-loc">
                             <form method="GET" action="index.php" style="width:100%;">
                                 <input type="hidden" name="view" value="warehouse">
@@ -317,14 +317,14 @@ $highlight_id = $_GET['last_id'] ?? null;
                     <div style="font-size: 3.5rem; margin-bottom: 25px;">📊</div>
                     <h2 style="font-weight:900; margin-bottom:10px;">Global Dashboard</h2>
                     <p style="color:var(--text-secondary); margin-bottom:30px;">Managing stock and locations across all inventory sectors in one easy view.</p>
-                    
+
                     <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
-                        <a href="index.php?view=warehouse&sector=Master&loc=GLOBAL" 
+                        <a href="index.php?view=warehouse&sector=Master&loc=GLOBAL"
                            style="display: block; width: 100%; padding: 18px; background: var(--text-main); color: white; border-radius: 14px; font-weight: 800; text-decoration: none; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
                            🏢 Master Overview (All Stock)
                         </a>
-                        
-                        <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=GLOBAL" 
+
+                        <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=GLOBAL"
                            style="display: block; width: 100%; padding: 15px; border: 2px solid #e2e8f0; color: #64748b; border-radius: 14px; font-weight: 700; text-decoration: none; transition: 0.2s; font-size: 0.9rem;">
                            🌐 View Only <?= htmlspecialchars($selected_sector) ?>
                         </a>
@@ -337,8 +337,8 @@ $highlight_id = $_GET['last_id'] ?? null;
     <!-- Sector Navigation -->
     <div class="sector-nav">
         <?php foreach ($sectors as $s): ?>
-            <a href="index.php?view=warehouse&sector=<?= urlencode($s['name']) ?>&loc=<?= urlencode($selected_loc) ?>" 
-               class="sector-card <?= $selected_sector === $s['name'] ? 'active' : '' ?>" 
+            <a href="index.php?view=warehouse&sector=<?= urlencode($s['name']) ?>&loc=<?= urlencode($selected_loc) ?>"
+               class="sector-card <?= $selected_sector === $s['name'] ? 'active' : '' ?>"
                data-sector="<?= htmlspecialchars($s['name']) ?>">
                 <span class="sector-icon"><?= $s['icon'] ?></span>
                 <span class="sector-name"><?= htmlspecialchars($s['name']) ?></span>
@@ -348,13 +348,13 @@ $highlight_id = $_GET['last_id'] ?? null;
 
     <!-- Main Content Grid -->
     <div class="warehouse-layout">
-        
+
         <!-- Inventory List -->
         <section class="inventory-feed">
             <div class="inventory-feed-header">
                 <div class="inventory-summary-title">
                     <h2><?= htmlspecialchars($selected_sector) ?> Inventory</h2>
-                    <?php 
+                    <?php
                         $total_qty = 0;
                         foreach($items as $it) $total_qty += (int)($it['quantity'] ?? 0);
                     ?>
@@ -426,12 +426,12 @@ $highlight_id = $_GET['last_id'] ?? null;
                                     </div>
                                 </td>
                             </tr>
-                            <?php foreach ($items as $item): 
+                            <?php foreach ($items as $item):
                                 $specs = json_decode($item['specs_json'], true) ?: [];
                                 $created_date = date('m/d/y', strtotime($item['created_at']));
                                 $updated_date = date('m/d/y', strtotime($item['updated_at']));
                             ?>
-                                <tr class="inventory-card <?= ($highlight_id && $item['id'] == $highlight_id) ? 'highlight-row' : '' ?>" 
+                                <tr class="inventory-card <?= ($highlight_id && $item['id'] == $highlight_id) ? 'highlight-row' : '' ?>"
                                      data-id="<?= $item['id'] ?>"
                                      data-sector-theme="<?= htmlspecialchars($item['sector']) ?>"
                                      data-brand="<?= htmlspecialchars($item['brand']) ?>"
@@ -439,10 +439,10 @@ $highlight_id = $_GET['last_id'] ?? null;
                                      data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
                                      data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
                                      data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
-                                    
+
                                     <td style="text-align: center;"><input type="checkbox" class="row-select"></td>
                                     <td><span class="location-tag"><?= htmlspecialchars($item['location_code']) ?></span></td>
-                                    
+
                                     <?php if ($selected_sector === 'Master'): ?>
                                         <td>
                                             <a href="index.php?view=warehouse&sector=<?= urlencode($item['sector']) ?>&loc=<?= urlencode($item['location_code']) ?>" style="text-decoration: none;">
@@ -473,7 +473,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                                     <?php elseif ($selected_sector === 'Master'): ?>
                                         <td>
                                             <div class="spec-value" style="font-size: 0.75rem;">
-                                                <?php 
+                                                <?php
                                                     if ($item['sector'] === 'Laptops') echo htmlspecialchars(($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? ''));
                                                     elseif ($item['sector'] === 'Gaming') echo htmlspecialchars(($specs['category'] ?? '') . ' ' . ($specs['gpu'] ?? ''));
                                                     elseif ($item['sector'] === 'Desktops') echo htmlspecialchars($specs['cpu_gen'] ?? '');
@@ -561,7 +561,7 @@ $highlight_id = $_GET['last_id'] ?? null;
         <?php if ($selected_loc !== 'GLOBAL'): ?>
         <aside class="warehouse-sidebar">
             <div style="background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: sticky; top: 20px;">
-                
+
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3 id="wh-form-title" style="font-weight: 800; margin: 0;">📥 Register Stock</h3>
                     <div id="session-counter" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; color: #15803d; display: none;">
@@ -579,12 +579,12 @@ $highlight_id = $_GET['last_id'] ?? null;
                     <input type="hidden" name="item_id" id="wh-edit-id" value="">
                     <input type="hidden" name="last_updated_at" id="wh-last-updated" value="">
                     <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
-                    
+
                     <div class="form-group" style="margin-bottom: 15px;">
                         <label for="wh-location-code">Location Code (Zone/Shelf)</label>
                         <input type="text" id="wh-location-code" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>" readonly style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; background:#f8fafc; color:#64748b; font-weight:700;">
                     </div>
-                    
+
                     <div style="display: flex; gap: 10px; margin-bottom: 15px;">
                         <div class="form-group" style="flex: 1;">
                             <label for="wh-brand">Brand</label>
@@ -596,7 +596,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                             <input type="text" name="model" list="model-options" id="wh-model" placeholder="Latitude" required style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
                             <datalist id="model-options"></datalist>
                         </div></div>
-                    
+
 
                     <!-- Sector Specific Fields -->
                     <div id="sector-specific-fields" style="border-top: 1px dashed #eee; padding-top: 15px; margin-bottom: 15px;">
@@ -774,12 +774,12 @@ $highlight_id = $_GET['last_id'] ?? null;
 
         <h2 style="font-weight:900; margin-bottom:10px; font-size:1.25rem;">📦 Manage Working Zone</h2>
         <p style="font-size:0.85rem; color:#64748b; margin-bottom:25px;">Update the name or operational status of this location.</p>
-        
+
         <form method="POST">
             <?= UI::csrf_field() ?>
             <input type="hidden" name="action" value="rename_zone">
             <input type="hidden" name="old_loc" id="rename-old-loc">
-            
+
             <div class="form-group" style="margin-bottom:20px;">
                 <label for="rename-new-loc" style="display:block; font-size:0.7rem; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:#94a3b8;">Zone Name</label>
                 <input type="text" name="new_loc" id="rename-new-loc" required style="width:100%; height:46px; border-radius:12px; border:1px solid #ddd; padding:0 15px; font-weight:800; font-size:1rem;">
@@ -819,16 +819,16 @@ $highlight_id = $_GET['last_id'] ?? null;
         // locData is now an object
         const loc = locData.location_code;
         const status = locData.status;
-        
+
         document.getElementById('rename-old-loc').value = loc;
         document.getElementById('delete-zone-loc').value = loc;
         document.getElementById('rename-new-loc').value = loc;
         document.getElementById('rename-status').value = status;
-        
+
         document.getElementById('rename-modal').style.display = 'flex';
         document.getElementById('rename-new-loc').focus();
     }
-    
+
     function closeRenameModal() {
         document.getElementById('rename-modal').style.display = 'none';
         document.getElementById('manage-statuses-block').style.display = 'none';

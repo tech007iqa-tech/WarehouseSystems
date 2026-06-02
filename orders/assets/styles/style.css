@@ -7,16 +7,16 @@
     --text-main: #0f172a;
     --text-secondary: #4b5563;
     --text-dim: #94a3b8;
-    
+
     --accent-color: #8cc63f;
     --accent-dark: #6fa032;
     --accent-hover: #7bad37;
     --accent-gradient: linear-gradient(135deg, #8cc63f 0%, #6fa032 100%);
-    
+
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    
+
     --border-radius-lg: 16px;
     --border-radius-md: 10px;
     --btn-height: 48px;
@@ -34,14 +34,14 @@
     --text-main: #f8fafc;
     --text-secondary: #cbd5e1;
     --text-dim: #94a3b8;
-    
+
     --accent-color: #a3e635; /* Vibrant Lime */
     --accent-gradient: linear-gradient(135deg, #a3e635 0%, #84cc16 100%);
-    
+
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.7);
     --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
-    
+
     --btn-success-bg: #15803d;
 }
 
@@ -140,7 +140,7 @@ a {
         padding: 16px 12px;
         border-radius: 12px;
     }
-    
+
     .summary-side, #customer-details {
         margin-top: 30px;
         padding-top: 30px;
@@ -608,7 +608,7 @@ tr:hover .btn-delete {
 [data-theme="dark"] .theme-icon-moon { display: block; }
 
 /* Global Override for Dark Mode consistency on non-variable elements */
-[data-theme="dark"] .cust-card, 
+[data-theme="dark"] .cust-card,
 [data-theme="dark"] .inventory-card,
 [data-theme="dark"] .panel,
 [data-theme="dark"] .modal-overlay > div,

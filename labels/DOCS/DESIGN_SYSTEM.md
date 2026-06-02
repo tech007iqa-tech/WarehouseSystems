@@ -1,7 +1,7 @@
 # Design System & UI Guidelines
 
 ## 1. Overview
-The IQA Metal Label APP avoids heavy CSS frameworks like Tailwind or Bootstrap. Everything is styled through a global `style.css` file. The goal of this UI is to look incredibly clean, professional, and accessible. 
+The IQA Metal Label APP avoids heavy CSS frameworks like Tailwind or Bootstrap. Everything is styled through a global `style.css` file. The goal of this UI is to look incredibly clean, professional, and accessible.
 
 To maintain consistency throughout the app, future developers and agents must adhere to the design decisions and CSS variables outlined below.
 
@@ -24,7 +24,7 @@ You can see these initialized in `index.php`. All new CSS written must use these
     --text-secondary: #475569;
     --accent-color: #8cc63f;     /* Safety Green */
     --border-color: #e2e8f0;     /* Sharper borders */
-    
+
     /* Layout & Spacing */
     --spacing: 16px;
     --border-radius-lg: 12px;
@@ -107,5 +107,5 @@ Instead:
 1. Prevent default form submission.
 2. Send data using Javascript `fetch()`.
 3. Show a lightweight CSS spinner/loader on the button.
-4. Update the DOM explicitly (e.g., change target to "Sold") or pop up a subtle notification toast upon success. 
+4. Update the DOM explicitly (e.g., change target to "Sold") or pop up a subtle notification toast upon success.
 This aligns with the goal of creating a fast, snappy local Web-App.

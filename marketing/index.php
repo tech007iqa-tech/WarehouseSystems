@@ -47,15 +47,15 @@ if ($page === 'dashboard') {
                 $opportunities = [];
                 if ($labelsDb) {
                     $topStock = $labelsDb->query("SELECT brand, model, cpu_gen, ram, storage, warehouse_location, COUNT(*) as qty FROM items WHERE status = 'In Warehouse' GROUP BY brand, model HAVING qty > 0 ORDER BY qty DESC LIMIT 5")->fetchAll();
-                    
+
                     foreach ($topStock as $item) {
                         $specString = "({$item['cpu_gen']} | {$item['ram']} | {$item['storage']})";
                         $location = !empty($item['warehouse_location']) ? $item['warehouse_location'] : 'UNSPECIFIED';
-                        
+
                         $stmt = $marketingDb->prepare("SELECT id, model_name FROM model_templates WHERE model_name = ?");
                         $stmt->execute([$item['model']]);
                         $template = $stmt->fetch();
-                        
+
                         if (!$template) {
                             $prefill_specs = "CPU: {$item['cpu_gen']}\nRAM: {$item['ram']}\nSTORAGE: {$item['storage']}\nOS: Windows 10/11 Pro Ready";
                             $isWorkstation = (stripos($item['model'], 'Precision') !== false || stripos($item['model'], 'ZBook') !== false);
@@ -134,7 +134,7 @@ if ($page === 'dashboard') {
                             if ($log['action'] === 'CREATED') $icon = '✨';
                             if ($log['action'] === 'SYNCED') $icon = '🔄';
                             if ($log['action'] === 'GENERATED') $icon = '🔥';
-                            
+
                             echo UI::activity_item($icon, $log['summary'], $log['entity_type'] . " • " . date('M j, g:i a', strtotime($log['timestamp'])));
                         }
                         echo "</div>";

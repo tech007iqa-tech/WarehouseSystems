@@ -2,11 +2,11 @@
 /**
  * includes/hardware_form.php
  * A unified, reusable hardware specification form.
- * 
+ *
  * Used by:
  *  - new_label.php (Add mode)
  *  - refurbished_view.php (Edit mode)
- * 
+ *
  * Variables expected:
  *  - $item: (Array|null) Existing item data.
  *  - $formType: (String) 'add' or 'edit'.
@@ -24,14 +24,14 @@ $condition = $item[HW_FIELDS['DESCRIPTION']] ?? 'Untested';
         <h3 class="form-section-header">
             <span class="icon">🔍</span> Identity & Generation
         </h3>
-        
+
         <div class="form-group">
             <label for="<?= HW_FIELDS['BRAND'] ?>">Manufacturer *</label>
             <select id="<?= HW_FIELDS['BRAND'] ?>" name="<?= HW_FIELDS['BRAND'] ?>" required class="select-modern">
                 <option value="" disabled <?= empty($item[HW_FIELDS['BRAND']]) ? 'selected' : '' ?>>Choose Brand...</option>
-                <?php 
+                <?php
                 $brands = ['HP', 'Dell', 'Lenovo', 'Apple', 'Asus', 'Acer', 'Microsoft', 'MSI', 'Other'];
-                foreach ($brands as $b): 
+                foreach ($brands as $b):
                     $selected = ($item[HW_FIELDS['BRAND']] ?? '') === $b ? 'selected' : '';
                 ?>
                     <option value="<?= $b ?>" <?= $selected ?>><?= $b ?></option>
@@ -48,7 +48,7 @@ $condition = $item[HW_FIELDS['DESCRIPTION']] ?? 'Untested';
             <label for="<?= HW_FIELDS['SERIES'] ?>">Series (e.g., 840 G3)</label>
             <input type="text" id="<?= HW_FIELDS['SERIES'] ?>" name="<?= HW_FIELDS['SERIES'] ?>" value="<?= htmlspecialchars($item[HW_FIELDS['SERIES']] ?? '') ?>" autocomplete="off" spellcheck="false" placeholder="G3 / G4 / G5 / E6400">
         </div>
-        
+
         <div class="form-group highlight-on-focus">
             <label for="<?= HW_FIELDS['SERIAL_NUMBER'] ?>">Serial Number / Asset Tag</label>
             <input type="text" id="<?= HW_FIELDS['SERIAL_NUMBER'] ?>" name="<?= HW_FIELDS['SERIAL_NUMBER'] ?>" value="<?= htmlspecialchars($item[HW_FIELDS['SERIAL_NUMBER']] ?? '') ?>" placeholder="S/N: (Last 6 or Full)" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
@@ -155,7 +155,7 @@ $condition = $item[HW_FIELDS['DESCRIPTION']] ?? 'Untested';
         <h3 class="form-section-header" style="color: var(--accent-color);">
             <span class="icon">🛠️</span> Deep Technical Sheet
         </h3>
-        
+
         <div class="form-row-mobile" style="margin-bottom: 12px;">
             <div class="form-group">
                 <label for="<?= HW_FIELDS['GPU'] ?>">🎮 GPU (Graphics Card)</label>

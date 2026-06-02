@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 window.openPrintConfig = function(id) {
     currentPrintId = id;
-    
+
     // Reset defaults
     labelAStatus = true;
     labelBStatus = true;
@@ -81,7 +81,7 @@ window.openPrintConfig = function(id) {
     const btnB = document.getElementById('prevLabelB');
     if(btnA) { btnA.style.borderColor = 'var(--accent-color)'; btnA.style.opacity = '1'; }
     if(btnB) { btnB.style.borderColor = 'var(--accent-color)'; btnB.style.opacity = '1'; }
-    
+
     document.getElementById('printQty').value = 1;
     document.getElementById('printModal').style.display = 'flex';
 };

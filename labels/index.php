@@ -1,7 +1,7 @@
-<?php 
+<?php
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
-require_once 'includes/header.php'; 
+require_once 'includes/header.php';
 ?>
 
 <!-- Module Specific CSS -->
@@ -23,7 +23,7 @@ try {
 
 <!-- MAIN NAVIGATION GRID -->
 <div class="action-grid action-grid-container">
-    
+
     <!-- 1. INVENTORY TRACKER -->
     <a href="labels.php" class="card-link inventory-card hover-scale">
         <?= UI::stat_card("Inventory Tracker", $total_inventory . " Units Active", "inventory-stat") ?>

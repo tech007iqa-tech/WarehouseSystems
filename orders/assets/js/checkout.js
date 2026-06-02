@@ -205,7 +205,7 @@ window.addEventListener('load', () => {
 
 /**
  * Copies item details to clipboard
- * @param {HTMLElement} btn 
+ * @param {HTMLElement} btn
  */
 function copyEntry(btn) {
     const container = btn.closest('.col-desc');
@@ -247,7 +247,7 @@ function copyEntry(btn) {
 
 /**
  * Opens the item metadata editor modal
- * @param {number} index 
+ * @param {number} index
  */
 function openEditModal(index) {
     // Robust check for injected data
@@ -310,7 +310,7 @@ async function saveItemChanges() {
 
     const formData = new FormData();
     formData.append('action', 'save_single_item');
-    
+
     const csrfEl = document.querySelector('input[name="csrf_token"]');
     if (csrfEl) formData.append('csrf_token', csrfEl.value);
 

@@ -16,10 +16,10 @@ if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $marketingDb->prepare("INSERT INTO campaigns (title, type, status, start_date) VALUES (?, ?, ?, ?)");
             $stmt->execute([$title, $type, $status, $start_date]);
-            
+
             $newId = $marketingDb->lastInsertId();
             log_marketing_audit($marketingDb, 'Campaign', $newId, 'CREATED', "Created new marketing campaign: $title");
-            
+
             header("Location: ?page=campaigns&success=1");
             exit;
         } catch (Exception $e) {
@@ -87,7 +87,7 @@ if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php else: ?>
                 <div class="campaign-grid">
-                    <?php foreach ($campaigns as $camp): 
+                    <?php foreach ($campaigns as $camp):
                         $statusClass = 'badge-new';
                         if ($camp['status'] === 'Active') $statusClass = 'badge-lead';
                         if ($camp['status'] === 'Completed') $statusClass = 'badge-customer';

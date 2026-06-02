@@ -8,29 +8,29 @@ function handle_photo_bucket_actions($marketingDb, $processor, $labelsDb) {
     if (isset($_POST['upload_photo'])) {
         $model_name = $_POST['model_name'] ?? '';
         $category = $_POST['category'] ?? 'General';
-        
+
         if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
             $file_tmp = $_FILES['photo']['tmp_name'];
             $original_name = $_FILES['photo']['name'];
             $file_size = $_FILES['photo']['size'];
             $mime_type = $_FILES['photo']['type'];
-            
+
             $extension = pathinfo($original_name, PATHINFO_EXTENSION);
             $filename = uniqid('img_', true) . '.' . $extension;
             $target_dir = __DIR__ . '/../../assets/photo_bucket/';
             $target_path = $target_dir . $filename;
-            
+
             if (move_uploaded_file($file_tmp, $target_path)) {
                 try {
                     $stmt = $marketingDb->prepare("INSERT INTO photos (filename, original_name, model_name, category, file_path, file_size, mime_type, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                     $stmt->execute([$filename, $original_name, $model_name, $category, 'assets/photo_bucket/' . $filename, $file_size, $mime_type, 'Processing']);
-                    
+
                     $photoId = $marketingDb->lastInsertId();
                     log_marketing_audit($marketingDb, 'PHOTO', $photoId, 'UPLOADED', "Uploaded photo: $original_name for $model_name");
-                    
+
                     // Trigger Processing
                     $processor->process($photoId);
-                    
+
                     $_SESSION['notify'] = ['message' => "Photo uploaded and processed!", 'type' => 'success'];
                 } catch (Exception $e) {
                     $_SESSION['notify'] = ['message' => "DB Error: " . $e->getMessage(), 'type' => 'error'];
@@ -48,12 +48,12 @@ function handle_photo_bucket_actions($marketingDb, $processor, $labelsDb) {
     // 2. Handle Delete
     if (isset($_GET['delete_photo'])) {
         $photo_id = (int)$_GET['delete_photo'];
-        
+
         try {
             $stmt = $marketingDb->prepare("SELECT * FROM photos WHERE id = ?");
             $stmt->execute([$photo_id]);
             $photo = $stmt->fetch();
-            
+
             if ($photo) {
                 // Delete physical files
                 $filesToDelete = [$photo['file_path'], $photo['thumbnail_path'], $photo['optimized_path']];
@@ -63,10 +63,10 @@ function handle_photo_bucket_actions($marketingDb, $processor, $labelsDb) {
                         if (file_exists($p)) unlink($p);
                     }
                 }
-                
+
                 $stmt = $marketingDb->prepare("DELETE FROM photos WHERE id = ?");
                 $stmt->execute([$photo_id]);
-                
+
                 log_marketing_audit($marketingDb, 'PHOTO', $photo_id, 'DELETED', "Deleted photo: " . $photo['filename']);
                 $_SESSION['notify'] = ['message' => "Photo deleted successfully.", 'type' => 'success'];
             }

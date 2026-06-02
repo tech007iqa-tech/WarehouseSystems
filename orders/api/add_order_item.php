@@ -20,7 +20,7 @@ if (!Security::validate($_POST['csrf_token'] ?? '')) {
 
 try {
     $conn = Database::orders();
-    
+
     $customer_id = $_POST['customer_id'];
     $order_id = $_POST['order_id'];
     $brand = $_POST['brand'];
@@ -32,10 +32,10 @@ try {
     $price = Security::sanitize_float($_POST['unit_price'] ?? 0.00);
 
     $stmt = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    
+
     if ($stmt->execute([$order_id, $customer_id, $brand, $model, $series, $cpu, $desc, $qty, $price])) {
         $new_id = $conn->lastInsertId();
-        
+
         // Update Session for "Repeat Last"
         $_SESSION['last_entry'] = [
             'brand' => $brand,
@@ -52,7 +52,7 @@ try {
 
         // Generate the HTML for the new row to return to the frontend
         $formatted_price = number_format($price, 2);
-        
+
         echo json_encode([
             'success' => true,
             'new_total' => $total_units,

@@ -13,11 +13,11 @@ if ($labelsDb && !empty($templateModels)) {
     // We create a placeholder string (?,?,?) for the IN clause
     $placeholders = implode(',', array_fill(0, count($templateModels), '?'));
     $stmt = $labelsDb->prepare("
-        SELECT brand, model, COUNT(*) as qty 
-        FROM items 
-        WHERE status = 'In Warehouse' 
+        SELECT brand, model, COUNT(*) as qty
+        FROM items
+        WHERE status = 'In Warehouse'
         AND model IN ($placeholders)
-        GROUP BY brand, model 
+        GROUP BY brand, model
         ORDER BY qty DESC
     ");
     $stmt->execute($templateModels);
@@ -65,7 +65,7 @@ if ($selectedModel) {
             $generatedAd .= "📝 OVERVIEW:\n" . $matchingTemplate['marketing_copy'] . "\n\n";
             $generatedAd .= "DM for pricing and bulk manifest.";
         }
-        
+
         log_marketing_audit($marketingDb, 'AdGenerator', $selectedModel, 'GENERATED', "Generated $tone ad for $selectedModel (Qty: $qty)");
     }
 }
@@ -86,7 +86,7 @@ if ($selectedModel) {
             <?php else: ?>
                 <div class="stock-grid">
                     <?php foreach ($modelsInStock as $stock): ?>
-                        <a href="?page=ad_generator&model=<?php echo urlencode($stock['model']); ?>" 
+                        <a href="?page=ad_generator&model=<?php echo urlencode($stock['model']); ?>"
                            class="stock-item <?php echo ($selectedModel === $stock['model']) ? 'active' : ''; ?>">
                             <div class="stock-qty"><?php echo $stock['qty']; ?> Units</div>
                             <div class="stock-name"><?php echo htmlspecialchars($stock['brand'] . ' ' . $stock['model']); ?></div>
@@ -112,13 +112,13 @@ if ($selectedModel) {
 
         <?php if ($selectedModel && !$matchingTemplate): ?>
             <div class="alert alert-danger">
-                No marketing template found for <strong><?php echo htmlspecialchars($selectedModel); ?></strong>. 
+                No marketing template found for <strong><?php echo htmlspecialchars($selectedModel); ?></strong>.
                 <a href="?page=model_templates&prefill_model=<?php echo urlencode($selectedModel); ?>" style="color: white; text-decoration: underline;">Create one here</a> to generate an ad.
             </div>
         <?php elseif ($generatedAd): ?>
             <div class="ad-generator-layout">
                     <textarea id="adOutput" readonly><?php echo htmlspecialchars($generatedAd); ?></textarea>
-                    
+
                     <!-- PHOTO BANK INTEGRATION -->
                     <div class="photo-preview-sidebar">
                         <h4 style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 10px;">Bucket Assets</h4>
@@ -133,20 +133,20 @@ if ($selectedModel) {
                             <div class="asset-thumb">
                                 <span>No Photo</span>
                             </div>
-                        <?php 
+                        <?php
                             endfor;
                         else:
                             foreach($bucketPhotos as $photo):
                         ?>
                             <div class="asset-thumb exists">
-                                <?php 
-                                $previewImg = (!empty($photo['thumbnail_path']) && file_exists(__DIR__ . '/../../' . $photo['thumbnail_path'])) 
-                                              ? $photo['thumbnail_path'] 
+                                <?php
+                                $previewImg = (!empty($photo['thumbnail_path']) && file_exists(__DIR__ . '/../../' . $photo['thumbnail_path']))
+                                              ? $photo['thumbnail_path']
                                               : $photo['file_path'];
                                 ?>
                                 <img src="<?php echo $previewImg; ?>" alt="Stock Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
                             </div>
-                        <?php 
+                        <?php
                             endforeach;
                             // Fill remaining slots if less than 3
                             for($i=count($bucketPhotos); $i<3; $i++):
@@ -156,7 +156,7 @@ if ($selectedModel) {
                             </div>
                         <?php
                             endfor;
-                        endif; 
+                        endif;
                         ?>
                         <a href="?page=photo_bucket" style="font-size: 0.7rem; text-align: center; color: var(--accent-primary); text-decoration: none; font-weight: 700; margin-top: 5px;">Go to Bucket →</a>
                     </div>
@@ -184,12 +184,12 @@ function copyAdToClipboard() {
     copyText.select();
     copyText.setSelectionRange(0, 99999);
     navigator.clipboard.writeText(copyText.value);
-    
+
     const btn = document.querySelector('.btn-action');
     const originalText = btn.innerHTML;
     btn.innerHTML = "✅ Copied!";
     btn.style.background = "var(--accent-blue)";
-    
+
     setTimeout(() => {
         btn.innerHTML = originalText;
         btn.style.background = "";

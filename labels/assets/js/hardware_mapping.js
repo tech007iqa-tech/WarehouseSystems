@@ -1,6 +1,6 @@
 /**
  * assets/js/hardware_mapping.js
- * 
+ *
  * Global JavaScript object mirror of includes/hardware_mapping.php.
  * Use these constants to reference hardware fields in the frontend.
  */

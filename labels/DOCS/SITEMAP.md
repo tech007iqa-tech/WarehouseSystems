@@ -20,13 +20,13 @@
 │
 ├── /templates/             # Master files for PowerShell Injection
 │   ├── label_template.odt  # Master hardware label
-│   └── /scripts/           
+│   └── /scripts/
 │       └── generate_odt.ps1  # Label document generator
 │
 ├── /includes/              # Reusable PHP backend components
 │   ├── db.php              # PDO Shared Connections
 │   ├── header.php          # Sidebar Nav & HTML Head
-│   ├── footer.php          
+│   ├── footer.php
 │   ├── functions.php       # Formatting & Sanitization
 │   ├── hardware_form.php   # Unified Intake/Edit Component
 │   ├── hardware_mapping.php # Field name constants (HW_FIELDS)

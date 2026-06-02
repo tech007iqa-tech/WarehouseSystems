@@ -9,7 +9,7 @@ try {
     // 1. Robust Schema Migration for Leads
     $existing_cols = $conn->query("PRAGMA table_info(customers)")->fetchAll(PDO::FETCH_ASSOC);
     $col_names = array_column($existing_cols, 'name');
-    
+
     $required_cols = [
         'account_status' => "TEXT DEFAULT 'Lead'",
         'lead_source'    => "TEXT DEFAULT ''",
@@ -34,7 +34,7 @@ try {
         note TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    
+
     // Performance Indexing (Phase 1)
     $conn->exec("CREATE INDEX IF NOT EXISTS idx_interactions_cid ON interaction_logs(customer_id)");
 
@@ -47,15 +47,15 @@ $all_leads = [];
 try {
     // Attempt to attach orders for calculated balances
     Database::attach($conn, 'orders', 'orders_db');
-    
+
     // Check if the necessary tables exist in the attached DB before querying
     $table_check = $conn->query("SELECT name FROM orders_db.sqlite_master WHERE type='table' AND name='orders'")->fetch();
-    
+
     if ($table_check) {
         $sql = "
-            SELECT c.*, 
-                (SELECT created_at FROM orders_db.orders o WHERE o.customer_id = c.customer_id ORDER BY id DESC LIMIT 1) as last_purchase,
-                (SELECT order_id FROM orders_db.orders o WHERE o.customer_id = c.customer_id ORDER BY id DESC LIMIT 1) as last_order_id,
+            SELECT c.*,
+                (SELECT created_at FROM orders_db.orders o WHERE o.customer_id = c.customer_id ORDER BY o.created_at DESC LIMIT 1) as last_purchase,
+                (SELECT order_id FROM orders_db.orders o WHERE o.customer_id = c.customer_id ORDER BY o.created_at DESC LIMIT 1) as last_order_id,
                 (SELECT SUM(i.quantity * i.unit_price) FROM orders_db.items i WHERE i.customer_id = c.customer_id) as total_balance
             FROM customers c
             ORDER BY c.callback_date ASC, c.created_at DESC
@@ -141,7 +141,7 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
             </thead>
             <tbody id="leads-list">
                 <?php if (count($all_leads) > 0): ?>
-                    <?php foreach ($all_leads as $lead): 
+                    <?php foreach ($all_leads as $lead):
                         $status = strtolower($lead['account_status'] ?: 'lead');
                         $status_class = "status-" . ($status === 'active customer' ? 'active' : ($status === 'lead' ? 'pending' : ($status === 'lost' ? 'canceled' : 'idle')));
                         $search_blob = strtolower($lead['company_name'] . " " . $status . " " . $lead['lead_source'] . " " . $lead['interest'] . " " . $lead['customer_id']);
@@ -182,7 +182,7 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
                             <div style="font-size: 0.7rem; color: #94a3b8; font-weight:800; text-transform:uppercase; margin-top: 2px;"><?= htmlspecialchars($lead['contact_method'] ?: '') ?></div>
                         </td>
                         <td style="padding: 16px;">
-                            <?php if ($lead['callback_date']): 
+                            <?php if ($lead['callback_date']):
                                 $is_urgent = ($lead['callback_date'] <= date('Y-m-d'));
                             ?>
                                 <div style="font-size: 0.85rem; font-weight: 800; color: <?= $is_urgent ? '#be123c' : '#64748b' ?>;">
@@ -198,7 +198,7 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
                             </div>
                         </td>
                         <td style="padding: 16px; text-align: right;">
-                            <button type="button" class="btn-order-view" 
+                            <button type="button" class="btn-order-view"
                                     onclick='openLeadModal(<?= json_encode($lead, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'
                                     style="padding: 8px 12px; font-size: 0.75rem;">
                                 <span>Edit Log</span>
@@ -220,7 +220,7 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
 <!-- CRM Interaction & Edit Modal -->
 <div id="leadModal" class="modal-overlay" onclick="if(event.target === this) closeLeadModal()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;">
     <div style="background:white; border-radius:24px; width:95%; max-width:1000px; padding:0; box-shadow:var(--shadow-lg); max-height: 90vh; overflow:hidden; display:flex;">
-        
+
         <!-- Left Side: Lead Profile & Edit -->
         <div style="flex: 1.2; padding: 40px; border-right: 1px solid #f1f5f9; overflow-y: auto;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 30px;">
@@ -231,14 +231,14 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
                     </a>
                 </div>
             </div>
-            
+
             <form id="lead-form" onsubmit="saveLead(event)">
                 <?= UI::csrf_field() ?>
                 <input type="hidden" id="lead_customer_id" name="customer_id">
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div class="form-group">
-                        <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Account Status</label>
+                        <label for="lead_status" style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Account Status</label>
                         <select id="lead_status" name="account_status" required>
                             <option value="Lead">Lead</option>
                             <option value="Active Customer">Active Customer</option>
@@ -247,40 +247,40 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
                         </select>
                     </div>
                     <div class="form-group">
-                        <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Lead Source</label>
+                        <label for="lead_source" style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Lead Source</label>
                         <input type="text" id="lead_source" name="lead_source" placeholder="Website, Referral, etc.">
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
-                    <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Core Interest / Needs</label>
+                    <label for="lead_interest" style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Core Interest / Needs</label>
                     <input type="text" id="lead_interest" name="interest" placeholder="e.g. Bulk Laptops, Gaming PCs">
                 </div>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                     <div class="form-group">
-                        <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Last Contact Date</label>
+                        <label for="lead_message_date" style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Last Contact Date</label>
                         <input type="date" id="lead_message_date" name="message_date">
                     </div>
                     <div class="form-group">
-                        <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Contact Method</label>
+                        <label for="lead_method" style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Contact Method</label>
                         <input type="text" id="lead_method" name="contact_method" placeholder="Email, Phone, WhatsApp...">
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 20px;">
-                    <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Next Follow-Up Call</label>
+                    <label for="lead_callback_date" style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Next Follow-Up Call</label>
                     <input type="date" id="lead_callback_date" name="callback_date" style="border-color:var(--accent-color); border-width:2px;">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 30px;">
-                    <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">General Account Notes</label>
+                    <label for="lead_notes" style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">General Account Notes</label>
                     <textarea id="lead_notes" name="internal_notes" style="width:100%; min-height:80px;"></textarea>
                 </div>
 
                 <div style="background: #f8fafc; padding: 20px; border-radius: 16px; margin-bottom: 30px; border: 1px solid #e2e8f0;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <label style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:var(--accent-color);">🆕 Log New Interaction</label>
+                        <label for="lead_notes" style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:var(--accent-color);">🆕 Log New Interaction</label>
                         <div style="display:flex; gap:8px;">
                             <button type="button" onclick="quickLog('Phone')" class="btn-order-view" style="font-size:0.6rem; padding:4px 8px; background:white; border:1px solid #cbd5e1;">📞 Call</button>
                             <button type="button" onclick="quickLog('Email')" class="btn-order-view" style="font-size:0.6rem; padding:4px 8px; background:white; border:1px solid #cbd5e1;">📧 Email</button>
@@ -331,7 +331,7 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
                     <input type="text" name="contact_person" placeholder="Name">
                 </div>
                 <div class="form-group">
-                    <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Lead Source</label>
+                    <label for="lead_source" style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Lead Source</label>
                     <input type="text" name="lead_source" placeholder="Referral, Web, etc.">
                 </div>
             </div>
@@ -348,7 +348,7 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
             </div>
 
             <div class="form-group" style="margin-bottom: 30px;">
-                <label style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Initial Interest / Notes</label>
+                <label for="lead_interest" style="font-size:0.7rem; font-weight:800; text-transform:uppercase; color:var(--text-secondary);">Initial Interest / Notes</label>
                 <textarea name="interest" placeholder="What are they looking for?" style="width:100%; min-height:80px;"></textarea>
             </div>
 

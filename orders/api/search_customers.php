@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../core/Security.php';
 try {
     $conn = Database::customers();
     $q = $_GET['q'] ?? '';
-    
+
     $sql = "SELECT * FROM customers";
     $params = [];
 
@@ -18,7 +18,7 @@ try {
     }
 
     $sql .= " ORDER BY created_at DESC LIMIT 100";
-    
+
     $stmt = $conn->prepare($sql);
     $stmt->execute($params);
     $customers = $stmt->fetchAll(PDO::FETCH_ASSOC);

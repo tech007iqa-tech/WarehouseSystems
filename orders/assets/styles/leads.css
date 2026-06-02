@@ -66,11 +66,11 @@
         flex-direction: column;
         max-height: 95vh;
     }
-    
+
     #leadModal > div {
         flex-direction: column !important;
     }
-    
+
     #leadModal div[style*="flex: 0.8"] {
         border-top: 1px solid #e2e8f0;
         max-height: 300px;

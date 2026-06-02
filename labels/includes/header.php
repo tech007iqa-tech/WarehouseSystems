@@ -14,7 +14,7 @@ Security::init();
     <!-- Global UI & Components -->
     <?php require_once __DIR__ . '/../../core/UI.php'; ?>
     <link rel="stylesheet" href="../assets/css/components.css">
-    
+
     <!-- Global CSS Variables & Layout Rules -->
     <link rel="stylesheet" href="assets/css/style.css">
 
@@ -74,7 +74,7 @@ Security::init();
             <button id="confirmPrintBtn" class="btn btn-success" style="width:100%; height:60px; font-size:1.1rem; gap:10px;">
                 <span>🚀 Send to Windows Printer</span>
             </button>
-            
+
             <p style="margin-top:15px; font-size:0.7rem; text-align:center; color:var(--text-secondary);">
                 This will open the file directly in your default Windows application.
             </p>
@@ -94,7 +94,7 @@ Security::init();
     <aside class="sidebar">
         <!-- Close button for mobile -->
         <label for="nav-toggle" class="mobile-only" style="position: absolute; top: 15px; right: 15px; font-size: 1.5rem; cursor: pointer; display: none;">✕</label>
-        
+
         <h2 style="margin-top: 10px;">IQA METAL</h2>
 
         <nav style="flex: 1; overflow-y: auto;">

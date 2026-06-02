@@ -20,7 +20,7 @@ if ($id) {
         $pdo = Database::calendar();
         $stmt = $pdo->prepare("DELETE FROM events WHERE id = ?");
         $stmt->execute([$id]);
-        
+
         header("Location: ../../index.php?view=calendar&view_type=$view_type&week_offset=$week_offset");
         exit;
     } catch (\PDOException $e) {

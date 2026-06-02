@@ -29,7 +29,7 @@ try {
             $series = $_POST['update_series'] ?? '';
             $cpu = $_POST['update_cpu'] ?? '';
             $desc = $_POST['update_desc'] ?? '';
-            
+
             $stmt = $conn->prepare("UPDATE items SET brand=?, model=?, series=?, cpu=?, description=?, quantity=?, unit_price=? WHERE id=?");
             if ($stmt->execute([$brand, $model, $series, $cpu, $desc, (float)$qty, (float)$price, (int)$update_id])) {
                 $_SESSION['notification_msg'] = "Item details updated. 💾";
@@ -78,7 +78,7 @@ foreach($items as $item) $total_units += $item['quantity'];
     <aside class="order-sidebar">
         <div class="sidebar-card">
             <h2 id="batch-builder-top">Batch Builder</h2>
-            
+
             <div class="batch-meta">
                 <?php if ($customer_info): ?>
                     <?php if (!empty(trim($customer_info['company_name'] ?? ''))): ?>
@@ -103,7 +103,7 @@ foreach($items as $item) $total_units += $item['quantity'];
                     <span class="value counter" id="sidebar-total-qty"><?= $total_units ?></span>
                 </div>
             </div>
-            
+
             <a href="checkout.php?customer_id=<?= urlencode($current_customer) ?>&order_id=<?= urlencode($current_order) ?>" class="btn-finalize">
                 Finalize & Checkout →
             </a>
@@ -120,14 +120,14 @@ foreach($items as $item) $total_units += $item['quantity'];
                 <input type="hidden" name="customer_id" value="<?= htmlspecialchars($current_customer) ?>">
                 <input type="hidden" name="order_id" value="<?= htmlspecialchars($current_order) ?>">
                 <?= UI::csrf_field() ?>
-                
+
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Brand</label>
+                        <label for="brand">Brand</label>
                         <input type="text" id="brand" name="brand" list="brand-options" placeholder="Dell, HP..." required>
                     </div>
                     <div class="form-group">
-                        <label>Model</label>
+                        <label for="models">Model</label>
                         <div style="position: relative; display: flex; align-items: center;">
                             <span id="apple-prefix" style="display: none; position: absolute; left: 12px; color: var(--text-main); font-weight: 700; pointer-events: none;">A-</span>
                             <input type="text" id="models" name="model" list="model-options" placeholder="A1465..." required style="width: 100%; transition: padding 0.2s;">
@@ -137,18 +137,18 @@ foreach($items as $item) $total_units += $item['quantity'];
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Series / Project</label>
+                        <label for="series">Series / Project</label>
                         <input type="text" id="series" name="series" list="series-options" placeholder="IQA-2024-001">
                         <datalist id="series-options"></datalist>
                     </div>
                     <div class="form-group">
-                        <label>CPU / Gen</label>
+                        <label for="cpu">CPU / Gen</label>
                         <input type="text" id="cpu" name="cpu" list="cpu-options" placeholder="i5-8350U">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label>Description / Condition</label>
+                    <label for="description">Description / Condition</label>
                     <textarea id="description" name="description" placeholder="Used, No major defects..."></textarea>
                     <!-- Premium Interactive Keyword Chips -->
                     <div class="keyword-chips-container">
@@ -161,11 +161,11 @@ foreach($items as $item) $total_units += $item['quantity'];
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label>Quantity</label>
+                        <label for="qty">Quantity</label>
                         <input type="number" id="qty" name="quantity" placeholder="1" step="any" min="0" required>
                     </div>
                     <div class="form-group">
-                        <label>Unit Price ($)</label>
+                        <label for="price">Unit Price ($)</label>
                         <input type="number" id="price" name="unit_price" placeholder="0.00" step="0.01">
                     </div>
                 </div>
@@ -255,41 +255,41 @@ foreach($items as $item) $total_units += $item['quantity'];
             <input type="hidden" name="action" value="update_item">
             <input type="hidden" name="update_id" id="edit-id">
             <?= UI::csrf_field() ?>
-            
+
             <div class="form-row">
                 <div class="form-group">
-                    <label>Brand</label>
+                    <label for="edit-brand">Brand</label>
                     <input type="text" name="update_brand" id="edit-brand" required>
                 </div>
                 <div class="form-group">
-                    <label>Model</label>
+                    <label for="edit-model">Model</label>
                     <input type="text" name="update_model" id="edit-model" required>
                 </div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Series</label>
+                    <label for="edit-series">Series</label>
                     <input type="text" name="update_series" id="edit-series">
                 </div>
                 <div class="form-group">
-                    <label>CPU</label>
+                    <label for="edit-cpu">CPU</label>
                     <input type="text" name="update_cpu" id="edit-cpu">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Description</label>
+                <label for="edit-desc">Description</label>
                 <textarea name="update_desc" id="edit-desc"></textarea>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label>Quantity</label>
+                    <label for="edit-qty">Quantity</label>
                     <input type="number" name="update_qty" id="edit-qty" step="any" min="0" required>
                 </div>
                 <div class="form-group">
-                    <label>Price</label>
+                    <label for="edit-price">Price</label>
                     <input type="number" name="update_price" id="edit-price" step="0.01">
                 </div>
             </div>
@@ -325,7 +325,7 @@ window.toggleDescriptionKeyword = toggleDescriptionKeyword;
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('ajax-batch-form');
     if (!form) return;
-    
+
     const brandInput = form.querySelector('[name="brand"]');
     const modelInput = form.querySelector('[name="model"]');
     const seriesInput = form.querySelector('[name="series"]');
@@ -336,10 +336,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (brandInput.value.trim().toLowerCase() === 'apple') {
             if (applePrefix) applePrefix.style.display = 'block';
             if (modelInput) modelInput.style.paddingLeft = '32px';
-            
+
             if (!seriesInput.value) seriesInput.value = '-';
             if (!cpuInput.value) cpuInput.value = '-';
-            
+
             // Clean up any existing 'A' or 'A-' they might have typed
             if (modelInput && modelInput.value.toUpperCase().startsWith('A-')) {
                 modelInput.value = modelInput.value.substring(2);
@@ -416,7 +416,7 @@ function sortSummary() {
 function repeatLastEntry() {
     const stateEl = document.getElementById('lastEntryState');
     if (!stateEl) return;
-    
+
     const lastEntry = JSON.parse(stateEl.textContent);
     if (!lastEntry) return;
 
@@ -457,7 +457,7 @@ async function handleBatchSubmit(event) {
     btn.textContent = 'Adding...';
 
     const formData = new FormData(form);
-    
+
     // Ensure the model actually gets the A- prefix if brand is Apple
     if (formData.get('brand').trim().toLowerCase() === 'apple') {
         let currentModel = formData.get('model').trim();
@@ -523,7 +523,7 @@ async function handleBatchSubmit(event) {
                 descEl.value = '';
                 descEl.dispatchEvent(new Event('input'));
             }
-            
+
             // Trigger brand change event to reset specific UI (like Apple prefix UI)
             const brandEl = form.querySelector('[name="brand"]');
             if (brandEl) {
@@ -555,9 +555,9 @@ async function handleBatchSubmit(event) {
             <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px; text-align: left;">
                 Paste your data below. Delimiter format is auto-detected. Excel/Sheets and CSV lists are fully supported.
             </p>
-            
+
             <textarea id="import-paste-area" placeholder="Paste rows here..." style="width: 100%; height: 250px; border-radius: 12px; border: 2px solid #e2e8f0; padding: 15px; font-family: monospace; font-size: 0.85rem; resize: none; margin-bottom: 20px; outline: none; transition: border-color 0.2s; background: #f8fafc;" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
-            
+
             <div id="import-preview" style="margin-bottom: 20px; display: none;">
                 <div id="import-mapping-info"></div>
                 <h3 style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; text-align: left;">Preview: <span id="import-row-count">0</span> rows detected</h3>
@@ -744,7 +744,7 @@ function parsePastedText(text) {
         const series = seriesIdx !== -1 ? (cols[seriesIdx] || '').trim() : 'N/A';
         const cpu = cpuIdx !== -1 ? (cols[cpuIdx] || '').trim() : '';
         const description = descIdx !== -1 ? (cols[descIdx] || '').trim() : '';
-        
+
         let price = 0;
         if (priceIdx !== -1 && cols[priceIdx]) {
             const parsedPrice = parseFloat(cols[priceIdx].toString().replace(/[^-0-9.]/g, ''));
@@ -803,7 +803,7 @@ async function processImport() {
         btn.disabled = false;
         return;
     }
-    
+
     try {
         const response = await fetch('api/bulk_update_orders.php', {
             method: 'POST',

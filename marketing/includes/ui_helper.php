@@ -44,7 +44,7 @@ class UI {
         $style = "";
         if ($type === 'new') $class = 'badge-new';
         if ($type === 'customer') $class = 'badge-customer';
-        
+
         return "<span class='{$class}' style='{$style}'>{$text}</span>";
     }
 
@@ -80,22 +80,22 @@ class UI {
      */
     public static function format_specs($text) {
         if (empty($text)) return "<span style='color: var(--text-secondary); italic;'>No specs defined.</span>";
-        
+
         // Detect if it's tab-separated (spreadsheet paste)
         if (strpos($text, "\t") !== false) {
             $lines = explode("\n", str_replace("\r", "", trim($text)));
             $html = "<div class='spec-table' style='display: flex; flex-direction: column; gap: 4px;'>";
-            
+
             $isFirst = true;
             $gridTemplate = "";
             foreach ($lines as $line) {
                 if (empty(trim($line))) continue;
                 $parts = explode("\t", $line);
-                
+
                 if ($isFirst) {
                     $colCount = count($parts);
                     $gridTemplate = "grid-template-columns: repeat($colCount, 1fr);";
-                    
+
                     // Header Row
                     $html .= "<div style='display: grid; {$gridTemplate} gap: 10px; font-size: 0.7rem; text-transform: uppercase; font-weight: 800; color: var(--accent-primary); border-bottom: 2px solid var(--accent-tertiary); padding-bottom: 4px; margin-bottom: 4px; align-items: end;'>";
                     foreach ($parts as $part) {
@@ -149,7 +149,7 @@ class UI {
      */
     public static function format_specs_plain($text) {
         if (empty($text)) return "No specs defined.";
-        
+
         // Detect if it's tab-separated (spreadsheet paste)
         if (strpos($text, "\t") !== false) {
             $lines = array_filter(explode("\n", str_replace("\r", "", trim($text))));
@@ -174,7 +174,7 @@ class UI {
             foreach ($lines as $line) {
                 $parts = explode("\t", $line);
                 $rowStr = "";
-                
+
                 if ($isFirst) {
                     // Header Logic: Handle potential multi-line headers (e.g. 2-in-1/x360)
                     $formatted .= "📋 ";
@@ -232,7 +232,7 @@ class UI {
                 for ($i = 0; $i < count($colMaxLens); $i++) {
                     $val = isset($parts[$i]) ? trim($parts[$i]) : "";
                     if ($i === 0) $val .= ":"; // Add colon to first column (Brand)
-                    
+
                     $isLast = ($i === count($colMaxLens) - 1);
                     if (!$isLast) {
                         // Regular columns are left-aligned

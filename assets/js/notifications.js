@@ -11,7 +11,7 @@ class Notifications {
 
     init() {
         if (document.getElementById('toast-container')) return;
-        
+
         this.container = document.createElement('div');
         this.container.id = 'toast-container';
         document.body.appendChild(this.container);
@@ -22,7 +22,7 @@ class Notifications {
 
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
-        
+
         let icon = 'ℹ️';
         if (type === 'success') icon = '✨';
         if (type === 'error') icon = '⚠️';
@@ -37,14 +37,14 @@ class Notifications {
 
         // Auto-remove
         setTimeout(() => this.hide(toast), duration);
-        
+
         // Manual remove on click
         toast.onclick = () => this.hide(toast);
     }
 
     hide(toast) {
         if (toast.classList.contains('hiding')) return;
-        
+
         toast.classList.add('hiding');
         setTimeout(() => {
             if (toast.parentNode) {
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('msg')) {
         const msg = urlParams.get('msg');
-        
+
         const messages = {
             'added': 'New entry successfully added ✨',
             'updated': 'Changes saved successfully 💾',

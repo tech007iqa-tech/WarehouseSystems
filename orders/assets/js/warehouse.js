@@ -344,7 +344,7 @@ function filterWarehouse() {
 
     for (let i = 0; i < cards.length; i++) {
         const text = (cards[i].getAttribute('data-search') || "").toLowerCase();
-        
+
         // Every term must be present in the text (AND logic)
         const isMatch = terms.every(term => text.includes(term));
 
@@ -763,7 +763,7 @@ if (applyBulkBtn) {
     applyBulkBtn.addEventListener('click', async () => {
         const location = document.getElementById('bulkLocation').value.trim();
         const price = document.getElementById('bulkPrice').value.trim();
-        
+
         if (!location && !price) {
             alert("Please specify a new location or price to apply.");
             return;

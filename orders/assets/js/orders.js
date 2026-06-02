@@ -11,7 +11,7 @@ function filterOrders() {
 
     for (let i = 0; i < rows.length; i++) {
         const searchBlob = (rows[i].getAttribute('data-search') || "").toLowerCase();
-        
+
         // Every term must be present (AND logic)
         const isMatch = terms.every(term => searchBlob.includes(term));
 
@@ -37,7 +37,7 @@ function filterOrders() {
             emptyState.appendChild(td);
             tbody.appendChild(emptyState);
         }
-        
+
         if (emptyState) {
             emptyState.style.display = '';
             emptyState.querySelector('td').innerText = `No batches found matching "${input.value}"`;
@@ -49,13 +49,13 @@ function filterOrders() {
 
 /**
  * Sorts the orders table based on column index
- * @param {number} n 
+ * @param {number} n
  */
 function sortOrdersTable(n) {
     const table = document.querySelector(".orders-table");
     const tbody = table.querySelector("tbody");
     const rows = Array.from(tbody.querySelectorAll("tr.order-row"));
-    
+
     // Determine sort direction
     const currentDir = table.getAttribute("data-sort-dir") === "asc" ? "desc" : "asc";
     table.setAttribute("data-sort-dir", currentDir);
@@ -83,8 +83,8 @@ function sortOrdersTable(n) {
 
 /**
  * Updates the order status via AJAX
- * @param {HTMLSelectElement} select 
- * @param {string} orderId 
+ * @param {HTMLSelectElement} select
+ * @param {string} orderId
  */
 async function updateOrderStatus(select, orderId) {
     const newStatus = select.value;
@@ -98,7 +98,7 @@ async function updateOrderStatus(select, orderId) {
         const formData = new FormData();
         formData.append('order_id', orderId);
         formData.append('new_status', newStatus);
-        
+
         const csrfEl = document.querySelector('input[name="csrf_token"]');
         if (csrfEl) formData.append('csrf_token', csrfEl.value);
 
@@ -147,7 +147,7 @@ async function transferOrder(event) {
         const formData = new FormData(form);
         const csrfEl = document.querySelector('input[name="csrf_token"]');
         if (csrfEl && !formData.has('csrf_token')) formData.append('csrf_token', csrfEl.value);
-        
+
         const response = await fetch('api/transfer_order.php', {
             method: 'POST',
             body: formData
@@ -174,7 +174,7 @@ async function transferOrder(event) {
 document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const query = params.get('q');
-    
+
     if (query) {
         const searchInput = document.getElementById('order-search');
         if (searchInput) {
@@ -250,7 +250,7 @@ document.getElementById('cancelBulkBtn')?.addEventListener('click', () => {
 
 document.getElementById('applyBulkBtn')?.addEventListener('click', async () => {
     const status = document.getElementById('bulkStatus').value;
-    
+
     if (!status) {
         alert("Please select a status to apply.");
         return;
@@ -279,7 +279,7 @@ document.getElementById('applyBulkBtn')?.addEventListener('click', async () => {
             selectedOrderIds.clear();
             if (OrderDOM.selectAll) OrderDOM.selectAll.checked = false;
             updateOrderBulkBar();
-            window.location.reload(); 
+            window.location.reload();
         } else {
             IQA_Notify.error(`Error: ${json.error}`);
         }

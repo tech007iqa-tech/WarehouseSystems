@@ -7,7 +7,7 @@ function openLeadModal(lead) {
     document.getElementById('modal-customer-id').innerText = lead.customer_id;
     document.getElementById('modal-customer-link').href = `index.php?view=orders&type=completed&q=${encodeURIComponent(lead.customer_id)}`;
     document.getElementById('lead_customer_id').value = lead.customer_id;
-    
+
     document.getElementById('lead_status').value = lead.account_status || 'Lead';
     document.getElementById('lead_source').value = lead.lead_source || '';
     document.getElementById('lead_interest').value = lead.interest || '';
@@ -15,7 +15,7 @@ function openLeadModal(lead) {
     document.getElementById('lead_method').value = lead.contact_method || '';
     document.getElementById('lead_callback_date').value = lead.callback_date || '';
     document.getElementById('lead_notes').value = lead.internal_notes || '';
-    
+
     // Clear the new interaction note
     const newNote = document.getElementById('new_interaction_note');
     if (newNote) newNote.value = '';
@@ -38,13 +38,13 @@ function quickLog(method) {
 
     if (methodInput) methodInput.value = method;
     if (dateInput) dateInput.value = today;
-    
+
     const messages = {
         'Phone': 'Spoke with client via phone.',
         'Email': 'Sent follow-up email regarding outstanding items.',
         'Message': 'Sent text/WhatsApp message for quick check-in.'
     };
-    
+
     if (noteInput) {
         noteInput.value = messages[method] || `Contacted via ${method}.`;
         noteInput.style.borderColor = 'var(--accent-color)';
@@ -78,7 +78,7 @@ async function loadInteractionHistory(customerId) {
         historyContainer.innerHTML = logs.map(log => {
             const methodLower = (log.method || 'other').toLowerCase();
             const icon = icons[methodLower] || '📝';
-            
+
             return `
                 <div style="padding:15px; border-bottom:1px solid #f1f5f9; font-size:0.85rem; position:relative; padding-left:45px;">
                     <div style="position:absolute; left:0; top:15px; width:32px; height:32px; background:white; border:1px solid #e2e8f0; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1rem; box-shadow:0 2px 4px rgba(0,0,0,0.03);">
@@ -121,7 +121,7 @@ async function saveLead(event) {
             // Success animation or feedback
             btn.style.background = '#22c55e';
             btn.innerText = '✓ Saved Successfully';
-            
+
             setTimeout(() => {
                 location.reload(); // Reload to refresh table data
             }, 800);

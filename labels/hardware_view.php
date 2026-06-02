@@ -75,17 +75,17 @@ $color = $desc === 'For Parts' ? 'var(--btn-danger-bg)'
 <!-- Main Content Grid -->
 <form id="refurbForm">
     <div class="technical-layout">
-        
+
         <!-- LEFT: Technical Specs & Baseline Form -->
         <div class="panel main-technical-panel">
             <h3 style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 Detailed Hardware Profile
             </h3>
-            
+
             <input type="hidden" name="id" value="<?= (int)$item['id'] ?>">
-<?php 
+<?php
     $formType = 'edit';
-    include 'includes/hardware_form.php'; 
+    include 'includes/hardware_form.php';
 ?>
 
             <hr style="border:0; border-top:1px solid var(--border-color); margin: 25px 0;">
@@ -105,7 +105,7 @@ $color = $desc === 'For Parts' ? 'var(--btn-danger-bg)'
                 <div class="flex-between"><span>Added Date:</span> <strong><?= format_date($item['created_at']) ?></strong></div>
                 <div class="flex-between"><span>Current Status:</span> <strong style="color: var(--btn-success-bg);"><?= htmlspecialchars($item['status'] ?? '—') ?></strong></div>
                 <div class="flex-between"><span>Warehouse Loc:</span> <strong><?= htmlspecialchars($item['warehouse_location'] ?? '—') ?></strong></div>
-                
+
                 <!-- Quick Specs Summary (New Section) -->
                 <div style="margin: 15px 0; padding: 12px; background: rgba(0,0,0,0.03); border-radius: 8px;">
                      <div style="font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.5px;">Quick Specs</div>
@@ -113,7 +113,7 @@ $color = $desc === 'For Parts' ? 'var(--btn-danger-bg)'
                      <div class="flex-between"><span>Series:</span> <strong><?= htmlspecialchars($item['series'] ?: '—') ?></strong></div>
                      <div class="flex-between"><span>RAM:</span> <strong><?= htmlspecialchars($item['ram'] ?: 'None') ?></strong></div>
                      <div class="flex-between"><span>Storage:</span> <strong><?= htmlspecialchars($item['storage'] ?: 'None') ?></strong></div>
-                     
+
                      <details style="margin-top: 10px; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 10px;">
                         <summary style="font-size: 0.75rem; font-weight: 700; color: var(--accent-color); cursor: pointer; display: flex; align-items: center; gap: 5px;">
                             🔍 Full Technical Snapshot
@@ -128,7 +128,7 @@ $color = $desc === 'For Parts' ? 'var(--btn-danger-bg)'
                      </details>
                 </div>
             </div>
-            
+
             <div style="margin-top: 10px; padding: 15px; background: rgba(140, 198, 63, 0.1); border-radius: 8px; color: var(--accent-hover); font-size: 0.85rem;">
                 💡 <strong>Sales Note:</strong> The technical sheet is the primary source for buyers. Keeping CPU, RAM and and health updated here will push accurate data to the Purchase Order.
             </div>

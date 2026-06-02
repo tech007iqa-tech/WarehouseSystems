@@ -31,9 +31,9 @@ async function launchFile(relativePath) {
 /**
  * Flash Launch a Label ODT.
  * Checks for existence first, then opens or generates.
- * @param {number} id 
- * @param {string} brand 
- * @param {string} model 
+ * @param {number} id
+ * @param {string} brand
+ * @param {string} model
  * @param {HTMLElement|null} btn - Optional button to show loading state
  */
 async function flashOpenLabel(id, brand, model, btn = null) {
@@ -54,7 +54,7 @@ async function flashOpenLabel(id, brand, model, btn = null) {
 
         const genRes = await fetch('api/reprint_label.php', { method: 'POST', body: formData });
         const genJson = await genRes.json();
-        
+
         if (!genJson.success) {
             alert('Generation failed: ' + genJson.error);
         }

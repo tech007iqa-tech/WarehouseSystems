@@ -19,7 +19,7 @@ try {
     }
 
     $sql .= " ORDER BY created_at DESC LIMIT $limit";
-    
+
     $stmt = $pdo_labels->prepare($sql);
     $stmt->execute($params);
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -31,7 +31,7 @@ try {
     // Migration: add columns if older DB
     $cols = $conn_auth->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC);
     $col_names = array_column($cols, 'name');
-    
+
     if (!in_array('display_name', $col_names)) {
         $conn_auth->exec("ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''");
     }
@@ -63,7 +63,7 @@ try {
             $_SESSION['username'] = $user['username'];
             $_SESSION['display_name'] = $user['display_name'] ?: $user['username'];
             $_SESSION['role'] = $user['role'] ?? 'Operator';
-            
+
             // Redirect based on role
             if ($_SESSION['role'] === 'Admin') {
                 header("Location: ../index.php");

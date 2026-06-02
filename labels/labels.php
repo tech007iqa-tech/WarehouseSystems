@@ -241,7 +241,7 @@ try {
     .bulk-info { font-weight: 800; font-size: 1.1rem; }
     .bulk-actions { display: flex; gap: 10px; align-items: center; }
     .bulk-actions input, .bulk-actions select { background: white; color: var(--text-main); }
-    
+
     @keyframes slideDown {
         from { transform: translateY(-100%); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }

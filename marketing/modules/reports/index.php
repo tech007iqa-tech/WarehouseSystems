@@ -13,7 +13,7 @@ $totalWarehouseModels = 0;
 $marketedModels = 0;
 if ($labelsDb) {
     $totalWarehouseModels = $labelsDb->query("SELECT COUNT(DISTINCT model) FROM items WHERE status = 'In Warehouse'")->fetchColumn();
-    
+
     $marketedModels = $marketingDb->query("SELECT COUNT(DISTINCT model_name) FROM model_templates")->fetchColumn();
 }
 
@@ -44,7 +44,7 @@ $coveragePct = $totalWarehouseModels > 0 ? round(($marketedModels / $totalWareho
                     <div style="width: <?php echo $funnelWidth; ?>%; height: 100%; background: var(--accent-primary);"></div>
                 </div>
             </div>
-            
+
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                 <div class="stat-box">
                     <div class="label">Total Leads</div>
@@ -91,7 +91,7 @@ $coveragePct = $totalWarehouseModels > 0 ? round(($marketedModels / $totalWareho
         <div style="text-align: center; padding: 1rem 0;">
             <div style="font-size: 3rem; font-weight: 800; color: var(--accent-primary);"><?php echo $crmSynced; ?> / <?php echo $totalLeads; ?></div>
             <p style="color: var(--text-secondary); font-size: 0.9rem;">Leads currently synced with Master CRM</p>
-            
+
             <div style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; font-size: 0.8rem; color: var(--text-dim);">
                 <?php if ($crmSynced == $totalLeads): ?>
                     ✅ Your marketing database is 100% in sync with the Master CRM.

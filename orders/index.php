@@ -1,7 +1,7 @@
-<?php 
+<?php
 require_once 'core/database.php';
 require_once __DIR__ . '/../core/UI.php';
-include 'core/auth.php'; 
+include 'core/auth.php';
 
 // --- ROUTING & LOGIC PHASE (Pre-Output) ---
 $view = $_GET['view'] ?? 'default';
@@ -154,7 +154,7 @@ $page_content = ob_get_clean();
                         <span>🎯</span> Leads
                     </a>
                 <?php endif; ?>
-                
+
                 <a href="index.php?view=warehouse" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'warehouse' ? 'active' : '' ?>">
                     <span>🏬</span> Warehouse
                 </a>
@@ -181,7 +181,7 @@ $page_content = ob_get_clean();
             if (menu) {
                 const isOpen = menu.style.display === 'flex';
                 menu.style.display = isOpen ? 'none' : 'flex';
-                
+
                 if (!isOpen) {
                     const closeMenu = (e) => {
                         if (!menu.contains(e.target)) {

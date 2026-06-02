@@ -12,17 +12,17 @@ try {
 
     // Fetch all orders with customer details using Cross-DB Join
     $history_statuses = "'paid', 'dispatched', 'finalized', 'canceled'";
-    
+
     try {
         Database::attach($conn, 'customers', 'customers_db');
-        
-        $base_sql = "SELECT o.*, c.company_name FROM orders o 
+
+        $base_sql = "SELECT o.*, c.company_name FROM orders o
                      LEFT JOIN customers_db.customers c ON o.customer_id = c.customer_id";
-        
+
         if ($show_type === 'completed') {
             $sql = "$base_sql WHERE o.status IN ($history_statuses) ORDER BY o.created_at DESC";
         } else {
-            $sql = "$base_sql WHERE (o.status NOT IN ($history_statuses) OR o.status IS NULL) 
+            $sql = "$base_sql WHERE (o.status NOT IN ($history_statuses) OR o.status IS NULL)
                     OR (o.status = 'finalized' AND o.created_at > datetime('now', '-24 hours'))
                     ORDER BY o.created_at DESC";
         }
@@ -31,8 +31,8 @@ try {
         if ($show_type === 'completed') {
             $sql = "SELECT *, 'Unknown Account' as company_name FROM orders WHERE status IN ($history_statuses) ORDER BY created_at DESC";
         } else {
-            $sql = "SELECT *, 'Unknown Account' as company_name FROM orders 
-                    WHERE (status NOT IN ($history_statuses) OR status IS NULL) 
+            $sql = "SELECT *, 'Unknown Account' as company_name FROM orders
+                    WHERE (status NOT IN ($history_statuses) OR status IS NULL)
                     OR (status = 'finalized' AND created_at > datetime('now', '-24 hours'))
                     ORDER BY created_at DESC";
         }
@@ -105,7 +105,7 @@ try {
             </thead>
             <tbody id="orders-list">
                 <?php if (count($orders) > 0): ?>
-                    <?php foreach ($orders as $order): 
+                    <?php foreach ($orders as $order):
                         $company = $order['company_name'] ?: 'Unknown Account';
                         $status = strtolower($order['status']);
                         $search_blob = strtolower($order['order_id'] . " " . $company . " " . $order['customer_id']);
@@ -132,7 +132,7 @@ try {
                                     <?= htmlspecialchars($status) ?>
                                 </span>
                                 <div class="select-wrapper" style="position: relative;">
-                                    <select name="new_status" class="order-status-select" 
+                                    <select name="new_status" class="order-status-select"
                                             onchange="updateOrderStatus(this, '<?= $order['order_id'] ?>')"
                                             data-original-value="<?= htmlspecialchars($status) ?>"
                                             style="height: 32px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 700; padding: 0 10px; background: #f8fafc; cursor: pointer;">
@@ -147,8 +147,8 @@ try {
                             </div>
                         </td>
                         <td style="padding: 20px 24px; text-align: right;">
-                            <a href="checkout.php?customer_id=<?= urlencode($order['customer_id']) ?>&order_id=<?= urlencode($order['order_id']) ?>" 
-                               class="btn-order-view" 
+                            <a href="checkout.php?customer_id=<?= urlencode($order['customer_id']) ?>&order_id=<?= urlencode($order['order_id']) ?>"
+                               class="btn-order-view"
                                style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: #f1f5f9; color: #475569; border-radius: 10px; text-decoration: none; font-weight: 800; font-size: 0.85rem; transition: all 0.2s;">
                                 <span>Details</span>
                                 <i style="font-style: normal; font-size: 1.1rem; line-height: 1;">→</i>
@@ -174,13 +174,13 @@ try {
             <button type="button" onclick="closeTransferModal()" style="background:none; border:none; cursor:pointer; font-size:1.5rem; opacity:0.5;">&times;</button>
         </div>
         <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px;">Move this batch to a different customer account.</p>
-        
+
         <form onsubmit="transferOrder(event)">
             <input type="hidden" name="action" value="transfer_order">
             <input type="hidden" name="order_id" id="transfer_order_id">
-            
+
             <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display:block; font-size:0.7rem; font-weight:800; text-transform:uppercase; margin-bottom:5px; color:var(--text-secondary);">Select Target Customer</label>
+                <label for="transfer_new_customer_id" style="display:block; font-size:0.7rem; font-weight:800; text-transform:uppercase; margin-bottom:5px; color:var(--text-secondary);">Select Target Customer</label>
                 <select name="new_customer_id" id="transfer_new_customer_id" required style="width:100%; height:44px; border-radius:10px; border:1px solid var(--border-color); padding:0 10px; font-weight:600;">
                     <?php foreach($all_customers as $c): ?>
                         <option value="<?= htmlspecialchars($c['customer_id']) ?>">

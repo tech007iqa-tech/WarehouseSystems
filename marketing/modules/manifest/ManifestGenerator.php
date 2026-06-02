@@ -19,12 +19,12 @@ class ManifestGenerator {
     public function getMarketableInventory($minQty = 10) {
         // In a real scenario, this would JOIN or query the labels.sqlite
         // For now, we simulate the logic described: QTY > 10 and Status = 'In Warehouse'
-        $sql = "SELECT brand, model, COUNT(*) as qty, cpu_gen, ram, storage 
-                FROM items 
-                WHERE status = 'In Warehouse' 
-                GROUP BY brand, model 
+        $sql = "SELECT brand, model, COUNT(*) as qty, cpu_gen, ram, storage
+                FROM items
+                WHERE status = 'In Warehouse'
+                GROUP BY brand, model
                 HAVING qty >= :minQty";
-        
+
         try {
             $stmt = $this->labelsDb->prepare($sql);
             $stmt->execute(['minQty' => $minQty]);
@@ -50,7 +50,7 @@ class ManifestGenerator {
         }
 
         $ad .= "DM for volume pricing! #B2B #Hardware #Refurbished";
-        
+
         return $ad;
     }
 }

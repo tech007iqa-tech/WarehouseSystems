@@ -13,7 +13,7 @@
 - **Database:** SQLite3 using PDO (`includes/db.php`). Two `.sqlite` files (labels, audit).
 - **File Generation:** Native PowerShell "Structural Surgery" injecting content into Master Templates.
 - **Printing:**
-  - **Labels (.odt):** High-fidelity thermal labels generated via PowerShell "Structural Surgery". 
+  - **Labels (.odt):** High-fidelity thermal labels generated via PowerShell "Structural Surgery".
   - **Dual-Label approach:**
     - **Label A**: Branding (Brand, Model, Series, CPU).
     - **Label B**: Technical Specs (Consolidated 3-line layout: CPU, RAM/Storage/Battery, and GPU/OS/BIOS).

@@ -24,12 +24,12 @@ try {
     if ($action === 'register_customer') {
         // Generate new ID for quick registration
         $customer_id = 'CUST-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
-        
+
         $stmt = $conn->prepare("INSERT INTO customers (
-            customer_id, company_name, contact_person, email, phone, 
+            customer_id, company_name, contact_person, email, phone,
             account_status, lead_source, interest, internal_notes, callback_date, message_date
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        
+
         $stmt->execute([
             $customer_id,
             $_POST['company_name'],
@@ -47,11 +47,11 @@ try {
         if (!$customer_id) throw new Exception("Missing Customer ID for update");
 
         // Update main customer fields
-        $stmt = $conn->prepare("UPDATE customers SET 
-            account_status = ?, lead_source = ?, interest = ?, 
-            contact_method = ?, callback_date = ?, message_date = ?, internal_notes = ? 
+        $stmt = $conn->prepare("UPDATE customers SET
+            account_status = ?, lead_source = ?, interest = ?,
+            contact_method = ?, callback_date = ?, message_date = ?, internal_notes = ?
             WHERE customer_id = ?");
-        
+
         $stmt->execute([
             $_POST['account_status'], $_POST['lead_source'], $_POST['interest'],
             $_POST['contact_method'], $_POST['callback_date'], $_POST['message_date'], $_POST['internal_notes'],

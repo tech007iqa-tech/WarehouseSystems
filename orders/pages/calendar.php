@@ -33,7 +33,7 @@ $friday_ts = $monday_ts + (4 * 86400);
 $events = [];
 try {
     $pdo_cal = Database::calendar();
-    
+
     // Ensure table exists
     $pdo_cal->exec("CREATE TABLE IF NOT EXISTS events (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,7 +68,7 @@ try {
         $event_id = $row['id'];
         $event_date = $row['event_date'];
         $cust_id = $row['customer_id'];
-        
+
         $conversion_status = null;
         if ($cust_id) {
             // SMART CONVERSION: Check if this customer placed an order +/- 3 days from this visit
@@ -76,7 +76,7 @@ try {
             $stmt_conv = $pdo_ord_check->prepare("SELECT COUNT(*) FROM orders WHERE customer_id = ? AND created_at BETWEEN date(?, '-1 day') AND date(?, '+3 days')");
             $stmt_conv->execute([$cust_id, $event_date, $event_date]);
             $order_count = $stmt_conv->fetchColumn();
-            
+
             $conversion_status = ($order_count > 0) ? 'converted' : 'window_shop';
         }
 
@@ -105,7 +105,7 @@ if ($current_view === 'week') {
             <div class="view-controls">
                 <button class="<?php echo $current_view === 'month' ? 'active' : ''; ?>" onclick="location.href='index.php?view=calendar&view_type=month&month=<?php echo $month; ?>&year=<?php echo $year; ?>'">Month</button>
                 <button class="<?php echo $current_view === 'week' ? 'active' : ''; ?>" onclick="location.href='index.php?view=calendar&view_type=week&week_offset=0'">Week</button>
-                
+
                 <?php if ($week_offset != 0 || $current_view === 'month'): ?>
                     <button onclick="location.href='index.php?view=calendar&view_type=week&week_offset=0'" style="background: rgba(255,255,255,0.1); color: var(--accent); margin-left: 0.5rem;">
                         Today
@@ -130,9 +130,9 @@ if ($current_view === 'week') {
             <!-- Weekly View (Mon-Fri) -->
             <div class="calendar-grid-header" style="grid-template-columns: 100px repeat(5, 1fr);">
                 <div class="header-cell">Time</div>
-                <?php 
+                <?php
                 $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-                for ($i = 0; $i < 5; $i++): 
+                for ($i = 0; $i < 5; $i++):
                     $current_day_ts = $monday_ts + ($i * 86400);
                     $is_today_col = (date('Y-m-d', $current_day_ts) == date('Y-m-d'));
                 ?>
@@ -142,12 +142,12 @@ if ($current_view === 'week') {
                     </div>
                 <?php endfor; ?>
             </div>
-            
+
             <div class="weekly-scroll-area">
-                <?php 
+                <?php
                 $start_hour = 8;
                 $end_hour = 17;
-                for ($h = $start_hour; $h <= $end_hour; $h++): 
+                for ($h = $start_hour; $h <= $end_hour; $h++):
                     $time_label = ($h <= 12) ? "$h:00 AM" : ($h-12).":00 PM";
                     if ($h == 12) $time_label = "12:00 PM";
                     $is_lunch = ($h == 12);
@@ -155,7 +155,7 @@ if ($current_view === 'week') {
                 ?>
                     <div class="weekly-row <?php echo $is_lunch ? 'lunch-break' : ''; ?>">
                         <div class="time-slot-label"><?php echo $time_label; ?></div>
-                        <?php for($d=0; $d<5; $d++): 
+                        <?php for($d=0; $d<5; $d++):
                             $current_date_str = date('Y-m-d', $monday_ts + ($d * 86400));
                             $slot_events = [];
                             if (isset($events[$current_date_str])) {
@@ -167,17 +167,17 @@ if ($current_view === 'week') {
                             }
                             $has_overlap = count($slot_events) > 1;
                         ?>
-                            <div class="grid-cell <?php echo $has_overlap ? 'has-overlap' : ''; ?>" 
+                            <div class="grid-cell <?php echo $has_overlap ? 'has-overlap' : ''; ?>"
                                  onclick="openEventModal('<?php echo $current_date_str; ?>', '<?php echo $current_time_str; ?>')">
-                                <?php 
+                                <?php
                                 foreach ($slot_events as $ev) {
                                     $ev_start = (int)substr($ev['start_time'], 0, 2);
                                     $is_start = ($h == $ev_start);
                                     $style = "background: " . htmlspecialchars($ev['color']) . ";";
                                     $style .= "box-shadow: 0 4px 10px -2px " . htmlspecialchars($ev['color']) . "88;";
                                     $tooltip = htmlspecialchars($ev['title'] . ($ev['description'] ? ": " . $ev['description'] : ""));
-                                    echo '<div class="event-block ' . ($is_start ? 'is-start' : 'is-cont') . '" 
-                                                style="' . $style . '" 
+                                    echo '<div class="event-block ' . ($is_start ? 'is-start' : 'is-cont') . '"
+                                                style="' . $style . '"
                                                 title="' . $tooltip . '"
                                                 onclick="event.stopPropagation(); openEditModal(' . htmlspecialchars(json_encode($ev)) . ')">';
                                      if ($is_start) {
@@ -198,19 +198,19 @@ if ($current_view === 'week') {
                 <div class="header-cell">Sun</div><div class="header-cell">Mon</div><div class="header-cell">Tue</div><div class="header-cell">Wed</div><div class="header-cell">Thu</div><div class="header-cell">Fri</div><div class="header-cell">Sat</div>
             </div>
             <div class="calendar-month-grid">
-                <?php 
+                <?php
                 for ($x = 0; $x < $day_of_week; $x++) {
                     echo '<div class="grid-cell muted"></div>';
                 }
 
-                for ($i = 1; $i <= $number_of_days; $i++): 
+                for ($i = 1; $i <= $number_of_days; $i++):
                     $current_date = sprintf('%04d-%02d-%02d', $year, $month, $i);
                     $is_today = ($current_date == date('Y-m-d')) ? 'is-today' : '';
                 ?>
                     <div class="grid-cell <?php echo $is_today; ?>" onclick="openEventModal('<?php echo $current_date; ?>')">
                         <div class="day-number"><?php echo $i; ?></div>
                         <div class="event-list-container">
-                            <?php 
+                            <?php
                             if (isset($events[$current_date])) {
                                 foreach ($events[$current_date] as $ev) {
                                     $conv = $ev['conversion_status'];
@@ -218,18 +218,18 @@ if ($current_view === 'week') {
                                     if ($conv === 'converted') $conv_icon = ' ✅ Sale';
                                     if ($conv === 'window_shop') $conv_icon = ' 👀 Window Shop';
 
-                                    echo '<div class="event-pill ' . ($conv ? 'has-conversion ' . $conv : '') . '" 
-                                               title="' . htmlspecialchars($ev['start_time']) . '" 
+                                    echo '<div class="event-pill ' . ($conv ? 'has-conversion ' . $conv : '') . '"
+                                               title="' . htmlspecialchars($ev['start_time']) . '"
                                                style="background: ' . htmlspecialchars($ev['color']) . '; box-shadow: 0 4px 10px -2px ' . htmlspecialchars($ev['color']) . '88;"
-                                               onclick="event.stopPropagation(); openEditModal(' . htmlspecialchars(json_encode($ev)) . ')">' 
-                                          . htmlspecialchars($ev['title']) . $conv_icon . 
+                                               onclick="event.stopPropagation(); openEditModal(' . htmlspecialchars(json_encode($ev)) . ')">'
+                                          . htmlspecialchars($ev['title']) . $conv_icon .
                                           '</div>';
                                 }
                             }
                             ?>
                         </div>
                     </div>
-                <?php endfor; 
+                <?php endfor;
 
                 // Fill remaining cells for a consistent 6-row grid (42 cells)
                 $total_cells = $day_of_week + $number_of_days;
@@ -255,14 +255,14 @@ if ($current_view === 'week') {
             <input type="hidden" name="week_offset" value="<?php echo $week_offset; ?>">
             <input type="hidden" name="view_type" value="<?php echo $current_view; ?>">
             <input type="hidden" id="eventColor" name="color" value="#38bdf8">
-            
+
             <div class="form-group-cal">
-                <label>Title</label>
+                <label for="eventTitle">Title</label>
                 <input type="text" id="eventTitle" name="title" required placeholder="Project Name, Meeting, etc.">
             </div>
 
             <div class="form-group-cal">
-                <label>Link to Customer / Visit</label>
+                <label for="eventCustomer">Link to Customer / Visit</label>
                 <select id="eventCustomer" name="customer_id" class="form-control-cal">
                     <option value="">-- No Customer (Internal Event) --</option>
                     <?php foreach ($all_customers as $cust): ?>
@@ -274,18 +274,18 @@ if ($current_view === 'week') {
             </div>
 
             <div class="form-group-cal">
-                <label>Description / Notes</label>
+                <label for="eventDesc">Description / Notes</label>
                 <textarea id="eventDesc" name="description" placeholder="Add links, notes, or details..."></textarea>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div class="form-group-cal">
-                    <label>Date</label>
+                    <label for="eventDate">Date</label>
                     <input type="date" id="eventDate" name="event_date" required>
                 </div>
 
                 <div class="form-group-cal">
-                    <label>Category Color</label>
+                    <label for="eventColor">Category Color</label>
                     <div class="color-options-cal">
                         <div class="color-dot-cal active" data-color="#38bdf8" style="background: #38bdf8" onclick="selectColor(this, '#38bdf8')"></div>
                         <div class="color-dot-cal" data-color="#10b981" style="background: #10b981" onclick="selectColor(this, '#10b981')"></div>
@@ -297,7 +297,7 @@ if ($current_view === 'week') {
             </div>
 
             <div class="form-group-cal" style="text-align: center;">
-                <label style="display: block; text-align: left;">Schedule (8 AM - 5 PM)</label>
+                <label for="startTime" style="display: block; text-align: left;">Schedule (8 AM - 5 PM)</label>
                 <div id="timeTimeline" class="timeline-picker"></div>
                 <input type="hidden" id="startTime" name="start_time" value="08:00">
                 <input type="hidden" id="endTime" name="end_time" value="09:00">
@@ -324,15 +324,15 @@ if ($current_view === 'week') {
         for (let h = 8; h <= 17; h++) {
             const chip = document.createElement('div');
             chip.className = 'timeline-chip';
-            
+
             const displayHour = (h > 12 ? h-12 : h);
             const ampm = (h >= 12 ? 'pm' : 'am');
-            
+
             chip.innerHTML = `
                 <span class="h-val">${displayHour}</span>
                 <span class="a-val">${ampm}</span>
             `;
-            
+
             chip.dataset.hour = h;
             chip.onclick = () => selectHour(h);
             container.appendChild(chip);
@@ -379,7 +379,7 @@ if ($current_view === 'week') {
         chips.forEach(chip => {
             const h = parseInt(chip.dataset.hour);
             chip.classList.remove('selected', 'in-range');
-            
+
             if (h === selectedStart || h === selectedEnd) chip.classList.add('selected');
             if (selectedStart && selectedEnd && h > selectedStart && h < selectedEnd) {
                 chip.classList.add('in-range');
@@ -408,10 +408,10 @@ if ($current_view === 'week') {
         document.getElementById('eventDate').value = date;
         document.getElementById('deleteBtn').style.display = 'none';
         document.getElementById('submitBtn').innerText = 'Create Event';
-        
+
         selectedStart = parseInt(time.split(':')[0]);
         selectedEnd = Math.min(selectedStart + 1, 17);
-        
+
         initTimeline();
         updateTimelineUI();
         document.getElementById('calendarEventModal').classList.add('active');
@@ -426,10 +426,10 @@ if ($current_view === 'week') {
         document.getElementById('eventDate').value = event.event_date;
         document.getElementById('deleteBtn').style.display = 'block';
         document.getElementById('submitBtn').innerText = 'Save Changes';
-        
+
         selectedStart = parseInt(event.start_time.split(':')[0]);
         selectedEnd = parseInt(event.end_time.split(':')[0]);
-        
+
         document.getElementById('eventColor').value = event.color;
         document.querySelectorAll('.color-dot-cal').forEach(d => {
             d.classList.toggle('active', d.dataset.color === event.color);

@@ -12,10 +12,10 @@ $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['inventory_csv'])) {
     $file = $_FILES['inventory_csv'];
-    
+
     if ($file['error'] === UPLOAD_ERR_OK) {
         $handle = fopen($file['tmp_name'], 'r');
-        
+
         if ($handle !== false) {
             $header = fgetcsv($handle);
             if ($header) {
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['inventory_csv'])) {
                 foreach ($header as $index => $col) {
                     $mapping[trim(strtolower($col))] = $index;
                 }
-                
+
                 $count = 0;
                 $conn_wh->beginTransaction();
                 try {
@@ -34,10 +34,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['inventory_csv'])) {
                         $qty   = (int)($data[$mapping['qty']] ?? $data[$mapping['quantity']] ?? 0);
                         $loc   = $data[$mapping['location']] ?? $data[$mapping['location_code']] ?? 'ZONE-X';
                         $sector = $data[$mapping['type']] ?? $data[$mapping['sector']] ?? 'Laptops';
-                        
+
                         // Intelligent Specs Construction for Laptops
                         $specs = [];
-                        
+
                         // Handle "CPU / Gen" split or mapping
                         $cpu_gen = $data[$mapping['cpu / gen']] ?? $data[$mapping['cpu/gen']] ?? '';
                         if ($cpu_gen) {
@@ -68,10 +68,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['inventory_csv'])) {
                                 }
                             }
                         }
-                        
+
                         $specs_json = json_encode($specs);
-                        
-                        $stmt = $conn_wh->prepare("INSERT INTO inventory (user_owner, sector, location_code, brand, model, specs_json, quantity, last_updated_by) 
+
+                        $stmt = $conn_wh->prepare("INSERT INTO inventory (user_owner, sector, location_code, brand, model, specs_json, quantity, last_updated_by)
                                                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
                         $stmt->execute([$current_user, $sector, $loc, $brand, $model, $specs_json, $qty, $current_user]);
                         $count++;
@@ -119,7 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['inventory_csv'])) {
         <div style="background: white; padding: 40px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: var(--shadow-sm);">
             <form action="index.php?view=import_warehouse" method="POST" enctype="multipart/form-data">
                 <div style="margin-bottom: 30px;">
-                    <label style="display: block; font-weight: 800; font-size: 1.1rem; color: var(--text-main); margin-bottom: 15px;">1. Select Inventory Manifest</label>
+                    <label for="csv-input" style="display: block; font-weight: 800; font-size: 1.1rem; color: var(--text-main); margin-bottom: 15px;">1. Select Inventory Manifest</label>
                     <div id="drop-zone" style="border: 2px dashed #cbd5e1; border-radius: 20px; padding: 60px 20px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.3s ease;">
                         <input type="file" name="inventory_csv" id="csv-input" accept=".csv" required style="display: none;">
                         <div style="font-size: 4rem; margin-bottom: 15px;">📂</div>

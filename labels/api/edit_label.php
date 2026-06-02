@@ -117,7 +117,7 @@ try {
     // 2. LOG THE AUDIT EVENT
     $action = 'UPDATED';
     $summary = "Updated details for " . ($updated_item[HW_FIELDS['BRAND']] ?? '') . " " . ($updated_item[HW_FIELDS['MODEL']] ?? '');
-    
+
     // Status Change Summary
     if (($old_item[HW_FIELDS['STATUS']] ?? '') !== ($updated_item[HW_FIELDS['STATUS']] ?? '')) {
         $action = 'STATUS_CHANGE';

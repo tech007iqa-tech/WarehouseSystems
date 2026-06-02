@@ -27,7 +27,7 @@ While the Photo Bucket supports flexible uploads, the following "Hero Shots" are
 - **WebP Compression**: Processed images use the WebP format for superior loading speed.
 
 ## Troubleshooting: "Performance Warning"
-If you see a warning about the **GD Library**, thumbnail generation is disabled. 
+If you see a warning about the **GD Library**, thumbnail generation is disabled.
 1. **The Symptom**: "⚙️ Processing..." labels stay blurred or original high-res photos are used everywhere.
 2. **The Fix**:
    - Open your `php.ini` file (via XAMPP Config -> PHP).

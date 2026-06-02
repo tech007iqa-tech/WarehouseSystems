@@ -1,6 +1,6 @@
 <?php
 // includes/functions.php
-// A collection of global PHP helper functions to format data nicely before sending to the UI 
+// A collection of global PHP helper functions to format data nicely before sending to the UI
 // or before saving into the .sqlite file.
 
 /**
@@ -26,7 +26,7 @@ function sanitize_text($val) {
 
 /**
  * Returns a standardized JSON response format. Use this at the end of every file in /api/
- * 
+ *
  * @param bool $success - Did the operation succeed?
  * @param array|null $data - The payload to send to JS logic.
  * @param string|null $error_msg - The reason for failure (if success is false)
@@ -42,7 +42,7 @@ function send_json_response($success = true, $data = [], $error_msg = null) {
     } else {
         $output['error'] = $error_msg;
         // Optionally set a 400 status code if it's a solid failure
-        http_response_code(400); 
+        http_response_code(400);
     }
 
     echo json_encode($output);
@@ -72,7 +72,7 @@ function format_date($timestamp) {
 function ensure_system_folders() {
     $base = __DIR__ . '/../';
     $folders = ['exports', 'exports/labels', 'exports/orders', 'db/backups', 'fileBackups'];
-    
+
     foreach ($folders as $f) {
         $path = $base . $f;
         if (!is_dir($path)) {

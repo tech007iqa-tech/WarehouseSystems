@@ -56,7 +56,7 @@ try {
                 $nu = trim($_POST['new_username']);
                 $np = $_POST['new_password'];
                 $nr = $_POST['new_role'] ?? 'Operator';
-                
+
                 if (strlen($np) >= 3) {
                     $hash = password_hash($np, PASSWORD_BCRYPT);
                     try {
@@ -94,16 +94,16 @@ try {
             $db_orders_file = realpath('assets/db/orders.db');
             try {
                 if (!$db_cust_file || !$db_orders_file) throw new Exception("Database files not found.");
-                
+
                 $conn_m = new PDO("sqlite:" . $db_cust_file);
                 $conn_m->exec("ATTACH DATABASE '" . $db_orders_file . "' AS db_o");
-                
+
                 // Delete customers with no orders
                 $sql_clean = "DELETE FROM customers WHERE customer_id NOT IN (SELECT DISTINCT customer_id FROM db_o.orders)";
                 $stmt_clean = $conn_m->prepare($sql_clean);
                 $stmt_clean->execute();
                 $removed = $stmt_clean->rowCount();
-                
+
                 $message = "Cleanup complete! Removed {$removed} customer(s) with 0 orders.";
             } catch (Exception $e) { $error = "Cleanup failed: " . $e->getMessage(); }
         }
@@ -156,7 +156,7 @@ try {
         .status-msg { padding: 12px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; margin-bottom: 20px; text-align: center; }
         .msg-success { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
         .msg-error { background: #fef2f2; color: #991b1b; border: 1px solid #fee2e2; }
-        
+
         .user-list { list-style: none; margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 20px; }
         .user-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 8px; background: #f8fafc; margin-bottom: 8px; }
         .user-name { font-weight: 700; font-size: 0.9rem; color: var(--text-main); }
@@ -288,16 +288,16 @@ try {
                 foreach($users as $u) {
                     $is_admin = ($u['username'] === 'admin');
                     $user_role = $u['role'] ?? 'Operator';
-                    
+
                     echo "<li class='user-item'>
                             <div style='display:flex; flex-direction:column;'>
                                 <span class='user-name'>" . htmlspecialchars($u['username']) . ($is_admin ? " <small style='color:var(--accent-color)'>(Root)</small>" : "") . "</span>
                                 <span style='font-size: 0.65rem; color: #64748b; font-weight: 800; text-transform: uppercase;'>" . htmlspecialchars($user_role) . "</span>
                             </div>";
-                    
+
                     if (!$is_admin) {
                         echo "<div style='display:flex; gap:8px;'>";
-                        
+
                         // Role Toggle Button
                         $next_role = ($user_role === 'Admin' ? 'Operator' : 'Admin');
                         $btn_text = ($user_role === 'Admin' ? 'Demote' : 'Promote');
@@ -316,7 +316,7 @@ try {
                                 <input type='hidden' name='del_username' value='" . htmlspecialchars($u['username']) . "'>
                                 <button type='submit' class='btn-delete-small'>Revoke</button>
                               </form>";
-                        
+
                         echo "</div>";
                     }
                     echo "</li>";
@@ -374,7 +374,7 @@ try {
 
         <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #fecdd3;">
             <h1 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 15px;">Data Security & Backups</h1>
-            
+
             <div style="background: #f0f9ff; border: 1px solid #e0f2fe; padding: 20px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 20px;">
                 <div style="font-size: 2rem;">🛡️</div>
                 <div>
@@ -387,7 +387,7 @@ try {
             </div>
 
             <h1 style="font-size: 1.2rem; color: var(--text-main); margin-bottom: 15px;">Storage Health</h1>
-            
+
             <div style="display: grid; gap: 10px; margin-bottom: 25px;">
                 <?php
                 $dbs = ['customers', 'orders', 'warehouse', 'users', 'calendar'];
@@ -431,12 +431,12 @@ try {
                     </tr>
                 </thead>
                 <tbody>
-                    <?php 
+                    <?php
                     $logs = Audit::getRecent(20);
                     if (empty($logs)): ?>
                         <tr><td colspan="4" style="padding: 40px; text-align: center; color: #94a3b8;">No activity recorded yet.</td></tr>
-                    <?php else: 
-                        foreach($logs as $l): 
+                    <?php else:
+                        foreach($logs as $l):
                             $badge_color = strpos($l['action'], 'DELETE') !== false ? '#ef4444' : '#3b82f6';
                     ?>
                         <tr style="border-bottom: 1px solid #eee; background: white;">

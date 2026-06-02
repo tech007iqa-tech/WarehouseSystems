@@ -34,7 +34,7 @@ const notify = (message, type = 'success', title = '') => {
 
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    
+
     const icons = {
         success: '✅',
         error: '❌',

@@ -462,7 +462,7 @@
         align-items: start;
         flex-direction: row;
     }
-    
+
     #customer-details.summary-side {
         border-top: none !important;
         border-left: 1px solid var(--border-color) !important;

@@ -30,10 +30,10 @@ if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
             // 2. Save to Local Marketing DB (The "Sync")
             $stmtLocal = $marketingDb->prepare("INSERT INTO leads (customer_id, name, company, email, phone, source, status) VALUES (?, ?, ?, ?, ?, ?, 'Lead')");
             $stmtLocal->execute([$customer_id, $contact_person, $company_name, $email, $phone, $lead_source]);
-            
+
             // Log to Audit
             log_marketing_audit($marketingDb, 'Lead', $customer_id, 'SYNCED', "Lead synced to both CRM and Local DB: $contact_person ($company_name)");
-            
+
             header("Location: ?page=leads&success=1");
             exit;
         } catch (Exception $e) {
@@ -55,12 +55,12 @@ if ($action === 'sync') {
             // Check if contact already exists in local DB by customer_id or email
             $check = $marketingDb->prepare("SELECT COUNT(*) FROM leads WHERE customer_id = ? OR email = ?");
             $check->execute([$crmC['customer_id'], $crmC['email']]);
-            
+
             if ($check->fetchColumn() == 0) {
                 // If it's a 'Customer', we set the local status to 'Customer'
                 // If it's a 'Lead', we set it to 'Lead' (previously 'New')
                 $localStatus = $crmC['account_status'] ?? 'Lead';
-                
+
                 $stmtImport = $marketingDb->prepare("INSERT INTO leads (customer_id, name, company, email, phone, source, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $stmtImport->execute([
                     $crmC['customer_id'],
@@ -132,26 +132,26 @@ if ($action === 'edit' && isset($_GET['id'])) {
             <form action="?page=leads&action=update" method="POST" class="standard-form">
                 <input type="hidden" name="id" value="<?php echo $editLead['id']; ?>">
                 <input type="hidden" name="customer_id" value="<?php echo $editLead['customer_id']; ?>">
-                
+
                 <div class="form-grid-2col">
                     <div class="form-group">
-                        <label>Contact Name</label>
+                        <label for="name">Contact Name</label>
                         <input type="text" name="name" value="<?php echo htmlspecialchars($editLead['name']); ?>" required>
                     </div>
                     <div class="form-group">
-                        <label>Company</label>
+                        <label for="company">Company</label>
                         <input type="text" name="company" value="<?php echo htmlspecialchars($editLead['company']); ?>">
                     </div>
                     <div class="form-group">
-                        <label>Email Address</label>
+                        <label for="email">Email Address</label>
                         <input type="email" name="email" value="<?php echo htmlspecialchars($editLead['email']); ?>" required>
                     </div>
                     <div class="form-group">
-                        <label>Phone Number</label>
+                        <label for="phone">Phone Number</label>
                         <input type="text" name="phone" value="<?php echo htmlspecialchars($editLead['phone']); ?>">
                     </div>
                     <div class="form-group">
-                        <label>Marketing Status</label>
+                        <label for="status">Marketing Status</label>
                         <select name="status">
                             <option value="Lead" <?php echo $editLead['status'] === 'Lead' ? 'selected' : ''; ?>>Lead</option>
                             <option value="Customer" <?php echo $editLead['status'] === 'Customer' ? 'selected' : ''; ?>>Customer</option>
@@ -159,7 +159,7 @@ if ($action === 'edit' && isset($_GET['id'])) {
                         </select>
                     </div>
                 </div>
-                
+
                 <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
                     <button type="submit" class="btn-action">💾 Sync & Save Changes</button>
                     <a href="?page=leads" class="btn-small" style="line-height: 48px; padding: 0 20px;">Cancel</a>
@@ -258,12 +258,12 @@ if ($action === 'edit' && isset($_GET['id'])) {
                             <td colspan="5" style="text-align: center; padding: 2rem; color: var(--text-dim);">No leads found. Click "Sync from CRM" to import data.</td>
                         </tr>
                     <?php else: ?>
-                        <?php foreach ($leads as $lead): 
+                        <?php foreach ($leads as $lead):
                             $rawStatus = strtolower($lead['status']);
                             // Smart Badge Logic: If it contains 'customer', it's a Customer.
                             $isCustomer = (strpos($rawStatus, 'customer') !== false);
                             $badgeClass = $isCustomer ? 'badge-customer' : 'badge-lead';
-                            
+
                             // Display logic: Clean up long strings for the badge
                             $displayStatus = $isCustomer ? 'CUSTOMER' : strtoupper($lead['status']);
                         ?>

@@ -35,7 +35,7 @@ try {
 
             // 2. Insert Items
             $stmt_i = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            
+
             if (isset($input['items']) && is_array($input['items'])) {
                 foreach ($input['items'] as $item) {
                     $brand = trim($item['brand'] ?? 'Generic');
@@ -75,11 +75,11 @@ try {
                     $series = trim($cols[3] ?? 'N/A');
                     $cpu = trim($cols[4] ?? '');
                     $description = trim($cols[5] ?? '');
-                    
+
                     // Sanitize Price: Remove $ and , then convert to float
                     $raw_price = trim($cols[6] ?? '0');
                     $price = (float)preg_replace('/[^-0-9.]/', '', $raw_price);
-                    
+
                     $qty = (int)($cols[7] ?? 1);
 
                     if (empty($brand) && empty($model)) continue;
@@ -123,7 +123,7 @@ try {
     }
 
     $conn = Database::orders();
-    
+
     // Build positional parameters for safety
     $params = [$status];
     foreach($ids as $id) $params[] = $id;

@@ -1,7 +1,7 @@
 <?php
 /**
  * includes/hardware_mapping.php
- * 
+ *
  * Single source of truth for all hardware database column keys.
  * Use these constants to avoid hardcoding strings throughout the app.
  */

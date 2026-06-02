@@ -18,9 +18,9 @@ const IQA_Vocabulary = {
                 this.data = JSON.parse(cached);
                 this.populateAll();
                 console.log("IQA Intelligence: Vocabulary loaded from cache.");
-                
+
                 // Optional: Fetch fresh in background to sync for next time
-                this.sync(); 
+                this.sync();
                 return;
             } catch (e) { sessionStorage.removeItem('iqa_vocabulary'); }
         }
@@ -32,7 +32,7 @@ const IQA_Vocabulary = {
         try {
             const response = await fetch('api/get_vocabulary.php');
             if (!response.ok) throw new Error('Vocabulary fetch failed');
-            
+
             this.data = await response.json();
             sessionStorage.setItem('iqa_vocabulary', JSON.stringify(this.data));
             this.populateAll();
@@ -59,7 +59,7 @@ const IQA_Vocabulary = {
 
         // Clear existing (except static ones if needed, but we prefer fresh)
         list.innerHTML = '';
-        
+
         items.sort().forEach(item => {
             const option = document.createElement('option');
             option.value = item;

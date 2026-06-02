@@ -31,7 +31,7 @@ try {
     $params = [];
 
     if ($status) {
-        // Map UI description to database status if needed, 
+        // Map UI description to database status if needed,
         // but here we allow setting both Status and Description from the same UI
         $updates[] = "{$F['DESCRIPTION']} = :status, {$F['STATUS']} = 'In Warehouse'";
         $params[':status'] = $status;
@@ -44,19 +44,19 @@ try {
 
     $updateStr = implode(', ', $updates);
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    
+
     $sql = "UPDATE items SET {$updateStr} WHERE id IN ($placeholders)";
-    
+
     // Merge params (Named for set, Positional for IN)
-    // PDO doesn't like mixing named and positional well in some versions, 
+    // PDO doesn't like mixing named and positional well in some versions,
     // so let's use positional for everything or named for everything.
-    
+
     // Safer approach: Use named for everything or just rebuild positional.
     $finalParams = [];
     if ($status) $finalParams[] = $status;
     if ($location) $finalParams[] = $location;
     foreach($ids as $id) $finalParams[] = $id;
-    
+
     $posSql = "UPDATE items SET ";
     $posUpdates = [];
     if ($status) $posUpdates[] = "{$F['DESCRIPTION']} = ?, {$F['STATUS']} = 'In Warehouse'";

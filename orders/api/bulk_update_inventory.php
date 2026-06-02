@@ -38,7 +38,7 @@ try {
     }
 
     $updateStr = implode(', ', $updates);
-    
+
     // Add IDs to params for the IN clause
     foreach($ids as $id) $params[] = $id;
 

@@ -1,7 +1,7 @@
-<?php 
+<?php
 require_once 'includes/db.php';
 require_once 'includes/functions.php';
-require_once 'includes/header.php'; 
+require_once 'includes/header.php';
 
 // Fetch recent labels for the sidebar
 $recentLabels = [];
@@ -17,14 +17,14 @@ try {
 </div>
 
 <div class="sidebar-layout">
-    
+
     <!-- MAIN FORM COLUMN -->
     <div class="panel form-panel" style="position: relative;">
         <form id="newLabelForm">
             <?= UI::csrf_field() ?>
-            <?php 
+            <?php
                 $formType = 'add';
-                include 'includes/hardware_form.php'; 
+                include 'includes/hardware_form.php';
             ?>
 
             <!-- DESKTOP ACTION BAR -->
@@ -44,7 +44,7 @@ try {
 
         <!-- SUCCESS OVERLAY (Hidden by default) -->
         <div id="successOverlay" style="display:none; position:fixed; inset:0; background:rgba(255,255,255,0.98); border-radius: 0; z-index:9999; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px; backdrop-filter: blur(8px);">
-            
+
             <!-- Success Animation Circle -->
             <div class="success-checkmark">
                 <div class="check-icon">
@@ -57,13 +57,13 @@ try {
 
             <h2 style="color:var(--text-main); font-size: 1.6rem; margin-top: 10px; font-weight: 800;">Label Logged!</h2>
             <p id="successMsg" style="color:var(--text-secondary); margin-bottom:30px; font-size: 0.95rem; line-height: 1.4;"></p>
-            
+
             <!-- PRIMARY ACTIONS -->
             <div style="display:flex; flex-direction: column; gap:12px; width: 100%; max-width: 320px;">
                 <button id="btnQuickPrint" class="btn btn-success btn-large" style="gap: 10px; box-shadow: 0 10px 20px rgba(140, 198, 63, 0.3);">
                     🏷️ Launch Label
                 </button>
-                
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                     <button id="btnAgain" class="btn btn-primary" style="font-size: 0.85rem; padding: 0 10px;">⚙️ Print Config</button>
                     <button id="btnCloneNext" class="btn btn-primary" style="font-size: 0.85rem; padding: 0 10px; background: var(--text-secondary) !important;">📦 Add Another</button>
@@ -169,14 +169,14 @@ try {
 
     <!-- RECENT LABELS SIDEBAR -->
     <div class="panel sidebar-panel" style="background: var(--bg-page); border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 20px;">
-        
+
         <!-- LIVE PREVIEW SECTION -->
         <div class="live-preview-container">
             <h3 style="margin-bottom: 12px; font-size: 0.9rem; color: var(--text-secondary); display: flex; align-items: center; gap: 8px;">
                 <span style="background: var(--accent-color); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem;">LIVE</span>
                 Label Preview (2x1)
             </h3>
-            
+
             <div class="label-mockup" id="liveLabelPreview">
                 <div class="label-mockup-header">
                     <div id="prevBrandModel" class="prev-main">BRAND MODEL</div>
@@ -209,7 +209,7 @@ try {
         <?php else: ?>
             <div class="recent-scroll-container">
                 <?php foreach ($recentLabels as $rl): ?>
-                    <div class="recent-card clone-trigger" 
+                    <div class="recent-card clone-trigger"
                          data-brand="<?= htmlspecialchars($rl['brand'] ?? '') ?>"
                          data-model="<?= htmlspecialchars($rl['model'] ?? '') ?>"
                          data-series="<?= htmlspecialchars($rl['series'] ?? '') ?>"
@@ -222,7 +222,7 @@ try {
                          title="Click to clone these specs">
                         <div style="font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= htmlspecialchars(($rl['brand'] ?? '') . ' ' . ($rl['model'] ?? '')) ?></div>
                         <div style="color: var(--text-secondary); font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            <?= htmlspecialchars(($rl['cpu_gen'] && $rl['cpu_gen'] !== '0') ? $rl['cpu_gen'] : 'Unknown Gen') ?> | 
+                            <?= htmlspecialchars(($rl['cpu_gen'] && $rl['cpu_gen'] !== '0') ? $rl['cpu_gen'] : 'Unknown Gen') ?> |
                             <?= htmlspecialchars(($rl['ram'] && $rl['ram'] !== '0') ? (stripos($rl['ram'], 'GB') !== false ? $rl['ram'] : $rl['ram'] . 'GB') : 'No RAM') ?>
                         </div>
                         <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 8px;">
@@ -258,17 +258,17 @@ try {
 }
 
 .recent-scroll-container {
-    display: flex; 
-    flex-direction: column; 
+    display: flex;
+    flex-direction: column;
     gap: 12px;
 }
 
 .recent-card {
-    padding: 12px; 
-    background: var(--bg-panel); 
-    border-radius: 10px; 
-    font-size: 0.85rem; 
-    border: 1px solid var(--border-color); 
+    padding: 12px;
+    background: var(--bg-panel);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    border: 1px solid var(--border-color);
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -283,33 +283,33 @@ try {
         text-align: center;
     }
     .mobile-header-panel h1 { font-size: 1.5rem; margin-bottom: 5px; }
-    
+
     .sidebar-panel {
         order: -1; /* Recent labels at top on mobile for quick access */
         margin-bottom: 10px;
     }
-    
+
     .recent-scroll-container {
         flex-direction: row;
         overflow-x: auto;
         padding-bottom: 5px;
         -webkit-overflow-scrolling: touch;
     }
-    
+
     .recent-card {
         min-width: 180px;
         flex-shrink: 0;
     }
-    
+
     .mobile-sticky-bar {
         display: block;
         padding-bottom: calc(15px + env(safe-area-inset-bottom));
     }
-    
+
     .desktop-only {
         display: none !important;
     }
-    
+
     .form-panel {
         margin-bottom: 100px; /* Space for sticky bar */
     }

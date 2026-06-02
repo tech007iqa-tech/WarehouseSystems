@@ -151,11 +151,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const prefix = prefixDisplay.textContent.replace('-', '');
         const val = mainSpecsInput.value.trim();
         specsHidden.value = val ? `${prefix}-${val}` : '';
-        
+
         // Auto-Fill Cores & Speed if model is recognized
         // Strip common prefixes like 'i5-' or 'Ryzen 5 ' to match catalog keys
         let lookup = val.toUpperCase().replace(/^(I[3579]-|RYZEN\s[3579]\s)/, '').trim();
-        
+
         if (cpuTechnicalSpecs[lookup]) {
             if (coresInput) coresInput.value = cpuTechnicalSpecs[lookup].cores;
             if (speedInput) speedInput.value = cpuTechnicalSpecs[lookup].speed;
@@ -280,12 +280,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (matches.length > 0) {
                 cpuWrapper.style.display = 'block';
-                
+
                 // Smart Positioning: shift up if not enough space below
                 const rect = cpuInput.getBoundingClientRect();
                 const spaceBelow = window.innerHeight - rect.bottom;
                 const minSpaceNeeded = Math.min(250, matches.length * 45); // Approximate max height
-                
+
                 if (spaceBelow < minSpaceNeeded && rect.top > spaceBelow) {
                     cpuWrapper.classList.add('shift-up');
                 } else {
@@ -361,10 +361,10 @@ document.addEventListener("DOMContentLoaded", () => {
             // Support both Desktop and Mobile buttons
             const btnDesktop = document.getElementById('submitLabelBtnDesktop');
             const btnMobile = document.getElementById('submitLabelBtnMobile');
-            
+
             const btns = [btnDesktop, btnMobile].filter(b => b !== null);
             const originalTexts = btns.map(b => b.innerHTML);
-            
+
             btns.forEach(b => {
                 b.innerHTML = '⏳ Processing...';
                 b.disabled = true;
@@ -456,10 +456,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const locField = document.getElementById(F.LOCATION);
 
             if (snField) snField.value = '';
-            
-            // If location isn't pinned, we might want to clear it or keep it? 
+
+            // If location isn't pinned, we might want to clear it or keep it?
             // Usually, batching means same location. Let's keep location unless they reset.
-            
+
             successOverlay.style.display = 'none';
             if (snField) snField.focus();
         });
@@ -505,7 +505,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function updateLivePreview() {
     if (typeof window.HW_FIELDS === 'undefined') return;
     const F = window.HW_FIELDS;
-    
+
     const pvBrandModel = document.getElementById('prevBrandModel');
     const pvSeriesSpecs = document.getElementById('prevSeriesSpecs');
     const pvCpu = document.getElementById('prevCpu');
@@ -536,11 +536,11 @@ function updateLivePreview() {
     // Textual display logic
     pvBrandModel.textContent = (brand || model) ? (brand + ' ' + model).trim() : 'BRAND MODEL';
     pvSeriesSpecs.textContent = (series || specsHidden) ? (series + ' ' + specsHidden).trim() : 'SERIES SPECS';
-    
+
     if (pvCpu) pvCpu.textContent = specsHidden || '—';
     if (pvRam) pvRam.textContent = elRam ? (elRam.value || '—') : '—';
     if (pvStorage) pvStorage.textContent = elStorage ? (elStorage.value || '—') : '—';
-    
+
     if (pvBattery && elBattery) {
         if (elBattery.value === '') {
             pvBattery.textContent = '—';
@@ -548,7 +548,7 @@ function updateLivePreview() {
             pvBattery.textContent = (elBattery.value == '1') ? 'YES' : 'NO';
         }
     }
-    
+
     if (pvSN) pvSN.textContent = 'S/N: ' + (elSN ? (elSN.value || 'XXXXXX') : 'XXXXXX');
     if (pvCond) pvCond.textContent = elCond ? (elCond.value || 'UNTESTED') : 'UNTESTED';
 }

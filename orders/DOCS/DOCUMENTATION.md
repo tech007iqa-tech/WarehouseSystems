@@ -10,10 +10,10 @@ A high-performance B2B order management system optimized for rapid warehouse har
 ### 1. 📅 Admin Calendar & Scheduling (`pages/calendar.php`)
 The command center for administrative oversight and visit scheduling.
 - **Dual-View Layout**: Toggle between a data-dense **Monthly Grid** and a focus-driven **Weekly Timeline** (Mon-Fri).
-- **Smart Sync Engine**: 
+- **Smart Sync Engine**:
     - **CRM Integration**: Automatically pulls callback dates from the Leads database as "Suggested Tasks."
     - **Conversion Intelligence**: Cross-references visit dates with order creation to tag events as **Converted ✅** (resulting in a sale) or **Window Shopping 👀**.
-- **Interactive Timeline Picker**: A gamified, thumb-friendly time selector restricted to business hours (8 AM – 5 PM). 
+- **Interactive Timeline Picker**: A gamified, thumb-friendly time selector restricted to business hours (8 AM – 5 PM).
 - **Auto-Duration Logic**: Titles like "Meeting" or "Lunch" trigger automated duration suggestions (1hr-2hr blocks).
 - **iOS Optimized**: Features a horizontal-scrolling weekly grid with fixed time labels for zero-friction mobile use.
 
@@ -61,8 +61,8 @@ A Business Intelligence (BI) dashboard providing live market analytics directly 
 ## 🛠 Technical Architecture
 
 ### 1. Centralized Schema & Self-Healing Architecture
-The system employs a **Blueprint-first** approach managed via `core/Schema.php`. 
-- **Auto-Provisioning**: Upon every database connection (`getConnection`), the system verifies all tables and columns against the central blueprint. 
+The system employs a **Blueprint-first** approach managed via `core/Schema.php`.
+- **Auto-Provisioning**: Upon every database connection (`getConnection`), the system verifies all tables and columns against the central blueprint.
 - **Graceful Migrations**: Schema evolutions (adding new columns like `price` or `updated_at`) are handled globally, ensuring all operator nodes are in sync without manual DB scripts.
 
 ### 2. Integrated Query Engine & Cross-DB Joins

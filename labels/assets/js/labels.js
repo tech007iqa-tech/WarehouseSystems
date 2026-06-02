@@ -115,7 +115,7 @@ function buildRow(item) {
     if (description === 'Refurbished') link.classList.add('text-accent');
 
     tr.querySelector('.tpl-series').textContent = series;
-    
+
     // Serial Number
     const snText   = tr.querySelector('.tpl-sn-text');
     const snEmpty  = tr.querySelector('.tpl-sn-empty');
@@ -153,7 +153,7 @@ function buildRow(item) {
     // Status Badge
     const badge = tr.querySelector('.tpl-badge');
     badge.textContent = description;
-    
+
     if (description === 'For Parts') badge.classList.add('status-for-parts');
     else if (description === 'Refurbished') badge.classList.add('status-refurbished');
     else badge.classList.add('status-untested');
@@ -172,7 +172,7 @@ function buildRow(item) {
         launchBtn.dataset.brand = brand;
         launchBtn.dataset.model = model;
     }
-    
+
     const editBtn = tr.querySelector('.edit-btn');
     if (editBtn) editBtn.dataset.id = item.id;
 
@@ -270,7 +270,7 @@ function openEditRow(tr, item) {
     // Add hidden fields for all mapping keys not present in the visible row inputs
     const hiddenContainer = editTr.querySelector('.tpl-edit-cell-main');
     const existingInputs = new Set([...editTr.querySelectorAll('input, select')].map(i => i.name));
-    
+
     Object.values(F).forEach(dbField => {
         if (!existingInputs.has(dbField)) {
             const hidden = document.createElement('input');
@@ -306,7 +306,7 @@ function cancelEdit(tr) {
 async function saveEdit(tr, id) {
     const saveBtn = tr.querySelector('.save-edit-btn');
     const originalBtnText = saveBtn.textContent;
-    
+
     saveBtn.disabled = true;
     saveBtn.textContent = '⏳…';
 
@@ -482,7 +482,7 @@ document.getElementById('cancelBulkBtn').addEventListener('click', () => {
 document.getElementById('applyBulkBtn').addEventListener('click', async () => {
     const status = document.getElementById('bulkStatus').value;
     const location = document.getElementById('bulkLocation').value.trim();
-    
+
     if (!status && !location) {
         alert("Please select a status or enter a location to apply.");
         return;
@@ -524,8 +524,8 @@ document.getElementById('applyBulkBtn').addEventListener('click', async () => {
     }
 });
 
-function pad(n, len) { 
-    return String(n).padStart(len, '0'); 
+function pad(n, len) {
+    return String(n).padStart(len, '0');
 }
 
 function fmtDate(ts) {

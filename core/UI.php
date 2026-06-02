@@ -69,7 +69,7 @@ class UI {
         $icon = '💡';
         if ($type === 'NEED_PHOTO') $icon = '📸';
         if ($type === 'NEED_TEMPLATE') $icon = '📝';
-        
+
         return "
         <div class='opportunity-card opp-" . htmlspecialchars($type) . "'>
             <div class='opp-icon'>{$icon}</div>
@@ -100,18 +100,18 @@ class UI {
      */
     public static function format_specs($text) {
         if (empty($text)) return "<span class='text-dim italic'>No specs defined.</span>";
-        
+
         // Detect if it's tab-separated (spreadsheet paste)
         if (strpos($text, "\t") !== false) {
             $lines = explode("\n", str_replace("\r", "", trim($text)));
             $html = "<div class='spec-table-container'>";
-            
+
             $isFirst = true;
             $gridTemplate = "";
             foreach ($lines as $line) {
                 if (empty(trim($line))) continue;
                 $parts = explode("\t", $line);
-                
+
                 if ($isFirst) {
                     $colCount = count($parts);
                     $gridTemplate = "grid-template-columns: repeat($colCount, 1fr);";
@@ -162,7 +162,7 @@ class UI {
                 document.addEventListener('DOMContentLoaded', () => {
                     const btn = document.getElementById('themeToggle');
                     if (!btn) return;
-                    
+
                     btn.addEventListener('click', (e) => {
                         e.preventDefault();
                         const current = document.documentElement.getAttribute('data-theme');

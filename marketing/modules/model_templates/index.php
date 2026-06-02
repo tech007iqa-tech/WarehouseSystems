@@ -17,10 +17,10 @@ if ($action === 'add' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $marketingDb->prepare("INSERT INTO model_templates (model_name, category, base_specs, marketing_copy) VALUES (?, ?, ?, ?)");
             $stmt->execute([$model_name, $category, $base_specs, $marketing_copy]);
-            
+
             $newId = $marketingDb->lastInsertId();
             log_marketing_audit($marketingDb, 'Template', $newId, 'CREATED', "Created marketing template for: $model_name");
-            
+
             header("Location: ?page=model_templates&success=1");
             exit;
         } catch (Exception $e) {
@@ -41,9 +41,9 @@ if ($action === 'update' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $stmt = $marketingDb->prepare("UPDATE model_templates SET model_name = ?, category = ?, base_specs = ?, marketing_copy = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
         $stmt->execute([$model_name, $category, $base_specs, $marketing_copy, $id]);
-        
+
         log_marketing_audit($marketingDb, 'Template', $id, 'UPDATED', "Updated marketing template for: $model_name");
-        
+
         header("Location: ?page=model_templates&success=2");
         exit;
     } catch (Exception $e) {
@@ -67,9 +67,9 @@ if ($action === 'delete' && isset($_GET['id'])) {
 
         $stmt = $marketingDb->prepare("DELETE FROM model_templates WHERE id = ?");
         $stmt->execute([$id]);
-        
+
         log_marketing_audit($marketingDb, 'Template', $id, 'DELETED', "Deleted marketing template for: $name");
-        
+
         header("Location: ?page=model_templates&success=3");
         exit;
     } catch (Exception $e) {
@@ -85,7 +85,7 @@ if ($action === 'delete' && isset($_GET['id'])) {
 
 <?php if (isset($_GET['success'])): ?>
     <div class="alert alert-success">
-        <?php 
+        <?php
         if ($_GET['success'] == '1') echo 'Template created successfully!';
         elseif ($_GET['success'] == '2') echo 'Template updated successfully!';
         elseif ($_GET['success'] == '3') echo 'Template deleted successfully!';
@@ -105,19 +105,19 @@ if ($action === 'delete' && isset($_GET['id'])) {
             <?php if ($editTmpl): ?>
                 <input type="hidden" name="id" value="<?php echo $editTmpl['id']; ?>">
             <?php endif; ?>
-            
+
             <div class="form-grid-2col">
                 <div class="form-group">
                     <label for="model_name">Model Name</label>
-                    <?php 
-                        $prefill = $_GET['prefill_model'] ?? ($editTmpl['model_name'] ?? ''); 
+                    <?php
+                        $prefill = $_GET['prefill_model'] ?? ($editTmpl['model_name'] ?? '');
                     ?>
                     <input type="text" name="model_name" id="model_name" required value="<?php echo htmlspecialchars($prefill); ?>" placeholder="e.g. Dell Latitude 5490">
                 </div>
                 <div class="form-group">
                     <label for="category">Category</label>
                     <select name="category" id="category">
-                        <?php 
+                        <?php
                         $cats = ['Laptop', 'Desktop', 'Server', 'Part'];
                         foreach($cats as $cat):
                             $sel = (isset($editTmpl) && $editTmpl['category'] === $cat) ? 'selected' : '';
@@ -164,12 +164,12 @@ if ($action === 'delete' && isset($_GET['id'])) {
                 </div>
             <?php else: ?>
                 <div class="template-grid">
-                    <?php foreach ($templates as $tmpl): 
+                    <?php foreach ($templates as $tmpl):
                         // Photo Bank Check
                         $photoStmt = $marketingDb->prepare("SELECT category FROM photos WHERE model_name = ?");
                         $photoStmt->execute([$tmpl['model_name']]);
                         $foundPhotos = $photoStmt->fetchAll(PDO::FETCH_COLUMN);
-                        
+
                         $hasBulk = in_array('Bulk Stock', $foundPhotos);
                         $hasLaptop = in_array('Laptop', $foundPhotos) || in_array('Workstation', $foundPhotos);
                         $hasOther = count($foundPhotos) > 0;
@@ -180,7 +180,7 @@ if ($action === 'delete' && isset($_GET['id'])) {
                                 <h3><?php echo htmlspecialchars($tmpl['model_name']); ?></h3>
                                 <span class="tmpl-badge"><?php echo $tmpl['category']; ?></span>
                             </div>
-                            
+
                             <!-- PHOTO BANK PREVIEW -->
                             <div class="photo-bank-preview">
                                 <div class="photo-slot <?php echo $hasBulk ? 'filled' : ''; ?>" title="Bulk/Pallet Shot">📦</div>
