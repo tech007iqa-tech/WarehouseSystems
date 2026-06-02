@@ -126,19 +126,11 @@ try {
 
     file_put_contents($final_odt_path, $flat_xml);
 
-    // 7. Response Logic (Download vs Direct Open)
-    $mode = $_POST['mode'] ?? 'download';
-
+    // 7. Response — return file info for client-side download
     if (file_exists($final_odt_path)) {
-        if ($mode === 'open') {
-            $open_cmd = "powershell.exe -Command \"Start-Process '$final_odt_path'\"";
-            shell_exec($open_cmd);
-        }
-
         send_json_response(true, [
             'file_name' => $final_odt_name,
-            'file_path' => 'exports/labels/' . $final_odt_name,
-            'launched'  => ($mode === 'open')
+            'file_path' => 'exports/labels/' . $final_odt_name
         ]);
     } else {
         throw new Exception("ODT generation failed: Output file not created.");
