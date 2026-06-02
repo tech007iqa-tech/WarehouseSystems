@@ -416,7 +416,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('btnQuickPrint').addEventListener('click', async () => {
             const btn = document.getElementById('btnQuickPrint');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '⏳ Printing...';
+            btn.innerHTML = '⏳ Generating...';
             btn.disabled = true;
 
             const fd = new FormData();
@@ -424,16 +424,23 @@ document.addEventListener("DOMContentLoaded", () => {
             fd.append('qty', 1);
             fd.append('print_a', '1');
             fd.append('print_b', '1');
-            fd.append('mode', 'open');
 
             try {
                 const res = await fetch('api/reprint_label.php', { method: 'POST', body: fd});
                 const json = await res.json();
                 if (json.success) {
-                    btn.innerHTML = '✅ Sent!';
+                    // Trigger browser download so the file opens on the user's machine
+                    const link = document.createElement('a');
+                    link.href = json.data.file_path;
+                    link.download = json.data.file_name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    btn.innerHTML = '✅ Downloaded!';
                     setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 1500);
                 } else {
-                    alert("Print Error: " + json.error);
+                    alert("Label Error: " + json.error);
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 }

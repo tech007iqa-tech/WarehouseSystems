@@ -12,6 +12,7 @@ $campaignCount = $marketingDb->query("SELECT COUNT(*) FROM campaigns WHERE statu
 $photoCount = $marketingDb->query("SELECT COUNT(*) FROM photos")->fetchColumn() ?: 0;
 
 // Fetch inventory for summary (items with qty > 10)
+$inventoryCount = 0;
 if ($labelsDb) {
     $inventoryCount = $labelsDb->query("SELECT COUNT(DISTINCT model) FROM items WHERE status = 'In Warehouse'")->fetchColumn() ?: 0;
 }

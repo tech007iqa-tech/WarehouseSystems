@@ -194,4 +194,128 @@ class UI {
         }
         return "";
     }
+
+    /**
+     * Multibyte-safe str_pad for visual alignment in monospace fonts
+     */
+    private static function mb_str_pad($input, $pad_length, $pad_string = " ", $pad_type = STR_PAD_RIGHT) {
+        $diff = $pad_length - mb_strwidth($input);
+        if ($diff <= 0) return $input;
+        $left_pad = $right_pad = 0;
+        if ($pad_type == STR_PAD_RIGHT) {
+            $right_pad = $diff;
+        } else if ($pad_type == STR_PAD_LEFT) {
+            $left_pad = $diff;
+        } else {
+            $left_pad = floor($diff / 2);
+            $right_pad = $diff - $left_pad;
+        }
+        return str_repeat($pad_string, $left_pad) . $input . str_repeat($pad_string, $right_pad);
+    }
+
+    /**
+     * Smart formats specifications for plain text (handles pasted Google Sheets data)
+     */
+    public static function format_specs_plain($text) {
+        if (empty($text)) return "No specs defined.";
+
+        // Detect if it's tab-separated (spreadsheet paste)
+        if (strpos($text, "\t") !== false) {
+            $lines = array_filter(explode("\n", str_replace("\r", "", trim($text))));
+            if (empty($lines)) return "";
+
+            // First Pass: Calculate max VISUAL width for EVERY column
+            $colMaxLens = [];
+            foreach ($lines as $line) {
+                $parts = explode("\t", $line);
+                foreach ($parts as $i => $part) {
+                    $len = mb_strwidth(trim($part));
+                    if ($i === 0) $len += 1; // Account for the colon
+                    if (!isset($colMaxLens[$i]) || $len > $colMaxLens[$i]) {
+                        $colMaxLens[$i] = $len;
+                    }
+                }
+            }
+
+            // Second Pass: Build formatted string with perfect grid alignment
+            $formatted = "";
+            $isFirst = true;
+            foreach ($lines as $line) {
+                $parts = explode("\t", $line);
+                $rowStr = "";
+
+                if ($isFirst) {
+                    // Header Logic: Handle potential multi-line headers (e.g. 2-in-1/x360)
+                    $formatted .= "📋 ";
+                    $headerLines = [[], []];
+                    $hasMultiLine = false;
+
+                    foreach ($parts as $i => $part) {
+                        $val = strtoupper(trim($part));
+                        if (strpos($val, '/') !== false) {
+                            $subParts = explode('/', $val);
+                            $headerLines[0][$i] = $subParts[0];
+                            $headerLines[1][$i] = $subParts[1];
+                            $hasMultiLine = true;
+                        } else {
+                            $headerLines[0][$i] = $val;
+                            $headerLines[1][$i] = "";
+                        }
+                    }
+
+                    // Render First Header Line
+                    $rowStr1 = "";
+                    foreach ($headerLines[0] as $i => $val) {
+                        $isLast = ($i === count($colMaxLens) - 1);
+                        if (!$isLast) {
+                            $rowStr1 .= self::mb_str_pad($val, $colMaxLens[$i] + 3);
+                        } else {
+                            $rowStr1 .= self::mb_str_pad($val, $colMaxLens[$i], " ", STR_PAD_LEFT);
+                        }
+                    }
+                    $formatted .= $rowStr1 . "\n";
+
+                    // Render Second Header Line (if needed)
+                    if ($hasMultiLine) {
+                        $formatted .= "   "; // Offset for the emoji
+                        $rowStr2 = "";
+                        foreach ($headerLines[1] as $i => $val) {
+                            $isLast = ($i === count($colMaxLens) - 1);
+                            if (!$isLast) {
+                                $rowStr2 .= self::mb_str_pad($val, $colMaxLens[$i] + 3);
+                            } else {
+                                $rowStr2 .= self::mb_str_pad($val, $colMaxLens[$i], " ", STR_PAD_LEFT);
+                            }
+                        }
+                        $formatted .= $rowStr2 . "\n";
+                    }
+
+                    $formatted .= str_repeat("━", mb_strwidth("📋 " . $rowStr1)) . "\n";
+                    $isFirst = false;
+                    continue;
+                }
+
+                // Data Row Logic
+                $formatted .= "✅ ";
+                $rowStr = "";
+                for ($i = 0; $i < count($colMaxLens); $i++) {
+                    $val = isset($parts[$i]) ? trim($parts[$i]) : "";
+                    if ($i === 0) $val .= ":"; // Add colon to first column (Brand)
+
+                    $isLast = ($i === count($colMaxLens) - 1);
+                    if (!$isLast) {
+                        // Regular columns are left-aligned
+                        $rowStr .= self::mb_str_pad($val, $colMaxLens[$i] + 3);
+                    } else {
+                        // Right-align the last column (usually QTY) for better number comparison
+                        $rowStr .= self::mb_str_pad($val, $colMaxLens[$i], " ", STR_PAD_LEFT);
+                    }
+                }
+                $formatted .= $rowStr . "\n";
+            }
+            return trim($formatted);
+        }
+
+        return trim($text);
+    }
 }

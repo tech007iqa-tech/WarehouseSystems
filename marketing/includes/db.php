@@ -31,12 +31,15 @@ function get_labels_db() {
     static $pdo = null;
     if ($pdo === null) {
         try {
-            if (!file_exists(LABELS_DB_PATH)) {
-                return null; // Labels DB not found
+            // Ensure labels database directory exists
+            $db_dir = dirname(LABELS_DB_PATH);
+            if (!is_dir($db_dir)) {
+                mkdir($db_dir, 0777, true);
             }
             $pdo = new PDO("sqlite:" . LABELS_DB_PATH);
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            labels_schema_guard($pdo);
         } catch (PDOException $e) {
             error_log("Labels DB connection failed: " . $e->getMessage());
             return null;
@@ -52,6 +55,11 @@ function get_master_crm_db() {
     static $crm_pdo = null;
     if ($crm_pdo === null) {
         try {
+            // Ensure CRM database directory exists
+            $db_dir = dirname(MASTER_CRM_DB_PATH);
+            if (!is_dir($db_dir)) {
+                mkdir($db_dir, 0777, true);
+            }
             $crm_pdo = new PDO("sqlite:" . MASTER_CRM_DB_PATH);
             $crm_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $crm_pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
