@@ -805,3 +805,51 @@ if (applyBulkBtn) {
         }
     });
 }
+
+/**
+ * Generates and downloads a label (.odt) for a warehouse item.
+ * @param {number} itemId
+ * @param {HTMLElement} btn
+ */
+async function downloadWarehouseLabel(itemId, btn) {
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '🏷️ ⏳';
+
+    try {
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+        const fd = new FormData();
+        fd.append('id', itemId);
+        fd.append('csrf_token', csrfToken);
+
+        const response = await fetch('api/generate_warehouse_label.php', {
+            method: 'POST',
+            body: fd
+        });
+
+        const json = await response.json();
+        if (json.success) {
+            // Trigger a browser download
+            const filePath = json.data.file_path;
+            const fileName = json.data.file_name;
+
+            const link = document.createElement('a');
+            link.href = filePath;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            IQA_Notify.success("Label generated and download started!");
+        } else {
+            IQA_Notify.error("Error: " + json.error);
+        }
+    } catch (err) {
+        console.error(err);
+        IQA_Notify.error("Network error: Could not generate label.");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+

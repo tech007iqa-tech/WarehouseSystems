@@ -90,8 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $brand = $_POST['brand'];
         $model = $_POST['model'];
         $loc = $_POST['location_code'];
-        $qty = (int)$_POST['quantity'];
-        $price = (float)($_POST['price'] ?? 0.00);
+        $qty = (int) $_POST['quantity'];
+        $price = (float) ($_POST['price'] ?? 0.00);
         $sector = $_POST['sector'];
 
         // Dynamic Specs mapping based on sector
@@ -111,9 +111,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             ];
         } elseif ($sector === 'Gaming') {
             $specs = [
-                'category' => $_POST['gaming_category'] ?? 'Consoles', 'series' => $_POST['series'] ?? '',
-                'condition' => $_POST['condition'] ?? '', 'notes' => $_POST['notes'] ?? '',
-                'ram' => $_POST['ram'] ?? '', 'storage' => $_POST['storage'] ?? '', 'cpu' => $_POST['cpu'] ?? '', 'gpu' => $_POST['gpu'] ?? ''
+                'category' => $_POST['gaming_category'] ?? 'Consoles',
+                'series' => $_POST['series'] ?? '',
+                'condition' => $_POST['condition'] ?? '',
+                'notes' => $_POST['notes'] ?? '',
+                'ram' => $_POST['ram'] ?? '',
+                'storage' => $_POST['storage'] ?? '',
+                'cpu' => $_POST['cpu'] ?? '',
+                'gpu' => $_POST['gpu'] ?? ''
             ];
         } elseif ($sector === 'Desktops') {
             $specs = [
@@ -215,11 +220,14 @@ $highlight_id = $_GET['last_id'] ?? null;
                 $active_l = $active_l_stmt->fetch(PDO::FETCH_ASSOC);
                 $active_l_status = $active_l['status'] ?? 'Idle';
                 $active_l_color = $active_l['color'] ?? '#94a3b8';
-            ?>
+                ?>
                 <div class="active-loc-display" style="display:flex; align-items:center; gap:15px;">
                     <div style="text-align:right;">
                         <div class="loc-label">Active Location</div>
-                        <div style="font-size:0.65rem; font-weight:900; text-transform:uppercase; color:<?= $active_l_color ?>; letter-spacing:0.05em;"><?= htmlspecialchars($active_l_status) ?></div>
+                        <div
+                            style="font-size:0.65rem; font-weight:900; text-transform:uppercase; color:<?= $active_l_color ?>; letter-spacing:0.05em;">
+                            <?= htmlspecialchars($active_l_status) ?>
+                        </div>
                     </div>
                     <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>" class="loc-active-badge">
                         <span class="loc-pin">📍</span>
@@ -237,16 +245,22 @@ $highlight_id = $_GET['last_id'] ?? null;
             <span id="selectedCount">0</span> items selected
         </div>
         <div class="bulk-actions">
-            <input type="text" id="bulkLocation" placeholder="Move to Zone..." list="gate-loc-datalist" style="width: 150px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+            <input type="text" id="bulkLocation" placeholder="Move to Zone..." list="gate-loc-datalist"
+                style="width: 150px; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
             <datalist id="gate-loc-datalist">
-                <?php foreach($existing_locs as $l) echo "<option value='".htmlspecialchars($l['location_code'])."'>"; ?>
+                <?php foreach ($existing_locs as $l)
+                    echo "<option value='" . htmlspecialchars($l['location_code']) . "'>"; ?>
             </datalist>
             <div style="position:relative; display:flex; align-items:center;">
                 <span style="position:absolute; left:10px; font-weight:800; color:var(--text-secondary);">$</span>
-                <input type="number" id="bulkPrice" placeholder="Price" style="width: 100px; padding: 10px 10px 10px 25px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <input type="number" id="bulkPrice" placeholder="Price"
+                    style="width: 100px; padding: 10px 10px 10px 25px; border-radius: 8px; border: 1px solid var(--border-color);">
             </div>
-            <button id="applyBulkBtn" class="btn btn-success" style="background: white; color: var(--text-main); font-weight: 800; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">Apply Batch Changes</button>
-            <button id="cancelBulkBtn" style="background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: 700;">Cancel</button>
+            <button id="applyBulkBtn" class="btn btn-success"
+                style="background: white; color: var(--text-main); font-weight: 800; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer;">Apply
+                Batch Changes</button>
+            <button id="cancelBulkBtn"
+                style="background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 10px 15px; border-radius: 10px; cursor: pointer; font-weight: 700;">Cancel</button>
         </div>
     </div>
     <?= UI::csrf_field() ?>
@@ -259,14 +273,18 @@ $highlight_id = $_GET['last_id'] ?? null;
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                         <div>
                             <h2 style="font-weight:900; margin-bottom:4px;">Select Working Zone</h2>
-                            <p style="color:var(--text-secondary); font-size: 0.9rem;">Choose a shelf to register or edit stock.</p>
+                            <p style="color:var(--text-secondary); font-size: 0.9rem;">Choose a shelf to register or edit
+                                stock.</p>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: center;">
                             <div class="search-container" style="max-width: 200px; margin: 0;">
                                 <i class="search-icon">🔍</i>
-                                <input type="text" id="gate-loc-search" placeholder="Find zone..." onkeyup="filterGateLocations()" class="search-input" style="height: 40px; font-size: 0.9rem; border-radius: 10px;">
+                                <input type="text" id="gate-loc-search" placeholder="Find zone..."
+                                    onkeyup="filterGateLocations()" class="search-input"
+                                    style="height: 40px; font-size: 0.9rem; border-radius: 10px;">
                             </div>
-                            <select id="gate-loc-sort" onchange="sortGateLocations()" style="width: auto; height: 40px; font-size: 0.8rem; border-radius: 10px; padding: 0 12px; font-weight: 700; cursor: pointer; border: 1px solid var(--border-color); background: white; outline: none;">
+                            <select id="gate-loc-sort" onchange="sortGateLocations()"
+                                style="width: auto; height: 40px; font-size: 0.8rem; border-radius: 10px; padding: 0 12px; font-weight: 700; cursor: pointer; border: 1px solid var(--border-color); background: white; outline: none;">
                                 <option value="asc">Sort: A-Z</option>
                                 <option value="desc">Sort: Z-A</option>
                                 <option value="status">Sort: Status Group</option>
@@ -281,20 +299,23 @@ $highlight_id = $_GET['last_id'] ?? null;
                             $l_name = $loc['location_code'];
                             $l_status = $loc['status'];
                             $l_color = $loc['status_color'] ?: '#94a3b8';
-                            $l_count = (int)$loc['item_count'];
-                        ?>
+                            $l_count = (int) $loc['item_count'];
+                            ?>
                             <div class="loc-item-wrapper" style="position:relative;">
                                 <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=<?= urlencode($l_name) ?>"
-                                   class="loc-item gate-loc-item"
-                                   data-loc-name="<?= htmlspecialchars(strtolower($l_name)) ?>"
-                                   data-status="<?= htmlspecialchars(strtolower($l_status)) ?>"
-                                   data-count="<?= $l_count ?>">
-                                    <div style="position:absolute; top:8px; left:12px; font-size:0.6rem; font-weight:900; text-transform:uppercase; color:<?= $l_color ?>; letter-spacing:0.05em;"><?= htmlspecialchars($l_status) ?></div>
+                                    class="loc-item gate-loc-item" data-loc-name="<?= htmlspecialchars(strtolower($l_name)) ?>"
+                                    data-status="<?= htmlspecialchars(strtolower($l_status)) ?>" data-count="<?= $l_count ?>">
+                                    <div
+                                        style="position:absolute; top:8px; left:12px; font-size:0.6rem; font-weight:900; text-transform:uppercase; color:<?= $l_color ?>; letter-spacing:0.05em;">
+                                        <?= htmlspecialchars($l_status) ?>
+                                    </div>
                                     <span class="loc-icon">📦</span>
                                     <span class="loc-name"><?= htmlspecialchars($l_name) ?></span>
                                     <div style="font-size:0.7rem; color:#94a3b8; font-weight:700;"><?= $l_count ?> Items</div>
                                 </a>
-                                <button type="button" onclick='openRenameModal(<?= json_encode($loc) ?>)' class="btn-rename-zone" style="position:absolute; bottom:5px; right:5px; background:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:0.7rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.1); opacity:0; transition:0.2s;">✏️</button>
+                                <button type="button" onclick='openRenameModal(<?= json_encode($loc) ?>)'
+                                    class="btn-rename-zone"
+                                    style="position:absolute; bottom:5px; right:5px; background:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:0.7rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.1); opacity:0; transition:0.2s;">✏️</button>
                             </div>
                         <?php endforeach; ?>
 
@@ -302,12 +323,14 @@ $highlight_id = $_GET['last_id'] ?? null;
                             <form method="GET" action="index.php" style="width:100%;">
                                 <input type="hidden" name="view" value="warehouse">
                                 <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
-                                <input type="text" name="loc" placeholder="+ New Zone" required style="width:100%; border:none; background:transparent; text-align:center; font-weight:800; outline:none;">
+                                <input type="text" name="loc" placeholder="+ New Zone" required
+                                    style="width:100%; border:none; background:transparent; text-align:center; font-weight:800; outline:none;">
                                 <button type="submit" style="display:none;"></button>
                             </form>
                         </div>
                     </div>
-                    <div id="gate-no-results" style="display:none; text-align:center; padding: 40px; color: #94a3b8; font-weight: 600;">
+                    <div id="gate-no-results"
+                        style="display:none; text-align:center; padding: 40px; color: #94a3b8; font-weight: 600;">
                         No matching zones found.
                     </div>
                 </div>
@@ -316,17 +339,18 @@ $highlight_id = $_GET['last_id'] ?? null;
                 <div class="gate-card">
                     <div style="font-size: 3.5rem; margin-bottom: 25px;">📊</div>
                     <h2 style="font-weight:900; margin-bottom:10px;">Global Dashboard</h2>
-                    <p style="color:var(--text-secondary); margin-bottom:30px;">Managing stock and locations across all inventory sectors in one easy view.</p>
+                    <p style="color:var(--text-secondary); margin-bottom:30px;">Managing stock and locations across all
+                        inventory sectors in one easy view.</p>
 
                     <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
                         <a href="index.php?view=warehouse&sector=Master&loc=GLOBAL"
-                           style="display: block; width: 100%; padding: 18px; background: var(--text-main); color: white; border-radius: 14px; font-weight: 800; text-decoration: none; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                           🏢 Master Overview (All Stock)
+                            style="display: block; width: 100%; padding: 18px; background: var(--text-main); color: white; border-radius: 14px; font-weight: 800; text-decoration: none; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                            🏢 Master Overview (All Stock)
                         </a>
 
                         <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=GLOBAL"
-                           style="display: block; width: 100%; padding: 15px; border: 2px solid #e2e8f0; color: #64748b; border-radius: 14px; font-weight: 700; text-decoration: none; transition: 0.2s; font-size: 0.9rem;">
-                           🌐 View Only <?= htmlspecialchars($selected_sector) ?>
+                            style="display: block; width: 100%; padding: 15px; border: 2px solid #e2e8f0; color: #64748b; border-radius: 14px; font-weight: 700; text-decoration: none; transition: 0.2s; font-size: 0.9rem;">
+                            🌐 View Only <?= htmlspecialchars($selected_sector) ?>
                         </a>
                     </div>
                 </div>
@@ -334,543 +358,667 @@ $highlight_id = $_GET['last_id'] ?? null;
         </div>
     <?php else: ?>
 
-    <!-- Sector Navigation -->
-    <div class="sector-nav">
-        <?php foreach ($sectors as $s): ?>
-            <a href="index.php?view=warehouse&sector=<?= urlencode($s['name']) ?>&loc=<?= urlencode($selected_loc) ?>"
-               class="sector-card <?= $selected_sector === $s['name'] ? 'active' : '' ?>"
-               data-sector="<?= htmlspecialchars($s['name']) ?>">
-                <span class="sector-icon"><?= $s['icon'] ?></span>
-                <span class="sector-name"><?= htmlspecialchars($s['name']) ?></span>
-            </a>
-        <?php endforeach; ?>
-    </div>
+        <!-- Sector Navigation -->
+        <div class="sector-nav">
+            <?php foreach ($sectors as $s): ?>
+                <a href="index.php?view=warehouse&sector=<?= urlencode($s['name']) ?>&loc=<?= urlencode($selected_loc) ?>"
+                    class="sector-card <?= $selected_sector === $s['name'] ? 'active' : '' ?>"
+                    data-sector="<?= htmlspecialchars($s['name']) ?>">
+                    <span class="sector-icon"><?= $s['icon'] ?></span>
+                    <span class="sector-name"><?= htmlspecialchars($s['name']) ?></span>
+                </a>
+            <?php endforeach; ?>
+        </div>
 
-    <!-- Main Content Grid -->
-    <div class="warehouse-layout">
+        <!-- Main Content Grid -->
+        <div class="warehouse-layout">
 
-        <!-- Inventory List -->
-        <section class="inventory-feed">
-            <div class="inventory-feed-header">
-                <div class="inventory-summary-title">
-                    <h2><?= htmlspecialchars($selected_sector) ?> Inventory</h2>
-                    <?php
+            <!-- Inventory List -->
+            <section class="inventory-feed">
+                <div class="inventory-feed-header">
+                    <div class="inventory-summary-title">
+                        <h2><?= htmlspecialchars($selected_sector) ?> Inventory</h2>
+                        <?php
                         $total_qty = 0;
-                        foreach($items as $it) $total_qty += (int)($it['quantity'] ?? 0);
-                    ?>
-                    <div class="inventory-total-count">
-                        Total Qty: <span class="count-value"><?= number_format($total_qty) ?> Units</span>
+                        foreach ($items as $it)
+                            $total_qty += (int) ($it['quantity'] ?? 0);
+                        ?>
+                        <div class="inventory-total-count">
+                            Total Qty: <span class="count-value"><?= number_format($total_qty) ?> Units</span>
+                        </div>
+                    </div>
+                    <div class="inventory-actions">
+                        <div class="search-container" style="flex: 1; max-width: 300px;">
+                            <i class="search-icon">🔍</i>
+                            <input type="text" id="wh-search" placeholder="Search items..."
+                                aria-label="Search warehouse inventory" onkeyup="syncSearch(this)"
+                                onkeydown="if(event.key==='Enter') event.preventDefault()" class="search-input">
+                        </div>
+                        <a href="#wh-main-form" class="btn-export"
+                            style="background: var(--text-main); color: white; border: none;">NEW Item</a>
+                        <button type="button" onclick="downloadWarehouseCSV()" class="btn-export">
+                            📊 Export CSV
+                        </button>
+                        <button type="button" onclick="window.location.href='index.php?view=import_warehouse'"
+                            class="btn-export" style="background: #1e293b; color: white; border: none;">
+                            📥 Import Bulk
+                        </button>
                     </div>
                 </div>
-                <div class="inventory-actions">
-                    <div class="search-container" style="flex: 1; max-width: 300px;">
-                        <i class="search-icon">🔍</i>
-                        <input type="text" id="wh-search" placeholder="Search items..." aria-label="Search warehouse inventory" onkeyup="syncSearch(this)" onkeydown="if(event.key==='Enter') event.preventDefault()" class="search-input">
-                    </div>
-                    <a href="#wh-main-form" class="btn-export" style="background: var(--text-main); color: white; border: none;">NEW Item</a>
-                    <button type="button" onclick="downloadWarehouseCSV()" class="btn-export">
-                        📊 Export CSV
-                    </button>
-                    <button type="button" onclick="window.location.href='index.php?view=import_warehouse'" class="btn-export" style="background: #1e293b; color: white; border: none;">
-                        📥 Import Bulk
-                    </button>
-                </div>
-            </div>
 
-            <div class="inventory-table-container">
-                <table class="inventory-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAll"></th>
-                            <th class="col-type">Location</th>
-                            <?php if ($selected_sector === 'Master'): ?>
-                                <th>Sector</th>
-                            <?php endif; ?>
-                            <th class="col-main">Make/Model</th>
-                            <th class="col-qty">Price</th>
-                            <th class="col-qty">QTY</th>
-                            <?php if ($selected_sector === 'Laptops'): ?>
-                                <th>CPU</th>
-                                <th>Ram/Storage</th>
-                                <th>Series</th>
-                            <?php elseif ($selected_sector === 'Gaming'): ?>
-                                <th>Category</th>
-                                <th>CPU / GPU</th>
-                                <th>RAM / Storage</th>
-                            <?php elseif ($selected_sector === 'Desktops'): ?>
-                                <th>CPU / Gen Brand</th>
-                            <?php elseif ($selected_sector === 'Master'): ?>
-                                <th>Core Specs</th>
-                            <?php endif; ?>
-                            <th>Notes</th>
-                            <th class="col-log">Staff Log</th>
-                            <th class="col-actions"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="inventory-list">
-                        <?php if (empty($items)): ?>
+                <div class="inventory-table-container">
+                    <table class="inventory-table">
+                        <thead>
                             <tr>
-                                <td colspan="10" style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">
-                                    No items found in this sector.
-                                </td>
+                                <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAll"></th>
+                                <th class="col-type">Location</th>
+                                <?php if ($selected_sector === 'Master'): ?>
+                                    <th>Sector</th>
+                                <?php endif; ?>
+                                <th class="col-main">Make/Model</th>
+                                <th class="col-qty">Price</th>
+                                <th class="col-qty">QTY</th>
+                                <?php if ($selected_sector === 'Laptops'): ?>
+                                    <th>CPU</th>
+                                    <th>Ram/Storage</th>
+                                    <th>Series</th>
+                                <?php elseif ($selected_sector === 'Gaming'): ?>
+                                    <th>Category</th>
+                                    <th>CPU / GPU</th>
+                                    <th>RAM / Storage</th>
+                                <?php elseif ($selected_sector === 'Desktops'): ?>
+                                    <th>CPU / Gen Brand</th>
+                                <?php elseif ($selected_sector === 'Master'): ?>
+                                    <th>Core Specs</th>
+                                <?php endif; ?>
+                                <th>Notes</th>
+                                <th class="col-log">Staff Log</th>
+                                <th class="col-actions">Modify</th>
                             </tr>
-                        <?php else: ?>
-                            <!-- Dynamic No Results Placeholder -->
-                            <tr id="wh-no-results" class="no-results-row" style="display: none;">
-                                <td colspan="12">
-                                    <div class="no-results-wrapper" style="display: flex; justify-content: center; width: 100%;">
-                                        <div class="no-results-container">
-                                            <div class="no-results-icon">🕵️‍♂️</div>
-                                            <div style="font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em;">No matches found</div>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php foreach ($items as $item):
-                                $specs = json_decode($item['specs_json'], true) ?: [];
-                                $created_date = date('m/d/y', strtotime($item['created_at']));
-                                $updated_date = date('m/d/y', strtotime($item['updated_at']));
-                            ?>
-                                <tr class="inventory-card <?= ($highlight_id && $item['id'] == $highlight_id) ? 'highlight-row' : '' ?>"
-                                     data-id="<?= $item['id'] ?>"
-                                     data-sector-theme="<?= htmlspecialchars($item['sector']) ?>"
-                                     data-brand="<?= htmlspecialchars($item['brand']) ?>"
-                                     data-model="<?= htmlspecialchars($item['model']) ?>"
-                                     data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
-                                     data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
-                                     data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
-
-                                    <td style="text-align: center;"><input type="checkbox" class="row-select"></td>
-                                    <td><span class="location-tag"><?= htmlspecialchars($item['location_code']) ?></span></td>
-
-                                    <?php if ($selected_sector === 'Master'): ?>
-                                        <td>
-                                            <a href="index.php?view=warehouse&sector=<?= urlencode($item['sector']) ?>&loc=<?= urlencode($item['location_code']) ?>" style="text-decoration: none;">
-                                                <span class="sector-badge sector-<?= strtolower($item['sector']) ?>"><?= htmlspecialchars($item['sector']) ?></span>
-                                            </a>
-                                        </td>
-                                    <?php endif; ?>
-
-                                    <td>
-                                        <div class="cell-make"><?= htmlspecialchars($item['brand']) ?></div>
-                                        <div class="cell-model"><?= htmlspecialchars($item['model']) ?></div>
+                        </thead>
+                        <tbody id="inventory-list">
+                            <?php if (empty($items)): ?>
+                                <tr>
+                                    <td colspan="10"
+                                        style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">
+                                        No items found in this sector.
                                     </td>
-
-                                    <td><span class="price-pill">$<?= number_format($item['price'] ?? 0, 0) ?></span></td>
-
-                                    <td><span class="qty-pill"><?= (int)$item['quantity'] ?></span></td>
-
-                                    <?php if ($selected_sector === 'Laptops'): ?>
-                                        <td><div class="spec-value"><?= htmlspecialchars($specs['cpu'] ?? '-') ?></div></td>
-                                        <td><div class="spec-value"><?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?></div></td>
-                                        <td><div class="spec-value"><?= htmlspecialchars(($specs['series'] ?? '-') . ' (' . ($specs['gen'] ?? '-') . ')') ?></div></td>
-                                    <?php elseif ($selected_sector === 'Gaming'): ?>
-                                        <td><div class="spec-value"><?= htmlspecialchars($specs['category'] ?? '-') ?></div></td>
-                                        <td><div class="spec-value"><?= htmlspecialchars(($specs['cpu'] ?? '-') . ' / ' . ($specs['gpu'] ?? '-')) ?></div></td>
-                                        <td><div class="spec-value"><?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?></div></td>
-                                    <?php elseif ($selected_sector === 'Desktops'): ?>
-                                        <td><div class="spec-value"><?= htmlspecialchars($specs['cpu_gen'] ?? '-') ?></div></td>
-                                    <?php elseif ($selected_sector === 'Master'): ?>
-                                        <td>
-                                            <div class="spec-value" style="font-size: 0.75rem;">
-                                                <?php
-                                                    if ($item['sector'] === 'Laptops') echo htmlspecialchars(($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? ''));
-                                                    elseif ($item['sector'] === 'Gaming') echo htmlspecialchars(($specs['category'] ?? '') . ' ' . ($specs['gpu'] ?? ''));
-                                                    elseif ($item['sector'] === 'Desktops') echo htmlspecialchars($specs['cpu_gen'] ?? '');
-                                                    else echo '-';
-                                                ?>
+                                </tr>
+                            <?php else: ?>
+                                <!-- Dynamic No Results Placeholder -->
+                                <tr id="wh-no-results" class="no-results-row" style="display: none;">
+                                    <td colspan="12">
+                                        <div class="no-results-wrapper"
+                                            style="display: flex; justify-content: center; width: 100%;">
+                                            <div class="no-results-container">
+                                                <div class="no-results-icon">🕵️‍♂️</div>
+                                                <div style="font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em;">No
+                                                    matches found</div>
                                             </div>
-                                        </td>
-                                    <?php endif; ?>
-
-                                    <td>
-                                        <div class="notes-cell-wrapper">
-                                            <div class="status-row">
-                                                <span class="status-badge status-<?= htmlspecialchars($item['status']) ?>"><?= htmlspecialchars($item['status']) ?></span>
-                                                <span class="condition-label"><?= htmlspecialchars($specs['condition'] ?? 'Used') ?></span>
-                                                <?php if ($item['sector'] === 'Laptops'): ?>
-                                                    <span class="battery-badge <?= empty($specs['battery']) ? 'missing' : '' ?>" title="Battery Status">
-                                                        🔋 <?= !empty($specs['battery']) ? htmlspecialchars($specs['battery']) : 'Missing' ?>
-                                                    </span>
-                                                <?php endif; ?>
-                                            </div>
-                                            <div class="notes-text"><?= htmlspecialchars($specs['notes'] ?? '') ?></div>
-                                        </div>
-                                    </td>
-
-                                    <td>
-                                        <div class="staff-log-wrapper">
-                                            <div class="log-entry">
-                                                <span class="log-user">👤 <?= htmlspecialchars($item['user_owner']) ?></span>
-                                                <span class="log-date">Created <?= $created_date ?></span>
-                                            </div>
-                                            <?php if ($item['last_updated_by']): ?>
-                                                <div class="log-entry updated">
-                                                    <span class="log-user">✏️ <?= htmlspecialchars($item['last_updated_by']) ?></span>
-                                                    <span class="log-date">Edited <?= $updated_date ?></span>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-
-                                    <td>
-                                        <div class="row-actions">
-                                            <button type="button" class="row-action-btn btn-edit" onclick='editWarehouseItem(<?= json_encode($item) ?>)' title="Edit Entry">📝</button>
-                                            <form method="POST" action="" onsubmit="return confirm('Are you sure?');">
-                                                <input type="hidden" name="action" value="delete_inventory">
-                                                <input type="hidden" name="item_id" value="<?= (int)$item['id'] ?>">
-                                                <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
-                                                <input type="hidden" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>">
-                                                <?= UI::csrf_field() ?>
-                                                <button type="submit" class="row-action-btn btn-delete" title="Delete Entry">🗑️</button>
-                                            </form>
                                         </div>
                                     </td>
                                 </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                    <tfoot style="border-top: 2px solid #e2e8f0; background: #f8fafc;">
-                        <tr>
-                            <td colspan="2" style="padding: 15px;">
-                                <div class="search-container footer-search" style="max-width: 300px; margin: 0;">
-                                    <i class="search-icon">🔍</i>
-                                    <input type="text" id="wh-search-footer" placeholder="Filter these results..." onkeyup="syncSearch(this)" onkeydown="if(event.key==='Enter') event.preventDefault()" class="search-input" style="height: 40px; font-size: 0.9rem; border-radius: 10px;">
-                                </div>
-                            </td>
-                            <td style="text-align: right; padding: 15px; font-size: 1.1rem; color: #334155; font-weight: 800;">Inventory Total:</td>
-                            <td style="padding: 15px;">
-                                <span class="qty-pill" id="table-total-qty" style="background: #1e293b; color: white; font-size: 1.1rem; padding: 6px 12px;">
-                                    <?= number_format($total_qty) ?>
-                                </span>
-                            </td>
-                            <?php if ($selected_sector === 'Laptops' || $selected_sector === 'Gaming'): ?>
-                                <td colspan="5"></td>
-                            <?php elseif ($selected_sector === 'Desktops'): ?>
-                                <td colspan="3"></td>
-                            <?php else: ?>
-                                <td colspan="2"></td>
+                                <?php foreach ($items as $item):
+                                    $specs = json_decode($item['specs_json'], true) ?: [];
+                                    $created_date = date('m/d/y', strtotime($item['created_at']));
+                                    $updated_date = date('m/d/y', strtotime($item['updated_at']));
+                                    ?>
+                                    <tr class="inventory-card <?= ($highlight_id && $item['id'] == $highlight_id) ? 'highlight-row' : '' ?>"
+                                        data-id="<?= $item['id'] ?>" data-sector-theme="<?= htmlspecialchars($item['sector']) ?>"
+                                        data-brand="<?= htmlspecialchars($item['brand']) ?>"
+                                        data-model="<?= htmlspecialchars($item['model']) ?>"
+                                        data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
+                                        data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
+                                        data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
+
+                                        <td style="text-align: center;"><input type="checkbox" class="row-select"></td>
+                                        <td><span class="location-tag"><?= htmlspecialchars($item['location_code']) ?></span></td>
+
+                                        <?php if ($selected_sector === 'Master'): ?>
+                                            <td>
+                                                <a href="index.php?view=warehouse&sector=<?= urlencode($item['sector']) ?>&loc=<?= urlencode($item['location_code']) ?>"
+                                                    style="text-decoration: none;">
+                                                    <span
+                                                        class="sector-badge sector-<?= strtolower($item['sector']) ?>"><?= htmlspecialchars($item['sector']) ?></span>
+                                                </a>
+                                            </td>
+                                        <?php endif; ?>
+
+                                        <td>
+                                            <div class="cell-make"><?= htmlspecialchars($item['brand']) ?></div>
+                                            <div class="cell-model"><?= htmlspecialchars($item['model']) ?></div>
+                                        </td>
+
+                                        <td><span class="price-pill">$<?= number_format($item['price'] ?? 0, 0) ?></span></td>
+
+                                        <td><span class="qty-pill"><?= (int) $item['quantity'] ?></span></td>
+
+                                        <?php if ($selected_sector === 'Laptops'): ?>
+                                            <td>
+                                                <div class="spec-value"><?= htmlspecialchars($specs['cpu'] ?? '-') ?></div>
+                                            </td>
+                                            <td>
+                                                <div class="spec-value">
+                                                    <?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="spec-value">
+                                                    <?= htmlspecialchars(($specs['series'] ?? '-') . ' (' . ($specs['gen'] ?? '-') . ')') ?>
+                                                </div>
+                                            </td>
+                                        <?php elseif ($selected_sector === 'Gaming'): ?>
+                                            <td>
+                                                <div class="spec-value"><?= htmlspecialchars($specs['category'] ?? '-') ?></div>
+                                            </td>
+                                            <td>
+                                                <div class="spec-value">
+                                                    <?= htmlspecialchars(($specs['cpu'] ?? '-') . ' / ' . ($specs['gpu'] ?? '-')) ?>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="spec-value">
+                                                    <?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?>
+                                                </div>
+                                            </td>
+                                        <?php elseif ($selected_sector === 'Desktops'): ?>
+                                            <td>
+                                                <div class="spec-value"><?= htmlspecialchars($specs['cpu_gen'] ?? '-') ?></div>
+                                            </td>
+                                        <?php elseif ($selected_sector === 'Master'): ?>
+                                            <td>
+                                                <div class="spec-value" style="font-size: 0.75rem;">
+                                                    <?php
+                                                    if ($item['sector'] === 'Laptops')
+                                                        echo htmlspecialchars(($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? ''));
+                                                    elseif ($item['sector'] === 'Gaming')
+                                                        echo htmlspecialchars(($specs['category'] ?? '') . ' ' . ($specs['gpu'] ?? ''));
+                                                    elseif ($item['sector'] === 'Desktops')
+                                                        echo htmlspecialchars($specs['cpu_gen'] ?? '');
+                                                    else
+                                                        echo '-';
+                                                    ?>
+                                                </div>
+                                            </td>
+                                        <?php endif; ?>
+
+                                        <td>
+                                            <div class="notes-cell-wrapper">
+                                                <div class="status-row">
+                                                    <span
+                                                        class="status-badge status-<?= htmlspecialchars($item['status']) ?>"><?= htmlspecialchars($item['status']) ?></span>
+                                                    <span
+                                                        class="condition-label"><?= htmlspecialchars($specs['condition'] ?? 'Used') ?></span>
+                                                    <?php if ($item['sector'] === 'Laptops'): ?>
+                                                        <span class="battery-badge <?= empty($specs['battery']) ? 'missing' : '' ?>"
+                                                            title="Battery Status">
+                                                            🔋
+                                                            <?= !empty($specs['battery']) ? htmlspecialchars($specs['battery']) : 'Missing' ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <div class="notes-text"><?= htmlspecialchars($specs['notes'] ?? '') ?></div>
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <div class="staff-log-wrapper">
+                                                <div class="log-entry">
+                                                    <span class="log-user">👤 <?= htmlspecialchars($item['user_owner']) ?></span>
+                                                    <span class="log-date">Created <?= $created_date ?></span>
+                                                </div>
+                                                <?php if ($item['last_updated_by']): ?>
+                                                    <div class="log-entry updated">
+                                                        <span class="log-user">✏️
+                                                            <?= htmlspecialchars($item['last_updated_by']) ?></span>
+                                                        <span class="log-date">Edited <?= $updated_date ?></span>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <div class="row-actions">
+                                                <button type="button" class="row-action-btn btn-edit"
+                                                    onclick='editWarehouseItem(<?= json_encode($item) ?>)'
+                                                    title="Edit Entry">📝</button>
+                                                <button type="button" class="row-action-btn btn-label"
+                                                    onclick="downloadWarehouseLabel(<?= (int) $item['id'] ?>, this)"
+                                                    title="Generate & Download Label">🏷️</button>
+                                                <form method="POST" action="" onsubmit="return confirm('Are you sure?');">
+                                                    <input type="hidden" name="action" value="delete_inventory">
+                                                    <input type="hidden" name="item_id" value="<?= (int) $item['id'] ?>">
+                                                    <input type="hidden" name="sector"
+                                                        value="<?= htmlspecialchars($selected_sector) ?>">
+                                                    <input type="hidden" name="location_code"
+                                                        value="<?= htmlspecialchars($selected_loc) ?>">
+                                                    <?= UI::csrf_field() ?>
+                                                    <button type="submit" class="row-action-btn btn-delete"
+                                                        title="Delete Entry">🗑️</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
                             <?php endif; ?>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-        </section>
-
-        <!-- Add Item Sidebar (Hidden in Global View) -->
-        <?php if ($selected_loc !== 'GLOBAL'): ?>
-        <aside class="warehouse-sidebar">
-            <div style="background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: sticky; top: 20px;">
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 id="wh-form-title" style="font-weight: 800; margin: 0;">📥 Register Stock</h3>
-                    <div id="session-counter" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; color: #15803d; display: none;">
-                        ✨ <span id="session-count-val">0</span> Added this session
-                    </div>
+                        </tbody>
+                        <tfoot style="border-top: 2px solid #e2e8f0; background: #f8fafc;">
+                            <tr>
+                                <td colspan="2" style="padding: 15px;">
+                                    <div class="search-container footer-search" style="max-width: 300px; margin: 0;">
+                                        <i class="search-icon">🔍</i>
+                                        <input type="text" id="wh-search-footer" placeholder="Filter these results..."
+                                            onkeyup="syncSearch(this)"
+                                            onkeydown="if(event.key==='Enter') event.preventDefault()" class="search-input"
+                                            style="height: 40px; font-size: 0.9rem; border-radius: 10px;">
+                                    </div>
+                                </td>
+                                <td
+                                    style="text-align: right; padding: 15px; font-size: 1.1rem; color: #334155; font-weight: 800;">
+                                    Inventory Total:</td>
+                                <td style="padding: 15px;">
+                                    <span class="qty-pill" id="table-total-qty"
+                                        style="background: #1e293b; color: white; font-size: 1.1rem; padding: 6px 12px;">
+                                        <?= number_format($total_qty) ?>
+                                    </span>
+                                </td>
+                                <?php if ($selected_sector === 'Laptops' || $selected_sector === 'Gaming'): ?>
+                                    <td colspan="5"></td>
+                                <?php elseif ($selected_sector === 'Desktops'): ?>
+                                    <td colspan="3"></td>
+                                <?php else: ?>
+                                    <td colspan="2"></td>
+                                <?php endif; ?>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
-                <div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
-                    <button type="button" id="btn-clone-last" onclick="fillLastEnteredData()" style="background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; cursor: pointer; color: #475569; transition: all 0.2s;">
-                        📋 Clone Last
-                    </button>
-                </div>
-                <form method="POST" action="" id="wh-main-form">
-                    <?= UI::csrf_field() ?>
-                    <input type="hidden" name="action" id="wh-form-action" value="add_inventory">
-                    <input type="hidden" name="item_id" id="wh-edit-id" value="">
-                    <input type="hidden" name="last_updated_at" id="wh-last-updated" value="">
-                    <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
+            </section>
 
-                    <div class="form-group" style="margin-bottom: 15px;">
-                        <label for="wh-location-code">Location Code (Zone/Shelf)</label>
-                        <input type="text" id="wh-location-code" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>" readonly style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; background:#f8fafc; color:#64748b; font-weight:700;">
-                    </div>
+            <!-- Add Item Sidebar (Hidden in Global View) -->
+            <?php if ($selected_loc !== 'GLOBAL'): ?>
+                <aside class="warehouse-sidebar">
+                    <div
+                        style="background: white; padding: 25px; border-radius: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: sticky; top: 20px;">
 
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <div class="form-group" style="flex: 1;">
-                            <label for="wh-brand">Brand</label>
-                            <input type="text" name="brand" list="brand-options" id="wh-brand" placeholder="Dell" required style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
-                            <datalist id="brand-options"></datalist>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 id="wh-form-title" style="font-weight: 800; margin: 0;">📥 Register Stock</h3>
+                            <div id="session-counter"
+                                style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; color: #15803d; display: none;">
+                                ✨ <span id="session-count-val">0</span> Added this session
+                            </div>
                         </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label for="wh-model">Model</label>
-                            <input type="text" name="model" list="model-options" id="wh-model" placeholder="Latitude" required style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
-                            <datalist id="model-options"></datalist>
-                        </div></div>
+                        <div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+                            <button type="button" id="btn-clone-last" onclick="fillLastEnteredData()"
+                                style="background: #f1f5f9; border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; cursor: pointer; color: #475569; transition: all 0.2s;">
+                                📋 Clone Last
+                            </button>
+                        </div>
+                        <form method="POST" action="" id="wh-main-form">
+                            <?= UI::csrf_field() ?>
+                            <input type="hidden" name="action" id="wh-form-action" value="add_inventory">
+                            <input type="hidden" name="item_id" id="wh-edit-id" value="">
+                            <input type="hidden" name="last_updated_at" id="wh-last-updated" value="">
+                            <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
 
-
-                    <!-- Sector Specific Fields -->
-                    <div id="sector-specific-fields" style="border-top: 1px dashed #eee; padding-top: 15px; margin-bottom: 15px;">
-                        <?php if ($selected_sector === 'Laptops'): ?>
-                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                <div class="form-group" style="flex: 1;">
-                                    <label for="wh-spec-cpu">CPU</label>
-                                    <input type="text" id="wh-spec-cpu" name="cpu" list="cpu-options" placeholder="Core i7-1185G7" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label for="wh-spec-gpu">GPU</label>
-                                    <input type="text" id="wh-spec-gpu" name="gpu" placeholder="Integrated / RTX" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                <div class="form-group" style="flex: 1;">
-                                    <label for="wh-spec-ram">RAM</label>
-                                    <input type="text" id="wh-spec-ram" name="ram" placeholder="16GB DDR4" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label for="wh-spec-storage">Storage</label>
-                                    <input type="text" id="wh-spec-storage" name="storage" placeholder="512GB NVMe" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                <div class="form-group" style="flex: 1;">
-                                    <label for="wh-spec-battery">Battery Health</label>
-                                    <input type="text" id="wh-spec-battery" name="battery" placeholder="85% Health" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label for="wh-spec-windows">Windows Version</label>
-                                    <input type="text" id="wh-spec-windows" name="windows" placeholder="Win 11 Pro" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                <div class="form-group" style="flex: 1;">
-                                    <label for="wh-spec-series">Model Number</label>
-                                    <input type="text" id="wh-spec-series" name="series" required placeholder="E7450" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label for="wh-spec-gen">Generation</label>
-                                    <input type="text" id="wh-spec-gen" name="gen" required placeholder="11th Gen" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                </div>
-                            </div>
-                        <?php elseif ($selected_sector === 'Gaming'): ?>
-                            <div class="form-group" style="margin-bottom: 10px;">
-                                <label for="wh-gaming-cat">Category</label>
-                                <select name="gaming_category" id="wh-gaming-cat" onchange="toggleGamingFields()" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px; font-weight:700;">
-                                    <option value="PC">PC / Custom Build</option>
-                                    <option value="Consoles">Consoles</option>
-                                    <option value="Controllers">Controllers</option>
-                                    <option value="Games">Games</option>
-                                </select>
-                            </div>
-
-                            <!-- PC Specific -->
-                            <div id="wh-gaming-pc-fields">
-                                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                    <div class="form-group" style="flex: 1;">
-                                        <label for="wh-gaming-pc-cpu">CPU</label>
-                                        <input type="text" id="wh-gaming-pc-cpu" name="cpu" placeholder="Ryzen 7" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                    </div>
-                                    <div class="form-group" style="flex: 1;">
-                                        <label for="wh-gaming-pc-gpu">GPU</label>
-                                        <input type="text" id="wh-gaming-pc-gpu" name="gpu" placeholder="RTX 3070" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Specific Specs for everything else -->
-                            <div class="form-group" style="margin-bottom: 10px;">
-                                <label for="wh-series" id="wh-gaming-spec-label">Specs / Series</label>
-                                <input type="text" name="series" list="series-options" id="wh-series" placeholder="Series / Edition" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                <datalist id="series-options"></datalist>
-                                <div id="wh-gaming-extra-specs" style="display: flex; gap: 10px; margin-top:5px;">
-                                    <div class="form-group" style="flex: 1;">
-                                        <input type="text" name="ram" id="wh-ram" placeholder="RAM / Color" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                    </div>
-                                    <div class="form-group" style="flex: 1;">
-                                        <input type="text" name="storage" id="wh-storage" placeholder="Storage" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                    </div>
-                                </div>
-                            </div>
-                        <?php elseif ($selected_sector === 'Electronics'): ?>
-                            <div class="form-group" style="margin-bottom: 10px;">
-                                <label for="wh-elec-type">Device Type</label>
-                                <input type="text" id="wh-elec-type" name="type" placeholder="Charger / Hub" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                            </div>
-                            <div class="form-group" style="margin-bottom: 10px;">
-                                <label for="wh-elec-spec">Specs / Condition</label>
-                                <input type="text" id="wh-elec-spec" name="voltage" placeholder="65W / 19.5V" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                <input type="text" name="condition" placeholder="New" style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px; margin-top:5px;">
-                            </div>
-                        <?php elseif ($selected_sector === 'Desktops'): ?>
                             <div class="form-group" style="margin-bottom: 15px;">
-                                <label for="wh-spec-cpu-gen">CPU / Gen Brand</label>
-                                <input type="text" id="wh-spec-cpu-gen" name="cpu_gen" list="cpu-gen-options" placeholder="i7 10th Gen / Intel" style="width:100%; height:40px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; font-weight: 600;">
-                                <datalist id="cpu-gen-options">
-                                    <option value="2nd-3rd Gen">
-                                    <option value="4th-5th Gen">
-                                    <option value="6th-7th Gen">
-                                    <option value="i5-8th Gen">
-                                    <option value="i7-8th Gen">
-                                    <option value="i5-9th Gen">
-                                    <option value="i7-9th Gen">
-                                    <option value="i5-10th Gen">
-                                    <option value="i7-10th Gen">
-                                    <option value="i5-11th Gen">
-                                    <option value="i7-11th Gen">
-                                    <option value="i5-12th Gen">
-                                    <option value="i7-12th Gen">
-                                    <option value="i5-13th Gen">
-                                    <option value="i7-13th Gen">
-                                </datalist>
+                                <label for="wh-location-code">Location Code (Zone/Shelf)</label>
+                                <input type="text" id="wh-location-code" name="location_code"
+                                    value="<?= htmlspecialchars($selected_loc) ?>" readonly
+                                    style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; background:#f8fafc; color:#64748b; font-weight:700;">
                             </div>
-                        <?php endif; ?>
-                    </div>
 
-                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                        <div class="form-group" style="flex: 1;">
-                            <label for="wh-condition">Condition</label>
-                            <select id="wh-condition" name="condition" style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; font-weight:700;">
-                                <option value="A Grade">A Grade</option>
-                                <option value="B Grade">B Grade</option>
-                                <option value="C Grade">C Grade</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label for="wh-price">Price</label>
-                            <div style="position:relative; display:flex; align-items:center;">
-                                <span style="position:absolute; left:12px; font-weight:800; color:#64748b;">$</span>
-                                <input type="number" step="1" id="wh-price" name="price" value="" placeholder="150" min="0" required style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px 0 25px; font-weight: 800;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="wh-brand">Brand</label>
+                                    <input type="text" name="brand" list="brand-options" id="wh-brand" placeholder="Dell"
+                                        required
+                                        style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
+                                    <datalist id="brand-options"></datalist>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="wh-model">Model</label>
+                                    <input type="text" name="model" list="model-options" id="wh-model" placeholder="Latitude"
+                                        required
+                                        style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
+                                    <datalist id="model-options"></datalist>
+                                </div>
                             </div>
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label for="wh-quantity">Initial Quantity</label>
-                            <input type="number" id="wh-quantity" name="quantity" value="1" min="1" required style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; font-weight: 800;">
-                        </div>
-                    </div>
 
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label for="wh-notes">Notes / Observations</label>
-                        <textarea id="wh-notes" name="notes" placeholder="Any scratches or specifics..." style="width:100%; height:80px; border-radius:10px; border:1px solid #ddd; padding: 10px; font-family:inherit; resize:none;"></textarea>
-                    </div>
 
-                    <button type="submit" id="wh-submit-btn" style="width:100%; height:50px; background:var(--text-main); color:white; border:none; border-radius:14px; font-weight:800; cursor:pointer;">
-                        📥 Add to Stock
-                    </button>
-                    <button type="button" id="wh-cancel-edit" onclick="resetWarehouseForm()" style="display:none; width:100%; margin-top:10px; background:none; border:none; color:#64748b; font-weight:700; cursor:pointer;">Cancel Edit</button>
-                </form>
-            </div>
-        </aside>
-        <?php else: ?>
-        <aside class="warehouse-sidebar" style="background:#f8fafc; border:2px dashed #cbd5e1; border-radius:20px; padding:40px; text-align:center; color:#64748b;">
-            <div style="font-size:2rem; margin-bottom:15px;">🚫</div>
-            <h3 style="font-weight:800;">Registration Locked</h3>
-            <p>You are in <b>Global View</b>. To add or edit specific stock, please select a specific <b>Working Zone</b> from the gate.</p>
-            <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>" style="display:inline-block; margin-top:20px; color:var(--text-main); font-weight:800;">Back to Gate</a>
-        </aside>
+                            <!-- Sector Specific Fields -->
+                            <div id="sector-specific-fields"
+                                style="border-top: 1px dashed #eee; padding-top: 15px; margin-bottom: 15px;">
+                                <?php if ($selected_sector === 'Laptops'): ?>
+                                    <div class="form-group" style="flex: 1; padding-bottom: 2%;">
+                                        <label for="wh-spec-series">Model Number</label>
+                                        <input type="text" id="wh-spec-series" name="series" required placeholder="E7450"
+                                            style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                    </div>
+                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                        <div class="form-group" style="flex: 1;">
+                                            <label for="wh-spec-cpu">CPU</label>
+                                            <input type="text" id="wh-spec-cpu" name="cpu" list="cpu-options"
+                                                placeholder="Core i7-1185G7"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                        </div>
+                                        <div class="form-group" style="flex: 1;">
+                                            <label for="wh-spec-gpu">GPU</label>
+                                            <input type="text" id="wh-spec-gpu" name="gpu" placeholder="Integrated / RTX"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                        <div class="form-group" style="flex: 1;">
+                                            <label for="wh-spec-ram">RAM</label>
+                                            <input type="text" id="wh-spec-ram" name="ram" placeholder="16GB DDR4"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                        </div>
+                                        <div class="form-group" style="flex: 1;">
+                                            <label for="wh-spec-storage">Storage</label>
+                                            <input type="text" id="wh-spec-storage" name="storage" placeholder="512GB NVMe"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                        <div class="form-group" style="flex: 1;">
+                                            <label for="wh-spec-battery">Battery Health</label>
+                                            <input type="text" id="wh-spec-battery" name="battery" placeholder="85% Health"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                        </div>
+                                        <div class="form-group" style="flex: 1;">
+                                            <label for="wh-spec-windows">Windows Version</label>
+                                            <input type="text" id="wh-spec-windows" name="windows" placeholder="Win 11 Pro"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                        <div class="form-group" style="flex: 1;">
+                                            <label for="wh-spec-gen">Generation</label>
+                                            <input type="text" id="wh-spec-gen" name="gen" required placeholder="11th Gen"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                        </div>
+                                    </div>
+                                <?php elseif ($selected_sector === 'Gaming'): ?>
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <label for="wh-gaming-cat">Category</label>
+                                        <select name="gaming_category" id="wh-gaming-cat" onchange="toggleGamingFields()"
+                                            style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px; font-weight:700;">
+                                            <option value="PC">PC / Custom Build</option>
+                                            <option value="Consoles">Consoles</option>
+                                            <option value="Controllers">Controllers</option>
+                                            <option value="Games">Games</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- PC Specific -->
+                                    <div id="wh-gaming-pc-fields">
+                                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                            <div class="form-group" style="flex: 1;">
+                                                <label for="wh-gaming-pc-cpu">CPU</label>
+                                                <input type="text" id="wh-gaming-pc-cpu" name="cpu" placeholder="Ryzen 7"
+                                                    style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                            </div>
+                                            <div class="form-group" style="flex: 1;">
+                                                <label for="wh-gaming-pc-gpu">GPU</label>
+                                                <input type="text" id="wh-gaming-pc-gpu" name="gpu" placeholder="RTX 3070"
+                                                    style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Specific Specs for everything else -->
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <label for="wh-series" id="wh-gaming-spec-label">Specs / Series</label>
+                                        <input type="text" name="series" list="series-options" id="wh-series"
+                                            placeholder="Series / Edition"
+                                            style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                        <datalist id="series-options"></datalist>
+                                        <div id="wh-gaming-extra-specs" style="display: flex; gap: 10px; margin-top:5px;">
+                                            <div class="form-group" style="flex: 1;">
+                                                <input type="text" name="ram" id="wh-ram" placeholder="RAM / Color"
+                                                    style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                            </div>
+                                            <div class="form-group" style="flex: 1;">
+                                                <input type="text" name="storage" id="wh-storage" placeholder="Storage"
+                                                    style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php elseif ($selected_sector === 'Electronics'): ?>
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <label for="wh-elec-type">Device Type</label>
+                                        <input type="text" id="wh-elec-type" name="type" placeholder="Charger / Hub"
+                                            style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 10px;">
+                                        <label for="wh-elec-spec">Specs / Condition</label>
+                                        <input type="text" id="wh-elec-spec" name="voltage" placeholder="65W / 19.5V"
+                                            style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                        <input type="text" name="condition" placeholder="New"
+                                            style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px; margin-top:5px;">
+                                    </div>
+                                <?php elseif ($selected_sector === 'Desktops'): ?>
+                                    <div class="form-group" style="margin-bottom: 15px;">
+                                        <label for="wh-spec-cpu-gen">CPU / Gen Brand</label>
+                                        <input type="text" id="wh-spec-cpu-gen" name="cpu_gen" list="cpu-gen-options"
+                                            placeholder="i7 10th Gen / Intel"
+                                            style="width:100%; height:40px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; font-weight: 600;">
+                                        <datalist id="cpu-gen-options">
+                                            <option value="2nd-3rd Gen">
+                                            <option value="4th-5th Gen">
+                                            <option value="6th-7th Gen">
+                                            <option value="i5-8th Gen">
+                                            <option value="i7-8th Gen">
+                                            <option value="i5-9th Gen">
+                                            <option value="i7-9th Gen">
+                                            <option value="i5-10th Gen">
+                                            <option value="i7-10th Gen">
+                                            <option value="i5-11th Gen">
+                                            <option value="i7-11th Gen">
+                                            <option value="i5-12th Gen">
+                                            <option value="i7-12th Gen">
+                                            <option value="i5-13th Gen">
+                                            <option value="i7-13th Gen">
+                                        </datalist>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="wh-condition">Condition</label>
+                                    <select id="wh-condition" name="condition"
+                                        style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; font-weight:700;">
+                                        <option value="A Grade">A Grade</option>
+                                        <option value="B Grade">B Grade</option>
+                                        <option value="C Grade">C Grade</option>
+                                        <option value="No Power">No Power</option>
+                                        <option value="No Post">No Post</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="wh-price">Price</label>
+                                    <div style="position:relative; display:flex; align-items:center;">
+                                        <span style="position:absolute; left:12px; font-weight:800; color:#64748b;">$</span>
+                                        <input type="number" step="1" id="wh-price" name="price" value="" placeholder="150"
+                                            min="0" required
+                                            style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px 0 25px; font-weight: 800;">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="wh-quantity">Initial Quantity</label>
+                                    <input type="number" id="wh-quantity" name="quantity" value="1" min="1" required
+                                        style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; font-weight: 800;">
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 20px;">
+                                <label for="wh-notes">Notes / Observations</label>
+                                <textarea id="wh-notes" name="notes" placeholder="Any scratches or specifics..."
+                                    style="width:100%; height:80px; border-radius:10px; border:1px solid #ddd; padding: 10px; font-family:inherit; resize:none;"></textarea>
+                            </div>
+
+                            <button type="submit" id="wh-submit-btn"
+                                style="width:100%; height:50px; background:var(--text-main); color:white; border:none; border-radius:14px; font-weight:800; cursor:pointer;">
+                                📥 Add to Stock
+                            </button>
+                            <button type="button" id="wh-cancel-edit" onclick="resetWarehouseForm()"
+                                style="display:none; width:100%; margin-top:10px; background:none; border:none; color:#64748b; font-weight:700; cursor:pointer;">Cancel
+                                Edit</button>
+                        </form>
+                    </div>
+                </aside>
+            <?php else: ?>
+                <aside class="warehouse-sidebar"
+                    style="background:#f8fafc; border:2px dashed #cbd5e1; border-radius:20px; padding:40px; text-align:center; color:#64748b;">
+                    <div style="font-size:2rem; margin-bottom:15px;">🚫</div>
+                    <h3 style="font-weight:800;">Registration Locked</h3>
+                    <p>You are in <b>Global View</b>. To add or edit specific stock, please select a specific <b>Working
+                            Zone</b> from the gate.</p>
+                    <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>"
+                        style="display:inline-block; margin-top:20px; color:var(--text-main); font-weight:800;">Back to Gate</a>
+                </aside>
+            <?php endif; ?>
+
         <?php endif; ?>
-
-    <?php endif; ?>
-</div>
-
-<!-- warehouse.js is now loaded globally in index.php -->
-<!-- Rename Zone Modal -->
-<div id="rename-modal" class="modal-overlay no-print" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;" onclick="if(event.target===this) closeRenameModal()">
-    <div style="background:white; border-radius:24px; width:95%; max-width:450px; padding:35px; box-shadow:var(--shadow-lg); position:relative;">
-        <form method="POST" id="delete-zone-form" onsubmit="return confirm('CRITICAL ACTION: This will PERMANENTLY DELETE ALL ITEMS in this zone. This cannot be undone. Proceed?');">
-            <?= UI::csrf_field() ?>
-            <input type="hidden" name="action" value="delete_zone">
-            <input type="hidden" name="old_loc" id="delete-zone-loc">
-            <button type="submit" class="btn-hidden-delete" title="Hidden: Delete Zone" style="position:absolute; top:20px; right:20px; background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.1; transition:opacity 0.3s, transform 0.2s; padding:5px;">🗑️</button>
-        </form>
-
-        <h2 style="font-weight:900; margin-bottom:10px; font-size:1.25rem;">📦 Manage Working Zone</h2>
-        <p style="font-size:0.85rem; color:#64748b; margin-bottom:25px;">Update the name or operational status of this location.</p>
-
-        <form method="POST">
-            <?= UI::csrf_field() ?>
-            <input type="hidden" name="action" value="rename_zone">
-            <input type="hidden" name="old_loc" id="rename-old-loc">
-
-            <div class="form-group" style="margin-bottom:20px;">
-                <label for="rename-new-loc" style="display:block; font-size:0.7rem; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:#94a3b8;">Zone Name</label>
-                <input type="text" name="new_loc" id="rename-new-loc" required style="width:100%; height:46px; border-radius:12px; border:1px solid #ddd; padding:0 15px; font-weight:800; font-size:1rem;">
-            </div>
-
-            <div class="form-group" style="margin-bottom:30px;">
-                <label for="rename-status" style="display:block; font-size:0.7rem; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:#94a3b8;">Location Status</label>
-                <select name="location_status" id="rename-status" style="width:100%; height:46px; border-radius:12px; border:1px solid #ddd; padding:0 15px; font-weight:700; cursor:pointer; background:#f8fafc;">
-                    <?php foreach ($all_statuses as $status): ?>
-                        <option value="<?= htmlspecialchars($status['name']) ?>"><?= htmlspecialchars($status['name']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-                <div style="margin-top:10px; text-align:right;">
-                    <a href="javascript:void(0)" onclick="toggleManageStatuses()" style="font-size:0.7rem; color:var(--accent-color); font-weight:800; text-decoration:none;">+ Add New Status Type</a>
-                </div>
-            </div>
-
-            <div id="manage-statuses-block" style="display:none; background:#f1f5f9; padding:20px; border-radius:16px; margin-bottom:25px; border:1px dashed #cbd5e1;">
-                <div style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:#64748b; margin-bottom:10px;">Create New Status</div>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="new-status-name" placeholder="Status Name" style="flex:2; height:38px; border-radius:8px; border:1px solid #cbd5e1; padding:0 10px; font-size:0.85rem;">
-                    <input type="color" id="new-status-color" value="#64748b" style="flex:0.5; height:38px; border:none; padding:0; background:none; cursor:pointer;">
-                    <button type="button" onclick="addNewStatusType()" style="flex:1; background:var(--accent-color); color:white; border:none; border-radius:8px; font-weight:800; font-size:0.75rem; cursor:pointer;">Add</button>
-                </div>
-            </div>
-
-            <div style="display:flex; gap:12px;">
-                <button type="button" onclick="closeRenameModal()" style="flex:1; height:48px; border-radius:14px; border:1px solid #ddd; background:none; font-weight:800; cursor:pointer; color:#64748b;">Cancel</button>
-                <button type="submit" style="flex:1; height:48px; border-radius:14px; border:none; background:var(--text-main); color:white; font-weight:800; cursor:pointer; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">Update Zone</button>
-            </div>
-        </form>
     </div>
-</div>
 
-<script>
-    function openRenameModal(locData) {
-        // locData is now an object
-        const loc = locData.location_code;
-        const status = locData.status;
+    <!-- warehouse.js is now loaded globally in index.php -->
+    <!-- Rename Zone Modal -->
+    <div id="rename-modal" class="modal-overlay no-print"
+        style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;"
+        onclick="if(event.target===this) closeRenameModal()">
+        <div
+            style="background:white; border-radius:24px; width:95%; max-width:450px; padding:35px; box-shadow:var(--shadow-lg); position:relative;">
+            <form method="POST" id="delete-zone-form"
+                onsubmit="return confirm('CRITICAL ACTION: This will PERMANENTLY DELETE ALL ITEMS in this zone. This cannot be undone. Proceed?');">
+                <?= UI::csrf_field() ?>
+                <input type="hidden" name="action" value="delete_zone">
+                <input type="hidden" name="old_loc" id="delete-zone-loc">
+                <button type="submit" class="btn-hidden-delete" title="Hidden: Delete Zone"
+                    style="position:absolute; top:20px; right:20px; background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.1; transition:opacity 0.3s, transform 0.2s; padding:5px;">🗑️</button>
+            </form>
 
-        document.getElementById('rename-old-loc').value = loc;
-        document.getElementById('delete-zone-loc').value = loc;
-        document.getElementById('rename-new-loc').value = loc;
-        document.getElementById('rename-status').value = status;
+            <h2 style="font-weight:900; margin-bottom:10px; font-size:1.25rem;">📦 Manage Working Zone</h2>
+            <p style="font-size:0.85rem; color:#64748b; margin-bottom:25px;">Update the name or operational status of
+                this location.</p>
 
-        document.getElementById('rename-modal').style.display = 'flex';
-        document.getElementById('rename-new-loc').focus();
-    }
+            <form method="POST">
+                <?= UI::csrf_field() ?>
+                <input type="hidden" name="action" value="rename_zone">
+                <input type="hidden" name="old_loc" id="rename-old-loc">
 
-    function closeRenameModal() {
-        document.getElementById('rename-modal').style.display = 'none';
-        document.getElementById('manage-statuses-block').style.display = 'none';
-    }
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label for="rename-new-loc"
+                        style="display:block; font-size:0.7rem; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:#94a3b8;">Zone
+                        Name</label>
+                    <input type="text" name="new_loc" id="rename-new-loc" required
+                        style="width:100%; height:46px; border-radius:12px; border:1px solid #ddd; padding:0 15px; font-weight:800; font-size:1rem;">
+                </div>
 
-    function toggleManageStatuses() {
-        const block = document.getElementById('manage-statuses-block');
-        block.style.display = block.style.display === 'none' ? 'block' : 'none';
-    }
+                <div class="form-group" style="margin-bottom:30px;">
+                    <label for="rename-status"
+                        style="display:block; font-size:0.7rem; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:#94a3b8;">Location
+                        Status</label>
+                    <select name="location_status" id="rename-status"
+                        style="width:100%; height:46px; border-radius:12px; border:1px solid #ddd; padding:0 15px; font-weight:700; cursor:pointer; background:#f8fafc;">
+                        <?php foreach ($all_statuses as $status): ?>
+                            <option value="<?= htmlspecialchars($status['name']) ?>">
+                                <?= htmlspecialchars($status['name']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div style="margin-top:10px; text-align:right;">
+                        <a href="javascript:void(0)" onclick="toggleManageStatuses()"
+                            style="font-size:0.7rem; color:var(--accent-color); font-weight:800; text-decoration:none;">+
+                            Add New Status Type</a>
+                    </div>
+                </div>
 
-    async function addNewStatusType() {
-        const name = document.getElementById('new-status-name').value;
-        const color = document.getElementById('new-status-color').value;
-        if (!name) return;
+                <div id="manage-statuses-block"
+                    style="display:none; background:#f1f5f9; padding:20px; border-radius:16px; margin-bottom:25px; border:1px dashed #cbd5e1;">
+                    <div
+                        style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:#64748b; margin-bottom:10px;">
+                        Create New Status</div>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="new-status-name" placeholder="Status Name"
+                            style="flex:2; height:38px; border-radius:8px; border:1px solid #cbd5e1; padding:0 10px; font-size:0.85rem;">
+                        <input type="color" id="new-status-color" value="#64748b"
+                            style="flex:0.5; height:38px; border:none; padding:0; background:none; cursor:pointer;">
+                        <button type="button" onclick="addNewStatusType()"
+                            style="flex:1; background:var(--accent-color); color:white; border:none; border-radius:8px; font-weight:800; font-size:0.75rem; cursor:pointer;">Add</button>
+                    </div>
+                </div>
 
-        const formData = new FormData();
-        formData.append('action', 'add_location_status');
-        formData.append('status_name', name);
-        formData.append('status_color', color);
+                <div style="display:flex; gap:12px;">
+                    <button type="button" onclick="closeRenameModal()"
+                        style="flex:1; height:48px; border-radius:14px; border:1px solid #ddd; background:none; font-weight:800; cursor:pointer; color:#64748b;">Cancel</button>
+                    <button type="submit"
+                        style="flex:1; height:48px; border-radius:14px; border:none; background:var(--text-main); color:white; font-weight:800; cursor:pointer; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1);">Update
+                        Zone</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        try {
-            const response = await fetch(window.location.href, {
-                method: 'POST',
-                body: formData
-            });
-            if (response.ok) {
-                location.reload();
-            }
-        } catch (err) {
-            console.error("Failed to add status", err);
+    <script>
+        function openRenameModal(locData) {
+            // locData is now an object
+            const loc = locData.location_code;
+            const status = locData.status;
+
+            document.getElementById('rename-old-loc').value = loc;
+            document.getElementById('delete-zone-loc').value = loc;
+            document.getElementById('rename-new-loc').value = loc;
+            document.getElementById('rename-status').value = status;
+
+            document.getElementById('rename-modal').style.display = 'flex';
+            document.getElementById('rename-new-loc').focus();
         }
-    }
 
-    // Add CSS for the rename button visibility on hover
-    const style = document.createElement('style');
-    style.textContent = `
+        function closeRenameModal() {
+            document.getElementById('rename-modal').style.display = 'none';
+            document.getElementById('manage-statuses-block').style.display = 'none';
+        }
+
+        function toggleManageStatuses() {
+            const block = document.getElementById('manage-statuses-block');
+            block.style.display = block.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function addNewStatusType() {
+            const name = document.getElementById('new-status-name').value;
+            const color = document.getElementById('new-status-color').value;
+            if (!name) return;
+
+            const formData = new FormData();
+            formData.append('action', 'add_location_status');
+            formData.append('status_name', name);
+            formData.append('status_color', color);
+
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    location.reload();
+                }
+            } catch (err) {
+                console.error("Failed to add status", err);
+            }
+        }
+
+        // Add CSS for the rename button visibility on hover
+        const style = document.createElement('style');
+        style.textContent = `
         .loc-item-wrapper:hover .btn-rename-zone { opacity: 1 !important; }
         .btn-rename-zone:hover { transform: scale(1.1); background: #f8fafc !important; }
         .btn-hidden-delete:hover { opacity: 0.8 !important; transform: scale(1.2); color: #ef4444; }
     `;
-    document.head.appendChild(style);
+        document.head.appendChild(style);
 
-    // Ensure gaming fields are correctly toggled on load if Gaming is selected
-    if (typeof toggleGamingFields === 'function') toggleGamingFields();
-</script>
+        // Ensure gaming fields are correctly toggled on load if Gaming is selected
+        if (typeof toggleGamingFields === 'function') toggleGamingFields();
+    </script>

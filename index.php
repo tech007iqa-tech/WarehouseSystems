@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,14 +13,17 @@
 
     <!-- Primary Stylesheet -->
     <link rel="stylesheet" href="assets/css/portal.css?v=<?= filemtime('assets/css/portal.css') ?>">
-
+    <link rel="icon" type="image/png" href="./orders/assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
 </head>
+
 <body>
 
     <div class="background-blob"></div>
 
     <header class="portal-header">
-        <h1>Warehouse Systems </h1><h2>By</h2><h3>IQA Metal</h3>
+        <h1>Warehouse Systems </h1>
+        <h2>By</h2>
+        <h3>IQA Metal</h3>
         <p>Intelligent inventory management & rapid label logistics.</p>
     </header>
 
@@ -36,7 +40,8 @@
         <a href="orders/index.php" class="module-card">
             <div class="icon-box">📊</div>
             <h2>Order Manager</h2>
-            <p>Comprehensive CRM, batch fulfillment, and customer registry with advanced warehouse location tracking.</p>
+            <p>Comprehensive CRM, batch fulfillment, and customer registry with advanced warehouse location tracking.
+            </p>
             <div class="badge badge-orders">Module Active</div>
         </a>
 
@@ -47,6 +52,15 @@
             <p>Lead generation, campaign tracking, and outreach automation for B2B expansion.</p>
             <div class="badge badge-marketing">Module Initialized</div>
         </a>
+
+
+        <a href="https://docs.google.com/spreadsheets/d/13X8PYZFg4NdXMYhveHBj4_sqNkGzpo2wmSgZ8aLcz3M/edit?usp=sharing"
+            class="module-card">
+            <div class="icon-box">🔗</div>
+            <h2>Links</h2>
+            <p>Sheets file</p>
+            <div class="badge badge-marketing">Active</div>
+        </a>
     </main>
 
     <footer class="footer-note">
@@ -56,4 +70,5 @@
     <!-- Global Notifications Engine -->
     <script src="assets/js/notifications.js?v=<?= filemtime('assets/js/notifications.js') ?>"></script>
 </body>
+
 </html>

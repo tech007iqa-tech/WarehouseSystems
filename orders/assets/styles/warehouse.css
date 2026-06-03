@@ -165,6 +165,7 @@
     margin-bottom: 24px;
     gap: 20px;
     flex-wrap: wrap;
+    width: fit-content;
 }
 
 .inventory-summary-title h2 {
@@ -257,7 +258,8 @@
     border: 1px solid var(--border-color);
     overflow: hidden;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
-    overflow-anchor: none; /* Prevent browser from jumping scroll during DOM changes */
+    overflow-anchor: none;
+    /* Prevent browser from jumping scroll during DOM changes */
 }
 
 .inventory-table {
@@ -762,16 +764,38 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     animation: slideDown 0.3s ease forwards;
 }
-.bulk-info { font-weight: 800; font-size: 1.1rem; }
-.bulk-actions { display: flex; gap: 10px; align-items: center; }
-.bulk-actions input { background: white; color: var(--text-main); font-weight: 700; border: none; }
+
+.bulk-info {
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.bulk-actions input {
+    background: white;
+    color: var(--text-main);
+    font-weight: 700;
+    border: none;
+}
 
 @keyframes slideDown {
-    from { transform: translateY(-100%); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 /* Selected Row Highlighting */
@@ -786,7 +810,8 @@
 }
 
 /* Custom Premium Checkboxes */
-.row-select, #selectAll {
+.row-select,
+#selectAll {
     -webkit-appearance: none;
     appearance: none;
     width: 22px;
@@ -802,24 +827,28 @@
     justify-content: center;
 }
 
-.row-select:checked, #selectAll:checked {
+.row-select:checked,
+#selectAll:checked {
     background: var(--accent-color);
     border-color: var(--accent-color);
 }
 
-.row-select:checked::after, #selectAll:checked::after {
+.row-select:checked::after,
+#selectAll:checked::after {
     content: '✓';
     color: white;
     font-size: 14px;
     font-weight: 900;
 }
 
-.row-select:hover, #selectAll:hover {
+.row-select:hover,
+#selectAll:hover {
     border-color: var(--accent-color);
     transform: scale(1.05);
 }
 
-[data-theme="dark"] .row-select, [data-theme="dark"] #selectAll {
+[data-theme="dark"] .row-select,
+[data-theme="dark"] #selectAll {
     background: var(--bg-surface-2);
     border-color: var(--border-color);
 }
@@ -833,6 +862,7 @@
     background: #f0fdf4 !important;
     border-left: 4px solid #166534 !important;
 }
+
 .sector-badge:hover {
     filter: brightness(0.95);
     transform: translateY(-1px);
@@ -873,19 +903,31 @@
 }
 
 @keyframes marching-ants {
-    0% { background-position: 0 0, 0 100%, 0 100%, 100% 0; }
-    100% { background-position: 20px 0, -20px 100%, 0 0, 100% 100%; }
+    0% {
+        background-position: 0 0, 0 100%, 0 100%, 100% 0;
+    }
+
+    100% {
+        background-position: 20px 0, -20px 100%, 0 0, 100% 100%;
+    }
 }
 
 .no-results-icon {
     font-size: 3rem;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
     animation: pulse-subtle 2s infinite;
 }
 
 @keyframes pulse-subtle {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
 }
 
 /* Highlight Animation for Recently Added/Updated Items */
@@ -900,9 +942,11 @@
         background-color: rgba(140, 198, 63, 0.3);
         box-shadow: inset 0 0 0 2px var(--accent-color);
     }
+
     30% {
         background-color: rgba(140, 198, 63, 0.15);
     }
+
     100% {
         background-color: transparent;
         box-shadow: inset 0 0 0 0px transparent;
