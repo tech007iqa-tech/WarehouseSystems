@@ -794,7 +794,7 @@
 }
 
 .bulk-actions input {
-    background: white;
+    background-color: white;
     color: var(--text-main);
     font-weight: 700;
     border: none;
@@ -965,4 +965,57 @@
         background-color: transparent;
         box-shadow: inset 0 0 0 0px transparent;
     }
+}
+
+/* Inspiring CSS Flare for Notes & Observations input */
+#wh-notes {
+    border: 2px dashed #cbd5e1 !important;
+    background-color: #fafbfd !important;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' /%3E%3C/svg%3E") !important;
+    background-repeat: no-repeat !important;
+    background-position: 12px center !important;
+    background-size: 18px !important;
+    padding-left: 38px !important;
+    font-style: italic;
+    color: var(--text-main);
+}
+
+#wh-notes:hover {
+    border-color: var(--accent-color) !important;
+    background-color: #ffffff !important;
+}
+
+#wh-notes:focus {
+    border-style: solid !important;
+    border-color: var(--accent-color) !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 0 0 4px rgba(140, 198, 63, 0.15), inset 0 2px 4px rgba(0,0,0,0.02) !important;
+    font-style: normal;
+    transform: translateY(-2px);
+}
+
+#wh-notes::placeholder {
+    color: #94a3b8;
+    font-style: italic;
+    transition: color 0.3s ease;
+}
+
+#wh-notes:focus::placeholder {
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] #wh-notes {
+    border-color: #475569 !important;
+    background-color: rgba(30, 41, 59, 0.3) !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' /%3E%3C/svg%3E") !important;
+}
+
+[data-theme="dark"] #wh-notes:hover {
+    border-color: var(--accent-color) !important;
+    background-color: var(--bg-panel) !important;
+}
+
+[data-theme="dark"] #wh-notes:focus {
+    background-color: var(--bg-panel) !important;
 }
