@@ -74,6 +74,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el) el.addEventListener('change', updateSelectColors);
     });
     updateSelectColors();
+
+    // Register for real-time synchronization
+    if (document.getElementById('inventory-list')) {
+        AppSync.register({
+            elementId: 'inventory-list',
+            url: window.location.pathname + window.location.search + (window.location.search ? '&ajax=1' : '?ajax=1'),
+            onUpdate: () => {
+                // Re-apply search filter after syncing
+                filterWarehouse();
+                
+                // Keep selected IDs up-to-date with what actually exists in DOM now
+                const currentIds = new Set(Array.from(document.querySelectorAll('#inventory-list .row-select')).map(cb => cb.closest('tr').dataset.id));
+                for (let id of selectedIds) {
+                    if (!currentIds.has(id)) {
+                        selectedIds.delete(id);
+                    }
+                }
+                updateBulkBar();
+            }
+        });
+    }
 });
 
 /**
@@ -787,20 +808,24 @@ function updateBulkBar() {
     if (DOM.bulkBar) DOM.bulkBar.style.display = count > 0 ? 'flex' : 'none';
 }
 
+let lastChecked = null;
+
 if (DOM.selectAll) {
     DOM.selectAll.addEventListener('change', (e) => {
         const isChecked = e.target.checked;
         const checkboxes = DOM.tbody.querySelectorAll('.row-select');
         checkboxes.forEach(cb => {
-            cb.checked = isChecked;
             const tr = cb.closest('tr');
-            const id = tr.dataset.id;
-            if (isChecked) {
-                selectedIds.add(id);
-                tr.classList.add('selected-row');
-            } else {
-                selectedIds.delete(id);
-                tr.classList.remove('selected-row');
+            if (tr.style.display !== 'none') {
+                cb.checked = isChecked;
+                const id = tr.dataset.id;
+                if (isChecked) {
+                    selectedIds.add(id);
+                    tr.classList.add('selected-row');
+                } else {
+                    selectedIds.delete(id);
+                    tr.classList.remove('selected-row');
+                }
             }
         });
         updateBulkBar();
@@ -808,18 +833,46 @@ if (DOM.selectAll) {
 }
 
 if (DOM.tbody) {
-    DOM.tbody.addEventListener('change', (e) => {
+    DOM.tbody.addEventListener('click', (e) => {
         if (e.target.classList.contains('row-select')) {
-            const tr = e.target.closest('tr');
-            const id = tr.dataset.id;
-            if (e.target.checked) {
-                selectedIds.add(id);
-                tr.classList.add('selected-row');
+            const currentCb = e.target;
+            const checkboxes = Array.from(DOM.tbody.querySelectorAll('.row-select')).filter(cb => cb.closest('tr').style.display !== 'none');
+            
+            if (e.shiftKey && lastChecked && lastChecked !== currentCb) {
+                let start = checkboxes.indexOf(currentCb);
+                let end = checkboxes.indexOf(lastChecked);
+                
+                if (start > -1 && end > -1) {
+                    const range = checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
+                    const isChecked = currentCb.checked;
+                    
+                    range.forEach(cb => {
+                        cb.checked = isChecked;
+                        const tr = cb.closest('tr');
+                        const id = tr.dataset.id;
+                        if (isChecked) {
+                            selectedIds.add(id);
+                            tr.classList.add('selected-row');
+                        } else {
+                            selectedIds.delete(id);
+                            tr.classList.remove('selected-row');
+                        }
+                    });
+                }
             } else {
-                selectedIds.delete(id);
-                tr.classList.remove('selected-row');
-                if (DOM.selectAll) DOM.selectAll.checked = false;
+                const tr = currentCb.closest('tr');
+                const id = tr.dataset.id;
+                if (currentCb.checked) {
+                    selectedIds.add(id);
+                    tr.classList.add('selected-row');
+                } else {
+                    selectedIds.delete(id);
+                    tr.classList.remove('selected-row');
+                    if (DOM.selectAll) DOM.selectAll.checked = false;
+                }
             }
+            
+            lastChecked = currentCb;
             updateBulkBar();
         }
     });

@@ -435,36 +435,68 @@ function updateBulkBar() {
     DOM.bulkBar.style.display = count > 0 ? 'flex' : 'none';
 }
 
+let lastLabelsChecked = null;
+
 DOM.selectAll.addEventListener('change', (e) => {
     const isChecked = e.target.checked;
     const checkboxes = DOM.tbody.querySelectorAll('.row-select');
     checkboxes.forEach(cb => {
-        cb.checked = isChecked;
         const tr = cb.closest('tr');
-        const id = tr.dataset.id;
-        if (isChecked) {
-            selectedIds.add(id);
-            tr.classList.add('selected-row');
-        } else {
-            selectedIds.delete(id);
-            tr.classList.remove('selected-row');
+        if (tr.style.display !== 'none') {
+            cb.checked = isChecked;
+            const id = tr.dataset.id;
+            if (isChecked) {
+                selectedIds.add(id);
+                tr.classList.add('selected-row');
+            } else {
+                selectedIds.delete(id);
+                tr.classList.remove('selected-row');
+            }
         }
     });
     updateBulkBar();
 });
 
-DOM.tbody.addEventListener('change', (e) => {
+DOM.tbody.addEventListener('click', (e) => {
     if (e.target.classList.contains('row-select')) {
-        const tr = e.target.closest('tr');
-        const id = tr.dataset.id;
-        if (e.target.checked) {
-            selectedIds.add(id);
-            tr.classList.add('selected-row');
+        const currentCb = e.target;
+        const checkboxes = Array.from(DOM.tbody.querySelectorAll('.row-select')).filter(cb => cb.closest('tr').style.display !== 'none');
+        
+        if (e.shiftKey && lastLabelsChecked && lastLabelsChecked !== currentCb) {
+            let start = checkboxes.indexOf(currentCb);
+            let end = checkboxes.indexOf(lastLabelsChecked);
+            
+            if (start > -1 && end > -1) {
+                const range = checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
+                const isChecked = currentCb.checked;
+                
+                range.forEach(cb => {
+                    cb.checked = isChecked;
+                    const tr = cb.closest('tr');
+                    const id = tr.dataset.id;
+                    if (isChecked) {
+                        selectedIds.add(id);
+                        tr.classList.add('selected-row');
+                    } else {
+                        selectedIds.delete(id);
+                        tr.classList.remove('selected-row');
+                    }
+                });
+            }
         } else {
-            selectedIds.delete(id);
-            tr.classList.remove('selected-row');
-            DOM.selectAll.checked = false;
+            const tr = currentCb.closest('tr');
+            const id = tr.dataset.id;
+            if (currentCb.checked) {
+                selectedIds.add(id);
+                tr.classList.add('selected-row');
+            } else {
+                selectedIds.delete(id);
+                tr.classList.remove('selected-row');
+                DOM.selectAll.checked = false;
+            }
         }
+        
+        lastLabelsChecked = currentCb;
         updateBulkBar();
     }
 });

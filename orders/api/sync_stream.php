@@ -16,22 +16,30 @@ header('Cache-Control: no-cache');
 header('Connection: keep-alive');
 header('X-Accel-Buffering: no'); // Disable buffering on proxy servers like nginx
 
-// Absolute paths to customers database and WAL files
-$db_path = __DIR__ . '/../../db/customers.db';
-$wal_path = $db_path . '-wal';
+// Absolute paths to database files
+$db_files = [
+    __DIR__ . '/../../db/customers.db',
+    __DIR__ . '/../../db/orders.db',
+    __DIR__ . '/../../db/warehouse.db'
+];
 
-// Fetch the most recent modification time of either file
-function get_db_mtime($db, $wal) {
-    clearstatcache(true, $db);
-    clearstatcache(true, $wal);
-    
-    $t1 = file_exists($db) ? filemtime($db) : 0;
-    $t2 = file_exists($wal) ? filemtime($wal) : 0;
-    
-    return max($t1, $t2);
+// Fetch the most recent modification time of any db or its WAL file
+function get_db_mtime($files) {
+    $max_mtime = 0;
+    foreach ($files as $db_path) {
+        $wal_path = $db_path . '-wal';
+        clearstatcache(true, $db_path);
+        clearstatcache(true, $wal_path);
+        
+        $t1 = file_exists($db_path) ? filemtime($db_path) : 0;
+        $t2 = file_exists($wal_path) ? filemtime($wal_path) : 0;
+        
+        $max_mtime = max($max_mtime, $t1, $t2);
+    }
+    return $max_mtime;
 }
 
-$last_mtime = get_db_mtime($db_path, $wal_path);
+$last_mtime = get_db_mtime($db_files);
 
 // Send 2KB padding to force browsers to start processing the stream immediately
 echo ":" . str_repeat(" ", 2048) . "\n\n";
@@ -42,7 +50,7 @@ $start_time = time();
 
 // Keep the stream open for 25 seconds (then recycle the connection to avoid memory limits)
 while (time() - $start_time < 25) {
-    $current_mtime = get_db_mtime($db_path, $wal_path);
+    $current_mtime = get_db_mtime($db_files);
     
     if ($current_mtime !== $last_mtime) {
         echo "event: database-change\n";

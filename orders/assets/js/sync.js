@@ -145,10 +145,26 @@ window.AppSync = window.AppSync || {
                                       (existingRow.className !== newRow.className);
 
                     if (isChanged) {
+                        // Preserve states of all checkboxes by index
+                        const oldCheckboxes = existingRow.querySelectorAll('input[type="checkbox"]');
+                        const checkboxCheckedStates = Array.from(oldCheckboxes).map(cb => cb.checked);
+                        const hadSelectedClass = existingRow.classList.contains('selected-row');
+
                         existingRow.innerHTML = newRow.innerHTML;
                         Array.from(newRow.attributes).forEach(attr => {
                             existingRow.setAttribute(attr.name, attr.value);
                         });
+
+                        // Restore checkbox states by index
+                        const newCheckboxes = existingRow.querySelectorAll('input[type="checkbox"]');
+                        newCheckboxes.forEach((cb, idx) => {
+                            if (idx < checkboxCheckedStates.length) {
+                                cb.checked = checkboxCheckedStates[idx];
+                            }
+                        });
+                        if (hadSelectedClass) {
+                            existingRow.classList.add('selected-row');
+                        }
 
                         existingRow.classList.remove('row-pulse-highlight');
                         void existingRow.offsetWidth;

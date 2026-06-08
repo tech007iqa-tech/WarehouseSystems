@@ -202,6 +202,201 @@ if ($selected_loc) {
 }
 
 $highlight_id = $_GET['last_id'] ?? null;
+
+// --- LIVEWIRE-STYLE AJAX VIEW HANDLER ---
+if (UI::is_ajax()) {
+    if (ob_get_level() > 0) ob_clean();
+    ob_start();
+    if (empty($items)): ?>
+        <tr>
+            <td colspan="10"
+                style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">
+                No items found in this sector.
+            </td>
+        </tr>
+    <?php else: ?>
+        <tr id="wh-no-results" class="no-results-row" style="display: none;">
+            <td colspan="12">
+                <div class="no-results-wrapper"
+                    style="display: flex; justify-content: center; width: 100%;">
+                    <div class="no-results-container">
+                        <div class="no-results-icon">🕵️‍♂️</div>
+                        <div style="font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em;">No
+                            matches found</div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <?php foreach ($items as $item):
+            $specs = json_decode($item['specs_json'], true) ?: [];
+            
+            $created_date = '';
+            $created_date_only = '';
+            $created_time_only = '';
+            if (!empty($item['created_at'])) {
+                $date_created_obj = new DateTime($item['created_at'], new DateTimeZone('UTC'));
+                $date_created_obj->setTimezone(new DateTimeZone('America/Los_Angeles'));
+                $created_date = $date_created_obj->format('m/d/y');
+                $created_date_only = $date_created_obj->format('m/d/y');
+                $created_time_only = $date_created_obj->format('h:i A');
+            }
+
+            $updated_date = '';
+            if (!empty($item['updated_at'])) {
+                $date_updated_obj = new DateTime($item['updated_at'], new DateTimeZone('UTC'));
+                $date_updated_obj->setTimezone(new DateTimeZone('America/Los_Angeles'));
+                $updated_date = $date_updated_obj->format('m/d/y');
+            }
+            ?>
+            <tr class="inventory-card <?= ($highlight_id && $item['id'] == $highlight_id) ? 'highlight-row' : '' ?>"
+                data-id="<?= $item['id'] ?>" data-sector-theme="<?= htmlspecialchars($item['sector']) ?>"
+                data-brand="<?= htmlspecialchars($item['brand']) ?>"
+                data-model="<?= htmlspecialchars($item['model']) ?>"
+                data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
+                data-created-date="<?= $created_date_only ?>"
+                data-created-time="<?= $created_time_only ?>"
+                data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
+                data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
+
+                <td style="text-align: center;"><input type="checkbox" class="row-select"></td>
+                <td><span class="location-tag"><?= htmlspecialchars($item['location_code']) ?></span></td>
+
+                <?php if ($selected_sector === 'Master'): ?>
+                    <td>
+                        <a href="index.php?view=warehouse&sector=<?= urlencode($item['sector']) ?>&loc=<?= urlencode($item['location_code']) ?>"
+                            style="text-decoration: none;">
+                            <span
+                                class="sector-badge sector-<?= strtolower($item['sector']) ?>"><?= htmlspecialchars($item['sector']) ?></span>
+                        </a>
+                    </td>
+                <?php endif; ?>
+
+                <td>
+                    <div class="cell-make"><?= htmlspecialchars($item['brand']) ?></div>
+                    <div class="cell-model"><?= htmlspecialchars($item['model']) ?></div>
+                </td>
+
+                <td><span class="qty-pill"><?= (int) $item['quantity'] ?></span></td>
+
+                <td><span class="price-pill">$<?= number_format($item['price'] ?? 0, 0) ?></span></td>
+
+                <?php if ($selected_sector === 'Laptops'): ?>
+                    <td>
+                        <div class="spec-value"><?= htmlspecialchars($specs['cpu'] ?? '-') ?></div>
+                    </td>
+                    <td>
+                        <div class="spec-value">
+                            <?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="spec-value">
+                            <?= htmlspecialchars(($specs['series'] ?? '-') . ' (' . ($specs['gen'] ?? '-') . ')') ?>
+                        </div>
+                    </td>
+                <?php elseif ($selected_sector === 'Gaming'): ?>
+                    <td>
+                        <div class="spec-value"><?= htmlspecialchars($specs['category'] ?? '-') ?></div>
+                    </td>
+                    <td>
+                        <div class="spec-value">
+                            <?= htmlspecialchars(($specs['cpu'] ?? '-') . ' / ' . ($specs['gpu'] ?? '-')) ?>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="spec-value">
+                            <?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?>
+                        </div>
+                    </td>
+                <?php elseif ($selected_sector === 'Desktops'): ?>
+                    <td>
+                        <div class="spec-value"><?= htmlspecialchars($specs['cpu_gen'] ?? '-') ?></div>
+                    </td>
+                <?php elseif ($selected_sector === 'Master'): ?>
+                    <td>
+                        <div class="spec-value" style="font-size: 0.75rem;">
+                            <?php
+                            if ($item['sector'] === 'Laptops')
+                                echo htmlspecialchars(($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? ''));
+                            elseif ($item['sector'] === 'Gaming')
+                                echo htmlspecialchars(($specs['category'] ?? '') . ' ' . ($specs['gpu'] ?? ''));
+                            elseif ($item['sector'] === 'Desktops')
+                                echo htmlspecialchars($specs['cpu_gen'] ?? '');
+                            else
+                                echo '-';
+                            ?>
+                        </div>
+                    </td>
+                <?php endif; ?>
+
+                <td>
+                    <div class="notes-cell-wrapper">
+                        <div class="status-row">
+                            <?php if (!empty($item['status'])): ?>
+                                <span
+                                    class="status-badge status-<?= htmlspecialchars($item['status']) ?>"><?= htmlspecialchars($item['status']) ?></span>
+                            <?php endif; ?>
+                            <span
+                                class="condition-label"><?= htmlspecialchars($specs['condition'] ?? 'Used') ?></span>
+                            <?php if ($item['sector'] === 'Laptops'): ?>
+                                <span class="battery-badge <?= empty($specs['battery']) ? 'missing' : '' ?>"
+                                    title="Battery Status">
+                                    🔋
+                                    <?= !empty($specs['battery']) ? htmlspecialchars($specs['battery']) : 'Missing' ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="notes-text"><?= htmlspecialchars($specs['notes'] ?? '') ?></div>
+                    </div>
+                </td>
+
+                <td>
+                    <div class="staff-log-wrapper">
+                        <div class="log-entry">
+                            <span class="log-user">👤 <?= htmlspecialchars($item['user_owner']) ?></span>
+                            <span class="log-date">Created <?= $created_date ?></span>
+                        </div>
+                        <?php if ($item['last_updated_by']): ?>
+                            <div class="log-entry updated">
+                                <span class="log-user">✏️
+                                    <?= htmlspecialchars($item['last_updated_by']) ?></span>
+                                <span class="log-date">Edited <?= $updated_date ?></span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </td>
+
+                <td>
+                    <div class="row-actions">
+                        <button type="button" class="row-action-btn btn-edit"
+                            onclick='editWarehouseItem(<?= json_encode($item) ?>)'
+                            title="Edit Entry">📝</button>
+                        <button type="button" class="row-action-btn btn-label"
+                            onclick="downloadWarehouseLabel(<?= (int) $item['id'] ?>, this)"
+                            title="Generate & Download Label">🏷️</button>
+                        <form method="POST" action="" onsubmit="return confirm('Are you sure?');">
+                            <input type="hidden" name="action" value="delete_inventory">
+                            <input type="hidden" name="item_id" value="<?= (int) $item['id'] ?>">
+                            <input type="hidden" name="sector"
+                                value="<?= htmlspecialchars($selected_sector) ?>">
+                            <input type="hidden" name="location_code"
+                                value="<?= htmlspecialchars($selected_loc) ?>">
+                            <?= UI::csrf_field() ?>
+                            <button type="submit" class="row-action-btn btn-delete"
+                                title="Delete Entry">🗑️</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    <?php endif;
+    $table_html = ob_get_clean();
+    header('Content-Type: application/json');
+    echo json_encode([
+        'inventory-list' => $table_html
+    ]);
+    exit();
+}
 ?>
 
 <script id="warehouse-state" type="application/json">

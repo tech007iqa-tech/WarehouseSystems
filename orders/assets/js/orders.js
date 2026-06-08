@@ -182,6 +182,26 @@ document.addEventListener('DOMContentLoaded', () => {
             filterOrders(); // Trigger the existing filter logic
         }
     }
+
+    // Register for real-time synchronization
+    if (document.getElementById('orders-list')) {
+        AppSync.register({
+            elementId: 'orders-list',
+            url: window.location.pathname + window.location.search + (window.location.search ? '&ajax=1' : '?ajax=1'),
+            onUpdate: () => {
+                filterOrders();
+                
+                // Keep selected IDs up-to-date with what actually exists in DOM now
+                const currentIds = new Set(Array.from(document.querySelectorAll('#orders-list .row-select')).map(cb => cb.closest('tr').dataset.id));
+                for (let id of selectedOrderIds) {
+                    if (!currentIds.has(id)) {
+                        selectedOrderIds.delete(id);
+                    }
+                }
+                updateOrderBulkBar();
+            }
+        });
+    }
 });
 
 // ─── BULK ACTIONS LOGIC ──────────────────────────────────────────────────────
@@ -200,20 +220,24 @@ function updateOrderBulkBar() {
     if (OrderDOM.bulkBar) OrderDOM.bulkBar.style.display = count > 0 ? 'flex' : 'none';
 }
 
+let lastOrderChecked = null;
+
 if (OrderDOM.selectAll) {
     OrderDOM.selectAll.addEventListener('change', (e) => {
         const isChecked = e.target.checked;
         const checkboxes = OrderDOM.tbody.querySelectorAll('.row-select');
         checkboxes.forEach(cb => {
-            cb.checked = isChecked;
             const tr = cb.closest('tr');
-            const id = tr.dataset.id;
-            if (isChecked) {
-                selectedOrderIds.add(id);
-                tr.classList.add('selected-row');
-            } else {
-                selectedOrderIds.delete(id);
-                tr.classList.remove('selected-row');
+            if (tr.style.display !== 'none') {
+                cb.checked = isChecked;
+                const id = tr.dataset.id;
+                if (isChecked) {
+                    selectedOrderIds.add(id);
+                    tr.classList.add('selected-row');
+                } else {
+                    selectedOrderIds.delete(id);
+                    tr.classList.remove('selected-row');
+                }
             }
         });
         updateOrderBulkBar();
@@ -221,18 +245,46 @@ if (OrderDOM.selectAll) {
 }
 
 if (OrderDOM.tbody) {
-    OrderDOM.tbody.addEventListener('change', (e) => {
+    OrderDOM.tbody.addEventListener('click', (e) => {
         if (e.target.classList.contains('row-select')) {
-            const tr = e.target.closest('tr');
-            const id = tr.dataset.id;
-            if (e.target.checked) {
-                selectedOrderIds.add(id);
-                tr.classList.add('selected-row');
+            const currentCb = e.target;
+            const checkboxes = Array.from(OrderDOM.tbody.querySelectorAll('.row-select')).filter(cb => cb.closest('tr').style.display !== 'none');
+            
+            if (e.shiftKey && lastOrderChecked && lastOrderChecked !== currentCb) {
+                let start = checkboxes.indexOf(currentCb);
+                let end = checkboxes.indexOf(lastOrderChecked);
+                
+                if (start > -1 && end > -1) {
+                    const range = checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
+                    const isChecked = currentCb.checked;
+                    
+                    range.forEach(cb => {
+                        cb.checked = isChecked;
+                        const tr = cb.closest('tr');
+                        const id = tr.dataset.id;
+                        if (isChecked) {
+                            selectedOrderIds.add(id);
+                            tr.classList.add('selected-row');
+                        } else {
+                            selectedOrderIds.delete(id);
+                            tr.classList.remove('selected-row');
+                        }
+                    });
+                }
             } else {
-                selectedOrderIds.delete(id);
-                tr.classList.remove('selected-row');
-                if (OrderDOM.selectAll) OrderDOM.selectAll.checked = false;
+                const tr = currentCb.closest('tr');
+                const id = tr.dataset.id;
+                if (currentCb.checked) {
+                    selectedOrderIds.add(id);
+                    tr.classList.add('selected-row');
+                } else {
+                    selectedOrderIds.delete(id);
+                    tr.classList.remove('selected-row');
+                    if (OrderDOM.selectAll) OrderDOM.selectAll.checked = false;
+                }
             }
+            
+            lastOrderChecked = currentCb;
             updateOrderBulkBar();
         }
     });

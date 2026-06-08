@@ -48,6 +48,73 @@ try {
 } catch (PDOException $e) {
     die("Database Connection failed: " . $e->getMessage());
 }
+
+if (UI::is_ajax()) {
+    if (ob_get_level() > 0) ob_clean();
+    ob_start();
+    if (count($orders) > 0) {
+        foreach ($orders as $order) {
+            $company = $order['company_name'] ?: 'Unknown Account';
+            $status = strtolower($order['status']);
+            $search_blob = strtolower($order['order_id'] . " " . $company . " " . $order['customer_id']);
+            $status_class = "status-" . $status;
+            ?>
+            <tr class="order-row" data-id="<?= $order['order_id'] ?>" data-search="<?= htmlspecialchars($search_blob) ?>" style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;">
+                <td style="text-align: center;"><input type="checkbox" class="row-select"></td>
+                <td style="padding: 20px 24px;">
+                    <div style="font-weight: 800; color: var(--text-main); font-size: 0.95rem; font-family: monospace;"><?= htmlspecialchars($order['order_id']) ?></div>
+                </td>
+                <td style="padding: 20px 24px;">
+                    <div style="display:flex; align-items:center; gap: 8px;">
+                        <a href="index.php#customer-details" onclick="localStorage.setItem('active_customer_id', '<?= $order['customer_id'] ?>')"><div style="font-weight: 700; color: var(--text-main);"><?= htmlspecialchars($company) ?></div></a>
+                        <button type="button" class="btn-transfer-small no-print" onclick="openTransferModal('<?= htmlspecialchars($order['order_id']) ?>', '<?= htmlspecialchars($order['customer_id']) ?>')" title="Transfer" style="background:none; border:none; cursor:pointer; font-size: 0.8rem; opacity:0.3; transition: opacity 0.2s;">⇄</button>
+                    </div>
+                    <div style="font-size: 0.7rem; color: #94a3b8; font-family: monospace; margin-top: 2px;"><?= htmlspecialchars($order['customer_id']) ?></div>
+                </td>
+                <td style="padding: 20px 24px;">
+                    <div style="font-size: 0.85rem; font-weight: 600; color: #64748b;"><?= date('M d, Y', strtotime($order['created_at'])) ?></div>
+                </td>
+                <td style="padding: 20px 24px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="order-badge <?= $status_class ?>" style="min-width: 80px; text-align: center;">
+                            <?= htmlspecialchars($status) ?>
+                        </span>
+                        <div class="select-wrapper" style="position: relative;">
+                            <select name="new_status" class="order-status-select"
+                                    onchange="updateOrderStatus(this, '<?= $order['order_id'] ?>')"
+                                    data-original-value="<?= htmlspecialchars($status) ?>"
+                                    style="height: 32px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 700; padding: 0 10px; background: #f8fafc; cursor: pointer;">
+                                <option value="active" <?= $status === 'active' ? 'selected' : '' ?>>Active</option>
+                                <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>Pending</option>
+                                <option value="paid" <?= $status === 'paid' ? 'selected' : '' ?>>Paid</option>
+                                <option value="dispatched" <?= $status === 'dispatched' ? 'selected' : '' ?>>Dispatched</option>
+                                <option value="canceled" <?= $status === 'canceled' ? 'selected' : '' ?>>Canceled</option>
+                                <option value="finalized" <?= $status === 'finalized' ? 'selected' : '' ?>>Finalized</option>
+                            </select>
+                        </div>
+                    </div>
+                </td>
+                <td style="padding: 20px 24px; text-align: right;">
+                    <a href="checkout.php?customer_id=<?= urlencode($order['customer_id']) ?>&order_id=<?= urlencode($order['order_id']) ?>"
+                       class="btn-order-view"
+                       style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: #f1f5f9; color: #475569; border-radius: 10px; text-decoration: none; font-weight: 800; font-size: 0.85rem; transition: all 0.2s;">
+                        <span>Details</span>
+                        <i style="font-style: normal; font-size: 1.1rem; line-height: 1;">→</i>
+                    </a>
+                </td>
+            </tr>
+            <?php
+        }
+    } else {
+        echo '<tr><td colspan="5" style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">No batches found in this category.</td></tr>';
+    }
+    $table_html = ob_get_clean();
+    header('Content-Type: application/json');
+    echo json_encode([
+        'orders-list' => $table_html
+    ]);
+    exit();
+}
 ?>
 
 <!-- Load dedicated registry styles -->
