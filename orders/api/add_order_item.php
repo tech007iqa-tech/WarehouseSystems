@@ -2,8 +2,14 @@
 // orders/api/add_order_item.php
 header('Content-Type: application/json');
 require_once __DIR__ . '/../core/database.php';
-require_once __DIR__ . '/../../core/Security.php';
+require_once __DIR__ . '/../core/Security.php';
 session_start();
+
+if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized access.']);
+    exit;
+}
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);

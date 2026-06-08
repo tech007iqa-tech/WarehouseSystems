@@ -576,7 +576,21 @@
 .warehouse-sidebar select,
 .warehouse-sidebar textarea {
     font-size: 16px;
+    font-family: inherit;
+}
+
+.warehouse-sidebar select {
     -webkit-appearance: none;
+    appearance: none;
+}
+
+.warehouse-sidebar input[type="text"],
+.warehouse-sidebar input[type="search"],
+.warehouse-sidebar input[type="email"],
+.warehouse-sidebar input[type="password"],
+.warehouse-sidebar textarea {
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 @media (max-width: 1024px) {

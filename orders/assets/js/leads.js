@@ -170,3 +170,41 @@ function filterLeads() {
         rows[i].style.display = searchBlob.includes(filter) ? "" : "none";
     }
 }
+
+// Register leads list for background synchronization
+function initLeadsSync() {
+    AppSync.register({
+        elementId: 'leads-list',
+        url: 'index.php?view=leads&ajax=1',
+        onUpdate: () => {
+            // Re-apply text filtering
+            filterLeads();
+            // Re-apply active tab status filtering
+            const activeTab = document.querySelector('.orders-tab-link.active');
+            if (activeTab) {
+                const onclickText = activeTab.getAttribute('onclick') || '';
+                const match = onclickText.match(/'([^']+)'/);
+                if (match && match[1]) {
+                    const status = match[1];
+                    const rows = document.getElementsByClassName('lead-row');
+                    for (let row of rows) {
+                        const rowStatus = row.getAttribute('data-status').toLowerCase();
+                        if (status === 'all') {
+                            // Let filterLeads decide visibility
+                        } else if (status === 'lead' && rowStatus !== 'lead') {
+                            row.style.display = 'none';
+                        } else if (status === 'active' && rowStatus !== 'active customer') {
+                            row.style.display = 'none';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initLeadsSync);
+} else {
+    initLeadsSync();
+}

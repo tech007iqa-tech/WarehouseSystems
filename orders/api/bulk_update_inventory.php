@@ -2,7 +2,14 @@
 // orders/api/bulk_update_inventory.php
 header('Content-Type: application/json');
 require_once __DIR__ . '/../core/warehouse_db.php';
-require_once __DIR__ . '/../../core/Security.php';
+require_once __DIR__ . '/../core/Security.php';
+
+session_start();
+if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized access.']);
+    exit;
+}
 
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -15,12 +22,13 @@ try {
     $ids = $input['ids'] ?? [];
     $location = $input['location'] ?? null;
     $price = $input['price'] ?? null;
+    $status = $input['status'] ?? null;
 
     if (empty($ids)) {
         throw new Exception("No items selected.");
     }
 
-    if (!$location && !$price) {
+    if (!$location && !$price && !$status) {
         throw new Exception("No changes specified.");
     }
 
@@ -37,10 +45,16 @@ try {
         $params[] = $price;
     }
 
+    if ($status) {
+        $updates[] = "status = ?";
+        $params[] = $status;
+    }
+
     $updateStr = implode(', ', $updates);
 
     // Add IDs to params for the IN clause
-    foreach($ids as $id) $params[] = $id;
+    foreach ($ids as $id)
+        $params[] = $id;
 
     $sql = "UPDATE inventory SET {$updateStr}, updated_at = CURRENT_TIMESTAMP WHERE id IN (" . implode(',', array_fill(0, count($ids), '?')) . ")";
 

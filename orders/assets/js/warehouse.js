@@ -1,5 +1,5 @@
 /**
- * IQA Metal — Warehouse Control Logic
+ * System — Warehouse Control Logic
  */
 
 let __warehouseState = null;
@@ -13,6 +13,7 @@ function getWarehouseState() {
 document.addEventListener('DOMContentLoaded', () => {
     initWarehouseDatalists();
     initCpuGenChips();
+    initGhostSuffixes();
 
     // Session Counter Logic
     initSessionCounter();
@@ -66,6 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
         sortDropdown.value = savedSort;
         sortGateLocations(); // Apply it immediately
     }
+
+    // Attach color coding event listeners to select boxes
+    ['wh-spec-cpu', 'wh-condition'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', updateSelectColors);
+    });
+    updateSelectColors();
 });
 
 /**
@@ -80,7 +88,7 @@ function fillLastEnteredData() {
     if (!form) return;
 
     // Direct mapping for common fields
-    const fields = ['brand', 'model', 'quantity', 'price', 'condition', 'notes', 'cpu', 'gpu', 'ram', 'storage', 'battery', 'windows', 'series', 'gen', 'cpu_gen', 'gaming_category'];
+    const fields = ['brand', 'model', 'quantity', 'price', 'condition', 'notes', 'cpu', 'gpu', 'ram', 'storage', 'battery', 'windows', 'series', 'gen', 'cpu_gen', 'gaming_category', 'bios'];
 
     fields.forEach(f => {
         if (form[f] && data[f] !== undefined) {
@@ -90,6 +98,7 @@ function fillLastEnteredData() {
 
     // Trigger UI updates for specific sectors (like Gaming category toggle)
     if (typeof toggleGamingFields === 'function') toggleGamingFields();
+    if (typeof toggleBiosState === 'function') toggleBiosState();
 
     // Success micro-feedback on the button
     const btn = document.getElementById('btn-clone-last');
@@ -101,6 +110,9 @@ function fillLastEnteredData() {
 
     // Sync chips after cloning
     syncCpuGenChips();
+
+    // Update select colors
+    updateSelectColors();
 }
 
 /**
@@ -499,7 +511,9 @@ function editWarehouseItem(item) {
 
     // 3. Pre-fill Specs (parsing JSON)
     const specs = JSON.parse(item.specs_json || '{}');
-    if (form.condition) form.condition.value = specs.condition || 'Used';
+    if (form.condition) {
+        form.condition.value = specs.condition || 'Used';
+    }
     if (form.notes) form.notes.value = specs.notes || '';
 
     // Sector Specifics
@@ -512,6 +526,7 @@ function editWarehouseItem(item) {
         if (form.windows) form.windows.value = specs.windows || '';
         if (form.gen) form.gen.value = specs.gen || '';
         if (form.series) form.series.value = specs.series || '';
+        if (form.bios) form.bios.value = specs.bios || '';
     } else if (item.sector === 'Gaming') {
         if (form.gaming_category) {
             form.gaming_category.value = specs.category || 'PC';
@@ -528,6 +543,11 @@ function editWarehouseItem(item) {
             syncCpuGenChips();
         }
     }
+
+    if (typeof toggleBiosState === 'function') toggleBiosState();
+
+    // Update select colors
+    updateSelectColors();
 
     // Scroll to form for mobile UX
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -558,7 +578,11 @@ function resetWarehouseForm() {
 
     // Trigger UI cleanup
     if (typeof toggleGamingFields === 'function') toggleGamingFields();
+    if (typeof toggleBiosState === 'function') toggleBiosState();
     syncCpuGenChips();
+
+    // Update select colors
+    updateSelectColors();
 }
 
 /**
@@ -573,9 +597,9 @@ function downloadWarehouseCSV() {
     // CSV Meta Header
     let csv = `"Active Location","${activeLoc} 📍",,,,,,,\n\n`;
 
-    // Updated to match the specified B2B structure
-    const headers = ["Type", "Brand", "Model", "Series", "CPU / Gen", "Description", "Price", "QTY", "Total"];
-    if (isGlobal) headers.unshift("Location");
+    // Updated to match the specified B2B structure with Date & Time first
+    const headers = ["Date", "Time", "Type", "Brand", "Model", "Series", "CPU / Gen", "Description", "QTY", "Price", "Total"];
+    if (isGlobal) headers.splice(2, 0, "Location");
 
     csv += headers.map(h => `"${h}"`).join(",") + "\n";
 
@@ -593,6 +617,8 @@ function downloadWarehouseCSV() {
             const qty = qtyElement ? qtyElement.innerText.trim() : '0';
             const price = card.getAttribute('data-price') || '0.00';
             const total = (parseFloat(price) * parseInt(qty)).toFixed(2);
+            const createdDate = card.getAttribute('data-created-date') || '';
+            const createdTime = card.getAttribute('data-created-time') || '';
 
             const locTag = card.querySelector('.location-tag');
             const itemLoc = locTag ? locTag.innerText.trim() : '';
@@ -624,18 +650,20 @@ function downloadWarehouseCSV() {
             else if (sectorTheme === 'Electronics') itemType = "Electronics";
 
             const rowData = [
+                sanitize(createdDate),           // Date
+                sanitize(createdTime),           // Time
                 sanitize(itemType),              // Type
                 sanitize(brand),                 // Brand
                 sanitize(model),                 // Model
                 sanitize(specs.series || ""),    // Series
                 sanitize(cpuGen),                // CPU / Gen
                 sanitize(fullDesc),              // Description
-                sanitize(price),                 // Price
                 sanitize(qty),                   // QTY
+                sanitize(price),                 // Price
                 sanitize(total)                  // Total
             ];
 
-            if (isGlobal) rowData.unshift(sanitize(itemLoc));
+            if (isGlobal) rowData.splice(2, 0, sanitize(itemLoc));
 
             csv += rowData.join(",") + "\n";
             count++;
@@ -673,6 +701,23 @@ function initSessionCounter() {
     if (count > 0) {
         valSpan.innerText = count;
         counter.style.display = 'block';
+
+        // Show last added item info if available in sessionStorage
+        const lastItemRaw = sessionStorage.getItem('wh_session_last_item');
+        if (lastItemRaw) {
+            const lastItem = JSON.parse(lastItemRaw);
+            const infoDiv = document.getElementById('session-last-item-info');
+            const modelSeriesSpan = document.getElementById('session-last-model-series');
+            const qtySpan = document.getElementById('session-last-qty');
+            const timeSpan = document.getElementById('session-last-time');
+
+            if (infoDiv && modelSeriesSpan && qtySpan && timeSpan) {
+                modelSeriesSpan.innerText = lastItem.model + (lastItem.series ? ' ' + lastItem.series : '');
+                qtySpan.innerText = lastItem.quantity;
+                timeSpan.innerText = lastItem.time;
+                infoDiv.style.display = 'block';
+            }
+        }
     }
 }
 
@@ -689,6 +734,41 @@ function incrementSessionCounter() {
 
     const counter = document.getElementById('session-counter');
     if (counter) counter.style.display = 'block';
+
+    // Save last added item details to sessionStorage from wh_last_entry
+    const lastEntryRaw = localStorage.getItem('wh_last_entry');
+    if (lastEntryRaw) {
+        const lastEntry = JSON.parse(lastEntryRaw);
+        const now = new Date();
+        let hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12; // 0 should be 12
+        const timeStr = `${hours}:${minutes} ${ampm}`;
+
+        const lastItemData = {
+            model: lastEntry.model || 'Unknown',
+            series: lastEntry.series || '',
+            quantity: lastEntry.quantity || 1,
+            time: timeStr
+        };
+
+        sessionStorage.setItem('wh_session_last_item', JSON.stringify(lastItemData));
+
+        // Update the UI immediately
+        const infoDiv = document.getElementById('session-last-item-info');
+        const modelSeriesSpan = document.getElementById('session-last-model-series');
+        const qtySpan = document.getElementById('session-last-qty');
+        const timeSpan = document.getElementById('session-last-time');
+
+        if (infoDiv && modelSeriesSpan && qtySpan && timeSpan) {
+            modelSeriesSpan.innerText = lastItemData.model + (lastItemData.series ? ' ' + lastItemData.series : '');
+            qtySpan.innerText = lastItemData.quantity;
+            timeSpan.innerText = lastItemData.time;
+            infoDiv.style.display = 'block';
+        }
+    }
 }
 
 // ─── BULK ACTIONS LOGIC ──────────────────────────────────────────────────────
@@ -852,4 +932,138 @@ async function downloadWarehouseLabel(itemId, btn) {
         btn.innerHTML = originalText;
     }
 }
+
+/**
+ * Toggles the visibility of the BIOS State input group based on current Condition select value.
+ * Active for Laptops when condition is 'A Grade' or 'B Grade'.
+ */
+function toggleBiosState() {
+    const condSelect = document.getElementById('wh-condition');
+    const biosGroup = document.getElementById('wh-bios-state-group');
+    if (!condSelect || !biosGroup) return;
+
+    const val = condSelect.value;
+    if (val === 'A Grade' || val === 'B Grade') {
+        biosGroup.style.display = 'flex';
+    } else {
+        biosGroup.style.display = 'none';
+        const biosSelect = document.getElementById('wh-spec-bios');
+        if (biosSelect) biosSelect.value = '';
+    }
+}
+
+// Call on load to ensure state consistency
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof toggleBiosState === 'function') toggleBiosState();
+});
+
+/**
+ * Dynamic ghost suffix helper for RAM and Storage inputs
+ */
+function initGhostSuffixes() {
+    const ramInput = document.getElementById('wh-spec-ram');
+    const storageInput = document.getElementById('wh-spec-storage');
+
+    if (ramInput) {
+        let dl = document.getElementById('ram-ghost-options');
+        if (!dl) {
+            dl = document.createElement('datalist');
+            dl.id = 'ram-ghost-options';
+            document.body.appendChild(dl);
+            ramInput.setAttribute('list', 'ram-ghost-options');
+        }
+
+        // Restrict keyboard entries to digits only
+        ramInput.addEventListener('keypress', (e) => {
+            if (e.key < '0' || e.key > '9') {
+                e.preventDefault();
+            }
+        });
+
+        ramInput.addEventListener('paste', (e) => {
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            if (!/^\d+$/.test(text)) {
+                e.preventDefault();
+            }
+        });
+
+        ramInput.addEventListener('input', () => {
+            const val = ramInput.value.trim();
+            // If they clear or edit, we check if it is digits only to show suggestions
+            const digits = val.replace(/[^0-9]/g, '');
+            if (digits) {
+                dl.innerHTML = `<option value="${digits}GB">`;
+            } else {
+                dl.innerHTML = '';
+            }
+        });
+
+        // Auto-append GB on blur if only numbers were typed
+        ramInput.addEventListener('blur', () => {
+            const val = ramInput.value.trim();
+            if (/^\d+$/.test(val)) {
+                ramInput.value = val + 'GB';
+            }
+        });
+    }
+
+    if (storageInput) {
+        let dl = document.getElementById('storage-ghost-options');
+        if (!dl) {
+            dl = document.createElement('datalist');
+            dl.id = 'storage-ghost-options';
+            document.body.appendChild(dl);
+            storageInput.setAttribute('list', 'storage-ghost-options');
+        }
+
+        // Restrict keyboard entries to digits only
+        storageInput.addEventListener('keypress', (e) => {
+            if (e.key < '0' || e.key > '9') {
+                e.preventDefault();
+            }
+        });
+
+        storageInput.addEventListener('paste', (e) => {
+            const text = (e.clipboardData || window.clipboardData).getData('text');
+            if (!/^\d+$/.test(text)) {
+                e.preventDefault();
+            }
+        });
+
+        storageInput.addEventListener('input', () => {
+            const val = storageInput.value.trim();
+            const digits = val.replace(/[^0-9]/g, '');
+            if (digits) {
+                dl.innerHTML = `
+                    <option value="${digits}GB">
+                    <option value="${digits}TB">
+                    <option value="${digits}PB">
+                `;
+            } else {
+                dl.innerHTML = '';
+            }
+        });
+
+        // Auto-append GB on blur if only numbers were typed
+        storageInput.addEventListener('blur', () => {
+            const val = storageInput.value.trim();
+            if (/^\d+$/.test(val)) {
+                storageInput.value = val + 'GB';
+            }
+        });
+    }
+}
+
+function updateSelectColors() {
+    ['wh-spec-cpu', 'wh-condition'].forEach(id => {
+        const selectEl = document.getElementById(id);
+        if (!selectEl) return;
+        const selectedOpt = selectEl.options[selectEl.selectedIndex];
+        if (selectedOpt) {
+            selectEl.style.backgroundColor = selectedOpt.style.backgroundColor || '';
+            selectEl.style.color = selectedOpt.style.color || '';
+        }
+    });
+}
+
 

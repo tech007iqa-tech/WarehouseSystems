@@ -5,12 +5,32 @@ include '../core/auth.php';
 header('Content-Type: application/json');
 
 $query = $_GET['q'] ?? '';
-$sector = $_GET['sector'] ?? 'Laptops';
+$sector = $_GET['sector'] ?? '';
 
 try {
-    $stmt = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? AND (brand LIKE ? OR model LIKE ? OR location_code LIKE ?) LIMIT 20");
-    $search = "%$query%";
-    $stmt->execute([$sector, $search, $search, $search]);
+    $words = array_filter(preg_split('/\s+/', trim($query)));
+
+    $sql = "SELECT * FROM inventory WHERE 1=1";
+    $params = [];
+
+    if (!empty($sector)) {
+        $sql .= " AND sector = ?";
+        $params[] = $sector;
+    }
+
+    if (!empty($words)) {
+        foreach ($words as $word) {
+            $sql .= " AND (brand LIKE ? OR model LIKE ? OR location_code LIKE ? OR specs_json LIKE ?)";
+            $word_param = "%$word%";
+            $params[] = $word_param;
+            $params[] = $word_param;
+            $params[] = $word_param;
+            $params[] = $word_param;
+        }
+    }
+    $sql .= " ORDER BY id DESC LIMIT 50";
+    $stmt = $conn_wh->prepare($sql);
+    $stmt->execute($params);
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Unpack JSON specs for the frontend

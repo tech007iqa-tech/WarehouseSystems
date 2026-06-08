@@ -124,7 +124,7 @@
     text-transform: uppercase;
 }
 
-.form-group input, .form-group textarea {
+.form-group input, .form-group textarea, .form-group select {
     height: 44px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
@@ -132,6 +132,8 @@
     font-size: 0.9rem;
     font-weight: 500;
     transition: all 0.2s ease;
+    background-color: white;
+    color: var(--text-main);
 }
 
 .form-group textarea {
@@ -140,10 +142,18 @@
     resize: none;
 }
 
-.form-group input:focus, .form-group textarea:focus {
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 0 4px rgba(140, 198, 63, 0.1);
+}
+
+.form-group select:has(option:checked[value=""]) {
+    color: #94a3b8;
+}
+
+.form-group select option {
+    color: var(--text-main);
 }
 
 .btn-add {

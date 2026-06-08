@@ -1,4 +1,4 @@
-# 📦 IQA Warehouse Systems
+# 📦 IQA Warehouse Systems 6/8/2026 3:06 PM
 
 [![Version](https://img.shields.io/badge/version-2.0.0-green.svg)](https://github.com/)
 [![Tech](https://img.shields.io/badge/Stack-Vanilla_PHP_|_SQLite_|_JS-blue.svg)](https://github.com/)
@@ -19,7 +19,7 @@ A premium, high-performance warehouse management ecosystem designed for speed, r
 
 ### 📊 Order Manager (`/orders`)
 *B2B Relationship & Batch Fulfillment*
-- **CRM Hub**: Advanced lead tracking with interaction timelines and status priority.
+- **CRM Hub**: Advanced lead tracking with interaction timelines and status priority. Outfitted with real-time, timer-free Server-Sent Events (SSE) synchronization across all workstations.
 - **Batch Logistics**: Manage complex hardware orders with real-time stock allocation.
 - **Warehouse Gates**: Track the operational state of physical zones (Working, Audit, Idle).
 - **Global Registry**: Searchable customer database with session-persistent filters.

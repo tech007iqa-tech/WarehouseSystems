@@ -1,4 +1,4 @@
-# IQA Metal - Asset Caching Policies
+#  - Asset Caching Policies
 <IfModule mod_expires.c>
     ExpiresActive On
 
@@ -29,3 +29,9 @@
         Header append Vary: Accept-Encoding
     </FilesMatch>
 </IfModule>
+
+# Protect SQLite database files from direct web access
+<FilesMatch "\.db$">
+    Order deny,allow
+    Deny from all
+</FilesMatch>

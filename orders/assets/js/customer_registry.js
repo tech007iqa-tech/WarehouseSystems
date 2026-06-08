@@ -1,5 +1,5 @@
 /**
- * IQA Metal — Customer Registry Logic
+ * System — Customer Registry Logic
  * Handled safely with modern ES6+ standards.
  */
 
@@ -327,11 +327,19 @@ function filterCustomers() {
     if (!input) return;
 
     const filter = input.value.toLowerCase();
+    const terms = filter.split(/\s+/).filter(t => t.length > 0);
     const cards = document.getElementsByClassName('cust-card');
 
     for (let i = 0; i < cards.length; i++) {
         const search = cards[i].getAttribute('data-search')?.toLowerCase() || "";
-        cards[i].style.display = search.includes(filter) ? "" : "none";
+        let matches = true;
+        for (let term of terms) {
+            if (!search.includes(term)) {
+                matches = false;
+                break;
+            }
+        }
+        cards[i].style.display = matches ? "" : "none";
     }
 }
 

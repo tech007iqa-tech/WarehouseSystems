@@ -91,7 +91,7 @@ try {
         <input type="text" id="order-search" placeholder="Search by Order ID, Company, or Customer ID..." aria-label="Search orders" onkeyup="filterOrders()">
     </div>
 
-    <div class="table-container" style="background: white; border-radius: 20px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: var(--shadow-sm);">
+    <div class="table-container" style="background: white; border-radius: 20px; border: 1px solid var(--border-color); overflow-x: auto; -webkit-overflow-scrolling: touch; box-shadow: var(--shadow-sm);">
         <table class="orders-table" style="width: 100%; border-collapse: collapse; text-align: left;">
             <thead>
                 <tr style="background: #1e293b !important;">

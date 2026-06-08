@@ -80,30 +80,144 @@ $today = date('Y-m-d');
 $call_today = array_filter($all_leads, function($l) use ($today) {
     return !empty($l['callback_date']) && $l['callback_date'] <= $today && strtolower($l['account_status'] ?? '') !== 'lost' && strtolower($l['account_status'] ?? '') !== 'inactive';
 });
+
+// --- LIVEWIRE-STYLE AJAX VIEW HANDLER ---
+if (UI::is_ajax()) {
+    if (ob_get_level() > 0) ob_clean();
+
+    // 1. Render priority cards section HTML
+    ob_start();
+    if (count($call_today) > 0) {
+        ?>
+        <section class="tasks-section" style="margin-bottom: 35px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 20px; padding: 25px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                <span style="font-size:1.5rem;">☎️</span>
+                <h2 style="margin:0; font-size:1.1rem; font-weight:900; color:#9f1239; text-transform:uppercase; letter-spacing:0.05em;">Priority Follow-ups Today</h2>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:15px;">
+                <?php foreach($call_today as $task): ?>
+                <div class="task-card" onclick='openLeadModal(<?= json_encode($task, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)' style="background:white; padding:15px; border-radius:15px; border:1px solid #fecdd3; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 6px -1px rgba(159, 18, 57, 0.05);">
+                    <div style="font-weight:800; color:#1e293b;"><?= htmlspecialchars($task['company_name']) ?></div>
+                    <div style="font-size:0.75rem; color:#be123c; font-weight:700; margin-top:4px;">📅 Scheduled: <?= htmlspecialchars($task['callback_date']) ?></div>
+                    <div style="font-size:0.8rem; color:#64748b; margin-top:8px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                        <?= htmlspecialchars($task['internal_notes'] ?: 'No notes recorded.') ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <?php
+    }
+    $priority_html = ob_get_clean();
+
+    // 2. Render table rows HTML
+    ob_start();
+    if (count($all_leads) > 0) {
+        foreach ($all_leads as $lead) {
+            $status = strtolower($lead['account_status'] ?: 'lead');
+            $status_class = "status-" . ($status === 'active customer' ? 'active' : ($status === 'lead' ? 'pending' : ($status === 'lost' ? 'canceled' : 'idle')));
+            $search_blob = strtolower($lead['company_name'] . " " . $status . " " . $lead['lead_source'] . " " . $lead['interest'] . " " . $lead['customer_id']);
+            ?>
+            <tr class="lead-row" data-id="<?= htmlspecialchars($lead['customer_id']) ?>" data-search="<?= htmlspecialchars($search_blob) ?>" data-status="<?= $status ?>" style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;">
+                <td style="padding: 16px;">
+                    <div style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;"><?= htmlspecialchars($lead['company_name']) ?></div>
+                    <div style="font-size: 0.7rem; color: #94a3b8; font-family: monospace; margin-top: 2px;"><?= htmlspecialchars($lead['customer_id']) ?></div>
+                </td>
+                <td style="padding: 16px;">
+                    <span class="order-badge <?= $status_class ?>" style="min-width: 80px; text-align: center; font-size:0.65rem;">
+                        <?= htmlspecialchars($lead['account_status'] ?: 'Lead') ?>
+                    </span>
+                </td>
+                <td style="padding: 16px; font-size: 0.8rem; font-weight:600; color: #64748b;">
+                    <?= htmlspecialchars($lead['lead_source'] ?: '-') ?>
+                </td>
+                <td style="padding: 16px; font-size: 0.8rem; color: #64748b;">
+                    <?= htmlspecialchars($lead['interest'] ?: '-') ?>
+                </td>
+                <td style="padding: 16px;">
+                    <?php if ($lead['last_order_id']): ?>
+                        <a href="checkout.php?customer_id=<?= urlencode($lead['customer_id']) ?>&order_id=<?= urlencode($lead['last_order_id']) ?>" style="text-decoration: none;">
+                            <div style="font-weight: 700; color: var(--accent-color); font-size:0.85rem; font-family:monospace;"><?= htmlspecialchars($lead['last_order_id']) ?></div>
+                            <div style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;"><?= date('M d, Y', strtotime($lead['last_purchase'])) ?></div>
+                        </a>
+                    <?php else: ?>
+                        <span style="color:#cbd5e1;">-</span>
+                    <?php endif; ?>
+                </td>
+                <td style="padding: 16px; font-weight: 800; color: var(--text-main); font-size:0.9rem;">
+                    <?= isset($lead['total_balance']) && $lead['total_balance'] > 0 ? '$' . number_format($lead['total_balance'], 2) : '<span style="color:#cbd5e1;">$0.00</span>' ?>
+                </td>
+                <td style="padding: 16px;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: #475569;">
+                        <?= $lead['message_date'] ? date('M d, Y', strtotime($lead['message_date'])) : '-' ?>
+                    </div>
+                    <div style="font-size: 0.7rem; color: #94a3b8; font-weight:800; text-transform:uppercase; margin-top: 2px;"><?= htmlspecialchars($lead['contact_method'] ?: '') ?></div>
+                </td>
+                <td style="padding: 16px;">
+                    <?php if ($lead['callback_date']):
+                        $is_urgent = ($lead['callback_date'] <= date('Y-m-d'));
+                    ?>
+                        <div style="font-size: 0.85rem; font-weight: 800; color: <?= $is_urgent ? '#be123c' : '#64748b' ?>;">
+                            <?= date('M d, Y', strtotime($lead['callback_date'])) ?>
+                        </div>
+                    <?php else: ?>
+                        <span style="color:#cbd5e1;">-</span>
+                    <?php endif; ?>
+                </td>
+                <td style="padding: 16px; max-width: 200px;">
+                    <div style="font-size: 0.75rem; color: #64748b; line-height: 1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                        <?= htmlspecialchars($lead['internal_notes'] ?: '-') ?>
+                    </div>
+                </td>
+                <td style="padding: 16px; text-align: right;">
+                    <button type="button" class="btn-order-view"
+                            onclick='openLeadModal(<?= json_encode($lead, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'
+                            style="padding: 8px 12px; font-size: 0.75rem;">
+                        <span>Edit Log</span>
+                        📝
+                    </button>
+                </td>
+            </tr>
+            <?php
+        }
+    } else {
+        echo '<tr><td colspan="10" style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">No accounts found.</td></tr>';
+    }
+    $table_html = ob_get_clean();
+
+    header('Content-Type: application/json');
+    echo json_encode([
+        'priority-section-container' => $priority_html,
+        'leads-list' => $table_html
+    ]);
+    exit();
+}
 ?>
 
 <div class="orders-container">
 
-    <?php if (count($call_today) > 0): ?>
-    <!-- Urgent Follow-ups Section -->
-    <section class="tasks-section" style="margin-bottom: 35px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 20px; padding: 25px;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
-            <span style="font-size:1.5rem;">☎️</span>
-            <h2 style="margin:0; font-size:1.1rem; font-weight:900; color:#9f1239; text-transform:uppercase; letter-spacing:0.05em;">Priority Follow-ups Today</h2>
-        </div>
-        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:15px;">
-            <?php foreach($call_today as $task): ?>
-            <div class="task-card" onclick='openLeadModal(<?= json_encode($task, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)' style="background:white; padding:15px; border-radius:15px; border:1px solid #fecdd3; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 6px -1px rgba(159, 18, 57, 0.05);">
-                <div style="font-weight:800; color:#1e293b;"><?= htmlspecialchars($task['company_name']) ?></div>
-                <div style="font-size:0.75rem; color:#be123c; font-weight:700; margin-top:4px;">📅 Scheduled: <?= htmlspecialchars($task['callback_date']) ?></div>
-                <div style="font-size:0.8rem; color:#64748b; margin-top:8px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
-                    <?= htmlspecialchars($task['internal_notes'] ?: 'No notes recorded.') ?>
-                </div>
+    <div id="priority-section-container">
+        <?php if (count($call_today) > 0): ?>
+        <!-- Urgent Follow-ups Section -->
+        <section class="tasks-section" style="margin-bottom: 35px; background: #fff1f2; border: 1px solid #fecdd3; border-radius: 20px; padding: 25px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px;">
+                <span style="font-size:1.5rem;">☎️</span>
+                <h2 style="margin:0; font-size:1.1rem; font-weight:900; color:#9f1239; text-transform:uppercase; letter-spacing:0.05em;">Priority Follow-ups Today</h2>
             </div>
-            <?php endforeach; ?>
-        </div>
-    </section>
-    <?php endif; ?>
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:15px;">
+                <?php foreach($call_today as $task): ?>
+                <div class="task-card" onclick='openLeadModal(<?= json_encode($task, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)' style="background:white; padding:15px; border-radius:15px; border:1px solid #fecdd3; cursor:pointer; transition:all 0.2s; box-shadow:0 4px 6px -1px rgba(159, 18, 57, 0.05);">
+                    <div style="font-weight:800; color:#1e293b;"><?= htmlspecialchars($task['company_name']) ?></div>
+                    <div style="font-size:0.75rem; color:#be123c; font-weight:700; margin-top:4px;">📅 Scheduled: <?= htmlspecialchars($task['callback_date']) ?></div>
+                    <div style="font-size:0.8rem; color:#64748b; margin-top:8px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">
+                        <?= htmlspecialchars($task['internal_notes'] ?: 'No notes recorded.') ?>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
+        <?php endif; ?>
+    </div>
 
     <!-- Live Search & Filters -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px; gap:20px;">
@@ -146,7 +260,7 @@ $call_today = array_filter($all_leads, function($l) use ($today) {
                         $status_class = "status-" . ($status === 'active customer' ? 'active' : ($status === 'lead' ? 'pending' : ($status === 'lost' ? 'canceled' : 'idle')));
                         $search_blob = strtolower($lead['company_name'] . " " . $status . " " . $lead['lead_source'] . " " . $lead['interest'] . " " . $lead['customer_id']);
                     ?>
-                    <tr class="lead-row" data-search="<?= htmlspecialchars($search_blob) ?>" data-status="<?= $status ?>" style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;">
+                    <tr class="lead-row" data-id="<?= htmlspecialchars($lead['customer_id']) ?>" data-search="<?= htmlspecialchars($search_blob) ?>" data-status="<?= $status ?>" style="border-bottom: 1px solid #f1f5f9; transition: background 0.2s;">
                         <td style="padding: 16px;">
                             <div style="font-weight: 800; color: var(--text-main); font-size: 0.95rem;"><?= htmlspecialchars($lead['company_name']) ?></div>
                             <div style="font-size: 0.7rem; color: #94a3b8; font-family: monospace; margin-top: 2px;"><?= htmlspecialchars($lead['customer_id']) ?></div>

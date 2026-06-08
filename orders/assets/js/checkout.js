@@ -1,5 +1,5 @@
 /**
- * IQA Metal — Checkout Manifest Logic
+ * System — Checkout Manifest Logic
  * Managed with modern ES6+ standards and safe type-like documentation.
  */
 
@@ -89,7 +89,7 @@ function downloadCSV() {
     const date = state.orderDate || '';
 
     // Header Template
-    let csv = `"IQA Metal B2B Purchase Form",,,,,,,,\n\n`;
+    let csv = `"System B2B Purchase Form",,,,,,,,\n\n`;
     csv += `"Name","${cust}",,,,,,,\n`;
     csv += `"Date","${date}",,,,,,,\n`;
     csv += `"Order #","${ord}",,,,,,,\n\n`;

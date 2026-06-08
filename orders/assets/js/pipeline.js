@@ -1,5 +1,5 @@
 /**
- * IQA Metal — Pipeline Summary Detailed Overlay
+ * System — Pipeline Summary Detailed Overlay
  * Manages pipeline period switching and the detailed expanded overlay.
  */
 

@@ -12,12 +12,12 @@ if (($_SESSION['role'] ?? '') !== 'Admin') {
 }
 
 // 2. Prepare Backup
-$db_dir = realpath(__DIR__ . '/../assets/db');
+$db_dir = realpath(__DIR__ . '/../../db');
 $backup_name = 'IQA_Backup_' . date('Y-m-d_His') . '.zip';
 $temp_file = sys_get_temp_dir() . '/' . $backup_name;
 
 // 2. Prepare Backup
-$db_dir = realpath(__DIR__ . '/../assets/db');
+$db_dir = realpath(__DIR__ . '/../../db');
 $timestamp = date('Y-m-d_His');
 $files = glob($db_dir . '/*.db');
 

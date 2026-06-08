@@ -1,4 +1,4 @@
-# 🤖 AI Agent Instructions & Architecture Guidelines
+# 🤖 AI Agent Instructions & Architecture Guidelines 6/8/2026 3:06 PM
 
 ## 🎯 Overview
 This document is for future AI coding assistants working on the **IQA Warehouse Systems**. This project is a lean, high-performance ecosystem designed for speed and reliability in a physical warehouse environment.
@@ -8,9 +8,10 @@ This document is for future AI coding assistants working on the **IQA Warehouse 
 ## 🛠️ Tech Stack & Philosophy
 1.  **No Frameworks**: We avoid heavy PHP frameworks or Node.js build steps. Stick to **Vanilla PHP 8+**, **Vanilla JS**, and **Vanilla CSS**.
 2.  **SQLite First**: Data is stored in modular `.sqlite` files. Use `includes/db.php` (Labels) or `core/database.php` (Orders) for connections.
-3.  **Schema Guard**: Always maintain the "Self-Healing" pattern. If you add a column, update the `schema_guard.php` (Labels) or the database initialization logic (Orders).
-4.  **Flat XML (FODT)**: Do NOT use ZipArchive for label generation. Generate Flat XML ODT files as they are portable and dependency-free.
-5.  **Premium UI**: Every UI element must feel premium. Use HSL colors, glassmorphism, smooth transitions, and high contrast for warehouse visibility.
+3.  **Real-Time SSE Sync**: Rather than heavy client-side polling timers, use Server-Sent Events (`api/sync_stream.php` + `sync.js`) for synchronization. Monitor `filemtime` on database files and WAL write cache.
+4.  **Schema Guard**: Always maintain the "Self-Healing" pattern. If you add a column, update the `schema_guard.php` (Labels) or the database initialization logic (Orders).
+5.  **Flat XML (FODT)**: Do NOT use ZipArchive for label generation. Generate Flat XML ODT files as they are portable and dependency-free.
+6.  **Premium UI**: Every UI element must feel premium. Use HSL colors, glassmorphism, smooth transitions, and high contrast for warehouse visibility.
 
 ---
 

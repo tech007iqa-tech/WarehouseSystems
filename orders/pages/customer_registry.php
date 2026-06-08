@@ -359,7 +359,7 @@ try {
                 $status_class = $c['active_count'] > 0 ? 'status-active' : 'status-idle';
                 $status_text = $c['active_count'] > 0 ? 'Active Batch' : 'Idle';
 
-                echo "<div class='cust-card' onclick='showDetails(this)' data-customer='{$json_data}' data-search='" . htmlspecialchars($c['company_name'] . " " . $c['customer_id']) . "'>
+                echo "<div class='cust-card' onclick='showDetails(this)' data-customer='{$json_data}' data-search='" . htmlspecialchars($c['company_name'] . " " . $c['customer_id'] . " " . ($c['contact_person'] ?? '')) . "'>
                         <div class='cust-avatar'>{$initial}</div>
                         <div class='cust-main'>
                              <div class='cust-name' onclick='showProfile(event, {$json_data})'>" . htmlspecialchars($c['company_name']) . "</div>

@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive & Handover
+# 🧠 AI Technical Deep Dive & Handover 6/8/2026 3:06 PM
 
 This document serves as a "shortcut" for AI agents to understand the underlying logic of the IQA Warehouse Systems without reading every single file.
 
@@ -18,11 +18,14 @@ This document serves as a "shortcut" for AI agents to understand the underlying 
     *   **Design**: Modern **Teal/Lime** design palette (`#007268`).
 
 ## 🛠️ Key Technical Patterns
-### 1. Smart Sync (Master CRM)
+### 1. Smart Sync (Master CRM) & Real-Time SSE Sync
 The system uses a **Single Source of Truth** for people (Leads/Customers).
 *   **Database**: `orders/assets/db/customers.db`.
 *   **Format**: All new accounts must use the `CUST-XXXXXXXX` ID format (randomized string).
 *   **Behavior**: A lead captured in Marketing is instantly visible in the Order Manager.
+*   **Real-time Reactivity (SSE)**: Rather than running heavy client-side polling timers, we use **Server-Sent Events (SSE)**.
+    - **Watcher Endpoint (`api/sync_stream.php`)**: Establishes a persistent `text/event-stream` connection. Every 500ms, it checks `filemtime` on `customers.db` and `customers.db-wal` (WAL write cache). When a modification time change is detected, it broadcasts `database-change` to all open clients.
+    - **AppSync Client (`assets/js/sync.js`)**: An EventSource listener that triggers an instant AJAX fetch when notified. It uses a lightweight virtual DOM diffing algorithm to perform row-by-row replacements on the registered container (`#leads-list`) and standard innerHTML swaps for other containers (`#priority-section-container`). Input active states are automatically guarded during swaps.
 
 ### 2. Self-Healing Schemas
 Every module has a `schema_guard.php`.

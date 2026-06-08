@@ -2,7 +2,14 @@
 // orders/api/bulk_update_orders.php
 header('Content-Type: application/json');
 require_once __DIR__ . '/../core/database.php';
-require_once __DIR__ . '/../../core/Security.php';
+require_once __DIR__ . '/../core/Security.php';
+
+session_start();
+if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Unauthorized access.']);
+    exit;
+}
 
 $input = json_decode(file_get_contents('php://input'), true);
 

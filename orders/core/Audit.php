@@ -34,7 +34,7 @@ class Audit {
         } catch (Exception $e) {
             // --- Fallback: File-based Logging ---
             $log_dir = __DIR__ . '/../logs';
-            if (!is_dir($log_dir)) mkdir($log_dir, 0777, true);
+            if (!is_dir($log_dir)) mkdir($log_dir, 0755, true);
 
             $log_file = $log_dir . '/audit_fallback.log';
             $timestamp = date('Y-m-d H:i:s');

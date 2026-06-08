@@ -106,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 'windows' => $_POST['windows'] ?? '',
                 'series' => $_POST['series'] ?? '',
                 'gen' => $_POST['gen'] ?? '',
+                'bios' => $_POST['bios'] ?? '',
                 'condition' => $_POST['condition'] ?? '',
                 'notes' => $_POST['notes'] ?? ''
             ];
@@ -154,7 +155,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $last_id = $conn_wh->lastInsertId();
         }
         $msg = ($_POST['action'] === 'edit_inventory') ? 'updated' : 'added';
-        header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=" . $msg . "&last_id=" . $last_id . "#inventory-list");
+        $hash = ($msg === 'added') ? '#wh-main-form' : '#inventory-list';
+        header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=" . $msg . "&last_id=" . $last_id . $hash);
         exit();
     }
 }
@@ -416,8 +418,8 @@ $highlight_id = $_GET['last_id'] ?? null;
                                     <th>Sector</th>
                                 <?php endif; ?>
                                 <th class="col-main">Make/Model</th>
-                                <th class="col-qty">Price</th>
                                 <th class="col-qty">QTY</th>
+                                <th class="col-qty">Price</th>
                                 <?php if ($selected_sector === 'Laptops'): ?>
                                     <th>CPU</th>
                                     <th>Ram/Storage</th>
@@ -460,14 +462,33 @@ $highlight_id = $_GET['last_id'] ?? null;
                                 </tr>
                                 <?php foreach ($items as $item):
                                     $specs = json_decode($item['specs_json'], true) ?: [];
-                                    $created_date = date('m/d/y', strtotime($item['created_at']));
-                                    $updated_date = date('m/d/y', strtotime($item['updated_at']));
+                                    
+                                    // Timezone conversion to America/Los_Angeles
+                                    $created_date = '';
+                                    $created_date_only = '';
+                                    $created_time_only = '';
+                                    if (!empty($item['created_at'])) {
+                                        $date_created_obj = new DateTime($item['created_at'], new DateTimeZone('UTC'));
+                                        $date_created_obj->setTimezone(new DateTimeZone('America/Los_Angeles'));
+                                        $created_date = $date_created_obj->format('m/d/y');
+                                        $created_date_only = $date_created_obj->format('m/d/y');
+                                        $created_time_only = $date_created_obj->format('h:i A');
+                                    }
+
+                                    $updated_date = '';
+                                    if (!empty($item['updated_at'])) {
+                                        $date_updated_obj = new DateTime($item['updated_at'], new DateTimeZone('UTC'));
+                                        $date_updated_obj->setTimezone(new DateTimeZone('America/Los_Angeles'));
+                                        $updated_date = $date_updated_obj->format('m/d/y');
+                                    }
                                     ?>
                                     <tr class="inventory-card <?= ($highlight_id && $item['id'] == $highlight_id) ? 'highlight-row' : '' ?>"
                                         data-id="<?= $item['id'] ?>" data-sector-theme="<?= htmlspecialchars($item['sector']) ?>"
                                         data-brand="<?= htmlspecialchars($item['brand']) ?>"
                                         data-model="<?= htmlspecialchars($item['model']) ?>"
                                         data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
+                                        data-created-date="<?= $created_date_only ?>"
+                                        data-created-time="<?= $created_time_only ?>"
                                         data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
                                         data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
 
@@ -489,9 +510,9 @@ $highlight_id = $_GET['last_id'] ?? null;
                                             <div class="cell-model"><?= htmlspecialchars($item['model']) ?></div>
                                         </td>
 
-                                        <td><span class="price-pill">$<?= number_format($item['price'] ?? 0, 0) ?></span></td>
-
                                         <td><span class="qty-pill"><?= (int) $item['quantity'] ?></span></td>
+
+                                        <td><span class="price-pill">$<?= number_format($item['price'] ?? 0, 0) ?></span></td>
 
                                         <?php if ($selected_sector === 'Laptops'): ?>
                                             <td>
@@ -545,8 +566,10 @@ $highlight_id = $_GET['last_id'] ?? null;
                                         <td>
                                             <div class="notes-cell-wrapper">
                                                 <div class="status-row">
-                                                    <span
-                                                        class="status-badge status-<?= htmlspecialchars($item['status']) ?>"><?= htmlspecialchars($item['status']) ?></span>
+                                                    <?php if (!empty($item['status'])): ?>
+                                                        <span
+                                                            class="status-badge status-<?= htmlspecialchars($item['status']) ?>"><?= htmlspecialchars($item['status']) ?></span>
+                                                    <?php endif; ?>
                                                     <span
                                                         class="condition-label"><?= htmlspecialchars($specs['condition'] ?? 'Used') ?></span>
                                                     <?php if ($item['sector'] === 'Laptops'): ?>
@@ -604,7 +627,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                         </tbody>
                         <tfoot style="border-top: 2px solid #e2e8f0; background: #f8fafc;">
                             <tr>
-                                <td colspan="2" style="padding: 15px;">
+                                <td colspan="<?= $selected_sector === 'Master' ? 3 : 2 ?>" style="padding: 15px;">
                                     <div class="search-container footer-search" style="max-width: 300px; margin: 0;">
                                         <i class="search-icon">🔍</i>
                                         <input type="text" id="wh-search-footer" placeholder="Filter these results..."
@@ -622,13 +645,19 @@ $highlight_id = $_GET['last_id'] ?? null;
                                         <?= number_format($total_qty) ?>
                                     </span>
                                 </td>
-                                <?php if ($selected_sector === 'Laptops' || $selected_sector === 'Gaming'): ?>
-                                    <td colspan="5"></td>
-                                <?php elseif ($selected_sector === 'Desktops'): ?>
-                                    <td colspan="3"></td>
-                                <?php else: ?>
-                                    <td colspan="2"></td>
-                                <?php endif; ?>
+                                <?php
+                                $total_cols = 9; // default for Electronics/Other
+                                if ($selected_sector === 'Laptops' || $selected_sector === 'Gaming') {
+                                    $total_cols = 11;
+                                } elseif ($selected_sector === 'Desktops') {
+                                    $total_cols = 9;
+                                } elseif ($selected_sector === 'Master') {
+                                    $total_cols = 10;
+                                }
+                                $cols_used = ($selected_sector === 'Master' ? 3 : 2) + 2; // first td + Inventory Total td + Qty td
+                                $remaining_cols = $total_cols - $cols_used;
+                                ?>
+                                <td colspan="<?= $remaining_cols ?>"></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -644,8 +673,13 @@ $highlight_id = $_GET['last_id'] ?? null;
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                             <h3 id="wh-form-title" style="font-weight: 800; margin: 0;">📥 Register Stock</h3>
                             <div id="session-counter"
-                                style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; color: #15803d; display: none;">
-                                ✨ <span id="session-count-val">0</span> Added this session
+                                style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 16px; border-radius: 14px; font-size: 0.75rem; font-weight: 700; color: #15803d; display: none; line-height: 1.4; min-width: 180px;">
+                                <div>✨ <span id="session-count-val" style="font-weight: 900;">0</span> Added this session</div>
+                                <div id="session-last-item-info"
+                                    style="font-size: 0.68rem; color: #166534; margin-top: 4px; border-top: 1px dashed #bbf7d0; padding-top: 4px; font-weight: 600; display: none;">
+                                    Last: <strong id="session-last-model-series"></strong> (Qty: <span
+                                        id="session-last-qty"></span>) @ <span id="session-last-time"></span>
+                                </div>
                             </div>
                         </div>
                         <div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
@@ -668,21 +702,28 @@ $highlight_id = $_GET['last_id'] ?? null;
                                     style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; background:#f8fafc; color:#64748b; font-weight:700;">
                             </div>
 
-                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                                <div class="form-group" style="flex: 1;">
+                            <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
+                                <div class="form-group" style="flex: 1 1 130px; min-width: 130px;">
                                     <label for="wh-brand">Brand</label>
                                     <input type="text" name="brand" list="brand-options" id="wh-brand" placeholder="Dell"
                                         required
                                         style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
                                     <datalist id="brand-options"></datalist>
                                 </div>
-                                <div class="form-group" style="flex: 1;">
+                                <div class="form-group" style="flex: 1 1 130px; min-width: 130px;">
                                     <label for="wh-model">Model</label>
                                     <input type="text" name="model" list="model-options" id="wh-model" placeholder="Latitude"
                                         required
                                         style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
                                     <datalist id="model-options"></datalist>
                                 </div>
+                                <?php if ($selected_sector === 'Laptops'): ?>
+                                    <div class="form-group" style="flex: 1 1 130px; min-width: 130px;">
+                                        <label for="wh-spec-series">Series</label>
+                                        <input type="text" id="wh-spec-series" name="series" required placeholder="E7450"
+                                            style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
 
@@ -690,52 +731,101 @@ $highlight_id = $_GET['last_id'] ?? null;
                             <div id="sector-specific-fields"
                                 style="border-top: 1px dashed #eee; padding-top: 15px; margin-bottom: 15px;">
                                 <?php if ($selected_sector === 'Laptops'): ?>
-                                    <div class="form-group" style="flex: 1; padding-bottom: 2%;">
-                                        <label for="wh-spec-series">Model Number</label>
-                                        <input type="text" id="wh-spec-series" name="series" required placeholder="E7450"
-                                            style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                    </div>
-                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                        <div class="form-group" style="flex: 1;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                                        <div class="form-group"
+                                            style="flex: 1 1 90px; min-width: 90px; display: flex; flex-direction: column;">
                                             <label for="wh-spec-cpu">CPU</label>
-                                            <input type="text" id="wh-spec-cpu" name="cpu" list="cpu-options"
-                                                placeholder="Core i7-1185G7"
-                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                            <select id="wh-spec-cpu" name="cpu" required
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px; font-weight:700;">
+                                                <option value="N/A" style="background-color: #f1f5f9; color: #64748b;">-</option>
+                                                <option value="i3" style="background-color: #e0f2fe; color: #0369a1;">i3</option>
+                                                <option value="i5" style="background-color: #e0f2fe; color: #0369a1;">i5</option>
+                                                <option value="i7" style="background-color: #e0f2fe; color: #0369a1;">i7</option>
+                                                <option value="i9" style="background-color: #e0f2fe; color: #0369a1;">i9</option>
+                                                <option value="Ryzen 3" style="background-color: #fee2e2; color: #b91c1c;">Ryzen 3
+                                                </option>
+                                                <option value="Ryzen 5" style="background-color: #fee2e2; color: #b91c1c;">Ryzen 5
+                                                </option>
+                                                <option value="Ryzen 7" style="background-color: #fee2e2; color: #b91c1c;">Ryzen 7
+                                                </option>
+                                                <option value="Ryzen 9" style="background-color: #fee2e2; color: #b91c1c;">Ryzen 9
+                                                </option>
+                                            </select>
                                         </div>
-                                        <div class="form-group" style="flex: 1;">
+                                        <div class="form-group"
+                                            style="flex: 1 1 90px; min-width: 90px; display: flex; flex-direction: column;">
+                                            <label for="wh-spec-gen">Generation</label>
+                                            <input type="text" id="wh-spec-gen" name="gen" required list="gen-options"
+                                                placeholder="11th Gen"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                            <datalist id="gen-options">
+                                                <option value="-">
+                                                <option value="4th & 5th">
+                                                <option value="6th & 7th">
+                                                <option value="8th">
+                                                <option value="9th">
+                                                <option value="10th">
+                                                <option value="11th">
+                                                <option value="12th">
+                                                <option value="13th">
+                                                <option value="14th">
+                                                <option value="Core 2 Duo">
+                                                <option value="2nd">
+                                                <option value="3rd">
+                                                <option value="AMD">
+                                            </datalist>
+                                        </div>
+                                        <div class="form-group"
+                                            style="flex: 1 1 90px; min-width: 90px; display: flex; flex-direction: column;">
                                             <label for="wh-spec-gpu">GPU</label>
                                             <input type="text" id="wh-spec-gpu" name="gpu" placeholder="Integrated / RTX"
                                                 style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
                                         </div>
                                     </div>
-                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                        <div class="form-group" style="flex: 1;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                                        <div class="form-group"
+                                            style="flex: 1 1 80px; min-width: 80px; display: flex; flex-direction: column;">
+                                            <label for="wh-spec-windows">OS</label>
+                                            <input type="text" id="wh-spec-windows" name="windows" list="os-options"
+                                                placeholder="Win 11 Pro"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
+                                            <datalist id="os-options">
+                                                <option value="Win11 Pro">
+                                                <option value="Windows 10 Pro">
+                                                <option value="Windows 11 Home"></option>
+                                            </datalist>
+                                        </div>
+                                        <div class="form-group" id="wh-bios-state-group"
+                                            style="flex: 1 1 80px; min-width: 80px; display: none; flex-direction: column;">
+                                            <label for="wh-spec-bios">Bios</label>
+                                            <select id="wh-spec-bios" name="bios"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px; font-weight:700;">
+                                                <option value="—">-</option>
+                                                <option value="Unlocked">Unlocked</option>
+                                                <option value="Locked">Locked</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group"
+                                            style="flex: 1 1 80px; min-width: 80px; display: flex; flex-direction: column;">
+                                            <label for="wh-spec-battery">Battery</label>
+                                            <select id="wh-spec-battery" name="battery"
+                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px; font-weight:700;">
+                                                <option value=""></option>
+                                                <option value="Yes">Yes</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                                        <div class="form-group"
+                                            style="flex: 1 1 120px; min-width: 120px; display: flex; flex-direction: column;">
                                             <label for="wh-spec-ram">RAM</label>
-                                            <input type="text" id="wh-spec-ram" name="ram" placeholder="16GB DDR4"
+                                            <input type="text" id="wh-spec-ram" name="ram" placeholder="16GB"
                                                 style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
                                         </div>
-                                        <div class="form-group" style="flex: 1;">
+                                        <div class="form-group"
+                                            style="flex: 1 1 120px; min-width: 120px; display: flex; flex-direction: column;">
                                             <label for="wh-spec-storage">Storage</label>
                                             <input type="text" id="wh-spec-storage" name="storage" placeholder="512GB NVMe"
-                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                        <div class="form-group" style="flex: 1;">
-                                            <label for="wh-spec-battery">Battery Health</label>
-                                            <input type="text" id="wh-spec-battery" name="battery" placeholder="85% Health"
-                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                        </div>
-                                        <div class="form-group" style="flex: 1;">
-                                            <label for="wh-spec-windows">Windows Version</label>
-                                            <input type="text" id="wh-spec-windows" name="windows" placeholder="Win 11 Pro"
-                                                style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
-                                        </div>
-                                    </div>
-                                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                        <div class="form-group" style="flex: 1;">
-                                            <label for="wh-spec-gen">Generation</label>
-                                            <input type="text" id="wh-spec-gen" name="gen" required placeholder="11th Gen"
                                                 style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
                                         </div>
                                     </div>
@@ -753,13 +843,13 @@ $highlight_id = $_GET['last_id'] ?? null;
 
                                     <!-- PC Specific -->
                                     <div id="wh-gaming-pc-fields">
-                                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                            <div class="form-group" style="flex: 1;">
+                                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                                            <div class="form-group" style="flex: 1 1 200px;">
                                                 <label for="wh-gaming-pc-cpu">CPU</label>
                                                 <input type="text" id="wh-gaming-pc-cpu" name="cpu" placeholder="Ryzen 7"
                                                     style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
                                             </div>
-                                            <div class="form-group" style="flex: 1;">
+                                            <div class="form-group" style="flex: 1 1 200px;">
                                                 <label for="wh-gaming-pc-gpu">GPU</label>
                                                 <input type="text" id="wh-gaming-pc-gpu" name="gpu" placeholder="RTX 3070"
                                                     style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
@@ -774,12 +864,13 @@ $highlight_id = $_GET['last_id'] ?? null;
                                             placeholder="Series / Edition"
                                             style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
                                         <datalist id="series-options"></datalist>
-                                        <div id="wh-gaming-extra-specs" style="display: flex; gap: 10px; margin-top:5px;">
-                                            <div class="form-group" style="flex: 1;">
+                                        <div id="wh-gaming-extra-specs"
+                                            style="display: flex; flex-wrap: wrap; gap: 10px; margin-top:5px;">
+                                            <div class="form-group" style="flex: 1 1 200px;">
                                                 <input type="text" name="ram" id="wh-ram" placeholder="RAM / Color"
                                                     style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
                                             </div>
-                                            <div class="form-group" style="flex: 1;">
+                                            <div class="form-group" style="flex: 1 1 200px;">
                                                 <input type="text" name="storage" id="wh-storage" placeholder="Storage"
                                                     style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
                                             </div>
@@ -825,29 +916,34 @@ $highlight_id = $_GET['last_id'] ?? null;
                                 <?php endif; ?>
                             </div>
 
-                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                                <div class="form-group" style="flex: 1;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                                <div class="form-group" style="flex: 1 1 90px; min-width: 90px;">
                                     <label for="wh-condition">Condition</label>
-                                    <select id="wh-condition" name="condition"
+                                    <select id="wh-condition" name="condition" onchange="toggleBiosState()"
                                         style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; font-weight:700;">
-                                        <option value="A Grade">A Grade</option>
-                                        <option value="B Grade">B Grade</option>
-                                        <option value="C Grade">C Grade</option>
-                                        <option value="No Power">No Power</option>
-                                        <option value="No Post">No Post</option>
+                                        <option value="A Grade" style="background-color: #dcfce740; color: #0b3f1eff;">A Grade
+                                        </option>
+                                        <option value="B Grade" style="background-color: #e0f2fe40; color: #014468ff;">B Grade
+                                        </option>
+                                        <option value="C Grade" style="background-color: #faf5ff40; color: #531888ff;">C Grade
+                                        </option>
+                                        <option value="No Power" style="background-color: #fee2e240; color: #741212ff;">No Power
+                                        </option>
+                                        <option value="No Post" style="background-color: #fff7ed40; color: #9c3d18ff;">No Post
+                                        </option>
                                     </select>
                                 </div>
-                                <div class="form-group" style="flex: 1;">
+                                <div class="form-group" style="flex: 1 1 90px; min-width: 90px;">
                                     <label for="wh-price">Price</label>
                                     <div style="position:relative; display:flex; align-items:center;">
                                         <span style="position:absolute; left:12px; font-weight:800; color:#64748b;">$</span>
-                                        <input type="number" step="1" id="wh-price" name="price" value="" placeholder="150"
+                                        <input type="number" step="1" id="wh-price" name="price" value=".97" placeholder="150"
                                             min="0" required
                                             style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px 0 25px; font-weight: 800;">
                                     </div>
                                 </div>
-                                <div class="form-group" style="flex: 1;">
-                                    <label for="wh-quantity">Initial Quantity</label>
+                                <div class="form-group" style="flex: 1 1 90px; min-width: 90px;">
+                                    <label for="wh-quantity">QTY</label>
                                     <input type="number" id="wh-quantity" name="quantity" value="1" min="1" required
                                         style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px; font-weight: 800;">
                                 </div>
@@ -855,8 +951,8 @@ $highlight_id = $_GET['last_id'] ?? null;
 
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label for="wh-notes">Notes / Observations</label>
-                                <textarea id="wh-notes" name="notes" placeholder="Any scratches or specifics..."
-                                    style="width:100%; height:80px; border-radius:10px; border:1px solid #ddd; padding: 10px; font-family:inherit; resize:none;"></textarea>
+                                <input type="text" id="wh-notes" name="notes" placeholder="Any scratches or specifics..."
+                                    style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
                             </div>
 
                             <button type="submit" id="wh-submit-btn"
@@ -947,7 +1043,7 @@ $highlight_id = $_GET['last_id'] ?? null;
                         <input type="color" id="new-status-color" value="#64748b"
                             style="flex:0.5; height:38px; border:none; padding:0; background:none; cursor:pointer;">
                         <button type="button" onclick="addNewStatusType()"
-                            style="flex:1; background:var(--accent-color); color:white; border:none; border-radius:8px; font-weight:800; font-size:0.75rem; cursor:pointer;">Add</button>
+                            style="flex:1; background:var(--accent-color); color:white; border:none; border-radius:8px; font-weight:800; font-size:0.75rem; cursor:pointer;">Apply</button>
                     </div>
                 </div>
 
@@ -988,7 +1084,7 @@ $highlight_id = $_GET['last_id'] ?? null;
         }
 
         async function addNewStatusType() {
-            const name = document.getElementById('new-status-name').value;
+            const name = document.getElementById('new-status-name').value.trim();
             const color = document.getElementById('new-status-color').value;
             if (!name) return;
 
@@ -996,6 +1092,8 @@ $highlight_id = $_GET['last_id'] ?? null;
             formData.append('action', 'add_location_status');
             formData.append('status_name', name);
             formData.append('status_color', color);
+            const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+            formData.append('csrf_token', csrfToken);
 
             try {
                 const response = await fetch(window.location.href, {
@@ -1003,7 +1101,17 @@ $highlight_id = $_GET['last_id'] ?? null;
                     body: formData
                 });
                 if (response.ok) {
-                    location.reload();
+                    const select = document.getElementById('rename-status');
+                    if (select) {
+                        const opt = document.createElement('option');
+                        opt.value = name;
+                        opt.textContent = name;
+                        select.appendChild(opt);
+                        select.value = name;
+                    }
+                    const block = document.getElementById('manage-statuses-block');
+                    if (block) block.style.display = 'none';
+                    document.getElementById('new-status-name').value = '';
                 }
             } catch (err) {
                 console.error("Failed to add status", err);

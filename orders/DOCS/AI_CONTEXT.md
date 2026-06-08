@@ -1,69 +1,92 @@
-# 🤖 AI Agent Context: IQA Warehouse System
+# 🤖 AI Agent Context & Guidelines 6/8/2026 3:06 PM
 
-## 🎯 Quick Start for Agents
-This codebase is a **PHP/SQLite** monolith with a custom routing engine. Focus on these files for core logic:
-- **Router**: `index.php` (Uses `$_GET['view']` for page fragments in `pages/`)
-- **Database**: `core/database.php` (Centralized PDO Singleton)
-- **Auth**: `core/auth.php` (RBAC enforcement)
+Welcome! This document provides the architectural and styling patterns for the **IQA Warehouse Systems** codebase. By adhering to these guidelines, you will write cleaner, more maintainable code and avoid redundant investigations that waste tokens.
 
-## 🏗️ Architectural Patterns
+---
 
-### 1. State Injection (PHP -> JS)
-**Pattern**: Do NOT use global JS variables.
-**Implementation**: Look for `<script type="application/json" id="...State">` in PHP files. Use `JSON.parse(document.getElementById('...State').textContent)` in JS.
+## 🏗️ Architectural Core Patterns
 
-### 2. Integrated Cross-DB Queries
-**Pattern**: Efficiently querying across multiple databases (e.g., `customers` + `orders`).
-**Implementation**: Prefer `Database::queryIntegrated($primary, $attachments, $sql, $params)` over manual `ATTACH`.
-**Example**: `Database::queryIntegrated('customers', ['o' => 'orders'], "SELECT ... FROM customers LEFT JOIN o.orders ...")`.
+### 1. View-Based Routing & Asset Autoloading
+- **Entry Point**: `prod/index.php` acts as the router.
+- **Param**: It handles routing using `$_GET['view']` (default is `customer_registry.php`).
+- **Mapping**: The `$routes` array maps the requested view key to a specific file in `prod/pages/` and a dedicated stylesheet in `prod/assets/styles/`.
+- **Script Autoloading**: `prod/index.php` automatically inserts CSS and JS files matching the active route, reducing manual header/footer dependencies.
+- **RBAC**: Access is validated in `prod/core/auth.php`. Non-Admin roles (e.g., Operator) are forced to default to the `warehouse` view.
 
-### 3. Centralized Schema Management (Self-Healing)
-**Pattern**: Do NOT write `CREATE TABLE` or `ALTER TABLE` in individual pages.
-**Implementation**: Add the blueprint to `core/Schema.php`. `Database::getConnection()` calls `Schema::ensure()` automatically.
-**Migrations**: Add new columns to `Schema::runMigrations()`. This ensures all DBs are synchronized on the next load.
+### 2. Event-Driven Real-Time Synchronization (SSE)
+- **Concept**: To synchronize UI changes instantly across multiple workstations without timers, the system uses native browser Server-Sent Events (SSE).
+- **Backend stream**: `api/sync_stream.php` maintains a streaming connection and checks `filemtime` on SQLite database and WAL files (`db/customers.db` and `db/customers.db-wal`) every 500ms. If a modification is found, it sends a `database-change` event.
+- **Frontend listener**: `assets/js/sync.js` hosts the `AppSync` engine. When registered, it automatically creates a single global `EventSource` listener. On change, it requests `index.php?view=...&ajax=1` and performs a smart row-by-row virtual DOM diff (if it's the registered element ID) or a clean innerHTML swap (for other containers).
+- **Registration Example**:
+  ```javascript
+  AppSync.register({
+      elementId: 'leads-list',
+      url: 'index.php?view=leads&ajax=1',
+      onUpdate: () => { filterLeads(); }
+  });
+  ```
+- **Input protection**: Swaps are paused if the user is typing/interacting with an input element inside the target element.
 
-### 4. Audit & Accountability
-**Pattern**: Log all sensitive actions (deletes, status changes, transfers).
-**Implementation**: Use `Audit::log($action, $target_id, $details, $module)`.
-**Visibility**: Admins can view these in Settings via `Audit::getRecent()`.
+### 3. State Injection (PHP ➔ JS)
+- **Rule**: Do **NOT** declare global JavaScript variables directly in PHP strings.
+- **Pattern**:
+  1. Wrap data in a JSON script block inside the PHP page:
+     ```html
+     <script id="module-state" type="application/json">
+         <?= json_encode($data_array, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>
+     </script>
+     ```
+  2. Parse the text content inside the companion JS file:
+     ```javascript
+     const state = JSON.parse(document.getElementById('module-state').textContent);
+     ```
 
-### 5. Data Security & Backups
-**Pattern**: One-click ZIP export of all system databases and robust input sanitization.
-**Implementation**:
-- **Backups**: Handled by `api/generate_backup.php`.
-- **Sanitization**: Use `Security::sanitize_float($val)` and `Security::sanitize_int($val)` for all numeric/currency inputs to handle "dirty" data ($, commas).
-- **Auditing**: Every backup and sensitive change MUST be logged. `Audit::log()` now includes a **File-based Fallback** in `orders/logs/` if the database is locked.
+### 3. Integrated Cross-DB Joins
+- **Pattern**: SQLite databases are split by domain (`customers`, `orders`, `warehouse`, `users`, `calendar`).
+- **Helper**: Use `Database::queryIntegrated($primary, $attachments, $sql, $params)` rather than manually attaching.
+- **Syntax**:
+  ```php
+  $sql = "SELECT i.*, c.company_name FROM items i LEFT JOIN cust.customers c ON i.customer_id = c.customer_id";
+  $stmt = Database::queryIntegrated('orders', ['cust' => 'customers'], $sql);
+  ```
 
-### 6. Intelligent Vocabulary & Caching
-**Pattern**: Auto-completing intake based on historical data with instant UI feedback.
-**Implementation**:
-- Use `api/get_vocabulary.php` for data.
-- **Caching**: `assets/js/vocabulary.js` uses `sessionStorage` to cache vocabulary, ensuring instant population of datalists without waiting for the network.
+### 4. Self-Healing Schema Guard
+- **Location**: `prod/core/Schema.php`.
+- **Trigger**: Run automatically during `Database::getConnection()`.
+- **Migration Policy**: New columns, indexes, or updates are added globally within `Schema::runMigrations()`. They are written idempotently so they run safely on every boot. Do not write `CREATE TABLE` or `ALTER TABLE` statements inside view pages or endpoints.
 
-### 7. AJAX Live Sync & High-Speed Intake
-**Pattern**: Instant data entry without page reloads.
-**Implementation**:
-- **Batch Intake**: See `api/add_order_item.php` and `handleBatchSubmit` in `pages/new_order.php`.
-- **Feedback**: AJAX responses should return both the updated data and the HTML fragment for the new row to minimize client-side logic.
-- **Concurrency**: Warehouse items use `updated_at` for optimistic locking. Always check for `CONCURRENCY_ERROR` in JS.
+### 5. Audit Logging with Resilient Fallback
+- **Helper**: Use `Audit::log($action, $target_id, $details, $module)` for sensitive alterations (deletions, checkouts, updates).
+- **centralized**: DB logs are saved inside `users.db` under the `audit_log` table.
+- **Resilience**: If the database is locked, it catches the exception and logs to a flat file at `prod/logs/audit_fallback.log`.
 
-### 8. iOS Safari Constraints
-**Pattern**: Mobile-first premium feel.
-**Implementation**:
-- Use `16px` font on all inputs to avoid zoom.
-- Use `100dvh` for full-screen modals.
-- Ensure touch targets are 44px+.
+### 6. Intake Vocabulary Caching
+- **Endpoint**: `prod/api/get_vocabulary.php`.
+- **JS Caching**: `prod/assets/js/vocabulary.js` caches autocomplete terms (brands, models, CPUs) in browser `sessionStorage`. This prevents laggy AJAX completions during fast intake sessions.
 
-## 📅 Calendar Module Logic
-- **DB**: `calendar.db`, table `events`.
-- **Sync**: Pulls `callback_date` from `customers.db` and `created_at` from `orders.db`.
-- **Business Logic**: Enforcement of 08:00 - 17:00 window in both `pages/calendar.php` (UI) and `api/calendar/save.php` (Validation).
+---
 
-## ⚠️ Common Gotchas
-- **Permissions**: `assets/db/` must be writable.
-- **CSRF**: Ensure `<?= UI::csrf_field() ?>` is present in forms. AJAX calls must include the `csrf_token` in POST body/FormData.
-- **Paths**: `index.php` handles inclusions, so relative paths in sub-files can be tricky. Use `core/database.php` as the reference for relative paths.
-- **Concurrency**: Warehouse items use `updated_at` for optimistic locking. Always check for `CONCURRENCY_ERROR` in JS.
+## 🎨 UI/UX Design System Guidelines
 
-## 🚀 Efficiency Tip
-When modifying views, check if a corresponding `assets/js/[view].js` and `assets/styles/[view].css` exist. `index.php` loads these automatically if they are defined in the `$routes` array.
+- **Typography**: Uses the Google Font *Outfit* (sans-serif) for high scannability in warehouse conditions.
+- **Colors**: Defined in `prod/assets/styles/style.css` via CSS custom properties. Uses harmonized HSL variables:
+  - `--text-main`: Sleek dark slate/charcoal.
+  - `--accent-color`: Vibrant green (`#8cc63f`) representing fulfillment success.
+  - `--border-color`: Light slate/gray border divider lines.
+  - Glassmorphic backdrops are used for interactive cards and input overlays.
+
+---
+
+## 📱 Mobile (iOS Safari) Constraints
+Many warehouse managers perform hardware audits using iPads. To prevent styling degradation and zoom behaviors on mobile iOS Safari, respect the following constraints:
+- **Zoom Block**: Form inputs (inputs, selects, textareas) must have a font size of at least `16px`. iOS Safari will automatically zoom the page on focus if the font size is smaller.
+- **Viewport Bounds**: Modal windows and overlays should use `100dvh` (Dynamic Viewport Height) to ensure they render cleanly behind the Safari navigation toolbars.
+- **Touch Targets**: All clickable elements (buttons, badge inputs, close tags) must maintain a minimum bounding box of `48px` × `48px` to support error-free touch interaction.
+- **Hover Dependency**: Never hide critical actions behind hover triggers. All edit and delete paths must be directly clickable on touchscreen interfaces.
+
+---
+
+## 🔍 Token-Saving Shortcuts for AI Agents
+- **Avoid Loading**: `prod/pages/new_order.php` and `prod/pages/warehouse.php` are heavy UI containers. Do not view the entire file unless modifying forms.
+- **Config & DB Check**: Look directly at `prod/core/database.php` and `prod/core/Schema.php` for table blueprints and schema changes.
+- **Pathing reference**: Relative path references are calculated relative to `prod/index.php`. Use `__DIR__` in PHP includes to ensure correct file inclusion.

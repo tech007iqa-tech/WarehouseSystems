@@ -11,6 +11,11 @@ if (($_SESSION['role'] ?? 'Operator') !== 'Admin') {
     die("Unauthorized access.");
 }
 
+// CSRF Protection
+if (!Security::validate($_GET['csrf_token'] ?? '')) {
+    die("Security Error: CSRF token validation failed.");
+}
+
 $id = $_GET['id'] ?? null;
 $week_offset = $_GET['week_offset'] ?? 0;
 $view_type = $_GET['view_type'] ?? 'week';

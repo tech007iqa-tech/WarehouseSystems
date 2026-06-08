@@ -15,9 +15,9 @@ try {
     // 1. Fetch Sales Velocity (Top Brands/Models) + Inventory Check
     $velocity = Database::queryIntegrated('orders', ['w' => 'warehouse'], "
         SELECT items.brand, items.model, items.series, items.cpu, items.description, SUM(items.quantity) as total_qty, ROUND(AVG(items.unit_price), 2) as avg_price,
-               (SELECT SUM(quantity) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status = 'stocked') as in_stock,
-               (SELECT GROUP_CONCAT(DISTINCT location_code) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status = 'stocked') as stock_locations,
-               (SELECT SUM(quantity) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status != 'stocked') as incoming_stock
+               (SELECT SUM(quantity) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status = '') as in_stock,
+               (SELECT GROUP_CONCAT(DISTINCT location_code) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status = '') as stock_locations,
+               (SELECT SUM(quantity) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status != '') as incoming_stock
         FROM items
         WHERE 1=1 $date_condition
         GROUP BY items.brand, items.model, items.series, items.cpu, items.description

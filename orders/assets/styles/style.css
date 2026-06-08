@@ -219,7 +219,7 @@ input {
     padding: 0 16px;
     font-size: 16px;
     color: var(--text-main);
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, transform 0.2s ease;
     width: 100%;
     -webkit-appearance: none;
     appearance: none;
@@ -229,11 +229,45 @@ select:focus,
 input:focus {
     outline: none;
     border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px rgba(140, 198, 63, 0.1);
+    box-shadow: 0 0 0 4px rgba(140, 198, 63, 0.15), 0 4px 10px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+/* Premium filled state styling for textboxes with a pop animation */
+input:not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not(:placeholder-shown) {
+    border-color: var(--accent-color);
+    background-color: rgba(140, 198, 63, 0.03);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%238cc63f' width='18' height='18'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 18px;
+    padding-right: 44px;
+    animation: inputSuccessPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+[data-theme="dark"] input:not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not(:placeholder-shown) {
+    border-color: var(--accent-color);
+    background-color: rgba(163, 230, 53, 0.03);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23a3e635' width='18' height='18'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+}
+
+@keyframes inputSuccessPop {
+    0% {
+        transform: scale(0.98);
+        box-shadow: 0 0 0 0 rgba(140, 198, 63, 0.2);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 6px rgba(140, 198, 63, 0.1);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(140, 198, 63, 0);
+    }
 }
 
 ::placeholder {
-    color: #71717a;
+    color: #d5d5e7;
     /* Meets 4.5:1 contrast on white */
     opacity: 1;
 }

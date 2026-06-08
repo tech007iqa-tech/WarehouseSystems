@@ -1,32 +1,151 @@
 <?php
 // Secure Account Settings Fragment
-$db_file = 'assets/db/users.db';
-$message = '';
+$db_file = __DIR__ . '/../../db/users.db';
+$message = $_SESSION['settings_success_message'] ?? '';
+unset($_SESSION['settings_success_message']);
 $error = '';
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    if (!Security::validate($_POST['csrf_token'] ?? '')) {
+        die("Security Error: CSRF token validation failed.");
+    }
+}
 
 try {
     $conn_u = Database::users();
+
+    $username = $_SESSION['username'];
+    $stmt_ppp = $conn_u->prepare("SELECT ppp_sequence_key, ppp_row_index, ppp_password_len FROM users WHERE username = ?");
+    $stmt_ppp->execute([$username]);
+    $user_row = $stmt_ppp->fetch(PDO::FETCH_ASSOC);
+    $seq_key = $user_row['ppp_sequence_key'] ?? '';
+    $saved_row_index = (int)($user_row['ppp_row_index'] ?? 0);
+    $saved_pass_len = (int)($user_row['ppp_password_len'] ?? ($_SESSION['ppp_password_len'] ?? 30));
+    if ($saved_pass_len < 25) {
+        $saved_pass_len = 30;
+    }
+
+    // Helper to generate PPP passcodes
+    // Algorithm designed by Steve Gibson (Gibson Research Corporation)
+    // Reference: https://www.grc.com/ppp.htm
+    function generate_ppp_passcodes($sequence_key, $cell_len = 4) {
+        $alphabet = '!#%+23456789:=?@ABCDEFGHJKLMNPRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        $key_bin = hex2bin($sequence_key);
+        $passcodes = [];
+
+        for ($i = 0; $i < 125; $i++) {
+            $ciphertext = "";
+            $blocks_needed = (int)ceil(($cell_len * 6) / 128.0);
+            for ($b = 0; $b < $blocks_needed; $b++) {
+                $counter_bin = pack('P', $i) . pack('P', $b);
+                $ciphertext .= openssl_encrypt($counter_bin, 'aes-256-ecb', $key_bin, OPENSSL_RAW_DATA | OPENSSL_ZERO_PADDING);
+            }
+
+            $passcode = "";
+            $bit_buffer = 0;
+            $bit_count = 0;
+            $byte_index = 0;
+            $cipher_len = strlen($ciphertext);
+
+            for ($char_idx = 0; $char_idx < $cell_len; $char_idx++) {
+                while ($bit_count < 6 && $byte_index < $cipher_len) {
+                    $bit_buffer = ($bit_buffer << 8) | ord($ciphertext[$byte_index]);
+                    $byte_index++;
+                    $bit_count += 8;
+                }
+                if ($bit_count >= 6) {
+                    $shift = $bit_count - 6;
+                    $idx = ($bit_buffer >> $shift) & 0x3F;
+                    $bit_count = $shift;
+                    $passcode .= $alphabet[$idx];
+                } else {
+                    $passcode .= $alphabet[0];
+                }
+            }
+            $passcodes[] = $passcode;
+        }
+        return $passcodes;
+    }
+
+    if (isset($_GET['action']) && $_GET['action'] === 'ajax_generate_ppp') {
+        header('Content-Type: application/json');
+        $seq_key = trim($_GET['seq_key'] ?? '');
+        $length = (int)($_GET['length'] ?? 30);
+        if (!preg_match('/^[a-fA-F0-9]{64}$/', $seq_key)) {
+            echo json_encode(['success' => false, 'error' => 'Invalid sequence key']);
+            exit();
+        }
+        $cell_len = (int)ceil($length / 5.0);
+        $passcodes = generate_ppp_passcodes($seq_key, $cell_len);
+        echo json_encode(['success' => true, 'passcodes' => $passcodes]);
+        exit();
+    }
 
     // 1. Handle Password Change (All Users)
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] === 'change_password') {
         $old_pass = $_POST['old_password'] ?? '';
         $new_pass = $_POST['new_password'] ?? '';
         $confirm_pass = $_POST['confirm_password'] ?? '';
+        $new_seq_key = trim($_POST['ppp_sequence_key'] ?? '');
+        $ppp_row_index = (int)($_POST['ppp_row_index'] ?? 0);
         $user_id = $_SESSION['username'];
 
-        $stmt = $conn_u->prepare("SELECT password FROM users WHERE username = ?");
-        $stmt->execute([$user_id]);
-        $current_hash = $stmt->fetchColumn();
+        $is_forced = (isset($_SESSION['force_password_change']) && $_SESSION['force_password_change'] === true);
+        $verified_old = false;
 
-        if ($current_hash && password_verify($old_pass, $current_hash)) {
+        if ($is_forced) {
+            $verified_old = true;
+        } else {
+            $stmt = $conn_u->prepare("SELECT password, ppp_sequence_key FROM users WHERE username = ?");
+            $stmt->execute([$user_id]);
+            $user_row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $current_hash = $user_row['password'] ?? '';
+            $current_seq = $user_row['ppp_sequence_key'] ?? '';
+
+            if ($current_hash) {
+                if (!empty($current_seq)) {
+                    $verified_old = password_verify($old_pass . $current_seq, $current_hash);
+                }
+                if (!$verified_old) {
+                    $verified_old = password_verify($old_pass, $current_hash);
+                }
+            }
+        }
+
+        if ($verified_old) {
             if ($new_pass === $confirm_pass) {
-                if (strlen($new_pass) >= 3) {
-                    $new_hash = password_hash($new_pass, PASSWORD_BCRYPT);
-                    $stmt_u = $conn_u->prepare("UPDATE users SET password = ? WHERE username = ?");
-                    $stmt_u->execute([$new_hash, $user_id]);
-                    $message = "Password updated successfully!";
-                } else {
-                    $error = "New password must be at least 3 characters.";
+                if (Security::validatePassword($new_pass, $error)) {
+                    if (!empty($new_seq_key)) {
+                        if (!preg_match('/^[a-fA-F0-9]{64}$/', $new_seq_key)) {
+                            $error = "Sequence key must be exactly 64 hexadecimal characters.";
+                        }
+                    }
+
+                    if (!$error) {
+                        $hash_password = $new_pass;
+                        if (!empty($new_seq_key)) {
+                            $seq_key = strtoupper($new_seq_key);
+                            $hash_password .= $seq_key;
+                            $stmt_u = $conn_u->prepare("UPDATE users SET password = ?, ppp_sequence_key = ?, ppp_row_index = ?, ppp_password_len = ? WHERE username = ?");
+                            $stmt_u->execute([password_hash($hash_password, PASSWORD_BCRYPT), $seq_key, $ppp_row_index, strlen($new_pass), $user_id]);
+                        } else {
+                            $stmt_key = $conn_u->prepare("SELECT ppp_sequence_key FROM users WHERE username = ?");
+                            $stmt_key->execute([$user_id]);
+                            $existing_key = $stmt_key->fetchColumn();
+                            if (!empty($existing_key)) {
+                                $hash_password .= $existing_key;
+                            }
+                            $stmt_u = $conn_u->prepare("UPDATE users SET password = ?, ppp_row_index = ?, ppp_password_len = ? WHERE username = ?");
+                            $stmt_u->execute([password_hash($hash_password, PASSWORD_BCRYPT), $ppp_row_index, strlen($new_pass), $user_id]);
+                        }
+                        $_SESSION['settings_success_message'] = "Password and security settings updated successfully!";
+                        $_SESSION['ppp_password_len'] = strlen($new_pass);
+                        if (isset($_SESSION['force_password_change'])) {
+                            unset($_SESSION['force_password_change']);
+                        }
+                        header("Location: index.php?view=settings");
+                        exit();
+                    }
                 }
             } else {
                 $error = "New passwords do not match.";
@@ -57,14 +176,16 @@ try {
                 $np = $_POST['new_password'];
                 $nr = $_POST['new_role'] ?? 'Operator';
 
-                if (strlen($np) >= 3) {
+                if (empty($np) || strlen($np) < 3) {
+                    $error = "Password must be at least 3 characters.";
+                } else {
                     $hash = password_hash($np, PASSWORD_BCRYPT);
                     try {
                         $auth_add = $conn_u->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
                         $auth_add->execute([$nu, $hash, $nr]);
                         $message = "New user '{$nu}' ({$nr}) added successfully!";
                     } catch(Exception $e) { $error = "Error: Username might already exist."; }
-                } else { $error = "User password must be at least 3 characters."; }
+                }
             }
 
             if ($_POST['action'] === 'change_role' && !empty($_POST['target_user'])) {
@@ -90,8 +211,8 @@ try {
     // 3. Handle System Maintenance (Admin Only)
     if ($_SESSION['username'] === 'admin' && isset($_POST['action'])) {
         if ($_POST['action'] === 'cleanup_customers') {
-            $db_cust_file = realpath('assets/db/customers.db');
-            $db_orders_file = realpath('assets/db/orders.db');
+            $db_cust_file = realpath(__DIR__ . '/../../db/customers.db');
+            $db_orders_file = realpath(__DIR__ . '/../../db/orders.db');
             try {
                 if (!$db_cust_file || !$db_orders_file) throw new Exception("Database files not found.");
 
@@ -135,6 +256,7 @@ try {
             $_SESSION['integrity_report'] = $report;
         }
     }
+    $is_forced = (isset($_SESSION['force_password_change']) && $_SESSION['force_password_change'] === true);
 } catch (PDOException $e) { $error = "Database error: " . $e->getMessage(); }
 
 ?>
@@ -164,6 +286,11 @@ try {
     </style>
 
     <!-- Global System Feedback -->
+    <?php if (isset($_SESSION['force_password_change']) && $_SESSION['force_password_change'] === true): ?>
+        <div class="status-msg msg-error" style="width:100%; max-width:500px; margin-top:20px; background: #fff7ed; color: #c2410c; border: 1px solid #ffedd5;">
+            ⚠️ <strong>Security Warning:</strong> You are using default credentials. You must change your password to secure the system.
+        </div>
+    <?php endif; ?>
     <?php if ($message): ?>
         <div class="status-msg msg-success" style="width:100%; max-width:500px; margin-top:20px;"><?= $message ?></div>
     <?php endif; ?>
@@ -174,6 +301,9 @@ try {
     <!-- 0. APPEARANCE CARD -->
     <div class="settings-card">
         <div class="settings-header">
+             <a href="core/logout.php" style="float:right;text-decoration: none; background: #fef2f2; color: #991b1b; padding: 10px 16px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; border: 1px solid #fee2e2;">
+                    🚪 Sign Out
+                </a>
             <h1>Appearance</h1>
             <p class="subtitle">Customize the look and feel of the application.</p>
         </div>
@@ -186,28 +316,236 @@ try {
         </div>
     </div>
 
-    <!-- 1. PERSONAL SECURITY CARD -->
-    <div class="settings-card">
-        <div class="settings-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
-                <h1>Account Security</h1>
-                <p class="subtitle">Update your password to keep your account secure.</p>
+    <!-- UNIFIED PASSWORD UPDATE FORM -->
+    <form method="POST" id="password-update-form" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 40px;">
+        <?= UI::csrf_field() ?>
+        <input type="hidden" name="action" value="change_password">
+        <input type="hidden" name="ppp_sequence_key" id="ppp_sequence_key_input" value="<?= htmlspecialchars($seq_key) ?>">
+        <input type="hidden" name="ppp_row_index" id="ppp_row_index_input" value="<?= $saved_row_index ?>">
+
+        <!-- Perfect Paper Passwords (PPP) Card (SHOWN FIRST) -->
+        <div class="settings-card" id="ppp-card" style="max-width: 600px; width: 100%;">
+            <div class="settings-header multi-link-container" style="position: relative;">
+                <h1>🔑 Perfect Paper Passwords (PPP)</h1>
+                <p class="subtitle">Your offline, ultra-secure one-time passcode system from
+                    <span class="linked-text-info" style="color: #4f46e5; text-decoration: underline; font-weight: bold; cursor: pointer;">GRC</span>.
+                </p>
+                <!-- PPP Information Dialog -->
+                <div class="info-dialog" style="max-width: 500px; width: 90%;">
+                    <button type="button" class="btn-close-dialog" aria-label="Close dialog">&times;</button>
+                    <div style="padding: 10px; text-align: left; line-height: 1.6; font-family: system-ui, -apple-system, sans-serif;">
+                        <h2 style="font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">🔑 How PPP Works</h2>
+                        <p style="font-size: 0.9rem; color: #475569; margin-bottom: 12px;">
+                            <strong>Perfect Paper Passwords (PPP)</strong> is an offline, paper-based multi-factor authentication (MFA) system designed by Steve Gibson of Gibson Research Corporation (GRC).
+                        </p>
+                        <h3 style="font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Security Instructions:</h3>
+                        <ul style="font-size: 0.85rem; color: #475569; padding-left: 20px; margin-bottom: 16px;">
+                            <li style="margin-bottom: 6px;"><strong>Print the Card:</strong> Click the "Print Secure Passcard" button below and print a physical copy. Keep it safely in your wallet.</li>
+                            <li style="margin-bottom: 6px;"><strong>Passcode Grid:</strong> The card contains a grid of 50 unique passcodes indexed from Row 01 to 10 and Columns A to E.</li>
+                            <li style="margin-bottom: 6px;"><strong>Authentication:</strong> When signing in, the system will ask you to enter a passcode from a specific cell (e.g. <code>03-B</code>). Find that cell on your printed card and type the characters.</li>
+                            <li style="margin-bottom: 6px;"><strong>One-Time Use:</strong> Once you use a passcode, you are in. (<i>If you log out and do not know your password, please tell the Admin ASAP</i>)</li>
+                            <li style="margin-bottom: 6px;"><strong>No Secrets Stored Online:</strong> The server only stores a master Sequence Key, never the passcodes themselves.</li>
+                        </ul>
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 0.8rem; color: #64748b; font-style: italic;">
+                            Tip: If your physical card is lost or compromised, change your password and automatically generate a brand new card.<br><br>
+                            <strong>Important Note:</strong> To reprint or regenerate your original passcard, you MUST keep a backup of both your 64-character <strong style="color: black">Sequence Key</strong> and the corresponding <strong style="color: black">Password Length</strong> (e.g., 30).
+                        </div>
+                    </div>
+                </div>
             </div>
-            <a href="core/logout.php" style="text-decoration: none; background: #fef2f2; color: #991b1b; padding: 10px 16px; border-radius: 10px; font-size: 0.8rem; font-weight: 800; border: 1px solid #fee2e2;">
-                🚪 Sign Out
-            </a>
+
+            <!-- Length Range Controls (Only shown in PPP card if password change is forced) -->
+            <?php if ($is_forced): ?>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; align-items: center;">
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="display: block; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Password Length Range</label>
+                        <input type="number" id="ppp_length_input" name="ppp_length" value="<?= $saved_pass_len ?>" min="25" max="80" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: bold; text-align: center;" onchange="onLengthChange()">
+                        <span style="font-size: 0.7rem; color: #64748b; margin-top: 4px; display: block; line-height: 1.3;">
+                            Recommended: 25-50. Higher is more secure.
+                        </span>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Sequence Key</label>
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <input type="text" value="<?= htmlspecialchars($seq_key) ?>" placeholder="Generate a key to start..." readonly style="font-family: monospace; font-size: 0.75rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; flex: 1; text-align: center;" id="ppp_display_key">
+                        <button type="button" onclick="copySequenceKey()" style="background: #e2e8f0; color: #475569; border: none; padding: 0 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; height: 34px;">📋</button>
+                    </div>
+                    <?php if ($is_forced): ?>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <button type="button" class="btn-main" onclick="triggerGenKey()" style="background:#64748b; color:white; white-space:nowrap; padding: 0 16px; font-size:0.85rem; border-radius:10px; border:none; cursor:pointer; height:38px; font-weight:800; display: flex; align-items: center; gap: 6px;">🎲 Gen Key</button>
+
+                            <div class="multi-link-container" style="position: relative;">
+                                <button type="button" class="btn-main linked-text-info" style="background:#4f46e5; color:white; white-space:nowrap; padding: 0 16px; font-size:0.85rem; border-radius:10px; border:none; cursor:pointer; height:38px; font-weight:800; display: flex; align-items: center; gap: 6px;">🔍 Verify & Load Key</button>
+
+                                <!-- Input Sequence Key Dialog -->
+                                <div class="info-dialog" id="dialog_seq_key" style="max-width: 500px; width: 90%;">
+                                    <button type="button" class="btn-close-dialog" aria-label="Close dialog">&times;</button>
+                                    <div style="padding: 10px; text-align: left; line-height: 1.6; font-family: system-ui, -apple-system, sans-serif;">
+                                        <h2 style="font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">🔑 Load Sequence Key</h2>
+                                        <p style="font-size: 0.9rem; color: #475569; margin-bottom: 12px;">
+                                            Enter an existing 64-character hexadecimal Sequence Key to generate and preview its passcard grid.<br><br>
+                                            <strong>Note:</strong> You must also match the exact <em>Password Length Range</em> that was configured when generating the key to reprint/regenerate the original passcard cells.
+                                        </p>
+                                        <div class="form-group" style="margin-bottom: 20px;">
+                                            <label style="display: block; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Sequence Key</label>
+                                            <input type="text" id="manual_seq_key_input_forced" placeholder="e.g. 1DBED7E3..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: monospace; font-size: 0.85rem; box-sizing: border-box;" oninput="onManualKeyInput(this.value)">
+                                            <span id="manual_key_error_forced" style="font-size: 0.75rem; color: #ef4444; margin-top: 4px; display: none;">Key must be exactly 64 hexadecimal characters.</span>
+                                        </div>
+                                        <button type="button" class="btn-main" onclick="applyManualKey(true)" style="width: 100%; padding: 12px; border-radius: 8px; background: var(--text-main); color: white; border: none; font-weight: 800; cursor: pointer;">
+                                            Load Grid
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+                <div id="qr-container-wrapper" class="multi-link-container" style="display: <?= empty($seq_key) ? 'none' : 'flex' ?>; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                    <span class="linked-text-img" title="Click to enlarge QR Code" id="qr-clickable-zone">
+                        <img id="ppp_qr_img" src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=<?= urlencode($seq_key) ?>" alt="PPP QR Code" style="width: 110px; height: 110px; border-radius: 8px; display: block;">
+                    </span>
+                    <span style="font-size: 0.65rem; color: #64748b; font-weight: 800; margin-top: 6px; text-transform: uppercase;">Sequence QR Code</span>
+
+                    <!-- Image Dialog Modal -->
+                    <div class="image-dialog" id="qr-modal-dialog">
+                        <button type="button" class="btn-close-dialog" aria-label="Close dialog">&times;</button>
+                        <figure>
+                            <img id="ppp_qr_large_img" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=<?= urlencode($seq_key) ?>" alt="Enlarged PPP QR Code">
+                            <figcaption>Scan to Copy PPP Sequence Key</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table and Grid Preview -->
+            <div id="ppp-grid-section" style="border-top: 1px dashed var(--border-color); padding-top: 24px; margin-top: 20px; display: <?= empty($seq_key) ? 'none' : 'block' ?>;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="font-size: 0.95rem; font-weight: 800; color: var(--text-main); margin: 0;">Live Passcard Grid Preview</h3>
+
+                    <label id="ppp_show_active_container" style="display: none; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; color: var(--text-main); cursor: pointer; user-select: none; margin: 0;">
+                        <input type="checkbox" id="ppp_show_active_checkbox" onchange="toggleShowActive()" style="width: 16px; height: 16px;">
+                        Show active password in grid preview
+                    </label>
+                </div>
+
+                <div style="max-height: 250px; overflow: auto; border: 1px solid #e2e8f0; border-radius: 12px; background: white; margin-bottom: 20px; position: relative;">
+                    <table style="width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; text-align: center; font-family: monospace; table-layout: fixed;">
+                        <thead>
+                            <tr>
+                                <th style="color: #475569; font-weight: bold; padding: 12px 4px; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; width: 60px; position: sticky; top: 0; background: #f1f5f9; z-index: 10;">Row</th>
+                                <th style="color: #475569; font-weight: bold; padding: 12px 4px; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; position: sticky; top: 0; background: #f1f5f9; z-index: 10;">A</th>
+                                <th style="color: #475569; font-weight: bold; padding: 12px 4px; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; position: sticky; top: 0; background: #f1f5f9; z-index: 10;">B</th>
+                                <th style="color: #475569; font-weight: bold; padding: 12px 4px; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; position: sticky; top: 0; background: #f1f5f9; z-index: 10;">C</th>
+                                <th style="color: #475569; font-weight: bold; padding: 12px 4px; border-bottom: 2px solid #cbd5e1; border-right: 1px solid #e2e8f0; position: sticky; top: 0; background: #f1f5f9; z-index: 10;">D</th>
+                                <th style="color: #475569; font-weight: bold; padding: 12px 4px; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; background: #f1f5f9; z-index: 10;">E</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ppp-grid-tbody">
+                            <?php
+                            $cell_len = (int)ceil($saved_pass_len / 5.0);
+                            $actual_codes = !empty($seq_key) ? generate_ppp_passcodes($seq_key, $cell_len) : [];
+
+                            for ($r = 0; $r < 25; $r++) {
+                                $row_num = sprintf('%02d', $r + 1);
+                                $is_saved_row = ($saved_row_index === ($r + 1));
+                                $bg = $is_saved_row ? '#e0f2fe' : (($r % 2 === 0) ? '#f8fafc' : '#ffffff');
+                                $padding_top = ($r === 0) ? '14px' : '10px';
+
+                                echo "<tr data-row-num='" . ($r + 1) . "' style='background: {$bg}; cursor: pointer;' onclick='onRowClick(this, " . ($r + 1) . ")'>";
+                                echo "<td style='padding: {$padding_top} 4px 10px 4px; font-weight: bold; color: #64748b; border-right: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; width: 60px;'>{$row_num}</td>";
+
+                                for ($c = 0; $c < 5; $c++) {
+                                    $code_val = !empty($actual_codes) ? $actual_codes[$r * 5 + $c] : '';
+                                    $border_right = ($c < 4) ? 'border-right: 1px solid #e2e8f0;' : '';
+                                    echo "<td class='ppp-cell' style='padding: {$padding_top} 4px 10px 4px; font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; {$border_right} word-break: break-all;'>" . htmlspecialchars($code_val) . "</td>";
+                                }
+                                echo "</tr>";
+                            }
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; gap: 12px;">
+                    <button type="button" onclick="printPPPCard()" class="btn-main" style="flex: 1; padding: 14px; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; height: 50px;">
+                        🖨️ Print Passcard
+                    </button>
+                    <button type="button" onclick="viewPPPCard()" class="btn-main" style="flex: 1; padding: 14px; border-radius: 12px; background: #64748b; color: white; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; height: 50px;">
+                        📄 View / Save Passcard
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <form method="POST">
-            <input type="hidden" name="action" value="change_password">
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label for="old_password">Current Password</label>
-                <input type="password" id="old_password" name="old_password" placeholder="••••••••" required>
+        <!-- Account Security Card (SHOWN SECOND) -->
+        <div class="settings-card">
+            <div class="settings-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <h1>Account Security</h1>
+                    <p class="subtitle">Update your password to keep your account secure.</p>
+                </div>
+
             </div>
+
+            <?php if (!$is_forced): ?>
+                <!-- Password Length Range & Gen Key relocated here when logged in securely -->
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 24px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; align-items: center;">
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="display: block; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Password Length Range</label>
+                        <input type="number" id="ppp_length_input" name="ppp_length" value="<?= $saved_pass_len ?>" min="25" max="80" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; font-weight: bold; text-align: center;" onchange="onLengthChange()">
+                        <span style="font-size: 0.7rem; color: #64748b; margin-top: 4px; display: block; line-height: 1.3;">
+                            Recommended: 25-50. Higher is more secure.
+                        </span>
+                    </div>
+                    <div style="flex: 1; min-width: 150px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;">
+                        <label style="display: block; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Perfect Paper Passcode</label>
+                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                            <button type="button" class="btn-main" onclick="triggerGenKey()" style="background:#64748b; color:white; white-space:nowrap; padding: 0 16px; font-size:0.85rem; border-radius:10px; border:none; cursor:pointer; height:38px; font-weight:800; display: flex; align-items: center; gap: 6px;">
+                                🎲 Gen Key
+                            </button>
+
+                            <div class="multi-link-container" style="position: relative;">
+                                <button type="button" class="btn-main linked-text-info" style="background:#4f46e5; color:white; white-space:nowrap; padding: 0 16px; font-size:0.85rem; border-radius:10px; border:none; cursor:pointer; height:38px; font-weight:800; display: flex; align-items: center; gap: 6px;">🔍 Verify & Load Key</button>
+
+                                <!-- Input Sequence Key Dialog -->
+                                <div class="info-dialog" id="dialog_seq_key_secure" style="max-width: 500px; width: 90%;">
+                                    <button type="button" class="btn-close-dialog" aria-label="Close dialog">&times;</button>
+                                    <div style="padding: 10px; text-align: left; line-height: 1.6; font-family: system-ui, -apple-system, sans-serif;">
+                                        <h2 style="font-size: 1.3rem; font-weight: 800; color: #1e293b; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">🔑 Load Sequence Key</h2>
+                                        <p style="font-size: 0.9rem; color: #475569; margin-bottom: 12px;">
+                                            Enter an existing 64-character hexadecimal Sequence Key to generate and preview its passcard grid.<br><br>
+                                            <strong>Note:</strong> You must also match the exact <em>Password Length Range</em> that was configured when generating the key to reprint/regenerate the original passcard cells.
+                                        </p>
+                                        <div class="form-group" style="margin-bottom: 20px;">
+                                            <label style="display: block; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px;">Sequence Key</label>
+                                            <input type="text" id="manual_seq_key_input_secure" placeholder="e.g. 1DBED7E3..." style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: monospace; font-size: 0.85rem; box-sizing: border-box;" oninput="onManualKeyInput(this.value)">
+                                            <span id="manual_key_error_secure" style="font-size: 0.75rem; color: #ef4444; margin-top: 4px; display: none;">Key must be exactly 64 hexadecimal characters.</span>
+                                        </div>
+                                        <button type="button" class="btn-main" onclick="applyManualKey(false)" style="width: 100%; padding: 12px; border-radius: 8px; background: var(--text-main); color: white; border: none; font-weight: 800; cursor: pointer;">
+                                            Load Grid
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="old_password">Current Password</label>
+                    <input type="password" id="old_password" name="old_password" placeholder="••••••••" required>
+                </div>
+            <?php endif; ?>
+
             <div style="border-top: 1px dashed var(--border-color); padding-top: 20px; margin-top: 20px;">
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="new_password">New Password</label>
-                    <input type="password" id="new_password" name="new_password" placeholder="Min 3 characters" required>
+                    <input type="password" id="new_password" name="new_password" placeholder="Min 24 chars, complex (A-Z, a-z, 0-9, symbol)" <?= $is_forced ? 'readonly' : '' ?> required>
                 </div>
                 <div class="form-group" style="margin-bottom: 30px;">
                     <label for="confirm_password">Confirm New Password</label>
@@ -217,8 +555,454 @@ try {
             <button type="submit" class="btn-main" style="width: 100%; padding: 16px; border-radius: 12px; background: var(--text-main); color: white; border: none; font-weight: 800; cursor: pointer;">
                 💾 Update Password
             </button>
-        </form>
-    </div>
+        </div>
+    </form>
+
+    <script>
+    let activeSeqKey = "<?= htmlspecialchars($seq_key) ?>";
+    let pendingSeqKey = "";
+    let selectedRowIdx = <?= $saved_row_index ?>;
+
+    function onManualKeyInput(val) {
+        const isValid = /^[a-fA-F0-9]{64}$/.test(val.trim());
+        const errForced = document.getElementById('manual_key_error_forced');
+        const errSecure = document.getElementById('manual_key_error_secure');
+
+        if (errForced) {
+            errForced.style.display = (val.trim() === '' || isValid) ? 'none' : 'block';
+        }
+        if (errSecure) {
+            errSecure.style.display = (val.trim() === '' || isValid) ? 'none' : 'block';
+        }
+    }
+
+    function applyManualKey(isForced) {
+        const inputId = isForced ? 'manual_seq_key_input_forced' : 'manual_seq_key_input_secure';
+        const inputEl = document.getElementById(inputId);
+        if (!inputEl) return;
+
+        const rawVal = inputEl.value.trim();
+        if (!/^[a-fA-F0-9]{64}$/.test(rawVal)) {
+            alert("Please enter a valid 64-character hexadecimal Sequence Key first.");
+            return;
+        }
+
+        pendingSeqKey = rawVal.toUpperCase();
+
+        // Update display key text field and hidden inputs
+        const displayKeyInput = document.getElementById('ppp_display_key');
+        if (displayKeyInput) {
+            displayKeyInput.value = pendingSeqKey;
+        }
+        document.getElementById('ppp_sequence_key_input').value = pendingSeqKey;
+
+        // Reset selected row
+        selectedRowIdx = 0;
+        document.getElementById('ppp_row_index_input').value = '0';
+
+        // Show QR and grid preview if they are hidden
+        const qrWrapper = document.getElementById('qr-container-wrapper');
+        if (qrWrapper) qrWrapper.style.display = 'flex';
+        const gridSection = document.getElementById('ppp-grid-section');
+        if (gridSection) gridSection.style.display = 'block';
+
+        // Update QR images
+        const encodedKey = encodeURIComponent(pendingSeqKey);
+        const qrImg = document.getElementById('ppp_qr_img');
+        if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodedKey}`;
+        }
+        const qrLargeImg = document.getElementById('ppp_qr_large_img');
+        if (qrLargeImg) {
+            qrLargeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedKey}`;
+        }
+
+        // Uncheck show-active checkbox
+        const showActiveCheckbox = document.getElementById('ppp_show_active_checkbox');
+        if (showActiveCheckbox) {
+            showActiveCheckbox.checked = false;
+        }
+        const showActiveContainer = document.getElementById('ppp_show_active_container');
+        if (showActiveContainer) {
+            showActiveContainer.style.display = 'flex';
+        }
+
+        // Fetch new grid preview
+        fetchGridPreview(pendingSeqKey);
+
+        // Close modal
+        if (window.dialogEngine) {
+            window.dialogEngine.closeAnyOpenDialogs();
+        }
+
+        // Scroll to PPP grid
+        const pppCard = document.getElementById('ppp-card');
+        if (pppCard) {
+            pppCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    function generateRandomHexKey() {
+        const chars = '0123456789ABCDEF';
+        let result = '';
+        for (let i = 0; i < 64; i++) {
+            result += chars[Math.floor(Math.random() * 16)];
+        }
+        return result;
+    }
+
+    function triggerGenKey() {
+        pendingSeqKey = generateRandomHexKey();
+        document.getElementById('ppp_display_key').value = pendingSeqKey;
+        document.getElementById('ppp_sequence_key_input').value = pendingSeqKey;
+
+        // Show QR container and grid if hidden
+        document.getElementById('qr-container-wrapper').style.display = 'flex';
+        document.getElementById('ppp-grid-section').style.display = 'block';
+
+        // Update QR images
+        const encodedKey = encodeURIComponent(pendingSeqKey);
+        document.getElementById('ppp_qr_img').src = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodedKey}`;
+        document.getElementById('ppp_qr_large_img').src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedKey}`;
+
+        // When a new key is generated, we reset the selected row so the user must pick one
+        selectedRowIdx = 0;
+        document.getElementById('ppp_row_index_input').value = '0';
+
+        // Set the checkbox to unchecked (we show the pending key grid by default)
+        const showActiveCheckbox = document.getElementById('ppp_show_active_checkbox');
+        if (showActiveCheckbox) {
+            showActiveCheckbox.checked = false;
+        }
+
+        // Show the show-active checkbox container
+        const showActiveContainer = document.getElementById('ppp_show_active_container');
+        if (showActiveContainer) {
+            showActiveContainer.style.display = 'flex';
+        }
+
+        // Render grid for the pending key
+        fetchGridPreview(pendingSeqKey);
+
+        // Send them to the PPP card view
+        const pppCard = document.getElementById('ppp-card');
+        if (pppCard) {
+            pppCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    async function fetchGridPreview(seqKey) {
+        const lengthInput = document.getElementById('ppp_length_input');
+        const length = lengthInput ? (parseInt(lengthInput.value) || 30) : 30;
+
+        try {
+            const response = await fetch(`index.php?view=settings&action=ajax_generate_ppp&seq_key=${seqKey}&length=${length}`);
+            const data = await response.json();
+            if (data.success) {
+                renderGrid(data.passcodes, seqKey);
+            }
+        } catch(e) {
+            console.error("Failed to load passcodes preview:", e);
+        }
+    }
+
+    function renderGrid(passcodes, seqKey) {
+        const tbody = document.getElementById('ppp-grid-tbody');
+        tbody.innerHTML = '';
+
+        const checkbox = document.getElementById('ppp_show_active_checkbox');
+        const showActive = checkbox && checkbox.checked;
+        const currentSelectedIdx = showActive ? <?= $saved_row_index ?> : selectedRowIdx;
+
+        for (let r = 0; r < 25; r++) {
+            const rowNum = r + 1;
+            const isSelected = (currentSelectedIdx === rowNum);
+            const rowLabel = String(rowNum).padStart(2, '0');
+
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-row-num', rowNum);
+            tr.style.cursor = 'pointer';
+            tr.style.background = isSelected ? '#e0f2fe' : ((r % 2 === 0) ? '#f8fafc' : '#ffffff');
+            tr.onclick = function() { onRowClick(this, rowNum); };
+
+            let tdRow = document.createElement('td');
+            tdRow.style.padding = (r === 0) ? '14px 4px 10px 4px' : '10px 4px 10px 4px';
+            tdRow.style.fontWeight = 'bold';
+            tdRow.style.color = '#64748b';
+            tdRow.style.borderRight = '1px solid #e2e8f0';
+            tdRow.style.borderBottom = '1px solid #e2e8f0';
+            tdRow.style.width = '60px';
+            tdRow.innerText = rowLabel;
+            tr.appendChild(tdRow);
+
+            for (let c = 0; c < 5; c++) {
+                let tdCell = document.createElement('td');
+                tdCell.className = 'ppp-cell';
+                tdCell.style.padding = (r === 0) ? '14px 4px 10px 4px' : '10px 4px 10px 4px';
+                tdCell.style.fontWeight = 'bold';
+                tdCell.style.letterSpacing = '0.5px';
+                tdCell.style.borderBottom = '1px solid #e2e8f0';
+                if (c < 4) tdCell.style.borderRight = '1px solid #e2e8f0';
+                tdCell.style.wordBreak = 'break-all';
+
+                tdCell.innerText = passcodes[r * 5 + c];
+                tr.appendChild(tdCell);
+            }
+            tbody.appendChild(tr);
+        }
+
+        // Update Sequence Key display text and QR codes to match the current grid's key
+        const displayKeyInput = document.getElementById('ppp_display_key');
+        if (displayKeyInput) {
+            displayKeyInput.value = seqKey;
+        }
+        const encodedKey = encodeURIComponent(seqKey);
+        const qrImg = document.getElementById('ppp_qr_img');
+        if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodedKey}`;
+        }
+        const qrLargeImg = document.getElementById('ppp_qr_large_img');
+        if (qrLargeImg) {
+            qrLargeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedKey}`;
+        }
+
+        const footerLengthSpan = document.getElementById('ppp-card-footer-length');
+        if (footerLengthSpan) {
+            footerLengthSpan.innerText = length;
+        }
+
+        updatePrintCardSource(passcodes, seqKey);
+    }
+
+    function updatePrintCardSource(passcodes, seqKey) {
+        const source = document.getElementById('ppp-printable-card-source');
+        if (!source) return;
+
+        const lengthInput = document.getElementById('ppp_length_input');
+        const length = lengthInput ? (parseInt(lengthInput.value) || 30) : 30;
+
+        let tableRowsHtml = '';
+        for (let r = 0; r < 25; r++) {
+            const rowLabel = String(r + 1).padStart(2, '0');
+            let cellsHtml = '';
+            for (let c = 0; c < 5; c++) {
+                cellsHtml += `<td style='padding: 6px 4px; border: 1px solid #ccc; font-weight: bold; letter-spacing: 1px; word-break: break-all;'>${passcodes[r * 5 + c]}</td>`;
+            }
+            tableRowsHtml += `<tr>
+                <td style='padding: 6px 4px; border: 1px solid #ccc; font-weight: bold; background: #fafafa;'>${rowLabel}</td>
+                ${cellsHtml}
+            </tr>`;
+        }
+
+        source.innerHTML = `
+            <div style="border: 2px dashed #333; border-radius: 12px; padding: 20px; max-width: 450px; width: 100%; box-sizing: border-box; background: white; color: black; font-family: 'Courier New', Courier, monospace; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin: 20px auto;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
+                    <strong style="font-size: 16px; letter-spacing: 1px;">PERFECT PAPER PASSCARD</strong>
+                    <span style="font-size: 14px; font-weight: bold;">User: <?= htmlspecialchars($username) ?></span>
+                </div>
+                <div style="font-size: 10px; margin-bottom: 15px; word-break: break-all; border: 1px solid #ddd; padding: 8px; background: #f9f9f9; border-radius: 6px;">
+                    <strong>SEQUENCE KEY:</strong><br>${seqKey}
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; table-layout: fixed;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #000; background: #eee;">
+                            <th style="padding: 6px 4px; border: 1px solid #ccc; width: 50px;">Row</th>
+                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">A</th>
+                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">B</th>
+                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">C</th>
+                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">D</th>
+                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">E</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRowsHtml}
+                    </tbody>
+                </table>
+                <div style="margin-top: 15px; text-align: center; font-size: 9px; color: #666; border-top: 1px solid #eee; padding-top: 8px;">
+                    GRC Perfect Paper Passwords &bull; Password Length: ${length} &bull; Keep this card secure and offline.
+                </div>
+            </div>
+        `;
+    }
+
+    function printPPPCard() {
+        const source = document.getElementById('ppp-printable-card-source');
+        if (!source) return;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>Print PPP Passcard</title></head><body style="margin:20px;">' + source.innerHTML + '</body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+        printWindow.close();
+    }
+
+    function viewPPPCard() {
+        const source = document.getElementById('ppp-printable-card-source');
+        if (!source) return;
+        const viewWindow = window.open('', '_blank');
+        viewWindow.document.write('<html><head><title>PPP Passcard</title></head><body style="margin:20px;">' + source.innerHTML + '</body></html>');
+        viewWindow.document.close();
+        viewWindow.focus();
+    }
+
+    async function onRowClick(rowElement, rowNum) {
+        const checkbox = document.getElementById('ppp_show_active_checkbox');
+        const showActive = checkbox && checkbox.checked;
+
+        let targetKey = showActive ? activeSeqKey : (pendingSeqKey ? pendingSeqKey : activeSeqKey);
+        if (!targetKey) {
+            alert("Please generate a sequence key first!");
+            return;
+        }
+
+        const currentSelectedIdx = showActive ? <?= $saved_row_index ?> : selectedRowIdx;
+
+        // If the clicked row is already selected, copy its passcode to clipboard and confirm it
+        if (rowNum === currentSelectedIdx) {
+            const cells = rowElement.querySelectorAll('.ppp-cell');
+            let passcodeStr = '';
+            cells.forEach(c => passcodeStr += c.innerText);
+
+            const confirmInput = document.getElementById('confirm_password');
+            if (confirmInput) {
+                confirmInput.value = passcodeStr;
+            }
+
+            navigator.clipboard.writeText(passcodeStr).then(() => {
+                alert(`Row ${String(rowNum).padStart(2, '0')} passcode copied to clipboard and confirmed!`);
+            }).catch(() => {
+                alert(`Row ${String(rowNum).padStart(2, '0')} passcode confirmed!`);
+            });
+            return;
+        }
+
+        const newPasswordInput = document.getElementById('new_password');
+        if (newPasswordInput && newPasswordInput.value && newPasswordInput.value.trim() !== '') {
+            if (rowNum !== currentSelectedIdx) {
+                const proceed = confirm("You have already entered a password. Are you sure you want to change it to the passcodes in Row " + String(rowNum).padStart(2, '0') + "?");
+                if (!proceed) {
+                    return;
+                }
+            }
+        }
+
+        if (showActive) {
+            checkbox.checked = false;
+            pendingSeqKey = ""; // Discard pending key since they chose a row from the active grid
+            const container = document.getElementById('ppp_show_active_container');
+            if (container) container.style.display = 'none';
+        } else if (pendingSeqKey) {
+            activeSeqKey = pendingSeqKey;
+            pendingSeqKey = "";
+            const container = document.getElementById('ppp_show_active_container');
+            if (container) container.style.display = 'none';
+        }
+
+        // Always update the form hidden input with the selected key
+        document.getElementById('ppp_sequence_key_input').value = activeSeqKey;
+
+        selectedRowIdx = rowNum;
+        document.getElementById('ppp_row_index_input').value = rowNum;
+
+        // Update row highlights locally
+        const tbody = document.getElementById('ppp-grid-tbody');
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach((r, idx) => {
+            const rNum = parseInt(r.getAttribute('data-row-num'));
+            if (rNum === selectedRowIdx) {
+                r.style.background = '#e0f2fe';
+            } else {
+                r.style.background = (idx % 2 === 0) ? '#f8fafc' : '#ffffff';
+            }
+        });
+
+        const updatedRowElement = document.querySelector(`tr[data-row-num='${rowNum}']`);
+        if (updatedRowElement) {
+            const cells = updatedRowElement.querySelectorAll('.ppp-cell');
+            let passcodeStr = '';
+            cells.forEach(c => passcodeStr += c.innerText);
+
+            document.getElementById('new_password').value = passcodeStr;
+            const confirmInput = document.getElementById('confirm_password');
+            if (confirmInput) {
+                confirmInput.value = '';
+                confirmInput.focus();
+            }
+        }
+    }
+
+    function onLengthChange() {
+        const input = document.getElementById('ppp_length_input');
+        let val = parseInt(input.value) || 30;
+        if (val < 25) val = 25;
+        if (val > 80) val = 80;
+        input.value = val;
+
+        const checkbox = document.getElementById('ppp_show_active_checkbox');
+        const showActive = checkbox && checkbox.checked;
+        const targetKey = showActive ? activeSeqKey : (pendingSeqKey ? pendingSeqKey : activeSeqKey);
+        if (targetKey) {
+            fetchGridPreview(targetKey);
+        }
+    }
+
+    function toggleShowActive() {
+        const checkbox = document.getElementById('ppp_show_active_checkbox');
+        if (!checkbox) return;
+
+        if (checkbox.checked) {
+            fetchGridPreview(activeSeqKey);
+        } else {
+            fetchGridPreview(pendingSeqKey || activeSeqKey);
+        }
+    }
+
+    function copySequenceKey() {
+        const input = document.getElementById('ppp_display_key');
+        if (!input || !input.value) {
+            alert("No sequence key generated yet!");
+            return;
+        }
+        const key = input.value;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(key).then(() => {
+                alert('Sequence Key copied!');
+            }).catch(err => {
+                fallbackCopyText(input);
+            });
+        } else {
+            fallbackCopyText(input);
+        }
+    }
+
+    function fallbackCopyText(input) {
+        try {
+            const wasReadOnly = input.readOnly;
+            input.readOnly = false;
+            input.select();
+            input.setSelectionRange(0, 99999);
+            const successful = document.execCommand('copy');
+            input.readOnly = wasReadOnly;
+            if (successful) {
+                alert('Sequence Key copied!');
+            } else {
+                alert('Failed to copy. Please manually copy the text.');
+            }
+        } catch (err) {
+            alert('Failed to copy. Please manually copy the text.');
+        }
+    }
+
+    // Initialize on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        if (activeSeqKey) {
+            fetchGridPreview(activeSeqKey);
+        }
+    });
+    </script>
+
+    <!-- PRINTABLE PASSCARD SOURCE -->
+    <div id="ppp-printable-card-source" style="display: none;"></div>
 
     <!-- 2. SIGNATURE / INVOICE NAME CARD (ALL USERS) -->
     <div class="settings-card">
@@ -238,6 +1022,7 @@ try {
         </div>
 
         <form method="POST">
+            <?= UI::csrf_field() ?>
             <input type="hidden" name="action" value="update_signature">
             <div class="form-group" style="margin-bottom: 20px;">
                 <label for="display_name">Signature / Approved By Name</label>
@@ -258,6 +1043,7 @@ try {
         </div>
 
         <form method="POST" style="background: #f8fafc; padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
+            <?= UI::csrf_field() ?>
             <input type="hidden" name="action" value="add_user">
             <div style="display: flex; gap: 15px; margin-bottom: 12px;">
                 <div class="form-group" style="flex: 2;">
@@ -274,7 +1060,7 @@ try {
             </div>
             <div class="form-group" style="margin-bottom: 18px;">
                 <label for="staff_password">Assign Password</label>
-                <input type="password" id="staff_password" name="new_password" placeholder="Min 3 characters" required>
+                <input type="password" id="staff_password" name="new_password" placeholder="Min 24 chars, complex (A-Z, a-z, 0-9, symbol)" required>
             </div>
             <button type="submit" class="btn-main" style="width: 100%; height: 44px; border-radius: 10px; background: var(--accent-color); color: white; border: none; font-weight: 800; cursor: pointer;">
                 ⊕ Add New Staff Member
@@ -304,6 +1090,7 @@ try {
                         $btn_style = ($user_role === 'Admin' ? 'background:#e2e8f0; color:#475569;' : 'background:#dcfce7; color:#166534;');
 
                         echo "<form method='POST' style='display:inline;'>
+                                " . UI::csrf_field() . "
                                 <input type='hidden' name='action' value='change_role'>
                                 <input type='hidden' name='target_user' value='" . htmlspecialchars($u['username']) . "'>
                                 <input type='hidden' name='target_role' value='{$next_role}'>
@@ -312,6 +1099,7 @@ try {
 
                         // Revoke Access
                         echo "<form method='POST' style='display:inline;' onsubmit=\"return confirm('Remove access for this user?');\">
+                                " . UI::csrf_field() . "
                                 <input type='hidden' name='action' value='delete_user'>
                                 <input type='hidden' name='del_username' value='" . htmlspecialchars($u['username']) . "'>
                                 <button type='submit' class='btn-delete-small'>Revoke</button>
@@ -334,6 +1122,7 @@ try {
         </div>
 
         <form method="POST" onsubmit="return confirm('This will permanently delete all customers who have never placed an order. Are you sure?');">
+            <?= UI::csrf_field() ?>
             <input type="hidden" name="action" value="cleanup_customers">
             <div style="background: #fef2f2; border: 1px solid #fee2e2; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
                 <h3 style="font-size: 0.9rem; color: #991b1b; margin-bottom: 8px;">Purge Inactive Customers</h3>
@@ -364,6 +1153,7 @@ try {
             <?php endif; ?>
 
             <form method="POST">
+                <?= UI::csrf_field() ?>
                 <input type="hidden" name="action" value="integrity_check">
                 <button type="submit" id="btn-integrity-check" class="btn-main" style="width: 100%; padding: 16px; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.95rem;">
                     🔧 Run Schema Integrity Check
@@ -392,7 +1182,7 @@ try {
                 <?php
                 $dbs = ['customers', 'orders', 'warehouse', 'users', 'calendar'];
                 foreach ($dbs as $db) {
-                    $path = "assets/db/{$db}.db";
+                    $path = __DIR__ . "/../../db/{$db}.db";
                     $size = file_exists($path) ? round(filesize($path) / 1024, 2) . ' KB' : 'Not Created';
                     echo "<div style='display:flex; justify-content:space-between; padding:12px 15px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;'>
                             <span style='font-size:0.8rem; font-weight:800; color:var(--text-secondary); text-transform:uppercase;'>{$db}.db</span>
@@ -403,6 +1193,7 @@ try {
             </div>
 
             <form method="POST">
+                <?= UI::csrf_field() ?>
                 <input type="hidden" name="action" value="optimize_db">
                 <button type="submit" class="btn-main" style="width: 100%; padding: 16px; border-radius: 12px; background: #0369a1; color: white; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
                     ⚡ Optimize System Performance

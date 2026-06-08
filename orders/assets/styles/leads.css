@@ -76,3 +76,20 @@
         max-height: 300px;
     }
 }
+
+/* Live Sync Row Highlight Pulse */
+.row-pulse-highlight {
+    animation: rowPulse 1.5s ease-out;
+}
+
+@keyframes rowPulse {
+    0% {
+        background-color: rgba(34, 197, 94, 0.25); /* light green */
+    }
+    50% {
+        background-color: rgba(34, 197, 94, 0.1);
+    }
+    100% {
+        background-color: transparent;
+    }
+}

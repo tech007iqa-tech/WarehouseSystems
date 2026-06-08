@@ -27,7 +27,7 @@ try {
             $brand = $_POST['update_brand'] ?? '';
             $model = $_POST['update_model'] ?? '';
             $series = $_POST['update_series'] ?? '';
-            $cpu = $_POST['update_cpu'] ?? '';
+            $cpu = trim(($_POST['edit_cpu_series'] ?? '') . ' ' . ($_POST['edit_cpu_gen'] ?? ''));
             $desc = $_POST['update_desc'] ?? '';
 
             $stmt = $conn->prepare("UPDATE items SET brand=?, model=?, series=?, cpu=?, description=?, quantity=?, unit_price=? WHERE id=?");
@@ -81,18 +81,18 @@ foreach($items as $item) $total_units += $item['quantity'];
 
             <div class="batch-meta">
                 <?php if ($customer_info): ?>
-                    <?php if (!empty(trim($customer_info['company_name'] ?? ''))): ?>
-                        <div class="meta-item">
-                            <span class="label">Company Name:</span>
-                            <span class="value"><?= htmlspecialchars($customer_info['company_name']) ?></span>
-                        </div>
-                    <?php endif; ?>
-                    <?php if (!empty(trim($customer_info['contact_name'] ?? ''))): ?>
-                        <div class="meta-item">
-                            <span class="label">Contact Name:</span>
-                            <span class="value"><?= htmlspecialchars($customer_info['contact_name']) ?></span>
-                        </div>
-                    <?php endif; ?>
+                <?php if (!empty(trim($customer_info['company_name'] ?? ''))): ?>
+                <div class="meta-item">
+                    <span class="label">Company Name:</span>
+                    <span class="value"><?= htmlspecialchars($customer_info['company_name']) ?></span>
+                </div>
+                <?php endif; ?>
+                <?php if (!empty(trim($customer_info['contact_name'] ?? ''))): ?>
+                <div class="meta-item">
+                    <span class="label">Contact Name:</span>
+                    <span class="value"><?= htmlspecialchars($customer_info['contact_name']) ?></span>
+                </div>
+                <?php endif; ?>
                 <?php endif; ?>
                 <div class="meta-item">
                     <span class="label">Order ID:</span>
@@ -104,7 +104,8 @@ foreach($items as $item) $total_units += $item['quantity'];
                 </div>
             </div>
 
-            <a href="checkout.php?customer_id=<?= urlencode($current_customer) ?>&order_id=<?= urlencode($current_order) ?>" class="btn-finalize">
+            <a href="checkout.php?customer_id=<?= urlencode($current_customer) ?>&order_id=<?= urlencode($current_order) ?>"
+                class="btn-finalize">
                 Finalize & Checkout →
             </a>
         </div>
@@ -124,26 +125,61 @@ foreach($items as $item) $total_units += $item['quantity'];
                 <div class="form-row">
                     <div class="form-group">
                         <label for="brand">Brand</label>
-                        <input type="text" id="brand" name="brand" list="brand-options" placeholder="Dell, HP..." required>
+                        <input type="text" id="brand" name="brand" list="brand-options" placeholder="Dell, HP..."
+                            required>
                     </div>
                     <div class="form-group">
                         <label for="models">Model</label>
                         <div style="position: relative; display: flex; align-items: center;">
-                            <span id="apple-prefix" style="display: none; position: absolute; left: 12px; color: var(--text-main); font-weight: 700; pointer-events: none;">A-</span>
-                            <input type="text" id="models" name="model" list="model-options" placeholder="A1465..." required style="width: 100%; transition: padding 0.2s;">
+                            <span id="apple-prefix"
+                                style="display: none; position: absolute; left: 12px; color: var(--text-main); font-weight: 700; pointer-events: none;">A-</span>
+                            <input type="text" id="models" name="model" list="model-options" placeholder="A1465..."
+                                required style="width: 100%; transition: padding 0.2s;">
+                            <datalist id="model-options"></datalist>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group">
+                    <div class="form-group" style="flex: 1.2;">
                         <label for="series">Series / Project</label>
-                        <input type="text" id="series" name="series" list="series-options" placeholder="IQA-2024-001">
+                        <input type="text" id="series" name="series" list="series-options" placeholder="E2024-001">
                         <datalist id="series-options"></datalist>
                     </div>
-                    <div class="form-group">
-                        <label for="cpu">CPU / Gen</label>
-                        <input type="text" id="cpu" name="cpu" list="cpu-options" placeholder="i5-8350U">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="cpu_series">CPU</label>
+                        <select id="cpu_series" name="cpu_series" style="width: 100%;">
+                            <option value="" disabled selected hidden><small style="color: rgb(97, 97, 97);">i3, i5, i7,
+                                    i9</small></option>
+                            <option value=""></option>
+                            <option value="i3">i3</option>
+                            <option value="i5">i5</option>
+                            <option value="i7">i7</option>
+                            <option value="i9">i9</option>
+                            <option value="Ryzen 2">Ryzen 2</option>
+                            <option value="Ryzen 3">Ryzen 3</option>
+                            <option value="Ryzen 5">Ryzen 5</option>
+                            <option value="Ryzen 7">Ryzen 7</option>
+                            <option value="Ryzen 9">Ryzen 9</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="cpu_gen">GEN</label>
+                        <input type="text" id="cpu_gen" name="cpu_gen" list="cpu-gen-options"
+                            placeholder="e.g. 8th / 8350U">
+                        <datalist id="cpu-gen-options">
+                            <option value="6th & 7th">
+                            <option value="8th">
+                            <option value="9th">
+                            <option value="10th">
+                            <option value="11th">
+                            <option value="2nd & 3rd">
+                            <option value="4th & 5th">
+                            <option value="12th">
+                            <option value="13th">
+                            <option value="14th">
+                            <option value="Core 2 Duo">
+                        </datalist>
                     </div>
                 </div>
 
@@ -152,10 +188,14 @@ foreach($items as $item) $total_units += $item['quantity'];
                     <textarea id="description" name="description" placeholder="Used, No major defects..."></textarea>
                     <!-- Premium Interactive Keyword Chips -->
                     <div class="keyword-chips-container">
-                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Tested')" data-keyword="Tested">Tested</span>
-                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Untested')" data-keyword="Untested">Untested</span>
-                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Working')" data-keyword="Working">Working</span>
-                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Parts')" data-keyword="Parts">Parts</span>
+                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Tested')"
+                            data-keyword="Tested">Tested</span>
+                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Untested')"
+                            data-keyword="Untested">Untested</span>
+                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Working')"
+                            data-keyword="Working">Working</span>
+                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Parts')"
+                            data-keyword="Parts">Parts</span>
                     </div>
                 </div>
 
@@ -172,29 +212,38 @@ foreach($items as $item) $total_units += $item['quantity'];
 
                 <div class="form-actions" style="display: flex; gap: 10px;">
                     <button type="submit" class="btn-add" style="flex: 2;">Add to Batch</button>
-                    <button type="button" class="btn-repeat" onclick="openImportModal('<?= htmlspecialchars($current_customer) ?>', '<?= htmlspecialchars($current_order) ?>')" title="Import from Clipboard" style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px;">📋 Import</button>
-                    <button type="button" id="btn-repeat-last" class="btn-repeat" onclick="repeatLastEntry()" title="Fill with last entry" style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem; <?= isset($_SESSION['last_entry']) ? '' : 'display: none;' ?>">✨ Repeat Last</button>
+                    <button type="button" class="btn-repeat"
+                        onclick="openImportModal('<?= htmlspecialchars($current_customer) ?>', '<?= htmlspecialchars($current_order) ?>')"
+                        title="Import from Clipboard"
+                        style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px;">📋
+                        Import</button>
+                    <button type="button" id="btn-repeat-last" class="btn-repeat" onclick="repeatLastEntry()"
+                        title="Fill with last entry"
+                        style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem; <?= isset($_SESSION['last_entry']) ? '' : 'display: none;' ?>">✨
+                        Repeat Last</button>
                 </div>
             </form>
         </section>
 
         <!-- Inject Last Entry State -->
         <script type="application/json" id="lastEntryState">
-            <?= json_encode($_SESSION['last_entry'] ?? null) ?>
+        <?= json_encode($_SESSION['last_entry'] ?? null) ?>
         </script>
 
         <section class="summary-section card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
                 <h3>Current Batch Summary</h3>
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <select id="summary-sort" onchange="sortSummary()" style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
+                    <select id="summary-sort" onchange="sortSummary()"
+                        style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
                         <option value="newest">Newest Added</option>
                         <option value="desc_asc">Description</option>
                         <option value="qty_desc">Quantity (High-Low)</option>
                         <option value="price_desc">Price (High-Low)</option>
                     </select>
                     <div class="search-box" style="max-width: 160px; width: 100%;">
-                        <input type="text" id="summary-search" placeholder="Filter items..." onkeyup="filterSummary()" style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; width: 100%;">
+                        <input type="text" id="summary-search" placeholder="Filter items..." onkeyup="filterSummary()"
+                            style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; width: 100%;">
                     </div>
                 </div>
             </div>
@@ -211,34 +260,44 @@ foreach($items as $item) $total_units += $item['quantity'];
                     </thead>
                     <tbody id="summary-list">
                         <?php if (empty($items)): ?>
-                            <tr class="empty-row">
-                                <td colspan="4" style="text-align:center; padding: 40px; color: #94a3b8;">No items added yet.</td>
-                            </tr>
+                        <tr class="empty-row">
+                            <td colspan="4" style="text-align:center; padding: 40px; color: #94a3b8;">No items added
+                                yet.</td>
+                        </tr>
                         <?php else: ?>
-                            <?php foreach ($items as $item): ?>
-                                <tr class="summary-row" data-id="<?= $item['id'] ?>" data-desc="<?= htmlspecialchars($item['description']) ?>" data-qty="<?= $item['quantity'] ?>" data-price="<?= $item['unit_price'] ?>" data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['series'])) ?>">
-                                    <td>
-                                        <div class="item-primary"><?= htmlspecialchars($item['brand']) ?> <?= htmlspecialchars($item['model']) ?></div>
-                                        <div class="item-secondary"><?= htmlspecialchars($item['series']) ?> | <?= htmlspecialchars($item['cpu']) ?></div>
-                                        <?php if(!empty(trim($item['description']))): ?>
-                                            <div class="item-description" style="font-size: 0.75rem; color: #64748b; margin-top: 4px;"><?= nl2br(htmlspecialchars($item['description'])) ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="text-align:center; font-weight:700;"><?= $item['quantity'] ?></td>
-                                    <td style="text-align:right;">$<?= number_format($item['unit_price'], 2) ?></td>
-                                    <td style="text-align:right;">
-                                        <div class="action-buttons">
-                                            <button type="button" class="btn-edit" onclick="openEditModal(<?= htmlspecialchars(json_encode($item)) ?>)">✎</button>
-                                            <form method="POST" style="display:inline;" onsubmit="return confirm('Remove this item?');">
-                                                <input type="hidden" name="action" value="delete">
-                                                <input type="hidden" name="delete_id" value="<?= $item['id'] ?>">
-                                                <?= UI::csrf_field() ?>
-                                                <button type="submit" class="btn-delete">🗑</button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
+                        <?php foreach ($items as $item): ?>
+                        <tr class="summary-row" data-id="<?= $item['id'] ?>"
+                            data-desc="<?= htmlspecialchars($item['description']) ?>"
+                            data-qty="<?= $item['quantity'] ?>" data-price="<?= $item['unit_price'] ?>"
+                            data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['series'])) ?>">
+                            <td>
+                                <div class="item-primary"><?= htmlspecialchars($item['brand']) ?>
+                                    <?= htmlspecialchars($item['model']) ?></div>
+                                <div class="item-secondary"><?= htmlspecialchars($item['series']) ?> |
+                                    <?= htmlspecialchars($item['cpu']) ?></div>
+                                <?php if(!empty(trim($item['description']))): ?>
+                                <div class="item-description"
+                                    style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">
+                                    <?= nl2br(htmlspecialchars($item['description'])) ?></div>
+                                <?php endif; ?>
+                            </td>
+                            <td style="text-align:center; font-weight:700;"><?= $item['quantity'] ?></td>
+                            <td style="text-align:right;">$<?= number_format($item['unit_price'], 2) ?></td>
+                            <td style="text-align:right;">
+                                <div class="action-buttons">
+                                    <button type="button" class="btn-edit"
+                                        onclick="openEditModal(<?= htmlspecialchars(json_encode($item)) ?>)">✎</button>
+                                    <form method="POST" style="display:inline;"
+                                        onsubmit="return confirm('Remove this item?');">
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="delete_id" value="<?= $item['id'] ?>">
+                                        <?= UI::csrf_field() ?>
+                                        <button type="submit" class="btn-delete">🗑</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
                         <?php endif; ?>
                     </tbody>
                 </table>
@@ -259,22 +318,41 @@ foreach($items as $item) $total_units += $item['quantity'];
             <div class="form-row">
                 <div class="form-group">
                     <label for="edit-brand">Brand</label>
-                    <input type="text" name="update_brand" id="edit-brand" required>
+                    <input type="text" name="update_brand" id="edit-brand" list="brand-options" required>
                 </div>
                 <div class="form-group">
                     <label for="edit-model">Model</label>
-                    <input type="text" name="update_model" id="edit-model" required>
+                    <input type="text" name="update_model" id="edit-model" list="edit-model-options" required>
+                    <datalist id="edit-model-options"></datalist>
                 </div>
             </div>
 
             <div class="form-row">
-                <div class="form-group">
+                <div class="form-group" style="flex: 1.2;">
                     <label for="edit-series">Series</label>
-                    <input type="text" name="update_series" id="edit-series">
+                    <input type="text" name="update_series" id="edit-series" list="edit-series-options">
+                    <datalist id="edit-series-options"></datalist>
                 </div>
-                <div class="form-group">
-                    <label for="edit-cpu">CPU</label>
-                    <input type="text" name="update_cpu" id="edit-cpu">
+                <div class="form-group" style="flex: 1;">
+                    <label for="edit-cpu-series">CPU</label>
+                    <select id="edit-cpu-series" name="edit_cpu_series" style="width: 100%;">
+                        <option value="" disabled selected hidden>e.g. i5</option>
+                        <option value=""></option>
+                        <option value="i3">i3</option>
+                        <option value="i5">i5</option>
+                        <option value="i7">i7</option>
+                        <option value="i9">i9</option>
+                        <option value="Ryzen 2">Ryzen 2</option>
+                        <option value="Ryzen 3">Ryzen 3</option>
+                        <option value="Ryzen 5">Ryzen 5</option>
+                        <option value="Ryzen 7">Ryzen 7</option>
+                        <option value="Ryzen 9">Ryzen 9</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="edit-cpu-gen">GEN</label>
+                    <input type="text" name="edit_cpu_gen" id="edit-cpu-gen" list="cpu-gen-options"
+                        placeholder="e.g. 8th">
                 </div>
             </div>
 
@@ -323,32 +401,104 @@ function toggleDescriptionKeyword(keyword) {
 window.toggleDescriptionKeyword = toggleDescriptionKeyword;
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Edit Modal Datalist Filtering Logic
+    const editBrand = document.getElementById('edit-brand');
+    const editModel = document.getElementById('edit-model');
+    const editSeries = document.getElementById('edit-series');
+    const editModelDl = document.getElementById('edit-model-options');
+    const editSeriesDl = document.getElementById('edit-series-options');
+
+    const updateEditSeriesOptions = () => {
+        const selectedBrand = editBrand ? editBrand.value : '';
+        const selectedModel = editModel ? editModel.value.trim() : '';
+        const data = IQA_Inventory[selectedBrand];
+
+        if (editSeriesDl) editSeriesDl.innerHTML = '';
+
+        if (data) {
+            let seriesList = [];
+            if (selectedModel && data.modelSeries && data.modelSeries[selectedModel]) {
+                seriesList = data.modelSeries[selectedModel];
+            } else {
+                seriesList = data.series || [];
+            }
+
+            const val = editSeries ? editSeries.value.trim().toLowerCase() : '';
+            let filtered = seriesList;
+            if (val.length >= 1) {
+                filtered = seriesList.filter(s => s.toLowerCase().startsWith(val));
+            }
+            if (editSeriesDl) {
+                editSeriesDl.innerHTML = filtered.map(s => `<option value="${s}">`).join('');
+            }
+        }
+    };
+
+    const updateEditModelOptions = () => {
+        const selectedBrand = editBrand ? editBrand.value : '';
+        const data = IQA_Inventory[selectedBrand];
+        if (editModelDl) editModelDl.innerHTML = '';
+
+        if (data && data.models) {
+            editModelDl.innerHTML = data.models.map(m => `<option value="${m}">`).join('');
+        }
+        updateEditSeriesOptions();
+    };
+
+    if (editBrand) {
+        editBrand.addEventListener('change', updateEditModelOptions);
+        editBrand.addEventListener('input', updateEditModelOptions);
+    }
+    if (editModel) {
+        editModel.addEventListener('input', updateEditSeriesOptions);
+        editModel.addEventListener('change', updateEditSeriesOptions);
+    }
+    if (editSeries) {
+        editSeries.addEventListener('input', updateEditSeriesOptions);
+        editSeries.addEventListener('focus', updateEditSeriesOptions);
+    }
+
+    // Expose dynamic sync trigger globally for openEditModal
+    window.triggerEditModalDatalistSync = () => {
+        updateEditModelOptions();
+    };
+
     const form = document.getElementById('ajax-batch-form');
     if (!form) return;
 
     const brandInput = form.querySelector('[name="brand"]');
     const modelInput = form.querySelector('[name="model"]');
     const seriesInput = form.querySelector('[name="series"]');
-    const cpuInput = form.querySelector('[name="cpu"]');
+    const cpuGenInput = document.getElementById('cpu_gen');
     const applePrefix = document.getElementById('apple-prefix');
 
     const updateAppleUI = () => {
-        if (brandInput.value.trim().toLowerCase() === 'apple') {
+        const brandLower = brandInput.value.trim().toLowerCase();
+        const keepDash = (brandLower === 'apple' || brandLower === 'other');
+
+        if (brandLower === 'apple') {
             if (applePrefix) applePrefix.style.display = 'block';
             if (modelInput) modelInput.style.paddingLeft = '32px';
-
-            if (!seriesInput.value) seriesInput.value = '-';
-            if (!cpuInput.value) cpuInput.value = '-';
-
-            // Clean up any existing 'A' or 'A-' they might have typed
-            if (modelInput && modelInput.value.toUpperCase().startsWith('A-')) {
-                modelInput.value = modelInput.value.substring(2);
-            } else if (modelInput && modelInput.value.toUpperCase().startsWith('A')) {
-                modelInput.value = modelInput.value.substring(1);
-            }
         } else {
             if (applePrefix) applePrefix.style.display = 'none';
             if (modelInput) modelInput.style.paddingLeft = '';
+        }
+
+        if (keepDash) {
+            if (!seriesInput.value || seriesInput.value === '') seriesInput.value = '-';
+            if (cpuGenInput && (!cpuGenInput.value || cpuGenInput.value === '')) cpuGenInput.value = '-';
+        } else {
+            if (seriesInput && seriesInput.value === '-') seriesInput.value = '';
+            if (cpuGenInput && cpuGenInput.value === '-') cpuGenInput.value = '';
+        }
+
+        // Clean up any existing 'A' or 'A-' they might have typed
+        if (brandLower === 'apple' && modelInput) {
+            if (modelInput.value.toUpperCase().startsWith('A-')) {
+                modelInput.value = modelInput.value.substring(2);
+            } else if (modelInput.value.toUpperCase().startsWith('A')) {
+                modelInput.value = modelInput.value.substring(1);
+            }
         }
     };
 
@@ -363,11 +513,41 @@ function openEditModal(item) {
     document.getElementById('edit-brand').value = item.brand;
     document.getElementById('edit-model').value = item.model;
     document.getElementById('edit-series').value = item.series;
-    document.getElementById('edit-cpu').value = item.cpu;
+
+    let cpuSeries = '';
+    let cpuGen = '';
+    if (item.cpu) {
+        const cpuStr = item.cpu.trim();
+        const parts = cpuStr.split(/\s+/);
+        if (parts.length > 0) {
+            if (parts[0].toLowerCase() === 'ryzen' && parts.length > 1) {
+                cpuSeries = parts[0] + ' ' + parts[1];
+                cpuGen = parts.slice(2).join(' ');
+            } else {
+                cpuSeries = parts[0];
+                cpuGen = parts.slice(1).join(' ');
+            }
+        }
+    }
+    const editCpuSeriesEl = document.getElementById('edit-cpu-series');
+    if (editCpuSeriesEl) {
+        const optionExists = Array.from(editCpuSeriesEl.options).some(opt => opt.value === cpuSeries);
+        if (optionExists) {
+            editCpuSeriesEl.value = cpuSeries;
+            document.getElementById('edit-cpu-gen').value = cpuGen;
+        } else {
+            editCpuSeriesEl.value = '';
+            document.getElementById('edit-cpu-gen').value = item.cpu || '';
+        }
+    }
+
     document.getElementById('edit-desc').value = item.description;
     document.getElementById('edit-qty').value = item.quantity;
     document.getElementById('edit-price').value = item.unit_price;
     document.getElementById('editModal').style.display = 'flex';
+    if (window.triggerEditModalDatalistSync) {
+        window.triggerEditModalDatalistSync();
+    }
     location.hash = '#summary-list'; // Jump to batch-builder-top
 }
 
@@ -428,7 +608,6 @@ function repeatLastEntry() {
         'brand': lastEntry.brand,
         'model': lastEntry.model,
         'series': lastEntry.series,
-        'cpu': lastEntry.cpu,
         'description': lastEntry.description || ''
     };
 
@@ -438,12 +617,43 @@ function repeatLastEntry() {
             input.value = fields[key];
             // Visual feedback
             input.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-            setTimeout(() => { input.style.backgroundColor = ''; }, 600);
+            setTimeout(() => {
+                input.style.backgroundColor = '';
+            }, 600);
             if (key === 'description') {
                 input.dispatchEvent(new Event('input'));
             }
         }
     });
+
+    // Parse and repeat CPU fields
+    const cpuVal = lastEntry.cpu || '';
+    let cpuSeries = '';
+    let cpuGenText = '';
+    if (cpuVal.toLowerCase().startsWith('ryzen ')) {
+        const parts = cpuVal.split(' ');
+        cpuSeries = parts.slice(0, 2).join(' ');
+        cpuGenText = parts.slice(2).join(' ');
+    } else {
+        const parts = cpuVal.split(' ');
+        cpuSeries = parts[0] || '';
+        cpuGenText = parts.slice(1).join(' ');
+    }
+
+    if (form.cpu_series) {
+        form.cpu_series.value = cpuSeries;
+        form.cpu_series.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        setTimeout(() => {
+            form.cpu_series.style.backgroundColor = '';
+        }, 600);
+    }
+    if (form.cpu_gen) {
+        form.cpu_gen.value = cpuGenText;
+        form.cpu_gen.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        setTimeout(() => {
+            form.cpu_gen.style.backgroundColor = '';
+        }, 600);
+    }
 }
 
 async function handleBatchSubmit(event) {
@@ -457,6 +667,12 @@ async function handleBatchSubmit(event) {
     btn.textContent = 'Adding...';
 
     const formData = new FormData(form);
+
+    // Combine CPU Series and CPU Gen
+    const cpuSeriesVal = form.cpu_series.value;
+    const cpuGenVal = form.cpu_gen.value;
+    const combinedCpu = (cpuSeriesVal + ' ' + cpuGenVal).trim();
+    formData.set('cpu', combinedCpu);
 
     // Ensure the model actually gets the A- prefix if brand is Apple
     if (formData.get('brand').trim().toLowerCase() === 'apple') {
@@ -495,7 +711,9 @@ async function handleBatchSubmit(event) {
             // Remove flash-new once animation ends so it can replay next time
             const newRow = tbody.querySelector('.flash-new');
             if (newRow) {
-                newRow.addEventListener('animationend', () => newRow.classList.remove('flash-new'), { once: true });
+                newRow.addEventListener('animationend', () => newRow.classList.remove('flash-new'), {
+                    once: true
+                });
             }
 
             // 2. Update Sidebar Total
@@ -545,32 +763,105 @@ async function handleBatchSubmit(event) {
 </script>
 
 <!-- Import Modal -->
-<div id="import-modal" class="modal-overlay" style="display: none; overflow-y: auto; align-items: flex-start; padding: 20px 10px;" onclick="closeImportModal()">
+<div id="import-modal" class="modal-overlay"
+    style="display: none; overflow-y: auto; align-items: flex-start; padding: 20px 10px;" onclick="closeImportModal()">
     <div class="modal-card" onclick="event.stopPropagation()" style="max-width: 800px; width: 95%; margin: auto;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="font-weight: 900; margin: 0; font-size: 1.5rem; text-align: left;">📋 Import Batch from Clipboard</h2>
-            <button class="btn-repeat" onclick="closeImportModal()" style="border: none; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900;">✖</button>
+            <h2 style="font-weight: 900; margin: 0; font-size: 1.5rem; text-align: left;">📦 Batch Import Center</h2>
+            <button class="btn-repeat" onclick="closeImportModal()"
+                style="border: none; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 900;">✖</button>
         </div>
+
+        <!-- Tabs Header -->
+        <div class="import-tabs"
+            style="display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: 20px; gap: 10px;">
+            <button type="button" onclick="switchImportTab('clipboard')" id="tab-btn-clipboard" class="import-tab-btn"
+                style="padding: 10px 20px; font-weight: 800; border: none; background: none; border-bottom: 3px solid var(--accent-color); cursor: pointer; color: var(--text-main); font-size: 0.95rem; outline: none;">📋
+                Clipboard</button>
+            <button type="button" onclick="switchImportTab('warehouse')" id="tab-btn-warehouse" class="import-tab-btn"
+                style="padding: 10px 20px; font-weight: 700; border: none; background: none; border-bottom: 3px solid transparent; cursor: pointer; color: #64748b; font-size: 0.95rem; outline: none;">📦
+                Warehouse Stock</button>
+        </div>
+
         <div style="padding: 0;">
-            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px; text-align: left;">
-                Paste your data below. Delimiter format is auto-detected. Excel/Sheets and CSV lists are fully supported.
-            </p>
+            <!-- Tab 1: Clipboard -->
+            <div id="import-tab-clipboard-content">
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px; text-align: left;">
+                    Paste your data below. Delimiter format is auto-detected. Excel/Sheets and CSV lists are fully
+                    supported.
+                </p>
 
-            <textarea id="import-paste-area" placeholder="Paste rows here..." style="width: 100%; height: 250px; border-radius: 12px; border: 2px solid #e2e8f0; padding: 15px; font-family: monospace; font-size: 0.85rem; resize: none; margin-bottom: 20px; outline: none; transition: border-color 0.2s; background: #f8fafc;" onfocus="this.style.borderColor='var(--accent-color)'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+                <textarea id="import-paste-area" placeholder="Paste rows here..."
+                    style="width: 100%; height: 250px; border-radius: 12px; border: 2px solid #e2e8f0; padding: 15px; font-family: monospace; font-size: 0.85rem; resize: none; margin-bottom: 20px; outline: none; transition: border-color 0.2s; background: #f8fafc;"
+                    onfocus="this.style.borderColor='var(--accent-color)'"
+                    onblur="this.style.borderColor='#e2e8f0'"></textarea>
 
-            <div id="import-preview" style="margin-bottom: 20px; display: none;">
-                <div id="import-mapping-info"></div>
-                <h3 style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; text-align: left;">Preview: <span id="import-row-count">0</span> rows detected</h3>
-                <div style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.7rem; background: #f8fafc;">
-                    <table style="width: 100%; border-collapse: collapse; table-layout: fixed;" id="import-preview-table">
-                        <!-- Populated by JS -->
-                    </table>
+                <div id="import-preview" style="margin-bottom: 20px; display: none;">
+                    <div id="import-mapping-info"></div>
+                    <h3
+                        style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; text-align: left;">
+                        Preview: <span id="import-row-count">0</span> rows detected</h3>
+                    <div
+                        style="max-height: 200px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.7rem; background: #f8fafc;">
+                        <table style="width: 100%; border-collapse: collapse; table-layout: fixed;"
+                            id="import-preview-table">
+                            <!-- Populated by JS -->
+                        </table>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" onclick="processImport()" id="btn-submit-import" class="btn-save"
+                        style="flex: 2; height: 50px; font-weight: 800; cursor: pointer; border: none; border-radius: 12px;">🚀
+                        Start Bulk Import</button>
+                    <button type="button" onclick="closeImportModal()" class="btn-cancel"
+                        style="flex: 1; height: 50px; font-weight: 700; cursor: pointer; border: none; border-radius: 12px;">Cancel</button>
                 </div>
             </div>
 
-            <div style="display: flex; gap: 10px;">
-                <button type="button" onclick="processImport()" id="btn-submit-import" class="btn-save" style="flex: 2; height: 50px; font-weight: 800; cursor: pointer; border: none; border-radius: 12px;">🚀 Start Bulk Import</button>
-                <button type="button" onclick="closeImportModal()" class="btn-cancel" style="flex: 1; height: 50px; font-weight: 700; cursor: pointer; border: none; border-radius: 12px;">Cancel</button>
+            <!-- Tab 2: Warehouse Stock -->
+            <div id="import-tab-warehouse-content" style="display: none;">
+                <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 20px; text-align: left;">
+                    Search and select items from the warehouse system to copy into this order. Selected items will be
+                    flagged in the warehouse system for manual deletion.
+                </p>
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="wh-import-q" onkeyup="searchWarehouseImport()"
+                        placeholder="Search by brand, model, location, or specs..."
+                        style="width: 100%; height: 44px; padding: 0 15px; border-radius: 10px; border: 1px solid var(--border-color); outline: none;">
+                </div>
+
+                <div
+                    style="max-height: 250px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; background: #f8fafc;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.8rem;"
+                        id="wh-import-table">
+                        <thead>
+                            <tr style="background: #f1f5f9; position: sticky; top: 0; z-index: 10;">
+                                <th style="padding: 10px; width: 40px; text-align: center;"><input type="checkbox"
+                                        id="wh-import-select-all" onchange="toggleAllWarehouseImport(this)"></th>
+                                <th style="padding: 10px; width: 120px;">Location</th>
+                                <th style="padding: 10px; width: 220px;">Make/Model</th>
+                                <th style="padding: 10px; width: 60px; text-align: center;">QTY</th>
+                                <th style="padding: 10px; width: 90px; text-align: right;">Price</th>
+                                <th style="padding: 10px;">Specs/Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wh-import-list">
+                            <tr>
+                                <td colspan="6" style="padding: 30px; text-align: center; color: #94a3b8;">Type above to
+                                    search warehouse stock.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" onclick="submitWarehouseImport()" id="btn-submit-wh-import" class="btn-save"
+                        style="flex: 2; height: 50px; font-weight: 800; cursor: pointer; border: none; border-radius: 12px;">🚀
+                        Import Selected Stock</button>
+                    <button type="button" onclick="closeImportModal()" class="btn-cancel"
+                        style="flex: 1; height: 50px; font-weight: 700; cursor: pointer; border: none; border-radius: 12px;">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
@@ -579,6 +870,196 @@ async function handleBatchSubmit(event) {
 <script>
 let activeImportCustomerId = null;
 let activeImportOrderId = null;
+let whImportItems = [];
+
+function switchImportTab(tab) {
+    const isClipboard = tab === 'clipboard';
+
+    document.getElementById('import-tab-clipboard-content').style.display = isClipboard ? 'block' : 'none';
+    document.getElementById('import-tab-warehouse-content').style.display = isClipboard ? 'none' : 'block';
+
+    const clipBtn = document.getElementById('tab-btn-clipboard');
+    const whBtn = document.getElementById('tab-btn-warehouse');
+
+    if (isClipboard) {
+        clipBtn.style.borderBottom = '3px solid var(--accent-color)';
+        clipBtn.style.color = 'var(--text-main)';
+        clipBtn.style.fontWeight = '800';
+        whBtn.style.borderBottom = '3px solid transparent';
+        whBtn.style.color = '#64748b';
+        whBtn.style.fontWeight = '700';
+    } else {
+        whBtn.style.borderBottom = '3px solid var(--accent-color)';
+        whBtn.style.color = 'var(--text-main)';
+        whBtn.style.fontWeight = '800';
+        clipBtn.style.borderBottom = '3px solid transparent';
+        clipBtn.style.color = '#64748b';
+        clipBtn.style.fontWeight = '700';
+
+        // Auto-focus the search field in warehouse tab
+        setTimeout(() => {
+            const searchField = document.getElementById('wh-import-q');
+            if (searchField) {
+                searchField.value = '';
+                searchField.focus();
+                searchWarehouseImport();
+            }
+        }, 50);
+    }
+}
+
+async function searchWarehouseImport() {
+    const q = document.getElementById('wh-import-q').value;
+    const list = document.getElementById('wh-import-list');
+    const selectAll = document.getElementById('wh-import-select-all');
+    if (selectAll) selectAll.checked = false;
+
+    list.innerHTML =
+        `<tr><td colspan="6" style="padding: 30px; text-align: center; color: #94a3b8;">Loading warehouse stock...</td></tr>`;
+
+    try {
+        const response = await fetch(`api/get_warehouse_stock.php?q=${encodeURIComponent(q)}`);
+        if (!response.ok) throw new Error("API error");
+        whImportItems = await response.json();
+
+        if (whImportItems.length === 0) {
+            list.innerHTML =
+                `<tr><td colspan="6" style="padding: 30px; text-align: center; color: #94a3b8;">No matching warehouse stock found.</td></tr>`;
+            return;
+        }
+
+        list.innerHTML = whImportItems.map((item, idx) => {
+            const specNotes = item.specs?.notes || '';
+            const cpu = item.specs?.cpu || '';
+            const ram = item.specs?.ram || '';
+            const storage = item.specs?.storage || '';
+            const specsStr = [cpu, ram, storage, specNotes].filter(Boolean).join(' | ');
+
+            return `
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 10px; text-align: center;"><input type="checkbox" class="wh-import-row-select" data-index="${idx}"></td>
+                    <td style="padding: 10px;"><span class="location-tag" style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 0.75rem;">${escapeHTML(item.location_code)}</span></td>
+                    <td style="padding: 10px; font-weight: 600;">${escapeHTML(item.brand)} ${escapeHTML(item.model)}</td>
+                    <td style="padding: 10px; text-align: center; font-weight: 700;">${item.quantity}</td>
+                    <td style="padding: 10px; text-align: right;">$${parseFloat(item.price || 0).toFixed(2)}</td>
+                    <td style="padding: 10px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;" title="${escapeHTML(specsStr)}">${escapeHTML(specsStr)}</td>
+                </tr>
+            `;
+        }).join('');
+    } catch (err) {
+        console.error(err);
+        list.innerHTML =
+            `<tr><td colspan="6" style="padding: 30px; text-align: center; color: #ef4444;">Failed to fetch stock from warehouse.</td></tr>`;
+    }
+}
+
+function toggleAllWarehouseImport(master) {
+    const checkboxes = document.querySelectorAll('.wh-import-row-select');
+    checkboxes.forEach(cb => cb.checked = master.checked);
+}
+
+async function submitWarehouseImport() {
+    const checkboxes = document.querySelectorAll('.wh-import-row-select:checked');
+    if (checkboxes.length === 0) {
+        alert("Please select at least one warehouse item to import.");
+        return;
+    }
+
+    const btn = document.getElementById('btn-submit-wh-import');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ Importing...';
+    btn.disabled = true;
+
+    const itemsToImport = [];
+    const whIds = [];
+    checkboxes.forEach(cb => {
+        const idx = parseInt(cb.getAttribute('data-index'));
+        const item = whImportItems[idx];
+        if (item) {
+            whIds.push(item.id);
+
+            // Reconstruct the description
+            const specNotes = item.specs?.notes || '';
+            const cpu = item.specs?.cpu || '';
+            const ram = item.specs?.ram || '';
+            const storage = item.specs?.storage || '';
+            const battery = item.specs?.battery ? 'Battery: ' + item.specs.battery : '';
+            const condition = item.specs?.condition || '';
+            const series = item.specs?.series || '';
+
+            let extraDesc = [condition, battery, specNotes].filter(Boolean).join(' | ');
+            if (extraDesc) {
+                extraDesc += ' | ';
+            }
+            extraDesc += `[Warehouse Location: ${item.location_code} - Flagged for Deletion]`;
+
+            itemsToImport.push({
+                brand: item.brand,
+                model: item.model,
+                series: series || 'Warehouse Import',
+                cpu: cpu || '',
+                description: extraDesc,
+                quantity: item.quantity,
+                unit_price: item.price || 0
+            });
+        }
+    });
+
+    const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
+
+    try {
+        // First, add the items to the order
+        const importResponse = await fetch('api/bulk_update_orders.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'bulk_import',
+                csrf_token: csrfToken,
+                customer_id: activeImportCustomerId,
+                order_id: activeImportOrderId,
+                items: itemsToImport
+            })
+        });
+
+        const importResult = await importResponse.json();
+        if (!importResult.success) {
+            throw new Error(importResult.error || "Failed to add items to order.");
+        }
+
+        // Second, flag the warehouse items for manual deletion (status = 'Pending Delete')
+        const flagResponse = await fetch('api/bulk_update_inventory.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                csrf_token: csrfToken,
+                ids: whIds,
+                location: '',
+                price: '',
+                status: 'Pending Delete'
+            })
+        });
+
+        const flagResult = await flagResponse.json();
+        if (!flagResult.success) {
+            console.error("Failed to flag warehouse items:", flagResult.error);
+        }
+
+        btn.innerHTML = '✅ Success!';
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+
+    } catch (e) {
+        console.error(e);
+        alert("Import failed: " + e.message);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
 
 function openImportModal(customerId, orderId) {
     activeImportCustomerId = customerId;
@@ -587,6 +1068,7 @@ function openImportModal(customerId, orderId) {
     const area = document.getElementById('import-paste-area');
     if (modal) {
         modal.style.display = 'flex';
+        switchImportTab('clipboard'); // default to Clipboard tab on open
         if (area) {
             area.value = '';
             area.focus();
@@ -609,15 +1091,41 @@ function escapeHTML(str) {
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;'
-    }[m]));
+    } [m]));
 }
 
 // Smart paste parsing with delimiter detection & dynamic header matching
 function parsePastedText(text) {
-    if (!text.trim()) return { items: [], mapping: { brand: -1, model: -1, series: -1, cpu: -1, description: -1, price: -1, qty: -1, hasHeader: false, delimiterName: 'Tab' } };
+    if (!text.trim()) return {
+        items: [],
+        mapping: {
+            brand: -1,
+            model: -1,
+            series: -1,
+            cpu: -1,
+            description: -1,
+            price: -1,
+            qty: -1,
+            hasHeader: false,
+            delimiterName: 'Tab'
+        }
+    };
 
     const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
-    if (lines.length === 0) return { items: [], mapping: { brand: -1, model: -1, series: -1, cpu: -1, description: -1, price: -1, qty: -1, hasHeader: false, delimiterName: 'Tab' } };
+    if (lines.length === 0) return {
+        items: [],
+        mapping: {
+            brand: -1,
+            model: -1,
+            series: -1,
+            cpu: -1,
+            description: -1,
+            price: -1,
+            qty: -1,
+            hasHeader: false,
+            delimiterName: 'Tab'
+        }
+    };
 
     let tabCount = 0;
     let commaCount = 0;
@@ -677,13 +1185,31 @@ function parsePastedText(text) {
         const firstRow = parsedRows[0];
         firstRow.forEach((col, idx) => {
             const colLower = col.toLowerCase().trim();
-            if (colLower.includes('brand')) { brandIdx = idx; hasHeader = true; }
-            else if (colLower.includes('model')) { modelIdx = idx; hasHeader = true; }
-            else if (colLower.includes('series')) { seriesIdx = idx; hasHeader = true; }
-            else if (colLower.includes('cpu') || colLower.includes('processor')) { cpuIdx = idx; hasHeader = true; }
-            else if (colLower.includes('desc') || colLower.includes('description') || colLower.includes('spec')) { descIdx = idx; hasHeader = true; }
-            else if (colLower.includes('price') || colLower.includes('value') || colLower.includes('cost') || colLower.includes('unit_price')) { priceIdx = idx; hasHeader = true; }
-            else if (colLower.includes('qty') || colLower.includes('quantity') || colLower.includes('count') || colLower.includes('units')) { qtyIdx = idx; hasHeader = true; }
+            if (colLower.includes('brand')) {
+                brandIdx = idx;
+                hasHeader = true;
+            } else if (colLower.includes('model')) {
+                modelIdx = idx;
+                hasHeader = true;
+            } else if (colLower.includes('series')) {
+                seriesIdx = idx;
+                hasHeader = true;
+            } else if (colLower.includes('cpu') || colLower.includes('processor')) {
+                cpuIdx = idx;
+                hasHeader = true;
+            } else if (colLower.includes('desc') || colLower.includes('description') || colLower.includes(
+                    'spec')) {
+                descIdx = idx;
+                hasHeader = true;
+            } else if (colLower.includes('price') || colLower.includes('value') || colLower.includes('cost') ||
+                colLower.includes('unit_price')) {
+                priceIdx = idx;
+                hasHeader = true;
+            } else if (colLower.includes('qty') || colLower.includes('quantity') || colLower.includes(
+                'count') || colLower.includes('units')) {
+                qtyIdx = idx;
+                hasHeader = true;
+            }
         });
     }
 
@@ -782,7 +1308,10 @@ function parsePastedText(text) {
         delimiterName: delimiter === '\t' ? 'Tab (Excel/Sheets)' : delimiter === ',' ? 'CSV (Comma)' : 'Semicolon'
     };
 
-    return { items, mapping };
+    return {
+        items,
+        mapping
+    };
 }
 
 async function processImport() {
@@ -796,7 +1325,9 @@ async function processImport() {
 
     const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
 
-    const { items } = parsePastedText(area.value);
+    const {
+        items
+    } = parsePastedText(area.value);
     if (items.length === 0) {
         alert("No valid items detected to import.");
         btn.innerHTML = originalBtnText;
@@ -807,7 +1338,9 @@ async function processImport() {
     try {
         const response = await fetch('api/bulk_update_orders.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 action: 'bulk_import',
                 csrf_token: csrfToken,
@@ -821,7 +1354,9 @@ async function processImport() {
         if (result.success) {
             btn.innerHTML = '✅ Success!';
             setTimeout(() => {
-                window.location.href = 'index.php?customer_id=' + encodeURIComponent(activeImportCustomerId) + '&order_id=' + encodeURIComponent(activeImportOrderId) + '#batch-builder-top';
+                window.location.href = 'index.php?customer_id=' + encodeURIComponent(
+                    activeImportCustomerId) + '&order_id=' + encodeURIComponent(activeImportOrderId) +
+                    '#batch-builder-top';
                 window.location.reload();
             }, 1000);
         } else {
@@ -852,7 +1387,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const { items, mapping } = parsePastedText(text);
+            const {
+                items,
+                mapping
+            } = parsePastedText(text);
 
             // Show detected row count
             count.textContent = items.length;
@@ -904,4 +1442,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 </script>
-

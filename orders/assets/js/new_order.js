@@ -1,5 +1,5 @@
 /**
- * IQA Metal — Batch Builder Logic
+ * System — Batch Builder Logic
  * Merged & Modernized into a single external module.
  */
 
@@ -24,27 +24,82 @@ function initFormDatalists() {
     const modelInput = document.getElementById('models');
     const seriesInput = document.getElementById('series');
 
+    const cpuGenInput = document.getElementById('cpu_gen');
+
     // Populate CPU list once
     if (cpuDatalist) {
         cpuDatalist.innerHTML = cpuGenerations.map(cpu => `<option value="${cpu}">`).join('');
     }
 
+    const updateSeriesOptions = () => {
+        const selectedBrand = brandSelect ? brandSelect.value : '';
+        const selectedModel = modelInput ? modelInput.value.trim() : '';
+        const data = IQA_Inventory[selectedBrand];
+
+        if (seriesDatalist) seriesDatalist.innerHTML = '';
+
+        if (data) {
+            let seriesList = [];
+            if (selectedModel && data.modelSeries && data.modelSeries[selectedModel]) {
+                seriesList = data.modelSeries[selectedModel];
+            } else {
+                seriesList = data.series || [];
+            }
+
+            const val = seriesInput ? seriesInput.value.trim().toLowerCase() : '';
+            let filtered = seriesList;
+            if (val.length >= 1) {
+                filtered = seriesList.filter(s => s.toLowerCase().startsWith(val));
+            }
+            if (seriesDatalist) {
+                seriesDatalist.innerHTML = filtered.map(s => `<option value="${s}">`).join('');
+            }
+        }
+    };
+
     if (brandSelect) {
         brandSelect.addEventListener('change', (e) => {
             const selectedBrand = e.target.value;
             const data = IQA_Inventory[selectedBrand];
+            const brandLower = selectedBrand.trim().toLowerCase();
+            const keepDash = (brandLower === 'apple' || brandLower === 'other');
 
             if (modelInput) modelInput.value = '';
-            if (seriesInput) seriesInput.value = '';
+            
+            if (seriesInput) {
+                if (keepDash) {
+                    seriesInput.value = '-';
+                } else if (seriesInput.value === '-') {
+                    seriesInput.value = '';
+                }
+            }
+            
+            if (cpuGenInput) {
+                if (keepDash) {
+                    cpuGenInput.value = '-';
+                } else if (cpuGenInput.value === '-') {
+                    cpuGenInput.value = '';
+                }
+            }
 
             if (modelDatalist) modelDatalist.innerHTML = '';
             if (seriesDatalist) seriesDatalist.innerHTML = '';
 
             if (data) {
-                if (seriesDatalist) seriesDatalist.innerHTML = data.series.map(s => `<option value="${s}">`).join('');
                 if (modelDatalist) modelDatalist.innerHTML = data.models.map(m => `<option value="${m}">`).join('');
+                updateSeriesOptions();
             }
         });
+    }
+
+    if (modelInput) {
+        modelInput.addEventListener('input', updateSeriesOptions);
+        modelInput.addEventListener('change', updateSeriesOptions);
+    }
+
+    if (seriesInput) {
+        seriesInput.addEventListener('input', updateSeriesOptions);
+        seriesInput.addEventListener('focus', updateSeriesOptions);
     }
 }
 

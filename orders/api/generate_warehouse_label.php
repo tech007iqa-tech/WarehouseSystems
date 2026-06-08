@@ -3,10 +3,23 @@
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../core/warehouse_db.php';
-require_once __DIR__ . '/../../core/Security.php';
-require_once __DIR__ . '/../../labels/includes/db.php';
-require_once __DIR__ . '/../../labels/includes/functions.php';
-require_once __DIR__ . '/../../labels/includes/hardware_mapping.php';
+require_once __DIR__ . '/../core/Security.php';
+require_once __DIR__ . '/../core/Audit.php';
+
+function send_json_response($success, $data = null, $error = null) {
+    echo json_encode([
+        'success' => $success,
+        'data' => $data,
+        'error' => $error
+    ]);
+    exit;
+}
+
+session_start();
+if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+    http_response_code(401);
+    send_json_response(false, null, "Unauthorized access.");
+}
 
 try {
     // 1. Security Check
@@ -30,18 +43,16 @@ try {
 
     $specs = json_decode($item['specs_json'], true) ?: [];
 
-    // 3. Map Data from Warehouse Inventory to Label structure
-    $brand    = sanitize_text($item['brand'] ?? '');
-    $model    = sanitize_text($item['model'] ?? '');
-    $series   = sanitize_text($specs['series'] ?? '');
-    $cpu_gen  = sanitize_text($specs['gen'] ?? $specs['cpu_gen'] ?? '');
-    $cpu_specs= sanitize_text($specs['cpu'] ?? '');
-    $cpu_cores= null;
-    $cpu_speed= null;
-    $ram      = sanitize_text($specs['ram'] ?? '');
-    $storage  = sanitize_text($specs['storage'] ?? '');
-    $gpu      = sanitize_text($specs['gpu'] ?? '');
-    $os_version = sanitize_text($specs['windows'] ?? '');
+    // 3. Map Data
+    $brand    = $item['brand'] ?? '';
+    $model    = $item['model'] ?? '';
+    $series   = $specs['series'] ?? '';
+    $cpu_gen  = $specs['gen'] ?? $specs['cpu_gen'] ?? '';
+    $cpu_specs= $specs['cpu'] ?? '';
+    $ram      = $specs['ram'] ?? '';
+    $storage  = $specs['storage'] ?? '';
+    $gpu      = $specs['gpu'] ?? '';
+    $os_version = $specs['windows'] ?? '';
     
     // Normalize battery to 1 or 0
     $battery_val = $specs['battery'] ?? '';
@@ -50,91 +61,15 @@ try {
         $battery = (stripos($battery_val, 'missing') !== false || stripos($battery_val, 'no') !== false) ? 0 : 1;
     }
 
-    $bios_state = 'Unknown';
-    $description = sanitize_text($specs['condition'] ?? 'Untested');
-    $warehouse_location = sanitize_text($item['location_code'] ?? 'Unassigned');
+    $bios_state = $specs['bios'] ?? 'Unknown';
+    $description = $specs['condition'] ?? 'Untested';
+    $warehouse_location = $item['location_code'] ?? 'Unassigned';
 
-    $F = HW_FIELDS;
+    // Log audit event locally
+    $summary = "Warehouse Intake Label: Generated for $brand $model" . ($series ? " ($series)" : "");
+    Audit::log('LABEL_GENERATED', $id, $summary, 'warehouse');
 
-    // 4. Duplicate Check in labels.sqlite
-    $check_stmt = $pdo_labels->prepare("
-        SELECT id FROM items
-        WHERE " . $F['BRAND'] . " = :brand
-        AND " . $F['MODEL'] . " = :model
-        AND (" . $F['SERIES'] . " = :series OR (" . $F['SERIES'] . " IS NULL AND :series_null IS NULL))
-        AND (" . $F['CPU_SPECS'] . " = :cpu_specs OR (" . $F['CPU_SPECS'] . " IS NULL AND :cpu_specs_null IS NULL))
-        AND " . $F['BIOS_STATE'] . " = :bios_state
-        AND " . $F['DESCRIPTION'] . " = :description
-        AND (" . $F['LOCATION'] . " = :location OR (" . $F['LOCATION'] . " IS NULL AND :location_null IS NULL))
-        AND " . $F['STATUS'] . " = 'In Warehouse'
-        LIMIT 1
-    ");
-
-    $check_stmt->execute([
-        ':brand'     => $brand,
-        ':model'     => $model,
-        ':series'    => $series, ':series_null' => $series,
-        ':cpu_specs' => $cpu_specs, ':cpu_specs_null' => $cpu_specs,
-        ':bios_state'=> $bios_state,
-        ':description'=> $description,
-        ':location'  => $warehouse_location, ':location_null' => $warehouse_location
-    ]);
-
-    $existing_item = $check_stmt->fetch(PDO::FETCH_ASSOC);
-
-    if ($existing_item) {
-        $label_id = $existing_item['id'];
-        $is_duplicate = true;
-    } else {
-        // 5. Insert new row into labels.sqlite
-        $is_duplicate = false;
-        $stmt_ins = $pdo_labels->prepare("
-            INSERT INTO items (
-                " . $F['BRAND'] . ",
-                " . $F['MODEL'] . ",
-                " . $F['SERIES'] . ",
-                " . $F['CPU_GEN'] . ",
-                " . $F['CPU_SPECS'] . ",
-                " . $F['RAM'] . ",
-                " . $F['STORAGE'] . ",
-                " . $F['GPU'] . ",
-                " . $F['BATTERY'] . ",
-                " . $F['OS_VERSION'] . ",
-                " . $F['BIOS_STATE'] . ",
-                " . $F['DESCRIPTION'] . ",
-                " . $F['LOCATION'] . ",
-                " . $F['STATUS'] . "
-            ) VALUES (
-                :brand, :model, :series, :cpu_gen, :cpu_specs,
-                :ram, :storage, :gpu, :battery, :os_version,
-                :bios_state, :description, :location, 'In Warehouse'
-            )
-        ");
-
-        $stmt_ins->execute([
-            ':brand'          => $brand,
-            ':model'          => $model,
-            ':series'         => $series,
-            ':cpu_gen'        => $cpu_gen,
-            ':cpu_specs'      => $cpu_specs,
-            ':ram'            => $ram,
-            ':storage'        => $storage,
-            ':gpu'            => $gpu,
-            ':battery'        => $battery,
-            ':os_version'     => $os_version,
-            ':bios_state'     => $bios_state,
-            ':description'    => $description,
-            ':location'       => $warehouse_location
-        ]);
-
-        $label_id = $pdo_labels->lastInsertId();
-
-        // Log audit event
-        $summary = "Warehouse Intake: Added $brand $model" . ($series ? " ($series)" : "") . " to warehouse labels.";
-        log_audit_event($pdo_audit, 'Label', $label_id, 'CREATED', $summary, null, $_POST);
-    }
-
-    // 6. Generate Flat XML Content (.fodt) for label
+    // 4. Generate Flat XML Content (.fodt) for label
     // Escaping values for XML
     $brand_xml    = htmlspecialchars($brand ?? '', ENT_XML1, 'UTF-8');
     $model_xml    = htmlspecialchars($model ?? '', ENT_XML1, 'UTF-8');
@@ -148,16 +83,22 @@ try {
     $os_xml       = htmlspecialchars($os_version ?: '—', ENT_XML1, 'UTF-8');
     $bios_xml     = htmlspecialchars($bios_state, ENT_XML1, 'UTF-8');
 
+    $notes = $specs['notes'] ?? '';
+    $notes_xml = htmlspecialchars($notes, ENT_XML1, 'UTF-8');
+
     $labels_xml = '';
     // Page A: Branding Label
     $labels_xml .= '<text:p text:style-name="P1">' . $brand_xml . ' ' . $model_xml . ($series_xml ? ' ' . $series_xml : '') . '</text:p>';
     $labels_xml .= '<text:p text:style-name="P2">' . $cpu_spec_line . '</text:p>';
+    if ($notes !== '') {
+        $labels_xml .= '<text:p text:style-name="P4">' . $notes_xml . '</text:p>';
+    }
 
     // Page B: Technical Specs Label
     $labels_xml .= '<text:p text:style-name="P2B">CPU: ' . $cpu_spec_line . ' (' . $cpu_gen_display . ')</text:p>';
     $labels_xml .= '<text:p text:style-name="P2">RAM: ' . $ram_xml . ' | Storage: ' . $storage_xml . ' | Battery: ' . $battery_display . '</text:p>';
 
-    if ($gpu !== '' || $description === 'Refurbished') {
+    if ($gpu !== '' || $description === 'Refurbished' || !empty($specs['bios'])) {
         $labels_xml .= '<text:p text:style-name="P2">GPU: ' . $gpu_xml . ' | OS: ' . $os_xml . ' | BIOS: ' . $bios_xml . '</text:p>';
     }
 
@@ -186,6 +127,10 @@ try {
     <style:style style:name="P2B" style:family="paragraph" style:parent-style-name="P2">
       <style:paragraph-properties fo:break-before="page"/>
     </style:style>
+    <style:style style:name="P4" style:family="paragraph">
+      <style:paragraph-properties fo:text-align="center" fo:margin-top="0in" fo:margin-bottom="0in"/>
+      <style:text-properties fo:font-size="6pt" style:font-name="Arial"/>
+    </style:style>
     <style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss"/>
   </office:automatic-styles>
   <office:master-styles>
@@ -198,23 +143,25 @@ try {
   </office:body>
 </office:document>';
 
-    // 7. Save ODT
-    $export_dir = __DIR__ . '/../../labels/exports/labels/';
-    if (!is_dir($export_dir)) mkdir($export_dir, 0777, true);
+    // 5. Save ODT to local exports folder
+    $export_dir = __DIR__ . '/../assets/exports/labels/';
+    if (!is_dir($export_dir)) {
+        mkdir($export_dir, 0755, true);
+    }
 
     $safe_brand = preg_replace('/[^a-zA-Z0-9]/', '', $brand);
     $safe_model = preg_replace('/[^a-zA-Z0-9]/', '', $model);
     $safe_gen   = preg_replace('/[^a-zA-Z0-9]/', '', $cpu_gen);
 
-    $final_odt_name = "{$safe_brand}_{$safe_model}_{$safe_gen}_ID{$label_id}.odt";
-    $final_odt_path = realpath($export_dir) . DIRECTORY_SEPARATOR . $final_odt_name;
+    $final_odt_name = "{$safe_brand}_{$safe_model}_{$safe_gen}_ID{$id}.odt";
+    $final_odt_path = $export_dir . $final_odt_name;
 
     file_put_contents($final_odt_path, $flat_xml);
 
     if (file_exists($final_odt_path)) {
         send_json_response(true, [
             'file_name' => $final_odt_name,
-            'file_path' => '../labels/exports/labels/' . $final_odt_name
+            'file_path' => 'assets/exports/labels/' . $final_odt_name
         ]);
     } else {
         throw new Exception("ODT generation failed: Output file not created.");

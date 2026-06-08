@@ -1,6 +1,6 @@
 <?php
 require_once 'core/database.php';
-require_once __DIR__ . '/../core/UI.php';
+require_once __DIR__ . '/core/UI.php';
 include 'core/auth.php';
 
 // --- ROUTING & LOGIC PHASE (Pre-Output) ---
@@ -8,16 +8,16 @@ $view = $_GET['view'] ?? 'default';
 $is_new_order = isset($_GET['customer_id']);
 
 $routes = [
-    'register'  => ['page' => 'pages/new_customer.php',     'css' => 'customer_registry.css'],
-    'orders'    => ['page' => 'pages/orders.php',           'css' => 'orders.css'],
-    'leads'     => ['page' => 'pages/leads.php',            'css' => 'leads.css'],
-    'warehouse' => ['page' => 'pages/warehouse.php',        'css' => 'warehouse.css'],
-    'import_warehouse' => ['page' => 'pages/import_warehouse.php', 'css' => 'warehouse.css'],
-    'settings'  => ['page' => 'pages/settings.php',         'css' => 'style.css'],
-    'calendar'  => ['page' => 'pages/calendar.php',         'css' => 'calendar.css'],
-    'default'   => ['page' => 'pages/customer_registry.php', 'css' => 'customer_registry.css'],
-    'new_order' => ['page' => 'pages/new_order.php',         'css' => 'new_order.css'],
-    'trends'    => ['page' => 'pages/trends.php',            'css' => 'trends.css']
+    'register'          => ['page' =>'pages/new_customer.php',     'css' => 'customer_registry.css'],
+    'orders'            => ['page' =>'pages/orders.php',           'css' => 'orders.css'],
+    'leads'             => ['page' =>'pages/leads.php',            'css' => 'leads.css'],
+    'warehouse'         => ['page' =>'pages/warehouse.php',        'css' => 'warehouse.css'],
+    'import_warehouse'  => ['page' =>'pages/import_warehouse.php', 'css' => 'warehouse.css'],
+    'settings'          => ['page' =>'pages/settings.php',         'css' => 'style.css'],
+    'calendar'          => ['page' =>'pages/calendar.php',         'css' => 'calendar.css'],
+    'default'           => ['page' =>'pages/customer_registry.php','css' => 'customer_registry.css'],
+    'new_order'         => ['page' =>'pages/new_order.php',        'css' => 'new_order.css'],
+    'trends'            => ['page' =>'pages/trends.php',           'css' => 'trends.css']
 ];
 
 $active_key = $is_new_order ? 'new_order' : (isset($routes[$view]) ? $view : 'default');
@@ -63,8 +63,8 @@ $page_content = ob_get_clean();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Entry | IQA Metal</title>
-    <meta name="description" content="IQA Metal Order Management and Warehouse Control System. Efficiently manage batches, and customer fulfillments.">
+    <title>Order Entry | System</title>
+    <meta name="description" content="System Order Management and Warehouse Control System. Efficiently manage batches, and customer fulfillments.">
 
     <!-- Optimize Third-Party Connections (Non-blocking Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -76,7 +76,8 @@ $page_content = ob_get_clean();
     </noscript>
 
     <!-- Global Component Styles -->
-    <link rel="stylesheet" href="../assets/css/components.css">
+    <link rel="stylesheet" href="assets/styles/components.css">
+    <link rel="stylesheet" href="assets/styles/dialogs.css?v=<?= filemtime('assets/styles/dialogs.css') ?>">
 
     <!-- Primary Stylesheet (LCP Priority) -->
     <link rel="stylesheet" href="assets/styles/style.css?v=<?= filemtime('assets/styles/style.css') ?>">
@@ -92,6 +93,7 @@ $page_content = ob_get_clean();
     <link rel="icon" type="image/png" href="assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
 
     <!-- Logic Initialization (Deferred) -->
+    <script src="assets/js/sync.js?v=<?= filemtime('assets/js/sync.js') ?>" defer></script>
     <script src="assets/js/inventory_data.js?v=<?= filemtime('assets/js/inventory_data.js') ?>" defer></script>
     <script src="assets/js/vocabulary.js?v=<?= filemtime('assets/js/vocabulary.js') ?>" defer></script>
 </head>
@@ -201,7 +203,7 @@ $page_content = ob_get_clean();
     </div>
     <?php if ($active_key !== 'calendar'): ?>
     <footer class="footer" role="contentinfo">
-        <p><a href="#">&copy; <?= date('M Y') ?> IQA Metal</a> | Managed Inventory & Order Fulfillments <a href="../labels/">Labels</a></p>
+        <p style="text-align: center;" ><a href="#">&copy; <?= date('M Y') ?> System</a> | Managed Inventory & Order Fulfillments</p>
     </footer>
     <?php endif; ?>
     <!-- Load view-specific JavaScript -->
@@ -217,8 +219,10 @@ $page_content = ob_get_clean();
     <?php elseif ($active_key === 'orders'): ?>
         <script src="assets/js/orders.js?v=<?= filemtime('assets/js/orders.js') ?>" defer></script>
     <?php endif; ?>
+    <!-- Global Dialog Engine -->
+    <script src="assets/js/dialogEngine.js?v=<?= filemtime('assets/js/dialogEngine.js') ?>"></script>
     <!-- Global Notifications Engine -->
-    <script src="../assets/js/notifications.js"></script>
+    <script src="assets/js/notifications.js"></script>
 </body>
 
 </html>

@@ -1,77 +1,97 @@
-# 🏬 IQA Warehouse Inventory & Order Manager
+# 📦 IQA Warehouse Systems 6/8/2026 3:06 PM
 
-A modern, responsive PHP/SQLite application for managing warehouse hardware inventory, customer orders, and administrative scheduling. Optimized for high-speed "app-like" performance on both iOS Safari and desktop.
+[![Version](https://img.shields.io/badge/version-2.1.0-green.svg)](https://github.com/)
+[![Tech](https://img.shields.io/badge/Stack-Vanilla_PHP_|_SQLite_|_JS-blue.svg)](https://github.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/)
+
+A premium, high-performance warehouse management and sales logistics ecosystem designed for speed, reliability, and precision. Optimized for physical warehouse environments where quick hardware intake, accurate label logistics, and customer relation lifecycles are mission-critical.
+
+Unlike previous modular iterations, the application is consolidated as a single-monolith system contained within `/prod/` which operates with a shared routing dashboard and central SQLite databases stored in `/db/`.
 
 ---
 
-## ✨ Key Features
+## 🚀 The Core Modules
 
--   **📦 High-Speed Batch Builder**: AJAX-powered hardware intake with **Repeat Last Entry** shortcuts and real-time counter synchronization.
--   **📅 Integrated Admin Calendar**: Professional scheduling with weekly/monthly views, smart event suggestions, and business-hour enforcement.
--   **🎯 CRM & Relationship Hub**: Lead management with automated balance tracking, interaction logging, and priority follow-up logic.
--   **🏬 Warehouse Control**: Real-time stock management with operational zone status tracking and optimistic concurrency control.
--   **🛡️ Hardened Security**: Global CSRF protection and robust **Input Guards** that sanitize currency/numeric formatting automatically.
--   **🚀 Intelligence & Caching**: "Self-Learning" vocabulary with `sessionStorage` caching for instant-load autocomplete.
--   **📄 Thermal Labeling**: Native 2×1 ODT label generation using Flat XML (no external dependencies).
+All modules are unified under a single responsive dashboard in `index.php`. Access controls restrict non-admin users to the Warehouse Portal.
+
+### 🏬 Warehouse Control Center (`/prod/pages/warehouse.php`)
+*Physical Stock Logistics & Density Tracking*
+- **Sector Specifications**: Tailored data entry attributes based on hardware categories:
+  - **Laptops**: Tracking of CPU model, generation, series, RAM, storage, battery status, operating system, and BIOS status.
+  - **Gaming**: Track Console/Rig details, GPU specs, and RAM/storage.
+  - **Desktops**: Direct CPU and workstation configuration.
+  - **Electronics**: Simple general specification inventory.
+- **Zone Status Logic**: Physical zones or shelves are assigned operational states: `Working` (active intake), `Audit` (verification), `Shipping`, `In-Review`, `Warehoused` (long-term), or `Idle` (empty).
+- **Intake Optimizations**:
+  - **Clone Last Entry**: Quick clone feature pre-fills the intake forms with specifications from the last entered unit.
+  - **Bulk Clipboard Import**: Copy-paste tab-separated rows directly from spreadsheet files with auto-header matching and automatic input guards.
+- **Labeling Integration**: Generation of 2"×1" Flat XML labels for physical thermal printing without external zip dependencies.
+
+### 📊 Order Builder & Checkout Manifest (`/prod/pages/new_order.php` & `/prod/checkout.php`)
+*B2B Batch Intake & Order Verification*
+- **Batch Builder UI**: Real-time AJAX-powered intake of customer order items with inline editing, batch counts, and instant totals.
+- **Final Checkout**: Verification view showing searchable item details, editable unit prices, editable order dates (postdating/backdating), and total balances.
+- **Interactive Modals**: Instant AJAX metadata editing of manifest rows and order ownership transfer between client accounts.
+
+### 🎯 CRM & Relationship Hub (`/prod/pages/leads.php`)
+*Outreach Pipeline & Lead Status Tracking*
+- **Executive Bar**: High-level real-time KPI overview showing Active Leads count and overall Pipeline Gross Value.
+- **Priority Call Queue**: Highlights critical accounts needing callbacks today.
+- **Activity Timeline**: Vertical stream mapping interactions using intuitive action triggers (📞 Call, 📧 Email, 💬 Chat).
+- **Real-Time SSE Sync**: Uses a Server-Sent Events (SSE) database change stream (`api/sync_stream.php`) to synchronize changes across all workstations instantly under 500ms without client-side polling timers.
+- **One-Tap Conversion**: Promotes high-priority leads to customers and automatically redirects to a fresh order batch intake sheet.
+
+### 📅 Admin Calendar (`/prod/pages/calendar.php`)
+*Scheduler & Lead Management Calendar*
+- **Dual Layouts**: Toggle between Monthly Grid and Weekly Timeline (Mon-Fri) views.
+- **Auto Sync**: Intergrates leads' callback dates as "Suggested Tasks."
+- **Conversion Badging**: Tags calendar events as **Converted ✅** if visit dates correlate with successful sales orders, or **Window Shopping 👀** if not.
+- **Timeline Picker**: Restricted to operational business hours (8 AM - 5 PM) with automated event duration presets (Meeting, Lunch, etc.).
+
+### 📈 Historical Trends Engine (`/prod/pages/trends.php`)
+*Business Intelligence Analytics*
+- **BI Charts**: Uncapped historical queries parsing sales velocities, pricing curves, GPU/CPU generation dominance, and customer buying trends.
+- **Pure-CSS Visualization**: Outfitted with responsive CSS-based charts and multi-tab glassmorphic containers.
+
+### ⚙️ System Settings & Tools (`/prod/pages/settings.php`)
+*Administrative Control Panel*
+- **Integrity Schema Repair**: Clears cached session structures and runs diagnostic checkups/repairs on all DB structures.
+- **Backup Tool**: Stream-based archiving packages all SQLite databases into a secure ZIP file on the fly.
+- **Audit Logs**: Secure viewer exposing recent records from the centralized system audit log.
 
 ---
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology |
-| :--- | :--- |
-| **Backend** | PHP 8.x (Custom Route Mapping) |
-| **Database** | SQLite v3 (Modular: `customers`, `orders`, `users`, `warehouse`, `calendar`) |
-| **Connection** | Centralized **PDO Singleton** with engine-level Cross-DB Joining |
-| **Frontend** | Modern HTML5 & Vanilla CSS (CSS Variables, Glassmorphism) |
-| **Logic** | Vanilla JS (ES6+) with decoupled JSON state injection |
-| **Security** | CSRF-resistant PRG patterns, RBAC Session Guard, `.htaccess` DB protection |
+| Layer | Tech | Description |
+| :--- | :--- | :--- |
+| **Backend** | PHP 8.1+ | Clean, procedural-routing engine, object-oriented database layers. |
+| **Database** | SQLite 3 | Zero-configuration database storage with WAL journaling, optimistic locking, and busy-timeouts. |
+| **Frontend** | Vanilla JS / CSS3 | Modern interface built on HSL variables, glassmorphic styles, and layout animations. No tailwind or compiler requirements. |
+| **Documents** | Flat XML (FODT) | XML-based OpenDocument tags bypassing zip structures for LibreOffice-compatible label printing. |
 
 ---
 
-## 📂 Project Structure
+## ⚙️ Getting Started & Setup
 
-```text
-├── index.php               # Central Router & Entry Point
-├── checkout.php            # Manifest Editor & Export Hub
-├── generate_odt.php        # ODT Label Generator (Flat XML)
-├── api/                    # AJAX JSON Endpoints (Status, Logs, Calendar)
-├── core/                   # Shared Logic (Database Singleton, Auth, Login)
-├── pages/                  # View Fragments (Leads, Warehouse, Calendar, etc.)
-├── assets/
-│   ├── db/                 # SQLite .db files (Protected via .htaccess)
-│   ├── styles/             # Modular CSS per view
-│   ├── js/                 # Modular JS per view
-│   └── icon/               # App assets
-└── DOCS/
-    ├── DOCUMENTATION.md    # Full technical breakdown
-    └── AI_CONTEXT.md       # 🤖 HIGH-PRIORITY: Agent Architectural Overview
-```
+### 1. Pre-requisites
+- **PHP 8.1+** with the `sqlite3` and `pdo_sqlite` extensions enabled in `php.ini`.
+- **Apache/Nginx** with `.htaccess` support enabled (AllowOverride All) to secure databases.
+- **LibreOffice** (optional) to view/print Flat XML `.odt` labels.
+
+### 2. Project Installation
+1. Move the `prod` directory to your webserver document root (e.g., `/var/www/html/` or `C:/xampp/htdocs/app`).
+2. Move or map the `db` directory so it resides one level above the `prod/` folder (or adjust pathing in `prod/core/database.php`).
+3. Set **Write Permissions** on the `db/` directory and `prod/assets/exports/` directories.
+4. Open the application in your browser (e.g., `http://localhost/app/`).
+5. Databases and tables will initialize and seed themselves automatically on first load via the **Schema Guard** self-healing logic.
 
 ---
 
-## 🔄 Operational Workflow
+## 🔍 Internal Guidelines
 
-1.  **Onboarding**: Register a new B2B client via the **Customer Registry**.
-2.  **Scheduling**: Use the **Admin Calendar** to book visits or follow-up tasks.
-3.  **Intake**: Launch a "Fresh Batch" from the customer profile to start adding hardware in the **Batch Builder**.
-4.  **Warehouse**: Operators track items in the **Warehouse Portal**, managing zone statuses and stock levels.
-5.  **Fulfillment**: Verify the manifest in **Checkout**, print thermal labels, and export the finalized CSV/PDF for the client.
-6.  **CRM**: Use the **Leads Hub** to nurture prospects and track lifetime value (LTV) and balance history.
-
----
-
-## 🚀 Quick Start
-
-1.  **Server**: PHP 8.x + SQLite3 extension enabled.
-2.  **Permissions**: Ensure `assets/db/` is writable by the web server.
-3.  **Authentication**: Use the login portal; operators are auto-redirected to the Warehouse Portal. admin:admin123
-4.  **Labels**: Ensure the system has an `.odt` handler (e.g., LibreOffice) for label printing.
-
-
-
----
-
-> [!TIP]
-> **Developer Note**: State is passed from PHP to JS via `<script type="application/json">` blocks. Avoid global variable pollution. See `DOCS/AI_CONTEXT.md` for implementation patterns.
-
+If you are an AI assistant or human programmer modifying this project, consult the following documents inside `prod/DOCS/` before editing:
+- [🗺️ Global Sitemap](GLOBAL_SITEMAP.md): Complete directory map of all components.
+- [🤖 AI Agent Context](AI_CONTEXT.md): Coding guidelines, routing patterns, and mobile optimization guidelines.
+- [🧠 Technical Deep Dive](AI_TECHNICAL_DEEP_DIVE.md): Detailed information on database tables, schema guard migrations, and label template XML.
+- [🔍 Reviewer Checklist](CODE_REVIEW_CHECKLIST.md): Quality control gates, security checks, and code hygiene rules.

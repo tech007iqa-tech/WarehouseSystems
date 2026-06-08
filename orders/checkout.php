@@ -1,6 +1,6 @@
 <?php
 require_once 'core/database.php';
-require_once __DIR__ . '/../core/UI.php';
+require_once __DIR__ . '/core/UI.php';
 include 'core/auth.php';
 
 if (session_status() === PHP_SESSION_NONE) {

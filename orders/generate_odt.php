@@ -10,6 +10,7 @@ $model = $_POST['model'] ?? '';
 $series = $_POST['series'] ?? '';
 $cpu = $_POST['cpu'] ?? '';
 $desc = $_POST['description'] ?? '';
+$notes = $_POST['notes'] ?? '';
 
 // Word-wrap the brand/model/series to fit into precisely 3 rows.
 $full_title = trim("$brand $model $series");
@@ -31,6 +32,7 @@ $title1 = htmlspecialchars($lines[0]);
 $title2 = htmlspecialchars($lines[1]);
 $title3 = htmlspecialchars($lines[2]);
 $specs = htmlspecialchars(trim("$cpu | $desc"));
+$notes_xml = htmlspecialchars($notes);
 
 $flat_xml = '<?xml version="1.0" encoding="UTF-8"?>
 <office:document xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
@@ -50,6 +52,10 @@ $flat_xml = '<?xml version="1.0" encoding="UTF-8"?>
       <style:paragraph-properties fo:text-align="center" fo:margin-top="0.04in" fo:margin-bottom="0in"/>
       <style:text-properties fo:font-size="7pt" style:font-name="Times New Roman" fo:font-weight="bold"/>
     </style:style>
+    <style:style style:name="P4" style:family="paragraph" style:parent-style-name="Standard">
+      <style:paragraph-properties fo:text-align="center" fo:margin-top="0.02in" fo:margin-bottom="0in"/>
+      <style:text-properties fo:font-size="6pt" style:font-name="Times New Roman"/>
+    </style:style>
   </office:automatic-styles>
   <office:master-styles>
     <style:master-page style:name="Standard" style:page-layout-name="pm1"/>
@@ -59,8 +65,11 @@ $flat_xml = '<?xml version="1.0" encoding="UTF-8"?>
       <text:p text:style-name="P1">'.$title1.'</text:p>
       <text:p text:style-name="P1">'.$title2.'</text:p>
       <text:p text:style-name="P1">'.$title3.'</text:p>
-      <text:p text:style-name="P2">'.$specs.'</text:p>
-    </office:text>
+      <text:p text:style-name="P2">'.$specs.'</text:p>';
+if ($notes !== '') {
+    $flat_xml .= '      <text:p text:style-name="P4">'.$notes_xml.'</text:p>';
+}
+$flat_xml .= '    </office:text>
   </office:body>
 </office:document>';
 

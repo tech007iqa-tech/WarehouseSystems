@@ -65,7 +65,7 @@ class Schema {
                 model TEXT NOT NULL,
                 specs_json TEXT,
                 quantity INTEGER DEFAULT 0,
-                status TEXT DEFAULT 'stocked',
+                status TEXT DEFAULT '',
                 last_updated_by TEXT,
                 price REAL DEFAULT 0.00,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -88,7 +88,10 @@ class Schema {
                 username TEXT UNIQUE,
                 password TEXT,
                 role TEXT,
-                display_name TEXT DEFAULT ''
+                display_name TEXT DEFAULT '',
+                ppp_sequence_key TEXT DEFAULT '',
+                ppp_row_index INTEGER DEFAULT 0,
+                ppp_password_len INTEGER DEFAULT 55
             )",
             'audit_log' => "CREATE TABLE IF NOT EXISTS audit_log (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,12 +108,14 @@ class Schema {
         'calendar' => [
             'events' => "CREATE TABLE IF NOT EXISTS events (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT,
-                start_time DATETIME,
-                end_time DATETIME,
+                title TEXT NOT NULL,
                 description TEXT,
-                type TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                event_date DATE NOT NULL,
+                start_time TIME NOT NULL,
+                end_time TIME NOT NULL,
+                color TEXT DEFAULT '#38bdf8',
+                customer_id TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )"
         ]
     ];
@@ -195,6 +200,21 @@ class Schema {
                 foreach ($sectors as $s) $stmt->execute($s);
             }
         }
+        if ($db_name === 'warehouse' && $table === 'location_statuses') {
+            $count = $conn->query("SELECT COUNT(*) FROM location_statuses")->fetchColumn();
+            if ($count == 0) {
+                $statuses = [
+                    ['Working', '#10b981'],
+                    ['Audit', '#f59e0b'],
+                    ['Shipping', '#3b82f6'],
+                    ['In-Review', '#8b5cf6'],
+                    ['Warehoused', '#6366f1'],
+                    ['Idle', '#64748b']
+                ];
+                $stmt = $conn->prepare("INSERT INTO location_statuses (name, color) VALUES (?, ?)");
+                foreach ($statuses as $st) $stmt->execute($st);
+            }
+        }
     }
 
     /**
@@ -231,6 +251,7 @@ class Schema {
         if ($db_name === 'warehouse' && $table === 'inventory') {
             $conn->exec("CREATE INDEX IF NOT EXISTS idx_inv_sector ON inventory(sector)");
             $conn->exec("CREATE INDEX IF NOT EXISTS idx_inv_brand ON inventory(brand)");
+            $conn->exec("UPDATE inventory SET status = '' WHERE status = 'stocked'");
 
             $cols = $conn->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC);
             if (!in_array('price', array_column($cols, 'name'))) {
@@ -253,8 +274,36 @@ class Schema {
 
         if ($db_name === 'users' && $table === 'users') {
             $cols = $conn->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC);
-            if (!in_array('display_name', array_column($cols, 'name'))) {
+            $col_names = array_column($cols, 'name');
+            if (!in_array('display_name', $col_names)) {
                 $conn->exec("ALTER TABLE users ADD COLUMN display_name TEXT DEFAULT ''");
+            }
+            if (!in_array('ppp_sequence_key', $col_names)) {
+                $conn->exec("ALTER TABLE users ADD COLUMN ppp_sequence_key TEXT DEFAULT ''");
+            }
+            if (!in_array('ppp_row_index', $col_names)) {
+                $conn->exec("ALTER TABLE users ADD COLUMN ppp_row_index INTEGER DEFAULT 0");
+            }
+            if (!in_array('ppp_password_len', $col_names)) {
+                $conn->exec("ALTER TABLE users ADD COLUMN ppp_password_len INTEGER DEFAULT 55");
+            }
+        }
+
+        // --- Calendar Schema Evolution ---
+        if ($db_name === 'calendar' && $table === 'events') {
+            $cols = array_column(
+                $conn->query("PRAGMA table_info(events)")->fetchAll(PDO::FETCH_ASSOC),
+                'name'
+            );
+            $migrations = [
+                'event_date'  => "ALTER TABLE events ADD COLUMN event_date DATE DEFAULT ''",
+                'color'        => "ALTER TABLE events ADD COLUMN color TEXT DEFAULT '#38bdf8'",
+                'customer_id'  => "ALTER TABLE events ADD COLUMN customer_id TEXT DEFAULT ''",
+            ];
+            foreach ($migrations as $col => $sql) {
+                if (!in_array($col, $cols)) {
+                    $conn->exec($sql);
+                }
             }
         }
     }

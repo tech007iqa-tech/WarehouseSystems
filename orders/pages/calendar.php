@@ -445,7 +445,8 @@ if ($current_view === 'week') {
         if (id && confirm('Are you sure you want to delete this entry?')) {
             const offset = <?php echo $week_offset; ?>;
             const viewType = '<?php echo $current_view; ?>';
-            location.href = `api/calendar/delete.php?id=${id}&week_offset=${offset}&view_type=${viewType}`;
+            const csrfToken = '<?= Security::getToken() ?>';
+            location.href = `api/calendar/delete.php?id=${id}&week_offset=${offset}&view_type=${viewType}&csrf_token=${csrfToken}`;
         }
     }
 

@@ -6,7 +6,7 @@
 
 class Database {
     private static $instances = [];
-    private static $db_dir = __DIR__ . '/../assets/db';
+    private static $db_dir = __DIR__ . '/../../db';
 
     /**
      * Get a PDO connection to a specific database file.
@@ -20,7 +20,13 @@ class Database {
 
             // Ensure directory exists
             if (!is_dir(self::$db_dir)) {
-                mkdir(self::$db_dir, 0777, true);
+                mkdir(self::$db_dir, 0755, true);
+            }
+
+            // Ensure .htaccess exists to prevent database downloads
+            $htaccess_path = self::$db_dir . '/.htaccess';
+            if (!file_exists($htaccess_path)) {
+                file_put_contents($htaccess_path, "# Prevent direct download of SQLite database files\nDeny from all\n");
             }
 
             try {
