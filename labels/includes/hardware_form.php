@@ -41,12 +41,14 @@ $condition = $item[HW_FIELDS['DESCRIPTION']] ?? 'Untested';
 
         <div class="form-group highlight-on-focus">
             <label for="<?= HW_FIELDS['MODEL'] ?>">Main Model (e.g., EliteBook) *</label>
-            <input type="text" id="<?= HW_FIELDS['MODEL'] ?>" name="<?= HW_FIELDS['MODEL'] ?>" required value="<?= htmlspecialchars($item[HW_FIELDS['MODEL']] ?? '') ?>" autocomplete="off" spellcheck="false" placeholder="EliteBook / Latitude / ThinkPad">
+            <input type="text" id="<?= HW_FIELDS['MODEL'] ?>" name="<?= HW_FIELDS['MODEL'] ?>" required value="<?= htmlspecialchars($item[HW_FIELDS['MODEL']] ?? '') ?>" autocomplete="off" spellcheck="false" placeholder="EliteBook / Latitude / ThinkPad" list="model-options">
+            <datalist id="model-options"></datalist>
         </div>
 
         <div class="form-group highlight-on-focus">
             <label for="<?= HW_FIELDS['SERIES'] ?>">Series (e.g., 840 G3)</label>
-            <input type="text" id="<?= HW_FIELDS['SERIES'] ?>" name="<?= HW_FIELDS['SERIES'] ?>" value="<?= htmlspecialchars($item[HW_FIELDS['SERIES']] ?? '') ?>" autocomplete="off" spellcheck="false" placeholder="G3 / G4 / G5 / E6400">
+            <input type="text" id="<?= HW_FIELDS['SERIES'] ?>" name="<?= HW_FIELDS['SERIES'] ?>" value="<?= htmlspecialchars($item[HW_FIELDS['SERIES']] ?? '') ?>" autocomplete="off" spellcheck="false" placeholder="G3 / G4 / G5 / E6400" list="series-options">
+            <datalist id="series-options"></datalist>
         </div>
 
         <div class="form-group highlight-on-focus">

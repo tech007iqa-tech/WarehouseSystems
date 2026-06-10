@@ -22,6 +22,7 @@ Security::init();
     <script src="assets/js/actions.js"></script>
     <script src="assets/js/print_engine.js"></script>
     <script src="assets/js/hardware_mapping.js"></script>
+    <script src="../orders/assets/js/inventory_data.js"></script>
 
     <!-- Optional: A nice system font hook if desired later. Using system-ui fallbacks in CSS for now -->
 </head>
@@ -104,7 +105,7 @@ Security::init();
                 <li><a href="index.php" class="nav-link" id="nav-dashboard">🏠 Dashboard</a></li>
                 <li><a href="labels.php" class="nav-link" id="nav-labels">📦 Inventory Tracker</a></li>
                 <li><a href="new_label.php" class="nav-link" id="nav-new-label">🏷️ Print Hardware Label</a></li>
-                <li><a href="../orders" class="nav-link" id="nav-hardware">📦 Orders</a></li>
+                <li><a href="../" class="nav-link" id="nav-hardware">📦 Orders</a></li>
 
             </ul>
         </nav>

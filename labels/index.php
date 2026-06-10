@@ -11,7 +11,7 @@ require_once 'includes/header.php';
 // Fetch basic stats
 $total_inventory = 0;
 try {
-    $stmt = $pdo_labels->query("SELECT COUNT(id) FROM items WHERE status = 'In Warehouse'");
+    $stmt = $pdo_labels->query("SELECT COUNT(id) FROM items WHERE status != 'Sold'");
     $total_inventory = $stmt->fetchColumn();
 } catch (PDOException $e) { /* Silent */ }
 ?>

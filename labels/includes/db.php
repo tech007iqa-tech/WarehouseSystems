@@ -51,8 +51,14 @@ try {
     apply_sqlite_optimizations($pdo_audit);
 
     // 5. Schema Guard (Self-Healing)
-    require_once __DIR__ . '/schema_guard.php';
-    check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex, $pdo_audit);
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (empty($_SESSION['schemas_verified'])) {
+        require_once __DIR__ . '/schema_guard.php';
+        check_and_rebuild_schemas($pdo_labels, $pdo_orders, $pdo_rolodex, $pdo_audit);
+        $_SESSION['schemas_verified'] = true;
+    }
 
     // 6. Global Audit Support
     require_once __DIR__ . '/audit.php';

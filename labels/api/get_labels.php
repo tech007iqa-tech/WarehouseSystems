@@ -22,8 +22,12 @@ try {
 
     // Status filter
     if ($status !== 'all' && $status !== '') {
-        $conditions[] = "{$F['STATUS']} = :status";
-        $params[':status'] = $status;
+        if ($status === 'In Warehouse') {
+            $conditions[] = "{$F['STATUS']} != 'Sold'";
+        } else {
+            $conditions[] = "{$F['STATUS']} = :status";
+            $params[':status'] = $status;
+        }
     }
 
     // Text search filter (Multi-keyword "Flexible Search")

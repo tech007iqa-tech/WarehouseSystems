@@ -6,6 +6,15 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// 0. Device ID setting
+if (!isset($_COOKIE['device_id'])) {
+    $device_id = bin2hex(random_bytes(16));
+    setcookie('device_id', $device_id, time() + (86400 * 365 * 5), "/", "", true, true);
+    $_COOKIE['device_id'] = $device_id;
+} else {
+    $device_id = $_COOKIE['device_id'];
+}
+
 // 1. Auto-Redirect if already logged in
 if (isset($_SESSION['authenticated']) && $_SESSION['authenticated'] === true) {
     $redirect = ($_SESSION['role'] === 'Admin') ? "../index.php" : "../index.php?view=warehouse";
@@ -86,6 +95,15 @@ try {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 
+    $conn_auth->exec("CREATE TABLE IF NOT EXISTS login_attempts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ip_address TEXT NOT NULL,
+        device_id TEXT NOT NULL,
+        username TEXT NOT NULL,
+        attempt_count INTEGER DEFAULT 0,
+        last_attempt_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
     // Migration: add columns if older DB
     $cols = $conn_auth->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC);
     $col_names = array_column($cols, 'name');
@@ -114,52 +132,321 @@ try {
         $stmt_s->execute(['admin', $hash, 'Administrator', 'Admin']);
     }
 
+    // Helper function for Fibonacci sequence
+    if (!function_exists('get_fibonacci')) {
+        function get_fibonacci($n) {
+            if ($n <= 0) return 0;
+            if ($n === 1) return 1;
+            $prev = 0;
+            $curr = 1;
+            for ($i = 2; $i <= $n; $i++) {
+                $temp = $curr;
+                $curr = $prev + $curr;
+                $prev = $temp;
+            }
+            return $curr;
+        }
+    }
+
+    // AJAX handler for Step 1 (username check)
+    if (isset($_GET['action']) && $_GET['action'] === 'check_username') {
+        header('Content-Type: application/json');
+        $username = trim($_GET['username'] ?? '');
+        $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $device_id = $_COOKIE['device_id'] ?? '';
+
+        // Check attempts
+        $stmt_att = $conn_auth->prepare("
+            SELECT MAX(attempt_count) as max_count, MAX(last_attempt_at) as last_time
+            FROM login_attempts
+            WHERE ip_address = ? OR device_id = ? OR username = ?
+        ");
+        $stmt_att->execute([$ip_address, $device_id, $username]);
+        $attempt_data = $stmt_att->fetch(PDO::FETCH_ASSOC);
+
+        $attempts = (int)($attempt_data['max_count'] ?? 0);
+        $last_time = $attempt_data['last_time'] ?? null;
+
+        // Check for 77th attempt honeypot
+        if ($attempts >= 77) {
+            echo json_encode([
+                'success' => true,
+                'honeypot' => true
+            ]);
+            exit();
+        }
+
+        if ($attempts >= 2 && $last_time) {
+            $delay = 5 * get_fibonacci($attempts - 1);
+            $elapsed = time() - strtotime($last_time . ' UTC');
+            if ($elapsed < $delay) {
+                echo json_encode([
+                    'success' => false,
+                    'lockout' => true,
+                    'remaining' => $delay - $elapsed
+                ]);
+                exit();
+            }
+        }
+
+        // Check user existence
+        $stmt_u = $conn_auth->prepare("SELECT id FROM users WHERE username = ?");
+        $stmt_u->execute([$username]);
+        $user_exists = (bool)$stmt_u->fetchColumn();
+
+        // Simulated time delay to protect username validation from timing attacks
+        usleep(rand(50000, 100000));
+
+        echo json_encode([
+            'success' => true,
+            'exists' => $user_exists
+        ]);
+        exit();
+    }
+
+    // POST Login Handler
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['username']) && isset($_POST['password'])) {
         $username = trim($_POST['username']);
         $password = $_POST['password'];
+        $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $device_id = $_COOKIE['device_id'] ?? '';
 
-        $stmt_l = $conn_auth->prepare("SELECT * FROM users WHERE username = ?");
-        $stmt_l->execute([$username]);
-        $user = $stmt_l->fetch(PDO::FETCH_ASSOC);
+        // Check lockout and honeypot again
+        $stmt_att = $conn_auth->prepare("
+            SELECT MAX(attempt_count) as max_count, MAX(last_attempt_at) as last_time
+            FROM login_attempts
+            WHERE ip_address = ? OR device_id = ? OR username = ?
+        ");
+        $stmt_att->execute([$ip_address, $device_id, $username]);
+        $attempt_data = $stmt_att->fetch(PDO::FETCH_ASSOC);
 
-        if ($user) {
-            $verified = false;
-            if (!empty($user['ppp_sequence_key'])) {
-                $verified = password_verify($password . $user['ppp_sequence_key'], $user['password']);
+        $attempts = (int)($attempt_data['max_count'] ?? 0);
+        $last_time = $attempt_data['last_time'] ?? null;
+
+        if ($attempts >= 77) {
+            $_SESSION['honeypot'] = true;
+            header("Location: ../index.php?view=settings");
+            exit();
+        }
+
+        if ($attempts >= 2 && $last_time) {
+            $delay = 5 * get_fibonacci($attempts - 1);
+            $elapsed = time() - strtotime($last_time . ' UTC');
+            if ($elapsed < $delay) {
+                $error = "Too many failed login attempts. Please try again in " . ($delay - $elapsed) . " seconds.";
             }
-            if (!$verified) {
-                $verified = password_verify($password, $user['password']);
-            }
+        }
 
-            if ($verified) {
-                // 2. Session Fixation Protection
-                session_regenerate_id(true);
+        if (empty($error)) {
+            $stmt_l = $conn_auth->prepare("SELECT * FROM users WHERE username = ?");
+            $stmt_l->execute([$username]);
+            $user = $stmt_l->fetch(PDO::FETCH_ASSOC);
 
-                $_SESSION['authenticated'] = true;
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['display_name'] = $user['display_name'] ?: $user['username'];
-                $_SESSION['role'] = $user['role'] ?? 'Operator';
-                $_SESSION['ppp_password_len'] = strlen($password);
-
-                if (($user['username'] === 'admin' && password_verify('123', $user['password'])) || strlen($password) < 25) {
-                    $_SESSION['force_password_change'] = true;
+            $log_attempt = false;
+            if ($user) {
+                $verified = false;
+                if (!empty($user['ppp_sequence_key'])) {
+                    $verified = password_verify($password . $user['ppp_sequence_key'], $user['password']);
+                }
+                if (!$verified) {
+                    $verified = password_verify($password, $user['password']);
                 }
 
-                // Redirect based on role
-                if (isset($_SESSION['force_password_change']) && $_SESSION['force_password_change'] === true) {
-                    header("Location: ../index.php?view=settings");
-                } elseif ($_SESSION['role'] === 'Admin') {
-                    header("Location: ../index.php");
+                if ($verified) {
+                    // Reset attempt counter
+                    $stmt_clear = $conn_auth->prepare("DELETE FROM login_attempts WHERE ip_address = ? OR device_id = ? OR username = ?");
+                    $stmt_clear->execute([$ip_address, $device_id, $username]);
+
+                    // Session Fixation Protection
+                    session_regenerate_id(true);
+
+                    $_SESSION['authenticated'] = true;
+                    $_SESSION['username'] = $user['username'];
+                    $_SESSION['display_name'] = $user['display_name'] ?: $user['username'];
+                    $_SESSION['role'] = $user['role'] ?? 'Operator';
+                    $_SESSION['ppp_password_len'] = strlen($password);
+
+                    if (($user['username'] === 'admin' && password_verify('123', $user['password'])) || strlen($password) < 25) {
+                        $_SESSION['force_password_change'] = true;
+                    }
+
+                    // Redirect based on role
+                    if (isset($_SESSION['force_password_change']) && $_SESSION['force_password_change'] === true) {
+                        header("Location: ../index.php?view=settings");
+                    } elseif ($_SESSION['role'] === 'Admin') {
+                        header("Location: ../index.php");
+                    } else {
+                        header("Location: ../index.php?view=warehouse");
+                    }
+                    exit();
                 } else {
-                    header("Location: ../index.php?view=warehouse");
+                    $error = "Invalid username or password";
+                    $log_attempt = true;
                 }
-                exit();
             } else {
                 $error = "Invalid username or password";
             }
-        } else {
-            $error = "Invalid username or password";
+
+            if (!empty($error) && $log_attempt) {
+                // Log failed attempt for user
+                $stmt_find = $conn_auth->prepare("SELECT attempt_count FROM login_attempts WHERE ip_address = ? AND username = ?");
+                $stmt_find->execute([$ip_address, $username]);
+                $existing_count = $stmt_find->fetchColumn();
+
+                if ($existing_count !== false) {
+                    $stmt_up = $conn_auth->prepare("
+                        UPDATE login_attempts
+                        SET attempt_count = attempt_count + 1, last_attempt_at = CURRENT_TIMESTAMP
+                        WHERE ip_address = ? AND username = ?
+                    ");
+                    $stmt_up->execute([$ip_address, $username]);
+                } else {
+                    $stmt_ins = $conn_auth->prepare("
+                        INSERT INTO login_attempts (ip_address, device_id, username, attempt_count)
+                        VALUES (?, ?, ?, 1)
+                    ");
+                    $stmt_ins->execute([$ip_address, $device_id, $username]);
+                }
+            }
         }
+    }
+
+    // Check if honeypot active
+    $show_honeypot = false;
+    if (isset($_SESSION['honeypot']) && $_SESSION['honeypot'] === true) {
+        $show_honeypot = true;
+    } else {
+        $ip_address = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        $device_id = $_COOKIE['device_id'] ?? '';
+        $stmt_hp = $conn_auth->prepare("
+            SELECT MAX(attempt_count) FROM login_attempts
+            WHERE ip_address = ? OR device_id = ?
+        ");
+        $stmt_hp->execute([$ip_address, $device_id]);
+        $max_att = (int)$stmt_hp->fetchColumn();
+        if ($max_att >= 77) {
+            $show_honeypot = true;
+        }
+    }
+
+    if ($show_honeypot) {
+        ?>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Settings | System Portal</title>
+            <link rel="stylesheet" href="../assets/styles/style.css?v=1">
+            <style>
+                body {
+                    background: #0f172a;
+                    color: #f1f5f9;
+                    font-family: system-ui, -apple-system, sans-serif;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    min-height: 100vh;
+                    margin: 0;
+                }
+                .container {
+                    width: 100%;
+                    max-width: 800px;
+                    padding: 40px 20px;
+                }
+                .card {
+                    background: #1e293b;
+                    border: 1px solid #334155;
+                    border-radius: 16px;
+                    padding: 30px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                }
+                .warning-banner {
+                    background: #7f1d1d;
+                    border: 1px solid #b91c1c;
+                    color: #fca5a5;
+                    padding: 20px;
+                    border-radius: 12px;
+                    margin-bottom: 30px;
+                    font-weight: bold;
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    font-size: 1.1rem;
+                }
+                .form-group {
+                    margin-bottom: 20px;
+                }
+                label {
+                    display: block;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    color: #94a3b8;
+                    margin-bottom: 8px;
+                    text-transform: uppercase;
+                }
+                input {
+                    width: 100%;
+                    padding: 12px;
+                    background: #0f172a;
+                    border: 1px solid #334155;
+                    border-radius: 8px;
+                    color: white;
+                    font-size: 1rem;
+                    box-sizing: border-box;
+                }
+                button {
+                    width: 100%;
+                    padding: 14px;
+                    background: #4f46e5;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    font-size: 1rem;
+                    margin-top: 10px;
+                }
+                button:hover {
+                    background: #4338ca;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="card">
+                    <div class="warning-banner">
+                        <span style="font-size: 2rem;">⚠️</span>
+                        <div>
+                            <strong>Security Warning:</strong><br>
+                            You are using default credentials. You must change your password to secure the system.
+                        </div>
+                    </div>
+                    <h2 style="margin-top: 0; margin-bottom: 20px; font-size: 1.5rem;">Account Security</h2>
+                    <div class="form-group">
+                        <label>Current Password</label>
+                        <input type="password" value="••••••••" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" placeholder="Enter new complex password">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" placeholder="Confirm new complex password">
+                    </div>
+                    <button type="button" onclick="alert('Password updated successfully! Redirecting...')">Update Password</button>
+                </div>
+            </div>
+            <script>
+                try {
+                    history.pushState(null, '', '../index.php?view=settings');
+                } catch(e) {}
+            </script>
+        </body>
+        </html>
+        <?php
+        exit();
     }
 } catch (Exception $e) {
     $error = "System Error: " . $e->getMessage();
@@ -177,6 +464,7 @@ try {
     <link rel="stylesheet" href="../assets/styles/dialogs.css?v=<?= filemtime('../assets/styles/dialogs.css') ?>">
     <link rel="icon" type="image/png" href="../assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
     <script src="../assets/js/dialogEngine.js?v=<?= filemtime('../assets/js/dialogEngine.js') ?>"></script>
+    <script src="https://unpkg.com/html5-qrcode" defer></script>
 </head>
 <body class="login-body">
 
@@ -194,18 +482,25 @@ try {
             <div class="login-error"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
 
-        <form method="POST" action="">
-            <div class="login-form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" class="login-input" placeholder="admin" required>
+        <form method="POST" action="" id="login-form">
+            <div id="username-step">
+                <div class="login-form-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <label for="username" style="margin-bottom: 0;">Username</label>
+                        <button type="button" id="btn-edit-username" onclick="enableUsernameEdit()" style="display: none; background: none; border: none; color: #4f46e5; cursor: pointer; font-size: 0.85rem; font-weight: 600; padding: 0; text-transform: none;">Change</button>
+                    </div>
+                    <input type="text" id="username" name="username" class="login-input" placeholder="admin" required value="<?= htmlspecialchars($_POST['username'] ?? '') ?>">
+                </div>
+                <button type="button" id="btn-next" onclick="handleUsernameSubmit()" class="btn-login">Next ➔</button>
             </div>
 
-            <div class="login-form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" class="login-input" placeholder="••••••••" required>
+            <div id="password-step" style="display: none;">
+                <div class="login-form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="login-input" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-login">🔒 Sign In Safely</button>
             </div>
-
-            <button type="submit" class="btn-login">🔒 Sign In Safely</button>
         </form>
 
         <div class="login-footer multi-link-container" style="position: relative;">
@@ -226,7 +521,8 @@ try {
                             <label style="display: block; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 6px;">Sequence Key</label>
                             <div style="display: flex; gap: 8px;">
                                 <input type="text" id="ppp_display_key" placeholder="Generate or enter 64-hex key..." style="font-family: monospace; font-size: 0.75rem; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px; flex: 1; text-align: center;">
-                                <button type="button" onclick="copySequenceKey()" style="background: #e2e8f0; color: #475569; border: none; padding: 0 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer;">📋</button>
+                                <button type="button" onclick="copySequenceKey()" style="background: #e2e8f0; color: #475569; border: none; padding: 0 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer;" title="Copy to clipboard">📋</button>
+                                <button type="button" onclick="startQRScanner()" style="background: #e2e8f0; color: #475569; border: none; padding: 0 12px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer;" title="Scan QR Code via Camera">📷</button>
                             </div>
                         </div>
                     </div>
@@ -235,6 +531,10 @@ try {
                         <button type="button" onclick="triggerGenKey()" style="background: #64748b; color: white; padding: 10px 16px; font-size: 0.85rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 800;">🎲 Gen Key</button>
                         <button type="button" onclick="applyManualKey()" style="background: #4f46e5; color: white; padding: 10px 16px; font-size: 0.85rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 800; flex: 1;">🔍 Load Grid</button>
                     </div>
+
+                    <!-- Scanner Container -->
+                    <div id="reader" style="width: 100%; max-width: 450px; margin: 15px auto; display: none; border: 1px solid #cbd5e1; border-radius: 12px; overflow: hidden; background: #000;"></div>
+                    <button type="button" id="btn_stop_scanner" onclick="stopQRScanner()" style="display: none; background: #ef4444; color: white; padding: 10px 16px; font-size: 0.85rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 800; width: 100%; margin-bottom: 15px;">🛑 Stop Scanning</button>
 
                     <div id="qr-container-wrapper" style="display: none; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 15px;">
                         <a id="ppp_qr_link" href="#" target="_blank" title="Click to open QR Code in new tab" style="cursor: pointer; display: block;">
@@ -437,31 +737,31 @@ try {
             const rowLabel = String(r + 1).padStart(2, '0');
             let cellsHtml = '';
             for (let c = 0; c < 5; c++) {
-                cellsHtml += `<td style='padding: 6px 4px; border: 1px solid #ccc; font-weight: bold; letter-spacing: 1px; word-break: break-all;'>${passcodes[r * 5 + c]}</td>`;
+                cellsHtml += `<td style='padding: 5px 3px; border: 1px solid #ccc; font-weight: bold; letter-spacing: 0.5px; white-space: nowrap;'>${passcodes[r * 5 + c]}</td>`;
             }
             tableRowsHtml += `<tr>
-                <td style='padding: 6px 4px; border: 1px solid #ccc; font-weight: bold; background: #fafafa;'>${rowLabel}</td>
+                <td style='padding: 5px 3px; border: 1px solid #ccc; font-weight: bold; background: #fafafa; white-space: nowrap;'>${rowLabel}</td>
                 ${cellsHtml}
             </tr>`;
         }
 
         source.innerHTML = `
-            <div style="border: 2px dashed #333; border-radius: 12px; padding: 20px; max-width: 450px; width: 100%; box-sizing: border-box; background: white; color: black; font-family: 'Courier New', Courier, monospace; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin: 20px auto;">
+            <div style="border: 2px dashed #333; border-radius: 12px; padding: 20px; max-width: 100%; width: 100%; box-sizing: border-box; background: white; color: black; font-family: 'Courier New', Courier, monospace; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin: 20px auto;">
                 <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
                     <strong style="font-size: 16px; letter-spacing: 1px;">PERFECT PAPER PASSCARD</strong>
                 </div>
                 <div style="font-size: 10px; margin-bottom: 15px; word-break: break-all; border: 1px solid #ddd; padding: 8px; background: #f9f9f9; border-radius: 6px;">
                     <strong>SEQUENCE KEY:</strong><br>${seqKey}
                 </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; table-layout: fixed;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; table-layout: auto;">
                     <thead>
                         <tr style="border-bottom: 2px solid #000; background: #eee;">
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; width: 50px;">Row</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">A</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">B</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">C</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">D</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">E</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; width: 50px;">Row</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">A</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">B</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">C</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">D</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">E</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -482,8 +782,10 @@ try {
         printWindow.document.write('<html><head><title>Print PPP Passcard</title></head><body style="margin:20px;">' + source.innerHTML + '</body></html>');
         printWindow.document.close();
         printWindow.focus();
-        printWindow.print();
-        printWindow.close();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
     }
 
     function viewPPPCard() {
@@ -566,6 +868,134 @@ try {
             }
         } catch (err) {
             alert('Failed to copy. Please manually copy the text.');
+        }
+    }
+
+    let html5QrCode = null;
+
+    function startQRScanner() {
+        const readerDiv = document.getElementById('reader');
+        const stopBtn = document.getElementById('btn_stop_scanner');
+        readerDiv.style.display = 'block';
+        stopBtn.style.display = 'block';
+
+        html5QrCode = new Html5Qrcode("reader");
+        const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+            let scannedText = decodedText.trim();
+            // If it's a URL, extract the query parameters (e.g. data=HEX)
+            if (scannedText.includes('data=')) {
+                try {
+                    const urlParams = new URLSearchParams(scannedText.split('?')[1]);
+                    scannedText = urlParams.get('data') || scannedText;
+                } catch(e) {}
+            }
+
+            // Remove non-hex characters and convert to uppercase
+            scannedText = scannedText.replace(/[^a-fA-F0-9]/g, '').toUpperCase();
+            if (scannedText.length === 64) {
+                document.getElementById('ppp_display_key').value = scannedText;
+                stopQRScanner();
+                applyManualKey(); // Immediately load the grid
+            } else {
+                alert("Scanned text is not a valid 64-hex sequence key! Code: " + scannedText);
+            }
+        };
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
+            .catch(err => {
+                console.error("Camera access failed:", err);
+                alert("Could not start camera: " + err);
+                stopQRScanner();
+            });
+    }
+
+    function stopQRScanner() {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                document.getElementById('reader').style.display = 'none';
+                document.getElementById('btn_stop_scanner').style.display = 'none';
+                html5QrCode = null;
+            }).catch(err => {
+                console.error("Failed to stop scanner:", err);
+                document.getElementById('reader').style.display = 'none';
+                document.getElementById('btn_stop_scanner').style.display = 'none';
+                html5QrCode = null;
+            });
+        } else {
+            document.getElementById('reader').style.display = 'none';
+            document.getElementById('btn_stop_scanner').style.display = 'none';
+        }
+    }
+
+    function enableUsernameEdit() {
+        const usernameInput = document.getElementById('username');
+        usernameInput.readOnly = false;
+        usernameInput.focus();
+
+        document.getElementById('btn-edit-username').style.display = 'none';
+        document.getElementById('btn-next').style.display = 'block';
+        document.getElementById('password-step').style.display = 'none';
+        document.getElementById('password').value = '';
+    }
+
+    async function handleUsernameSubmit() {
+        const usernameInput = document.getElementById('username');
+        let username = usernameInput.value.trim();
+        if (!username) {
+            alert("Please enter a username.");
+            return;
+        }
+
+        const nextBtn = document.getElementById('btn-next');
+        const origBtnText = nextBtn.innerText;
+        nextBtn.disabled = true;
+        nextBtn.innerText = "Checking...";
+
+        try {
+            const response = await fetch(`login.php?action=check_username&username=${encodeURIComponent(username)}`);
+            const data = await response.json();
+
+            if (data.lockout) {
+                // Show lockout error
+                let errorDiv = document.querySelector('.login-error');
+                if (!errorDiv) {
+                    errorDiv = document.createElement('div');
+                    errorDiv.className = 'login-error';
+                    const card = document.querySelector('.login-card');
+                    card.insertBefore(errorDiv, document.getElementById('login-form'));
+                }
+                errorDiv.innerText = `Too many failed login attempts. Please try again in ${data.remaining} seconds.`;
+                nextBtn.disabled = false;
+                nextBtn.innerText = origBtnText;
+                return;
+            }
+
+            if (data.honeypot) {
+                // Trigger honeypot view by reloading the page which will render the warning
+                window.location.reload();
+                return;
+            }
+
+            if (data.success) {
+                // Hide username next button, show password step, lock username, show edit option
+                usernameInput.readOnly = true;
+                document.getElementById('btn-edit-username').style.display = 'inline-block';
+                nextBtn.style.display = 'none';
+                document.getElementById('password-step').style.display = 'block';
+                document.getElementById('password').focus();
+            }
+        } catch (e) {
+            console.error("Username check failed:", e);
+            // Fallback: allow them to proceed anyway to avoid locking them out on minor script errors
+            usernameInput.readOnly = true;
+            document.getElementById('btn-edit-username').style.display = 'inline-block';
+            nextBtn.style.display = 'none';
+            document.getElementById('password-step').style.display = 'block';
+            document.getElementById('password').focus();
+        } finally {
+            nextBtn.disabled = false;
+            nextBtn.innerText = origBtnText;
         }
     }
     </script>

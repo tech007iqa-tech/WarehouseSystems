@@ -9,6 +9,184 @@ document.addEventListener("DOMContentLoaded", () => {
     // Make it globally available for other scripts
     window.refreshPreview = updateLivePreview;
 
+    /* --- AUTO-COMPLETE DATALISTS FOR BRAND / MODEL / SERIES --- */
+    function initFormDatalists() {
+        const brandSelect = document.getElementById(F.BRAND);
+        const modelDatalist = document.getElementById('model-options');
+        const seriesDatalist = document.getElementById('series-options');
+        const modelInput = document.getElementById(F.MODEL);
+        const seriesInput = document.getElementById(F.SERIES);
+
+        const updateSeriesOptions = () => {
+            const selectedBrand = brandSelect ? brandSelect.value : '';
+            const selectedModel = modelInput ? modelInput.value.trim() : '';
+            const data = window.IQA_Inventory ? window.IQA_Inventory[selectedBrand] : null;
+
+            if (seriesDatalist) seriesDatalist.innerHTML = '';
+
+            if (data) {
+                let seriesList = [];
+                if (selectedModel && data.modelSeries && data.modelSeries[selectedModel]) {
+                    seriesList = data.modelSeries[selectedModel];
+                } else {
+                    seriesList = data.series || [];
+                }
+
+                const val = seriesInput ? seriesInput.value.trim().toLowerCase() : '';
+                let filtered = seriesList;
+                if (val.length >= 1) {
+                    filtered = seriesList.filter(s => s.toLowerCase().startsWith(val));
+                }
+                if (seriesDatalist) {
+                    seriesDatalist.innerHTML = filtered.map(s => `<option value="${s}">`).join('');
+                }
+            }
+        };
+
+        const populateInitialOptions = () => {
+            const selectedBrand = brandSelect ? brandSelect.value : '';
+            const data = window.IQA_Inventory ? window.IQA_Inventory[selectedBrand] : null;
+            if (data) {
+                if (modelDatalist) modelDatalist.innerHTML = data.models.map(m => `<option value="${m}">`).join('');
+                updateSeriesOptions();
+            }
+        };
+
+        if (brandSelect) {
+            brandSelect.addEventListener('change', (e) => {
+                const selectedBrand = e.target.value;
+                const data = window.IQA_Inventory ? window.IQA_Inventory[selectedBrand] : null;
+
+                if (modelInput) modelInput.value = '';
+                if (seriesInput) seriesInput.value = '';
+
+                if (modelDatalist) modelDatalist.innerHTML = '';
+                if (seriesDatalist) seriesDatalist.innerHTML = '';
+
+                if (data) {
+                    if (modelDatalist) modelDatalist.innerHTML = data.models.map(m => `<option value="${m}">`).join('');
+                    updateSeriesOptions();
+                }
+            });
+        }
+
+        if (modelInput) {
+            modelInput.addEventListener('input', updateSeriesOptions);
+            modelInput.addEventListener('change', updateSeriesOptions);
+        }
+
+        if (seriesInput) {
+            seriesInput.addEventListener('input', updateSeriesOptions);
+            seriesInput.addEventListener('focus', updateSeriesOptions);
+        }
+
+        // Initialize on load
+        populateInitialOptions();
+    }
+
+    initFormDatalists();
+
+    /**
+     * Dynamic ghost suffix helper for RAM and Storage inputs
+     */
+    function initGhostSuffixes() {
+        const ramInput = document.getElementById(F.RAM);
+        const storageInput = document.getElementById(F.STORAGE);
+
+        if (ramInput) {
+            let dl = document.getElementById('ram-ghost-options');
+            if (!dl) {
+                dl = document.createElement('datalist');
+                dl.id = 'ram-ghost-options';
+                document.body.appendChild(dl);
+                ramInput.setAttribute('list', 'ram-ghost-options');
+            }
+
+            // Restrict keyboard entries to digits only
+            ramInput.addEventListener('keypress', (e) => {
+                if (e.key < '0' || e.key > '9') {
+                    e.preventDefault();
+                }
+            });
+
+            ramInput.addEventListener('paste', (e) => {
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                if (!/^\d+$/.test(text)) {
+                    e.preventDefault();
+                }
+            });
+
+            ramInput.addEventListener('input', () => {
+                const val = ramInput.value.trim();
+                const digits = val.replace(/[^0-9]/g, '');
+                if (digits) {
+                    dl.innerHTML = `<option value="${digits} GB">`;
+                } else {
+                    dl.innerHTML = '';
+                }
+            });
+
+            // Auto-append GB on blur if only numbers were typed
+            ramInput.addEventListener('blur', () => {
+                const val = ramInput.value.trim();
+                if (/^\d+$/.test(val)) {
+                    ramInput.value = val + ' GB';
+                    updateLivePreview();
+                }
+            });
+        }
+
+        if (storageInput) {
+            let dl = document.getElementById('storage-ghost-options');
+            if (!dl) {
+                dl = document.createElement('datalist');
+                dl.id = 'storage-ghost-options';
+                document.body.appendChild(dl);
+                storageInput.setAttribute('list', 'storage-ghost-options');
+            }
+
+            // Restrict keyboard entries to digits only
+            storageInput.addEventListener('keypress', (e) => {
+                if (e.key < '0' || e.key > '9') {
+                    e.preventDefault();
+                }
+            });
+
+            storageInput.addEventListener('paste', (e) => {
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                if (!/^\d+$/.test(text)) {
+                    e.preventDefault();
+                }
+            });
+
+            storageInput.addEventListener('input', () => {
+                const val = storageInput.value.trim();
+                const digits = val.replace(/[^0-9]/g, '');
+                if (digits) {
+                    dl.innerHTML = `
+                        <option value="${digits} GB SSD">
+                        <option value="${digits} GB NVMe">
+                        <option value="${digits} TB SSD">
+                        <option value="${digits} TB NVMe">
+                    `;
+                } else {
+                    dl.innerHTML = '';
+                }
+            });
+
+            // Auto-append GB SSD on blur if only numbers were typed
+            storageInput.addEventListener('blur', () => {
+                const val = storageInput.value.trim();
+                if (/^\d+$/.test(val)) {
+                    storageInput.value = val + ' GB SSD';
+                    updateLivePreview();
+                }
+            });
+        }
+    }
+
+    initGhostSuffixes();
+
     /* --- SECTION TOGGLING (Untested vs Refurbished) --- */
     const conditionSelect = document.getElementById(F.DESCRIPTION);
     const technicalSection = document.getElementById('technicalSpecsSection');

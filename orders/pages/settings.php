@@ -407,7 +407,7 @@ try {
 
                 <div id="qr-container-wrapper" class="multi-link-container" style="display: <?= empty($seq_key) ? 'none' : 'flex' ?>; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0;">
                     <span class="linked-text-img" title="Click to enlarge QR Code" id="qr-clickable-zone">
-                        <img id="ppp_qr_img" src="https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=<?= urlencode($seq_key) ?>" alt="PPP QR Code" style="width: 110px; height: 110px; border-radius: 8px; display: block;">
+                        <img id="ppp_qr_img" src="<?= !empty($seq_key) ? 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' . urlencode($seq_key) : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' ?>" alt="PPP QR Code" style="width: 110px; height: 110px; border-radius: 8px; display: block;padding:10%;">
                     </span>
                     <span style="font-size: 0.65rem; color: #64748b; font-weight: 800; margin-top: 6px; text-transform: uppercase;">Sequence QR Code</span>
 
@@ -415,8 +415,8 @@ try {
                     <div class="image-dialog" id="qr-modal-dialog">
                         <button type="button" class="btn-close-dialog" aria-label="Close dialog">&times;</button>
                         <figure>
-                            <img id="ppp_qr_large_img" src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=<?= urlencode($seq_key) ?>" alt="Enlarged PPP QR Code">
-                            <figcaption>Scan to Copy PPP Sequence Key</figcaption>
+                            <img id="ppp_qr_large_img" src="<?= !empty($seq_key) ? 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($seq_key) : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' ?>" alt="Enlarged PPP QR Code" style="padding: 10%;">
+                            <figcaption id="ppp_qr_caption"><a href="#" onclick="printQRCode(); return false;"><span style="font-family: monospace; font-size: 0.8rem; word-break: break-all; margin-top: 5px; display: block;">Sequence Key:</a><br><span id="ppp_qr_caption_key"><?= htmlspecialchars($seq_key) ?></span></span></figcaption>
                         </figure>
                     </div>
                 </div>
@@ -765,6 +765,10 @@ try {
         if (qrLargeImg) {
             qrLargeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodedKey}`;
         }
+        const qrCaptionKey = document.getElementById('ppp_qr_caption_key');
+        if (qrCaptionKey) {
+            qrCaptionKey.innerText = seqKey;
+        }
 
         const footerLengthSpan = document.getElementById('ppp-card-footer-length');
         if (footerLengthSpan) {
@@ -786,16 +790,16 @@ try {
             const rowLabel = String(r + 1).padStart(2, '0');
             let cellsHtml = '';
             for (let c = 0; c < 5; c++) {
-                cellsHtml += `<td style='padding: 6px 4px; border: 1px solid #ccc; font-weight: bold; letter-spacing: 1px; word-break: break-all;'>${passcodes[r * 5 + c]}</td>`;
+                cellsHtml += `<td style='padding: 5px 3px; border: 1px solid #ccc; font-weight: bold; letter-spacing: 0.5px; white-space: nowrap;'>${passcodes[r * 5 + c]}</td>`;
             }
             tableRowsHtml += `<tr>
-                <td style='padding: 6px 4px; border: 1px solid #ccc; font-weight: bold; background: #fafafa;'>${rowLabel}</td>
+                <td style='padding: 5px 3px; border: 1px solid #ccc; font-weight: bold; background: #fafafa; white-space: nowrap;'>${rowLabel}</td>
                 ${cellsHtml}
             </tr>`;
         }
 
         source.innerHTML = `
-            <div style="border: 2px dashed #333; border-radius: 12px; padding: 20px; max-width: 450px; width: 100%; box-sizing: border-box; background: white; color: black; font-family: 'Courier New', Courier, monospace; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin: 20px auto;">
+            <div style="border: 2px dashed #333; border-radius: 12px; padding: 20px; max-width: 100%; width: 100%; box-sizing: border-box; background: white; color: black; font-family: 'Courier New', Courier, monospace; box-shadow: 0 4px 10px rgba(0,0,0,0.15); margin: 20px auto;">
                 <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px;">
                     <strong style="font-size: 16px; letter-spacing: 1px;">PERFECT PAPER PASSCARD</strong>
                     <span style="font-size: 14px; font-weight: bold;">User: <?= htmlspecialchars($username) ?></span>
@@ -803,15 +807,15 @@ try {
                 <div style="font-size: 10px; margin-bottom: 15px; word-break: break-all; border: 1px solid #ddd; padding: 8px; background: #f9f9f9; border-radius: 6px;">
                     <strong>SEQUENCE KEY:</strong><br>${seqKey}
                 </div>
-                <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: center; table-layout: fixed;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center; table-layout: auto;">
                     <thead>
                         <tr style="border-bottom: 2px solid #000; background: #eee;">
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; width: 50px;">Row</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">A</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">B</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">C</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">D</th>
-                            <th style="padding: 6px 4px; border: 1px solid #ccc; font-weight: bold;">E</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; width: 50px;">Row</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">A</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">B</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">C</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">D</th>
+                            <th style="padding: 5px 3px; border: 1px solid #ccc; font-weight: bold;">E</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -832,8 +836,23 @@ try {
         printWindow.document.write('<html><head><title>Print PPP Passcard</title></head><body style="margin:20px;">' + source.innerHTML + '</body></html>');
         printWindow.document.close();
         printWindow.focus();
-        printWindow.print();
-        printWindow.close();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    }
+
+    function printQRCode() {
+        const qrImgSrc = document.getElementById('ppp_qr_large_img').src;
+        const key = document.getElementById('ppp_qr_caption_key').innerText;
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write('<html><head><title>Print QR Code</title><style>body{display:flex;flex-direction:column;align-items:center;justify-content:center;height:90vh;margin:0;font-family:monospace;text-align:center;}img{max-width:300px;margin-bottom:20px;}.key{font-size:1.2rem;word-break:break-all;max-width:600px;}</style></head><body><img src="' + qrImgSrc + '" alt="QR Code"><div class="key"><strong>Sequence Key:</strong><br>' + key + '</div></body></html>');
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
     }
 
     function viewPPPCard() {

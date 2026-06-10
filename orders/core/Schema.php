@@ -132,19 +132,20 @@ class Schema {
         if (!isset(self::$blueprints[$db_name])) return;
 
         foreach (self::$blueprints[$db_name] as $table => $sql) {
+            // Bypass verification and migrations if already verified in this session
+            if (Database::isSchemaVerified($db_name, $table)) {
+                continue;
+            }
+
             // Always CREATE TABLE IF NOT EXISTS (safe no-op when table exists)
             $conn->exec($sql);
 
             // Always run migrations — idempotent PRAGMA checks mean no harm.
-            // This MUST NOT be gated by the session cache so a stale session
-            // cannot silently skip adding a new column.
             self::runMigrations($conn, $db_name, $table);
 
-            if (!Database::isSchemaVerified($db_name, $table)) {
-                // --- Initial Data Seeding (once per session) ---
-                self::seed($conn, $db_name, $table);
-                Database::markSchemaVerified($db_name, $table);
-            }
+            // --- Initial Data Seeding (once per session) ---
+            self::seed($conn, $db_name, $table);
+            Database::markSchemaVerified($db_name, $table);
         }
     }
 
