@@ -876,8 +876,14 @@ try {
     function startQRScanner() {
         const readerDiv = document.getElementById('reader');
         const stopBtn = document.getElementById('btn_stop_scanner');
+        
         readerDiv.style.display = 'block';
         stopBtn.style.display = 'block';
+
+        // Check for secure context
+        if (!window.isSecureContext) {
+            alert("Camera access requires a secure context (HTTPS or localhost). If you are accessing this site via HTTP, your mobile browser will block camera requests.");
+        }
 
         html5QrCode = new Html5Qrcode("reader");
         const qrCodeSuccessCallback = (decodedText, decodedResult) => {
@@ -902,12 +908,30 @@ try {
         };
         const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-        html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback)
-            .catch(err => {
-                console.error("Camera access failed:", err);
-                alert("Could not start camera: " + err);
-                stopQRScanner();
-            });
+        // Query available cameras to pick the back/rear one explicitly (often fixes mobile camera selection bugs)
+        Html5Qrcode.getCameras().then(devices => {
+            if (devices && devices.length > 0) {
+                let cameraId = devices[0].id;
+                // Seek environment/rear/back camera
+                for (const device of devices) {
+                    const label = device.label.toLowerCase();
+                    if (label.includes('back') || label.includes('environment') || label.includes('rear') || label.includes('out')) {
+                        cameraId = device.id;
+                        break;
+                    }
+                }
+                return html5QrCode.start(cameraId, config, qrCodeSuccessCallback);
+            } else {
+                return html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+            }
+        }).catch(err => {
+            console.warn("getCameras failed or rejected, falling back to facingMode constraints:", err);
+            return html5QrCode.start({ facingMode: "environment" }, config, qrCodeSuccessCallback);
+        }).catch(err => {
+            console.error("Camera access failed:", err);
+            alert("Could not start camera: " + err + "\n\nMake sure the app is hosted on HTTPS and camera permissions are allowed.");
+            stopQRScanner();
+        });
     }
 
     function stopQRScanner() {
