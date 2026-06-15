@@ -6,13 +6,11 @@
 
 require_once __DIR__ . '/Security.php';
 
-class UI
-{
+class UI {
     /**
      * Renders a hidden CSRF protection field
      */
-    public static function csrf_field()
-    {
+    public static function csrf_field() {
         $token = Security::getToken();
         return "<input type='hidden' name='csrf_token' value='{$token}'>";
     }
@@ -20,8 +18,7 @@ class UI
     /**
      * Renders a premium Glassmorphic Stat Card
      */
-    public static function stat_card($title, $value, $class = '', $id = '')
-    {
+    public static function stat_card($title, $value, $class = '', $id = '') {
         $id_attr = $id ? "id='" . htmlspecialchars($id) . "'" : "";
         $title_esc = htmlspecialchars($title);
         $value_esc = htmlspecialchars($value);
@@ -37,8 +34,7 @@ class UI
     /**
      * Renders a Status Badge
      */
-    public static function badge($text, $type = 'default')
-    {
+    public static function badge($text, $type = 'default') {
         $type_class = "badge-" . strtolower(str_replace(' ', '-', $type));
         return "<span class='badge " . htmlspecialchars($type_class) . "'>" . htmlspecialchars($text) . "</span>";
     }
@@ -46,8 +42,7 @@ class UI
     /**
      * Renders a Premium Action Button
      */
-    public static function button($text, $link = '#', $icon = '', $class = 'btn-primary')
-    {
+    public static function button($text, $link = '#', $icon = '', $class = 'btn-primary') {
         $icon_html = $icon ? "<span class='btn-icon'>" . $icon . "</span>" : "";
         return "
         <a href='" . htmlspecialchars($link) . "' class='btn " . htmlspecialchars($class) . "'>
@@ -59,8 +54,7 @@ class UI
     /**
      * Renders a Quick Action Hub Button (Marketing style)
      */
-    public static function action_button($text, $link, $emoji, $style = '')
-    {
+    public static function action_button($text, $link, $emoji, $style = '') {
         return "
         <a href='" . htmlspecialchars($link) . "' class='btn action-hub-btn' style='" . htmlspecialchars($style) . "'>
             <span style='margin-right: 12px; font-size: 1.2rem;'>" . htmlspecialchars($emoji) . "</span>
@@ -71,13 +65,10 @@ class UI
     /**
      * Renders an Opportunity Card (Marketing style)
      */
-    public static function opportunity_card($title, $desc, $link, $btn_text, $type = 'READY')
-    {
+    public static function opportunity_card($title, $desc, $link, $btn_text, $type = 'READY') {
         $icon = '💡';
-        if ($type === 'NEED_PHOTO')
-            $icon = '📸';
-        if ($type === 'NEED_TEMPLATE')
-            $icon = '📝';
+        if ($type === 'NEED_PHOTO') $icon = '📸';
+        if ($type === 'NEED_TEMPLATE') $icon = '📝';
 
         return "
         <div class='opportunity-card opp-" . htmlspecialchars($type) . "'>
@@ -93,14 +84,13 @@ class UI
     /**
      * Renders an Activity Feed Item
      */
-    public static function activity_item($icon, $title, $subtitle)
-    {
+    public static function activity_item($icon, $title, $subtitle) {
         return "
         <div class='activity-item'>
             <div class='activity-icon'>" . $icon . "</div>
             <div class='activity-details'>
-                <div class='activity-title'>" . htmlspecialchars($title) . "</div>
-                <div class='activity-subtitle'>" . htmlspecialchars($subtitle) . "</div>
+                <div class='activity-title'>".htmlspecialchars($title)."</div>
+                <div class='activity-subtitle'>".htmlspecialchars($subtitle)."</div>
             </div>
         </div>";
     }
@@ -108,10 +98,8 @@ class UI
     /**
      * Smart formats specifications (handles pasted Google Sheets data)
      */
-    public static function format_specs($text)
-    {
-        if (empty($text))
-            return "<span class='text-dim italic'>No specs defined.</span>";
+    public static function format_specs($text) {
+        if (empty($text)) return "<span class='text-dim italic'>No specs defined.</span>";
 
         // Detect if it's tab-separated (spreadsheet paste)
         if (strpos($text, "\t") !== false) {
@@ -121,8 +109,7 @@ class UI
             $isFirst = true;
             $gridTemplate = "";
             foreach ($lines as $line) {
-                if (empty(trim($line)))
-                    continue;
+                if (empty(trim($line))) continue;
                 $parts = explode("\t", $line);
 
                 if ($isFirst) {
@@ -151,8 +138,7 @@ class UI
         return nl2br(htmlspecialchars($text));
     }
 
-    public static function theme_init_script()
-    {
+    public static function theme_init_script() {
         return "
         <script>
             (function() {
@@ -165,8 +151,7 @@ class UI
     /**
      * Renders a Dark Mode Toggle Switch
      */
-    public static function theme_toggle()
-    {
+    public static function theme_toggle() {
         return "
         <div class='theme-toggle-wrapper'>
             <button id='themeToggle' class='theme-btn' title='Toggle Dark Mode' type='button'>
@@ -193,8 +178,7 @@ class UI
     /**
      * Renders any pending notifications from Session or URL
      */
-    public static function render_notifications()
-    {
+    public static function render_notifications() {
         $msg = $_SESSION['notification_msg'] ?? null;
         $type = $_SESSION['notification_type'] ?? 'info';
         unset($_SESSION['notification_msg'], $_SESSION['notification_type']);
@@ -214,11 +198,9 @@ class UI
     /**
      * Multibyte-safe str_pad for visual alignment in monospace fonts
      */
-    private static function mb_str_pad($input, $pad_length, $pad_string = " ", $pad_type = STR_PAD_RIGHT)
-    {
+    private static function mb_str_pad($input, $pad_length, $pad_string = " ", $pad_type = STR_PAD_RIGHT) {
         $diff = $pad_length - mb_strwidth($input);
-        if ($diff <= 0)
-            return $input;
+        if ($diff <= 0) return $input;
         $left_pad = $right_pad = 0;
         if ($pad_type == STR_PAD_RIGHT) {
             $right_pad = $diff;
@@ -234,16 +216,13 @@ class UI
     /**
      * Smart formats specifications for plain text (handles pasted Google Sheets data)
      */
-    public static function format_specs_plain($text)
-    {
-        if (empty($text))
-            return "No specs defined.";
+    public static function format_specs_plain($text) {
+        if (empty($text)) return "No specs defined.";
 
         // Detect if it's tab-separated (spreadsheet paste)
         if (strpos($text, "\t") !== false) {
             $lines = array_filter(explode("\n", str_replace("\r", "", trim($text))));
-            if (empty($lines))
-                return "";
+            if (empty($lines)) return "";
 
             // First Pass: Calculate max VISUAL width for EVERY column
             $colMaxLens = [];
@@ -251,8 +230,7 @@ class UI
                 $parts = explode("\t", $line);
                 foreach ($parts as $i => $part) {
                     $len = mb_strwidth(trim($part));
-                    if ($i === 0)
-                        $len += 1; // Account for the colon
+                    if ($i === 0) $len += 1; // Account for the colon
                     if (!isset($colMaxLens[$i]) || $len > $colMaxLens[$i]) {
                         $colMaxLens[$i] = $len;
                     }
@@ -322,8 +300,7 @@ class UI
                 $rowStr = "";
                 for ($i = 0; $i < count($colMaxLens); $i++) {
                     $val = isset($parts[$i]) ? trim($parts[$i]) : "";
-                    if ($i === 0)
-                        $val .= ":"; // Add colon to first column (Brand)
+                    if ($i === 0) $val .= ":"; // Add colon to first column (Brand)
 
                     $isLast = ($i === count($colMaxLens) - 1);
                     if (!$isLast) {

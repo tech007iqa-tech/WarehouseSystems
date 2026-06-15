@@ -135,3 +135,83 @@
 .tab-content.active {
     display: block;
 }
+
+/* Premium Table View for Trends */
+.trends-table-container {
+    margin-top: 15px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    overflow-x: auto;
+    box-shadow: var(--shadow-sm);
+}
+
+.trends-table {
+    border-spacing: 0;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.trends-table thead tr {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+}
+
+.trends-table th {
+    display: table-cell !important;
+    padding: 16px 20px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.9) !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    text-align: left;
+}
+
+.trends-table th:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+.trends-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+    color: var(--text-main);
+}
+
+.trends-table tbody tr:hover {
+    background-color: var(--bg-surface-2) !important;
+}
+
+.qty-chip {
+    background: var(--accent-color);
+    color: white;
+    font-weight: 800;
+    border-radius: 20px;
+    padding: 4px 12px;
+    display: inline-block;
+}
+
+/* Sorting indicators */
+.trends-table th.sort-asc::after {
+    content: " ▲";
+    font-size: 0.75rem;
+}
+
+.trends-table th.sort-desc::after {
+    content: " ▼";
+    font-size: 0.75rem;
+}
+
+/* Highlight styles */
+.match-highlight {
+    background-color: rgba(140, 198, 63, 0.3) !important;
+    color: var(--text-main) !important;
+    border-radius: 2px;
+    padding: 1px 2px;
+}
+

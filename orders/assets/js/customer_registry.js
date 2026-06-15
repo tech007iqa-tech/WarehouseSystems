@@ -261,7 +261,7 @@ function renderEditView(data) {
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom:12px;">
                 <div class="form-group">
                     <label for="edit-email">Email</label>
-                    <input type="email" id="edit-email" name="email" value="${escapeHTML(data.email)}" style="height:38px; font-size:0.85rem;">
+                   <input type="email" id="edit-email" name="email" value="${data.email && data.email !== '—' ? escapeHTML(data.email) : ''}" style="height:38px; font-size:0.85rem;">
                 </div>
                 <div class="form-group">
                     <label for="edit-phone">Phone</label>
@@ -319,9 +319,9 @@ function handleCancelEdit(data) {
     renderDetailView(data);
 }
 
-/**
- * Filters the customer list based on search input
- */
+let filterStartDate = null;
+let filterEndDate = null;
+
 function filterCustomers() {
     const input = document.getElementById('cust-search');
     if (!input) return;
@@ -331,15 +331,44 @@ function filterCustomers() {
     const cards = document.getElementsByClassName('cust-card');
 
     for (let i = 0; i < cards.length; i++) {
+        // Text Match
         const search = cards[i].getAttribute('data-search')?.toLowerCase() || "";
-        let matches = true;
+        let textMatches = true;
         for (let term of terms) {
             if (!search.includes(term)) {
-                matches = false;
+                textMatches = false;
                 break;
             }
         }
-        cards[i].style.display = matches ? "" : "none";
+
+        // Date Range Match
+        let dateMatches = true;
+        if (filterStartDate) {
+            const customerDataRaw = cards[i].getAttribute('data-customer');
+            if (customerDataRaw) {
+                try {
+                    const data = JSON.parse(customerDataRaw);
+                    const lastOrderStr = data.last_order_date;
+                    if (!lastOrderStr || lastOrderStr === '0000-00-00 00:00:00') {
+                        dateMatches = false;
+                    } else {
+                        // Compare local dates without timezone offsets
+                        const lastOrderDate = new Date(lastOrderStr.substring(0, 10) + 'T00:00:00');
+                        if (filterEndDate) {
+                            dateMatches = (lastOrderDate >= filterStartDate && lastOrderDate <= filterEndDate);
+                        } else {
+                            dateMatches = (lastOrderDate.getTime() === filterStartDate.getTime());
+                        }
+                    }
+                } catch (e) {
+                    dateMatches = false;
+                }
+            } else {
+                dateMatches = false;
+            }
+        }
+
+        cards[i].style.display = (textMatches && dateMatches) ? "" : "none";
     }
 }
 
@@ -747,4 +776,143 @@ async function processImport() {
         btn.innerHTML = originalBtnText;
         btn.disabled = false;
     }
+}
+
+// --- CALENDAR DATE RANGE PICKER ---
+let calendarCurrentDate = new Date();
+let tempStartDate = null;
+let tempEndDate = null;
+
+function toggleCalendarPopover(event) {
+    if (event) event.stopPropagation();
+    const popover = document.getElementById('calendar-filter-popover');
+    if (!popover) return;
+
+    const isOpen = popover.style.display === 'block';
+    popover.style.display = isOpen ? 'none' : 'block';
+
+    if (!isOpen) {
+        tempStartDate = filterStartDate;
+        tempEndDate = filterEndDate;
+        renderCalendar();
+
+        const closeCalendar = (e) => {
+            if (!popover.contains(e.target) && e.target !== document.getElementById('btn-date-range')) {
+                popover.style.display = 'none';
+                document.removeEventListener('click', closeCalendar);
+            }
+        };
+        document.addEventListener('click', closeCalendar);
+    }
+}
+
+function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    const monthYearLabel = document.getElementById('calendar-month-year');
+    if (!grid || !monthYearLabel) return;
+
+    grid.innerHTML = '';
+
+    const year = calendarCurrentDate.getFullYear();
+    const month = calendarCurrentDate.getMonth();
+
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    monthYearLabel.textContent = `${monthNames[month]} ${year}`;
+
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDayIndex; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'calendar-day empty';
+        grid.appendChild(emptyCell);
+    }
+
+    const today = new Date();
+    for (let day = 1; day <= totalDays; day++) {
+        const dayBtn = document.createElement('button');
+        dayBtn.type = 'button';
+        dayBtn.className = 'calendar-day';
+        dayBtn.textContent = day;
+
+        const cellDate = new Date(year, month, day);
+
+        if (cellDate.toDateString() === today.toDateString()) {
+            dayBtn.classList.add('today');
+        }
+
+        if (tempStartDate && cellDate.getTime() === tempStartDate.getTime()) {
+            dayBtn.classList.add('selected');
+            dayBtn.classList.add('range-start');
+        } else if (tempEndDate && cellDate.getTime() === tempEndDate.getTime()) {
+            dayBtn.classList.add('selected');
+            dayBtn.classList.add('range-end');
+        } else if (tempStartDate && tempEndDate && cellDate > tempStartDate && cellDate < tempEndDate) {
+            dayBtn.classList.add('in-range');
+        }
+
+        dayBtn.onclick = (e) => {
+            e.stopPropagation();
+            handleCalendarDayClick(cellDate);
+        };
+
+        grid.appendChild(dayBtn);
+    }
+}
+
+function handleCalendarDayClick(date) {
+    if (!tempStartDate || (tempStartDate && tempEndDate)) {
+        tempStartDate = date;
+        tempEndDate = null;
+    } else if (tempStartDate && !tempEndDate) {
+        if (date < tempStartDate) {
+            tempEndDate = tempStartDate;
+            tempStartDate = date;
+        } else {
+            tempEndDate = date;
+        }
+    }
+    renderCalendar();
+}
+
+function changeCalendarMonth(direction) {
+    calendarCurrentDate.setMonth(calendarCurrentDate.getMonth() + direction);
+    renderCalendar();
+}
+
+function clearDateRange() {
+    tempStartDate = null;
+    tempEndDate = null;
+    filterStartDate = null;
+    filterEndDate = null;
+
+    document.getElementById('date-range-label').textContent = 'Date Range';
+    document.getElementById('calendar-filter-popover').style.display = 'none';
+
+    filterCustomers();
+}
+
+function applyDateRange() {
+    filterStartDate = tempStartDate;
+    filterEndDate = tempEndDate;
+
+    const label = document.getElementById('date-range-label');
+    if (filterStartDate) {
+        const startLabel = formatDateShort(filterStartDate);
+        if (filterEndDate) {
+            label.textContent = `${startLabel} - ${formatDateShort(filterEndDate)}`;
+        } else {
+            label.textContent = startLabel;
+        }
+    } else {
+        label.textContent = 'Date Range';
+    }
+
+    document.getElementById('calendar-filter-popover').style.display = 'none';
+    filterCustomers();
+}
+
+function formatDateShort(date) {
+    const options = { month: 'short', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
 }

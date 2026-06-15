@@ -3,6 +3,47 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Persist sort preference in session
+if (isset($_GET['sort'])) {
+    $_SESSION['cust_sort_pref'] = $_GET['sort'];
+}
+$sort_param = $_GET['sort'] ?? $_SESSION['cust_sort_pref'] ?? 'date_desc';
+
+// Parse multiple sort rules
+$sort_rules = [];
+$raw_rules = explode(',', $sort_param);
+foreach ($raw_rules as $raw_rule) {
+    $raw_rule = trim($raw_rule);
+    if (empty($raw_rule)) continue;
+
+    $field = $raw_rule;
+    $dir = 'asc';
+
+    if (strlen($raw_rule) > 5 && substr($raw_rule, -5) === '_desc') {
+        $field = substr($raw_rule, 0, -5);
+        $dir = 'desc';
+    } elseif (strlen($raw_rule) > 4 && substr($raw_rule, -4) === '_asc') {
+        $field = substr($raw_rule, 0, -4);
+        $dir = 'asc';
+    } else {
+        // Suffix-less backward compatibility fallback
+        if ($field === 'orders' || $field === 'spent' || $field === 'date_desc') {
+            $dir = 'desc';
+        }
+        if ($field === 'date_desc' || $field === 'date_asc') {
+            $field = 'date';
+        }
+    }
+
+    if (in_array($field, ['date', 'name', 'orders', 'spent'])) {
+        $sort_rules[] = ['field' => $field, 'dir' => $dir];
+    }
+}
+
+if (empty($sort_rules)) {
+    $sort_rules[] = ['field' => 'date', 'dir' => 'desc'];
+}
+
 try {
     $conn = Database::customers();
     $conn_orders = Database::orders();
@@ -236,7 +277,7 @@ try {
     <?php endif; ?>
 
     <div class="registry-actions" style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
-        <a href="index.php?view=register" class="btn-register" style="margin:0;">+ Register New Customer</a>
+        <a href="index.php?view=register" class="btn-register" style="margin:0; width: auto; white-space: nowrap;">+ Register New Customer</a>
 
         <div class="sort-wrapper" style="display: flex; align-items: center; gap: 10px;">
             <label for="cust-sort" style="font-size: 0.75rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">Sort By:</label>
@@ -259,18 +300,40 @@ try {
         </div>
     </div>
 
-    <div class="search-wrapper">
-        <i class="search-icon">🔍</i>
-        <input type="text" id="cust-search" placeholder="Search by name or ID..." onkeyup="filterCustomers()">
+    <div class="search-wrapper" style="display: flex; gap: 10px; position: relative;">
+        <div style="position: relative; flex: 1;">
+            <i class="search-icon">🔍</i>
+            <input type="text" id="cust-search" placeholder="Search by name or ID..." onkeyup="filterCustomers()">
+        </div>
+        <div style="position: relative;">
+            <button type="button" id="btn-date-range" onclick="toggleCalendarPopover(event)" class="btn-view-cust" title="Filter by last order date" style="width: auto; height: 48px; padding: 0 16px; font-weight: 700; font-size: 0.9rem; background: white; border: 1px solid var(--border-color); border-radius: 12px; display: flex; align-items: center; gap: 8px; white-space: nowrap;">
+                📅 <span id="date-range-label">Date Range</span>
+            </button>
+
+            <!-- Calendar Popover -->
+            <div id="calendar-filter-popover" class="calendar-popover" style="display: none; position: absolute; right: 0; top: calc(100% + 8px); background: white; border: 1px solid var(--border-color); border-radius: 16px; box-shadow: var(--shadow-lg); width: 320px; z-index: 1000; padding: 16px; animation: sortFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+                <div class="calendar-popover-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <button type="button" class="btn-sort-dir" onclick="changeCalendarMonth(-1)">◀</button>
+                    <span id="calendar-month-year" style="font-weight: 800; font-size: 0.9rem; color: var(--text-main);"></span>
+                    <button type="button" class="btn-sort-dir" onclick="changeCalendarMonth(1)">▶</button>
+                </div>
+                <div class="calendar-popover-days" style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.7rem; font-weight: 800; color: var(--text-secondary); margin-bottom: 8px;">
+                    <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                </div>
+                <div id="calendar-grid" class="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 12px;">
+                    <!-- Filled dynamically -->
+                </div>
+                <div style="display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+                    <button type="button" class="btn-view-cust" onclick="clearDateRange()" style="width: auto; padding: 0 12px; height: 32px; font-size: 0.75rem; border-radius: 8px; font-weight: 700; color: #ef4444; background: none; border: 1px solid #fee2e2;">Clear</button>
+                    <button type="button" class="btn-register" onclick="applyDateRange()" style="margin: 0; width: auto; padding: 0 16px; height: 32px; font-size: 0.75rem; border-radius: 8px;">Apply</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="registry-list" id="customer-list">
         <?php
-        // Persist sort preference in session
-        if (isset($_GET['sort'])) {
-            $_SESSION['cust_sort_pref'] = $_GET['sort'];
-        }
-        $sort_param = $_GET['sort'] ?? $_SESSION['cust_sort_pref'] ?? 'date_desc';
+        // Sort rules are parsed at the top of the file
 
         // Fetch All Customers with Aggregated Order Data using Integrated Query
         try {
@@ -333,23 +396,40 @@ try {
         unset($c); // Clean up reference
 
         // Advanced Sorting Logic
-        usort($customers, function($a, $b) use ($sort_param) {
-            switch ($sort_param) {
-                case 'name':
-                    return strcasecmp($a['company_name'], $b['company_name']);
-                case 'orders':
-                    return $b['total_orders'] <=> $a['total_orders'];
-                case 'spent':
-                    return $b['lifetime_value'] <=> $a['lifetime_value'];
-                case 'date_desc':
-                    return strcmp($b['last_order_date'], $a['last_order_date']);
-                case 'date_asc':
-                default:
-                    // If no orders, push to end (or beginning depending on interpretation)
-                    if ($a['last_order_date'] === '0000-00-00 00:00:00') return 1;
-                    if ($b['last_order_date'] === '0000-00-00 00:00:00') return -1;
-                    return strcmp($a['last_order_date'], $b['last_order_date']);
+        usort($customers, function($a, $b) use ($sort_rules) {
+            foreach ($sort_rules as $rule) {
+                $field = $rule['field'];
+                $dir = $rule['dir'];
+
+                $cmp = 0;
+                switch ($field) {
+                    case 'name':
+                        $cmp = strcasecmp($a['company_name'], $b['company_name']);
+                        break;
+                    case 'orders':
+                        $cmp = $a['total_orders'] <=> $b['total_orders'];
+                        break;
+                    case 'spent':
+                        $cmp = $a['lifetime_value'] <=> $b['lifetime_value'];
+                        break;
+                    case 'date':
+                        $a_date = $a['last_order_date'] ?? '0000-00-00 00:00:00';
+                        $b_date = $b['last_order_date'] ?? '0000-00-00 00:00:00';
+                        if ($a_date === '0000-00-00 00:00:00') {
+                            $cmp = ($b_date === '0000-00-00 00:00:00') ? 0 : 1;
+                        } elseif ($b_date === '0000-00-00 00:00:00') {
+                            $cmp = -1;
+                        } else {
+                            $cmp = strcmp($a_date, $b_date);
+                        }
+                        break;
+                }
+
+                if ($cmp !== 0) {
+                    return ($dir === 'desc') ? -$cmp : $cmp;
+                }
             }
+            return 0;
         });
 
         if (count($customers) > 0) {

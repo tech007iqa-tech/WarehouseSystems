@@ -8,27 +8,35 @@ $view = $_GET['view'] ?? 'default';
 $is_new_order = isset($_GET['customer_id']);
 
 $routes = [
-    'register' => ['page' => 'pages/new_customer.php', 'css' => 'customer_registry.css'],
-    'orders' => ['page' => 'pages/orders.php', 'css' => 'orders.css'],
-    'leads' => ['page' => 'pages/leads.php', 'css' => 'leads.css'],
-    'warehouse' => ['page' => 'pages/warehouse.php', 'css' => 'warehouse.css'],
-    'import_warehouse' => ['page' => 'pages/import_warehouse.php', 'css' => 'warehouse.css'],
-    'settings' => ['page' => 'pages/settings.php', 'css' => 'style.css'],
-    'calendar' => ['page' => 'pages/calendar.php', 'css' => 'calendar.css'],
-    'default' => ['page' => 'pages/customer_registry.php', 'css' => 'customer_registry.css'],
-    'new_order' => ['page' => 'pages/new_order.php', 'css' => 'new_order.css'],
-    'trends' => ['page' => 'pages/trends.php', 'css' => 'trends.css']
+    'register'          => ['page' =>'pages/new_customer.php',     'css' => 'customer_registry.css'],
+    'orders'            => ['page' =>'pages/orders.php',           'css' => 'orders.css'],
+    'leads'             => ['page' =>'pages/leads.php',            'css' => 'leads.css'],
+    'warehouse'         => ['page' =>'pages/warehouse.php',        'css' => 'warehouse.css'],
+    'import_warehouse'  => ['page' =>'pages/import_warehouse.php', 'css' => 'warehouse.css'],
+    'settings'          => ['page' =>'pages/settings.php',         'css' => 'style.css'],
+    'calendar'          => ['page' =>'pages/calendar.php',         'css' => 'calendar.css'],
+    'default'           => ['page' =>'pages/customer_registry.php','css' => 'customer_registry.css'],
+    'new_order'         => ['page' =>'pages/new_order.php',        'css' => 'new_order.css'],
+    'trends'            => ['page' =>'pages/trends.php',           'css' => 'trends.css'],
+    'import_sales'      => ['page' =>'pages/import_sales.php',      'css' => 'orders.css']
 ];
 
 $active_key = $is_new_order ? 'new_order' : (isset($routes[$view]) ? $view : 'default');
 
 // --- ROLE BASED ACCESS CONTROL ---
 $user_role = $_SESSION['role'] ?? 'Operator';
-if ($user_role !== 'Admin') {
+if ($user_role === 'Operator') {
     $allowed_operator_keys = ['warehouse', 'import_warehouse', 'settings'];
     if (!in_array($active_key, $allowed_operator_keys)) {
         $active_key = 'warehouse';
     }
+} elseif ($user_role === 'Front Desk') {
+    $allowed_front_desk_keys = ['trends', 'calendar', 'settings'];
+    if (!in_array($active_key, $allowed_front_desk_keys)) {
+        $active_key = 'calendar';
+    }
+} elseif ($user_role !== 'Admin') {
+    $active_key = 'warehouse';
 }
 
 $active_route = $routes[$active_key];
@@ -64,20 +72,15 @@ $page_content = ob_get_clean();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Entry | System</title>
-    <meta name="description"
-        content="System Order Management and Warehouse Control System. Efficiently manage batches, and customer fulfillments.">
+    <meta name="description" content="System Order Management and Warehouse Control System. Efficiently manage batches, and customer fulfillments.">
 
     <!-- Optimize Third-Party Connections (Non-blocking Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style"
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
-        media="print" onload="this.media='all'">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'">
     <noscript>
-        <link rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap">
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap">
     </noscript>
 
     <!-- Global Component Styles -->
@@ -89,10 +92,10 @@ $page_content = ob_get_clean();
 
     <!-- Conditional Style Discovery -->
     <?php
-    if ($active_route['css'] !== 'style.css') {
-        $css_path = 'assets/styles/' . $active_route['css'];
-        echo '<link rel="stylesheet" href="' . $css_path . '?v=' . filemtime($css_path) . '">';
-    }
+        if ($active_route['css'] !== 'style.css') {
+            $css_path = 'assets/styles/' . $active_route['css'];
+            echo '<link rel="stylesheet" href="'.$css_path.'?v='.filemtime($css_path).'">';
+        }
     ?>
 
     <link rel="icon" type="image/png" href="assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
@@ -106,8 +109,7 @@ $page_content = ob_get_clean();
 <body class="modern-theme">
     <?= UI::theme_init_script() ?>
     <?= UI::render_notifications() ?>
-    <div class="breadcrumb-container" role="banner"
-        style="max-width: 800px; margin: 0 auto 20px auto; width: 100%; display: flex; justify-content: space-between; align-items: center;">
+    <div class="breadcrumb-container" role="banner" style="max-width: 800px; margin: 0 auto 20px auto; width: 100%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">
             <?php if ($user_role === 'Admin'): ?>
                 <a href="index.php"
@@ -116,113 +118,125 @@ $page_content = ob_get_clean();
                 </a>
 
                 <?php if (isset($_GET['view']) && $_GET['view'] === 'register'): ?>
-                    <span class="separator">/</span>
-                    <a href="#" class="crumb active">
-                        <span class="step-num">2</span> Register
-                    </a>
+                <span class="separator">/</span>
+                <a href="#" class="crumb active">
+                    <span class="step-num">2</span> Register
+                </a>
                 <?php endif; ?>
 
                 <?php if (isset($_GET['customer_id'])): ?>
-                    <span class="separator">/</span>
-                    <a href="#" class="crumb active">
-                        <span class="step-num">2</span> Order Entry
-                    </a>
+                <span class="separator">/</span>
+                <a href="#" class="crumb active">
+                    <span class="step-num">2</span> Order Entry
+                </a>
                 <?php endif; ?>
 
                 <?php if (isset($_GET['view']) && $_GET['view'] === 'settings'): ?>
-                    <span class="separator">/</span>
-                    <a href="#" class="crumb active">
-                        <span class="step-num">⚙️</span> Settings
-                    </a>
+                <span class="separator">/</span>
+                <a href="#" class="crumb active">
+                    <span class="step-num">⚙️</span> Settings
+                </a>
+                <?php endif; ?>
+            <?php elseif ($user_role === 'Front Desk'): ?>
+                <a href="index.php?view=calendar" class="crumb <?= !isset($_GET['view']) || $_GET['view'] === 'calendar' ? 'active' : '' ?>">
+                    <span class="step-num">📅</span> Calendar Portal
+                </a>
+                <?php if (isset($_GET['view']) && $_GET['view'] === 'trends'): ?>
+                <span class="separator">/</span>
+                <a href="index.php?view=trends" class="crumb active">
+                    <span class="step-num">📈</span> Trends Analysis
+                </a>
+                <?php endif; ?>
+                <?php if (isset($_GET['view']) && $_GET['view'] === 'settings'): ?>
+                <span class="separator">/</span>
+                <a href="#" class="crumb active">
+                    <span class="step-num">⚙️</span> Personal Settings
+                </a>
                 <?php endif; ?>
             <?php else: ?>
-                <a href="index.php?view=warehouse"
-                    class="crumb <?= !isset($_GET['view']) || $_GET['view'] === 'warehouse' ? 'active' : '' ?>">
+                <a href="index.php?view=warehouse" class="crumb <?= !isset($_GET['view']) || $_GET['view'] === 'warehouse' ? 'active' : '' ?>">
                     <span class="step-num">🏬</span> Warehouse Portal
                 </a>
                 <?php if (isset($_GET['view']) && $_GET['view'] === 'settings'): ?>
-                    <span class="separator">/</span>
-                    <a href="#" class="crumb active">
-                        <span class="step-num">⚙️</span> Personal Settings
-                    </a>
+                <span class="separator">/</span>
+                <a href="#" class="crumb active">
+                    <span class="step-num">⚙️</span> Personal Settings
+                </a>
                 <?php endif; ?>
             <?php endif; ?>
         </nav>
 
         <!-- Consolidated Hamburger Navigation Menu -->
         <div class="nav-hamburger-container" style="position: relative; z-index: 100;">
-            <button type="button" class="btn-hamburger" onclick="toggleNavDropdown(event)"
-                aria-label="Toggle navigation menu"
-                style="width: 44px; height: 40px; border-radius: 12px; background: white; border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; transition: all 0.2s; box-shadow: var(--shadow-sm);">
+            <button type="button" class="btn-hamburger" onclick="toggleNavDropdown(event)" aria-label="Toggle navigation menu" style="width: 44px; height: 40px; border-radius: 12px; background: white; border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; transition: all 0.2s; box-shadow: var(--shadow-sm);">
                 ☰
             </button>
-            <div id="nav-dropdown-menu" class="nav-dropdown"
-                style="display: none; position: absolute; top: calc(100% + 8px); right: 0; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: var(--shadow-lg); width: 220px; padding: 8px; flex-direction: column; gap: 4px; animation: fadeInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
-                <?php if ($user_role === 'Admin'): ?>
-                    <a href="index.php?view=calendar"
-                        class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'calendar' ? 'active' : '' ?>">
+            <div id="nav-dropdown-menu" class="nav-dropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; border: 1px solid var(--border-color); border-radius: var(--border-radius-md); box-shadow: var(--shadow-lg); width: 220px; padding: 8px; flex-direction: column; gap: 4px; animation: fadeInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);">
+                <?php if ($user_role === 'Admin' || $user_role === 'Front Desk'): ?>
+                    <a href="index.php?view=calendar" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'calendar' ? 'active' : '' ?>">
                         <span>📅</span> Calendar
                     </a>
-                    <a href="index.php?view=leads"
-                        class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'leads' ? 'active' : '' ?>">
+                <?php endif; ?>
+
+                <?php if ($user_role === 'Admin'): ?>
+                    <a href="index.php?view=leads" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'leads' ? 'active' : '' ?>">
                         <span>🎯</span> Leads
                     </a>
                 <?php endif; ?>
 
-                <a href="index.php?view=warehouse"
-                    class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'warehouse' ? 'active' : '' ?>">
-                    <span>🏬</span> Warehouse
-                </a>
+                <?php if ($user_role === 'Admin' || $user_role === 'Operator'): ?>
+                    <a href="index.php?view=warehouse" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'warehouse' ? 'active' : '' ?>">
+                        <span>🏬</span> Warehouse
+                    </a>
+                <?php endif; ?>
 
                 <?php if ($user_role === 'Admin'): ?>
-                    <a href="index.php?view=orders"
-                        class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'orders' ? 'active' : '' ?>">
+                    <a href="index.php?view=orders" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'orders' ? 'active' : '' ?>">
                         <span>📦</span> All Orders
                     </a>
-                    <a href="index.php?view=trends"
-                        class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'trends' ? 'active' : '' ?>">
+                <?php endif; ?>
+
+                <?php if ($user_role === 'Admin' || $user_role === 'Front Desk'): ?>
+                    <a href="index.php?view=trends" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'trends' ? 'active' : '' ?>">
                         <span>📈</span> Trends Analysis
                     </a>
                 <?php endif; ?>
 
-                <a href="index.php?view=settings"
-                    class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'settings' ? 'active' : '' ?>">
+                <a href="index.php?view=settings" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'settings' ? 'active' : '' ?>">
                     <span>⚙️</span> Settings
                 </a>
             </div>
         </div>
 
         <script>
-            function toggleNavDropdown(event) {
-                event.stopPropagation();
-                const menu = document.getElementById('nav-dropdown-menu');
-                if (menu) {
-                    const isOpen = menu.style.display === 'flex';
-                    menu.style.display = isOpen ? 'none' : 'flex';
+        function toggleNavDropdown(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('nav-dropdown-menu');
+            if (menu) {
+                const isOpen = menu.style.display === 'flex';
+                menu.style.display = isOpen ? 'none' : 'flex';
 
-                    if (!isOpen) {
-                        const closeMenu = (e) => {
-                            if (!menu.contains(e.target)) {
-                                menu.style.display = 'none';
-                                document.removeEventListener('click', closeMenu);
-                            }
-                        };
-                        document.addEventListener('click', closeMenu);
-                    }
+                if (!isOpen) {
+                    const closeMenu = (e) => {
+                        if (!menu.contains(e.target)) {
+                            menu.style.display = 'none';
+                            document.removeEventListener('click', closeMenu);
+                        }
+                    };
+                    document.addEventListener('click', closeMenu);
                 }
             }
+        }
         </script>
     </div>
 
-    <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse', 'calendar']) ? 'order-view' : '' ?>"
-        role="main">
+    <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse', 'calendar']) ? 'order-view' : '' ?>" role="main">
         <?= $page_content ?>
     </div>
     <?php if ($active_key !== 'calendar'): ?>
-        <footer class="footer" role="contentinfo">
-            <p style="text-align: center;"><a href="#">&copy; <?= date('M Y') ?> System</a> | Managed Inventory & Order
-                Fulfillments</p>
-        </footer>
+    <footer class="footer" role="contentinfo">
+        <p style="text-align: center;" ><a href="#">&copy; <?= date('M Y') ?> System</a> | Managed Inventory & Order Fulfillments</p>
+    </footer>
     <?php endif; ?>
     <!-- Load view-specific JavaScript -->
     <?php if ($active_key === 'new_order'): ?>

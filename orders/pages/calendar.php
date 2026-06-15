@@ -4,7 +4,8 @@
  * Pulls from calendar.db and integrates with main app shell.
  */
 
-if (($_SESSION['role'] ?? 'Operator') !== 'Admin') {
+$user_role = $_SESSION['role'] ?? 'Operator';
+if ($user_role !== 'Admin' && $user_role !== 'Front Desk') {
     echo "<div class='glass-card' style='padding: 2rem; text-align: center;'><h2>Unauthorized</h2><p>You do not have permission to access the Calendar.</p></div>";
     return;
 }

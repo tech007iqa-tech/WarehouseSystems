@@ -7,7 +7,8 @@ require_once '../../core/database.php';
 include '../../core/auth.php';
 
 // Access Control
-if (($_SESSION['role'] ?? 'Operator') !== 'Admin') {
+$user_role = $_SESSION['role'] ?? 'Operator';
+if ($user_role !== 'Admin' && $user_role !== 'Front Desk') {
     die("Unauthorized access.");
 }
 
