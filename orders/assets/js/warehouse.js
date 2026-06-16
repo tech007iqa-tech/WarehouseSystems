@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             onUpdate: () => {
                 // Re-apply search filter after syncing
                 filterWarehouse();
-                
+
                 // Keep selected IDs up-to-date with what actually exists in DOM now
                 const currentIds = new Set(Array.from(document.querySelectorAll('#inventory-list .row-select')).map(cb => cb.closest('tr').dataset.id));
                 for (let id of selectedIds) {
@@ -837,15 +837,15 @@ if (DOM.tbody) {
         if (e.target.classList.contains('row-select')) {
             const currentCb = e.target;
             const checkboxes = Array.from(DOM.tbody.querySelectorAll('.row-select')).filter(cb => cb.closest('tr').style.display !== 'none');
-            
+
             if (e.shiftKey && lastChecked && lastChecked !== currentCb) {
                 let start = checkboxes.indexOf(currentCb);
                 let end = checkboxes.indexOf(lastChecked);
-                
+
                 if (start > -1 && end > -1) {
                     const range = checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
                     const isChecked = currentCb.checked;
-                    
+
                     range.forEach(cb => {
                         cb.checked = isChecked;
                         const tr = cb.closest('tr');
@@ -871,7 +871,7 @@ if (DOM.tbody) {
                     if (DOM.selectAll) DOM.selectAll.checked = false;
                 }
             }
-            
+
             lastChecked = currentCb;
             updateBulkBar();
         }

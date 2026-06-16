@@ -1,4 +1,4 @@
-# 🤖 AI Agent Context & Guidelines 6/8/2026 3:06 PM
+# 🤖 AI Agent Context & Guidelines 6/16/2026 3:11 PM
 
 Welcome! This document provides the architectural and styling patterns for the **IQA Warehouse Systems** codebase. By adhering to these guidelines, you will write cleaner, more maintainable code and avoid redundant investigations that waste tokens.
 
@@ -87,6 +87,7 @@ Many warehouse managers perform hardware audits using iPads. To prevent styling 
 ---
 
 ## 🔍 Token-Saving Shortcuts for AI Agents
-- **Avoid Loading**: `prod/pages/new_order.php` and `prod/pages/warehouse.php` are heavy UI containers. Do not view the entire file unless modifying forms.
+- **Working Zones Grid**: `warehouse.php` implements a drill-down architecture where parent zones control the sub-locations visible. Use the state parameters `sector` and `active_zone_name` to filter and render sub-locations.
+- **CPU pricing popups**: `trends.php` uses companion JS functions `openCpuPricingModal` and `openOrderPreviewModal` that query standard AJAX endpoints. Keep dialog HTML blocks at the bottom of the PHP file layout.
 - **Config & DB Check**: Look directly at `prod/core/database.php` and `prod/core/Schema.php` for table blueprints and schema changes.
 - **Pathing reference**: Relative path references are calculated relative to `prod/index.php`. Use `__DIR__` in PHP includes to ensure correct file inclusion.

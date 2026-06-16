@@ -1,12 +1,10 @@
-# 📦 IQA Warehouse Systems 6/8/2026 3:06 PM
+# 📦 IQA Warehouse Systems 6/16/2026 3:11 PM
 
 [![Version](https://img.shields.io/badge/version-2.1.0-green.svg)](https://github.com/)
 [![Tech](https://img.shields.io/badge/Stack-Vanilla_PHP_|_SQLite_|_JS-blue.svg)](https://github.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/)
 
 A premium, high-performance warehouse management and sales logistics ecosystem designed for speed, reliability, and precision. Optimized for physical warehouse environments where quick hardware intake, accurate label logistics, and customer relation lifecycles are mission-critical.
-
-Unlike previous modular iterations, the application is consolidated as a single-monolith system contained within `/prod/` which operates with a shared routing dashboard and central SQLite databases stored in `/db/`.
 
 ---
 
@@ -21,7 +19,9 @@ All modules are unified under a single responsive dashboard in `index.php`. Acce
   - **Gaming**: Track Console/Rig details, GPU specs, and RAM/storage.
   - **Desktops**: Direct CPU and workstation configuration.
   - **Electronics**: Simple general specification inventory.
-- **Zone Status Logic**: Physical zones or shelves are assigned operational states: `Working` (active intake), `Audit` (verification), `Shipping`, `In-Review`, `Warehoused` (long-term), or `Idle` (empty).
+- **Nested Working Zones & Locations**: High-level grid grouping shelves/areas into parent Working Zones (e.g., `Zone A`, `Zone B`, `Inbound`, `General`). Supports drill-down navigation to view and manage sub-locations/shelves.
+- **Dynamic Add & Rename**: Add new working zones or sub-locations (with automatic code prefixing) and rename existing ones instantly via inline inputs.
+- **Zone Status Logic**: Physical locations are assigned operational states like `Working` (active intake), `Audit` (verification), `Shipping`, `In-Review`, `Warehoused` (long-term), or `Idle` (empty).
 - **Intake Optimizations**:
   - **Clone Last Entry**: Quick clone feature pre-fills the intake forms with specifications from the last entered unit.
   - **Bulk Clipboard Import**: Copy-paste tab-separated rows directly from spreadsheet files with auto-header matching and automatic input guards.
@@ -51,6 +51,8 @@ All modules are unified under a single responsive dashboard in `index.php`. Acce
 ### 📈 Historical Trends Engine (`/prod/pages/trends.php`)
 *Business Intelligence Analytics*
 - **BI Charts**: Uncapped historical queries parsing sales velocities, pricing curves, GPU/CPU generation dominance, and customer buying trends.
+- **CPU Pricing details**: Interactive modal detailing price ranges, averages, and transaction history for CPU lines.
+- **Order Preview Manifest**: Interactive inline modal allowing users to preview full order manifests directly from transactions inside trends.
 - **Pure-CSS Visualization**: Outfitted with responsive CSS-based charts and multi-tab glassmorphic containers.
 
 ### ⚙️ System Settings & Tools (`/prod/pages/settings.php`)

@@ -42,6 +42,9 @@ This map outlines the dual-module structure of the IQA Warehouse Systems.
 - `core/`:
     - `database.php`: Cross-DB PDO Singleton.
     - `auth.php`: Role-based security.
+- `api/`:
+    - `get_cpu_pricing_details.php`: API endpoint returning price metrics and recent transactions for CPU families.
+    - `get_order_details.php`: API endpoint returning item batch list and totals for a given order ID.
 - `assets/db/`: SQLite databases (`customers`, `orders`, `users`, `warehouse`).
 
 ---

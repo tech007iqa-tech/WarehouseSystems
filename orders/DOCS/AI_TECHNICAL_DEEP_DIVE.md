@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive 6/8/2026 3:06 PM
+# 🧠 AI Technical Deep Dive 6/16/2026 3:11 PM
 
 This document details the database schemas, query abstractions, concurrency controls, document generation formulas, and security patterns implemented in the **IQA Warehouse Systems**.
 
@@ -67,11 +67,16 @@ The system contains five SQLite databases situated in the `/db/` directory.
 - **`locations`** (Physical storage positions):
   - `location_code` (TEXT, PRIMARY KEY): E.g. `'Shelf-A'`.
   - `status` (TEXT): E.g. `'Working'`, `'Audit'`, `'Shipping'`, `'Idle'`.
+  - `working_zone_name` (TEXT, DEFAULT NULL): Parent working zone (e.g. `'Zone A'`).
   - `updated_at` (DATETIME)
 - **`location_statuses`** (Configurable zone states):
   - `id` (INTEGER, PRIMARY KEY AUTOINCREMENT)
   - `name` (TEXT, UNIQUE)
   - `color` (TEXT)
+- **`working_zones`** (Configurable parent physical zones):
+  - `id` (INTEGER, PRIMARY KEY AUTOINCREMENT)
+  - `name` (TEXT, UNIQUE): E.g. `'Zone A'`, `'Zone B'`, `'Inbound'`, `'General'`.
+  - `created_at` (DATETIME)
 
 ### 4. `users.db`
 - **`users`** (Operator and Administrator credentials):
@@ -138,6 +143,10 @@ To keep layouts updated in real-time across multiple workstations without spammi
   3. **Diff Swap (Client-side)**: Upon receiving the event, the client fetches the updated fragment JSON (`index.php?view=leads&ajax=1`). It swaps other static nodes (like follow-up card containers) directly, and performs a smart row-by-row virtual DOM diff on the table (`#leads-list`) to insert, update, or delete elements cleanly.
   4. **Active Input Protection**: The sync engine automatically skips swaps if the client currently has focus in inputs/textareas inside the targeted container.
   5. **Flash Animation**: Modified/new rows are highlighted with a 1.5s fading green background (`row-pulse-highlight` class).
+
+### 3. CPU Pricing details Dialog & Order Preview Modal (Trends Page)
+- **CPU Details**: In `trends.php`, clicking a row in the CPU dominance table calls `api/get_cpu_pricing_details.php?cpu=[Name]`. This endpoint computes statistics (min, max, avg unit prices) and fetches recent sales containing this CPU category from `orders.db` and `customers.db`.
+- **Order Preview**: Clicking a transaction Order ID inside the CPU details modal calls `api/get_order_details.php?order_id=[ID]`. This queries `orders.db` and `customers.db` to load full B2B client details, line items, and grand totals, displaying them in a manifest preview modal.
 
 ---
 

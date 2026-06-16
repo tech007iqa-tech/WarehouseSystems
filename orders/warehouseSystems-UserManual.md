@@ -50,8 +50,11 @@ The Warehouse module (`/prod/pages/warehouse.php`) is where you manage physical 
    - **Clone Last Entry**: Use this to pre-fill the form with details from the previous item—perfect for processing identical units.
    - **Bulk Clipboard Import**: Copy rows from an Excel or CSV file and paste them directly into the import tool for massive batch processing.
 
-### Zone Management
-- **Zone Status**: Assign zones (shelves/areas) statuses like `Working`, `Audit`, `Shipping`, or `Warehoused`.
+### Zone & Location Management
+- **Working Zones Grid**: The high-level view groups storage spaces into parent Working Zones (e.g., `Zone A`, `Zone B`, `Inbound`, `General`).
+- **Drill-down Navigation**: Clicking a parent zone filters the dashboard to only show its specific sub-locations or shelves. Use "Back to Zones" to return.
+- **Dynamic Addition**: Administrators can create new top-level Working Zones. When inside a Working Zone, new locations/shelves can be added with automatic code prefixing (e.g. `A-` for Zone A).
+- **Zone Renaming**: Use the inline rename pencil icon on a shelf/location or parent zone to instantly rename it in the system.
 - **Relocation**: Use the **Bulk Action Bar** to select multiple items and move them to a different zone in one click.
 
 ### Label Printing
@@ -96,6 +99,8 @@ The ordering workflow is split into two phases: building the batch and finalizin
 
 ### Historical Trends (`/prod/pages/trends.php`)
 - **BI Analytics**: Visualize sales velocity, pricing curves, and hardware dominance (e.g., which CPU generations are selling fastest).
+- **CPU Pricing Insights**: Click any row under the CPU Family Dominance card to open a pricing breakdown. Inspect minimum, maximum, and average prices alongside recent transaction records.
+- **Order Preview**: Click a transaction code (Order ID) in the pricing dialog to instantly overlay a detailed manifest checklist and valuation.
 - **Custom Queries**: Run historical reports to identify buying trends and optimize your inventory procurement.
 
 ---

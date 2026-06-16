@@ -74,12 +74,18 @@ class Schema {
             'locations' => "CREATE TABLE IF NOT EXISTS locations (
                 location_code TEXT PRIMARY KEY,
                 status TEXT DEFAULT 'Idle',
+                working_zone_name TEXT DEFAULT NULL,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )",
             'location_statuses' => "CREATE TABLE IF NOT EXISTS location_statuses (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE,
                 color TEXT
+            )",
+            'working_zones' => "CREATE TABLE IF NOT EXISTS working_zones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )"
         ],
         'users' => [
@@ -213,7 +219,39 @@ class Schema {
                     ['Idle', '#64748b']
                 ];
                 $stmt = $conn->prepare("INSERT INTO location_statuses (name, color) VALUES (?, ?)");
-                foreach ($statuses as $st) $stmt->execute($st);
+            }
+        }
+        if ($db_name === 'warehouse' && $table === 'working_zones') {
+            $count = $conn->query("SELECT COUNT(*) FROM working_zones")->fetchColumn();
+            if ($count == 0) {
+                // Populate default working zones based on existing prefixes or common tags
+                $default_zones = ['Zone A', 'Zone B', 'Inbound', 'General'];
+                $stmt = $conn->prepare("INSERT OR IGNORE INTO working_zones (name) VALUES (?)");
+                foreach ($default_zones as $z) {
+                    $stmt->execute([$z]);
+                }
+
+                // Associate existing locations with zones
+                $locs = $conn->query("SELECT location_code FROM locations")->fetchAll(PDO::FETCH_ASSOC);
+                $stmt_up = $conn->prepare("UPDATE locations SET working_zone_name = ? WHERE location_code = ?");
+                foreach ($locs as $loc) {
+                    $name = $loc['location_code'];
+                    $zone = 'General';
+                    if (preg_match('/^([a-zA-Z]+)([-‑]?\d+)?/u', $name, $matches)) {
+                        $p_zone = 'Zone ' . strtoupper($matches[1]);
+                        // Insert zone dynamically if not exists
+                        $conn->prepare("INSERT OR IGNORE INTO working_zones (name) VALUES (?)")->execute([$p_zone]);
+                        $zone = $p_zone;
+                    } elseif (preg_match('/^([a-zA-Z0-9]+)/u', $name, $matches)) {
+                        $p_zone = 'Zone ' . strtoupper($matches[1]);
+                        $conn->prepare("INSERT OR IGNORE INTO working_zones (name) VALUES (?)")->execute([$p_zone]);
+                        $zone = $p_zone;
+                    }
+                    if (strlen($name) > 10 || stripos($name, 'inbound') !== false || stripos($name, 'desktop') !== false) {
+                        $zone = 'General';
+                    }
+                    $stmt_up->execute([$zone, $name]);
+                }
             }
         }
     }
@@ -257,6 +295,10 @@ class Schema {
             $cols = $conn->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC);
             if (!in_array('price', array_column($cols, 'name'))) {
                 $conn->exec("ALTER TABLE inventory ADD COLUMN price REAL DEFAULT 0");
+            }
+            $cols = $conn->query("PRAGMA table_info(locations)")->fetchAll(PDO::FETCH_ASSOC);
+            if (!in_array('working_zone_name', array_column($cols, 'name'))) {
+                $conn->exec("ALTER TABLE locations ADD COLUMN working_zone_name TEXT DEFAULT NULL");
             }
         }
 

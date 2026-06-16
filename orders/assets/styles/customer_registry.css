@@ -605,3 +605,110 @@
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
+
+/* Secondary Action Button & Badge Refinements */
+.btn-secondary-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 54px;
+    font-size: 1rem;
+    font-weight: 800;
+    border-radius: 12px;
+    background: var(--bg-surface-2);
+    color: var(--text-main);
+    border: 1px dashed var(--border-color);
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.btn-secondary-action:hover {
+    background: var(--border-color);
+    border-color: var(--text-secondary);
+}
+
+.cust-id-badge {
+    margin-top: 6px;
+    font-size: 0.75rem;
+    font-family: monospace;
+    background: var(--bg-surface-2);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 8px;
+    display: inline-block;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.crm-notes-box {
+    background: var(--bg-surface-2);
+    padding: 16px;
+    border-radius: 12px;
+    margin-top: 15px;
+    border: 1px solid var(--border-color);
+}
+
+/* --- DARK THEME OVERRIDES --- */
+[data-theme="dark"] .detail-box {
+    background: var(--bg-panel);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .detail-notes {
+    background: var(--bg-surface-2);
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .order-row-link {
+    background: var(--bg-panel);
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+[data-theme="dark"] .order-row-link:hover {
+    background: rgba(163, 230, 53, 0.08);
+}
+
+[data-theme="dark"] .order-row-link.completed {
+    background: var(--bg-surface-2);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .order-row-link.completed:hover {
+    background: var(--border-color);
+    color: var(--text-main);
+}
+
+[data-theme="dark"] .stat-chip {
+    background: var(--bg-surface-2);
+}
+
+[data-theme="dark"] .empty-state {
+    background: var(--bg-surface-2) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-dim) !important;
+}
+
+[data-theme="dark"] .btn-secondary-action {
+    background: var(--bg-surface-2);
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+[data-theme="dark"] .btn-secondary-action:hover {
+    background: var(--border-color);
+}
+
+[data-theme="dark"] .cust-id-badge {
+    background: var(--bg-surface-2);
+    color: var(--text-secondary);
+}
+
+[data-theme="dark"] .crm-notes-box {
+    background: var(--bg-surface-2);
+    border-color: var(--border-color);
+}
+

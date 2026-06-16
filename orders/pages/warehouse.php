@@ -54,6 +54,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     }
 
+    if ($_POST['action'] === 'add_working_zone' && isset($_POST['zone_name'])) {
+        $zone_name = trim($_POST['zone_name']);
+        if (!empty($zone_name)) {
+            $stmt = $conn_wh->prepare("INSERT OR IGNORE INTO working_zones (name) VALUES (?)");
+            $stmt->execute([$zone_name]);
+        }
+        header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=zone_added");
+        exit();
+    }
+
+    if ($_POST['action'] === 'add_sub_zone' && isset($_POST['shelf_name'])) {
+        $shelf_name = trim($_POST['shelf_name']);
+        $parent_zone = $_POST['parent_zone'] ?? 'General';
+        if (!empty($shelf_name)) {
+            $stmt = $conn_wh->prepare("INSERT OR IGNORE INTO locations (location_code, status, working_zone_name) VALUES (?, 'Idle', ?)");
+            $stmt->execute([$shelf_name, $parent_zone]);
+        }
+        header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&zone=" . urlencode($parent_zone) . "&msg=shelf_added");
+        exit();
+    }
+
     if ($_POST['action'] === 'add_location_status' && isset($_POST['status_name'])) {
         $name = trim($_POST['status_name']);
         $color = $_POST['status_color'] ?? '#64748b';
@@ -205,20 +226,19 @@ $highlight_id = $_GET['last_id'] ?? null;
 
 // --- LIVEWIRE-STYLE AJAX VIEW HANDLER ---
 if (UI::is_ajax()) {
-    if (ob_get_level() > 0) ob_clean();
+    if (ob_get_level() > 0)
+        ob_clean();
     ob_start();
     if (empty($items)): ?>
         <tr>
-            <td colspan="10"
-                style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">
+            <td colspan="10" style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">
                 No items found in this sector.
             </td>
         </tr>
     <?php else: ?>
         <tr id="wh-no-results" class="no-results-row" style="display: none;">
             <td colspan="12">
-                <div class="no-results-wrapper"
-                    style="display: flex; justify-content: center; width: 100%;">
+                <div class="no-results-wrapper" style="display: flex; justify-content: center; width: 100%;">
                     <div class="no-results-container">
                         <div class="no-results-icon">🕵️‍♂️</div>
                         <div style="font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em;">No
@@ -229,7 +249,7 @@ if (UI::is_ajax()) {
         </tr>
         <?php foreach ($items as $item):
             $specs = json_decode($item['specs_json'], true) ?: [];
-            
+
             $created_date = '';
             $created_date_only = '';
             $created_time_only = '';
@@ -250,12 +270,9 @@ if (UI::is_ajax()) {
             ?>
             <tr class="inventory-card <?= ($highlight_id && $item['id'] == $highlight_id) ? 'highlight-row' : '' ?>"
                 data-id="<?= $item['id'] ?>" data-sector-theme="<?= htmlspecialchars($item['sector']) ?>"
-                data-brand="<?= htmlspecialchars($item['brand']) ?>"
-                data-model="<?= htmlspecialchars($item['model']) ?>"
-                data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
-                data-created-date="<?= $created_date_only ?>"
-                data-created-time="<?= $created_time_only ?>"
-                data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
+                data-brand="<?= htmlspecialchars($item['brand']) ?>" data-model="<?= htmlspecialchars($item['model']) ?>"
+                data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>" data-created-date="<?= $created_date_only ?>"
+                data-created-time="<?= $created_time_only ?>" data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
                 data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
 
                 <td style="text-align: center;"><input type="checkbox" class="row-select"></td>
@@ -336,11 +353,9 @@ if (UI::is_ajax()) {
                                 <span
                                     class="status-badge status-<?= htmlspecialchars($item['status']) ?>"><?= htmlspecialchars($item['status']) ?></span>
                             <?php endif; ?>
-                            <span
-                                class="condition-label"><?= htmlspecialchars($specs['condition'] ?? 'Used') ?></span>
+                            <span class="condition-label"><?= htmlspecialchars($specs['condition'] ?? 'Used') ?></span>
                             <?php if ($item['sector'] === 'Laptops'): ?>
-                                <span class="battery-badge <?= empty($specs['battery']) ? 'missing' : '' ?>"
-                                    title="Battery Status">
+                                <span class="battery-badge <?= empty($specs['battery']) ? 'missing' : '' ?>" title="Battery Status">
                                     🔋
                                     <?= !empty($specs['battery']) ? htmlspecialchars($specs['battery']) : 'Missing' ?>
                                 </span>
@@ -368,8 +383,7 @@ if (UI::is_ajax()) {
 
                 <td>
                     <div class="row-actions">
-                        <button type="button" class="row-action-btn btn-edit"
-                            onclick='editWarehouseItem(<?= json_encode($item) ?>)'
+                        <button type="button" class="row-action-btn btn-edit" onclick='editWarehouseItem(<?= json_encode($item) ?>)'
                             title="Edit Entry">📝</button>
                         <button type="button" class="row-action-btn btn-label"
                             onclick="downloadWarehouseLabel(<?= (int) $item['id'] ?>, this)"
@@ -377,13 +391,10 @@ if (UI::is_ajax()) {
                         <form method="POST" action="" onsubmit="return confirm('Are you sure?');">
                             <input type="hidden" name="action" value="delete_inventory">
                             <input type="hidden" name="item_id" value="<?= (int) $item['id'] ?>">
-                            <input type="hidden" name="sector"
-                                value="<?= htmlspecialchars($selected_sector) ?>">
-                            <input type="hidden" name="location_code"
-                                value="<?= htmlspecialchars($selected_loc) ?>">
+                            <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
+                            <input type="hidden" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>">
                             <?= UI::csrf_field() ?>
-                            <button type="submit" class="row-action-btn btn-delete"
-                                title="Delete Entry">🗑️</button>
+                            <button type="submit" class="row-action-btn btn-delete" title="Delete Entry">🗑️</button>
                         </form>
                     </div>
                 </td>
@@ -491,41 +502,110 @@ if (UI::is_ajax()) {
                         </div>
                     </div>
 
-                    <div class="loc-grid" id="gate-loc-grid">
-                        <?php foreach ($existing_locs as $loc):
-                            $l_name = $loc['location_code'];
-                            $l_status = $loc['status'];
-                            $l_color = $loc['status_color'] ?: '#94a3b8';
-                            $l_count = (int) $loc['item_count'];
-                            ?>
-                            <div class="loc-item-wrapper" style="position:relative;">
-                                <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=<?= urlencode($l_name) ?>"
-                                    class="loc-item gate-loc-item" data-loc-name="<?= htmlspecialchars(strtolower($l_name)) ?>"
-                                    data-status="<?= htmlspecialchars(strtolower($l_status)) ?>" data-count="<?= $l_count ?>">
-                                    <div
-                                        style="position:absolute; top:8px; left:12px; font-size:0.6rem; font-weight:900; text-transform:uppercase; color:<?= $l_color ?>; letter-spacing:0.05em;">
-                                        <?= htmlspecialchars($l_status) ?>
-                                    </div>
-                                    <span class="loc-icon">📦</span>
-                                    <span class="loc-name"><?= htmlspecialchars($l_name) ?></span>
-                                    <div style="font-size:0.7rem; color:#94a3b8; font-weight:700;"><?= $l_count ?> Items</div>
-                                </a>
-                                <button type="button" onclick='openRenameModal(<?= json_encode($loc) ?>)'
-                                    class="btn-rename-zone"
-                                    style="position:absolute; bottom:5px; right:5px; background:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:0.7rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.1); opacity:0; transition:0.2s;">✏️</button>
-                            </div>
-                        <?php endforeach; ?>
+                    <?php
+                    // Get current zone selection from GET parameter
+                    $active_zone_name = $_GET['zone'] ?? null;
 
-                        <div class="loc-item new-loc">
-                            <form method="GET" action="index.php" style="width:100%;">
-                                <input type="hidden" name="view" value="warehouse">
-                                <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
-                                <input type="text" name="loc" placeholder="+ New Zone" required
-                                    style="width:100%; border:none; background:transparent; text-align:center; font-weight:800; outline:none;">
-                                <button type="submit" style="display:none;"></button>
-                            </form>
+                    // Fetch working zones for the grid
+                    $working_zones = $conn_wh->query("
+                        SELECT wz.*, 
+                            (SELECT COUNT(*) FROM locations l WHERE l.working_zone_name = wz.name) as location_count,
+                            (SELECT SUM((SELECT COUNT(*) FROM inventory i WHERE i.location_code = l.location_code)) FROM locations l WHERE l.working_zone_name = wz.name) as total_items
+                        FROM working_zones wz
+                        ORDER BY wz.name ASC
+                    ")->fetchAll(PDO::FETCH_ASSOC);
+
+                    if (!$active_zone_name): ?>
+                        <div class="loc-grid" id="gate-loc-grid">
+                            <?php foreach ($working_zones as $wz):
+                                $wz_name = $wz['name'];
+                                $wz_locations = (int) $wz['location_count'];
+                                $wz_items = (int) $wz['total_items'];
+                                ?>
+                                <div class="loc-item-wrapper" style="position:relative;">
+                                    <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&zone=<?= urlencode($wz_name) ?>"
+                                        class="loc-item gate-loc-item" data-loc-name="<?= htmlspecialchars(strtolower($wz_name)) ?>"
+                                        data-status="working" data-count="<?= $wz_locations ?>">
+                                        <div style="position:absolute; top:8px; left:12px; font-size:0.6rem; font-weight:900; text-transform:uppercase; color:#3b82f6; letter-spacing:0.05em;">
+                                            <?= $wz_locations ?> Locations
+                                        </div>
+                                        <span class="loc-icon">📁</span>
+                                        <span class="loc-name"><?= htmlspecialchars($wz_name) ?></span>
+                                        <div style="font-size:0.7rem; color:#94a3b8; font-weight:700;"><?= $wz_items ?> Items</div>
+                                    </a>
+                                </div>
+                            <?php endforeach; ?>
+
+                            <div class="loc-item new-loc" style="padding: 10px;">
+                                <form method="POST" action="" style="width:100%;">
+                                    <input type="hidden" name="action" value="add_working_zone">
+                                    <?= UI::csrf_field() ?>
+                                    <input type="text" name="zone_name" placeholder="+ New Working Zone" required
+                                        style="width:100%; border:none; background:transparent; text-align:center; font-weight:800; outline:none; font-size:0.85rem;">
+                                </form>
+                            </div>
                         </div>
-                    </div>
+                    <?php else:
+                        // Show shelves belonging to the active parent zone
+                        $filtered_locs = [];
+                        foreach ($existing_locs as $loc) {
+                            if (($loc['working_zone_name'] ?? 'General') === $active_zone_name) {
+                                $filtered_locs[] = $loc;
+                            }
+                        }
+                        ?>
+                        <div style="margin-bottom: 20px;">
+                            <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>" class="btn-export" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; box-shadow:none; display:inline-flex; width:auto; height:36px; padding:0 14px; border-radius:10px;">
+                                🔙 Back to Zones
+                            </a>
+                            <span style="margin-left: 15px; font-weight: 800; color: var(--text-main); font-size: 1.1rem; vertical-align: middle;">
+                                Zone: <?= htmlspecialchars($active_zone_name) ?>
+                            </span>
+                        </div>
+
+                        <div class="loc-grid" id="gate-loc-grid">
+                            <?php foreach ($filtered_locs as $loc):
+                                $l_name = $loc['location_code'];
+                                $l_status = $loc['status'];
+                                $l_color = $loc['status_color'] ?: '#94a3b8';
+                                $l_count = (int) $loc['item_count'];
+                                ?>
+                                <div class="loc-item-wrapper" style="position:relative;">
+                                    <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=<?= urlencode($l_name) ?>"
+                                        class="loc-item gate-loc-item" data-loc-name="<?= htmlspecialchars(strtolower($l_name)) ?>"
+                                        data-status="<?= htmlspecialchars(strtolower($l_status)) ?>" data-count="<?= $l_count ?>">
+                                        <div
+                                            style="position:absolute; top:8px; left:12px; font-size:0.6rem; font-weight:900; text-transform:uppercase; color:<?= $l_color ?>; letter-spacing:0.05em;">
+                                            <?= htmlspecialchars($l_status) ?>
+                                        </div>
+                                        <span class="loc-icon">📦</span>
+                                        <span class="loc-name"><?= htmlspecialchars($l_name) ?></span>
+                                        <div style="font-size:0.7rem; color:#94a3b8; font-weight:700;"><?= $l_count ?> Items</div>
+                                    </a>
+                                    <button type="button" onclick='openRenameModal(<?= json_encode($loc) ?>)'
+                                        class="btn-rename-zone"
+                                        style="position:absolute; bottom:5px; right:5px; background:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:0.7rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.1); opacity:0; transition:0.2s;">✏️</button>
+                                </div>
+                            <?php endforeach; ?>
+
+                            <div class="loc-item new-loc" style="padding: 10px;">
+                                <form method="POST" action="" style="width:100%;">
+                                    <input type="hidden" name="action" value="add_sub_zone">
+                                    <input type="hidden" name="parent_zone" value="<?= htmlspecialchars($active_zone_name) ?>">
+                                    <?= UI::csrf_field() ?>
+                                    <?php 
+                                        $prefix_placeholder = '';
+                                        if (preg_match('/Zone\s+([a-zA-Z0-9]+)/i', $active_zone_name, $m)) {
+                                            $prefix_placeholder = strtoupper($m[1]) . '-';
+                                        }
+                                    ?>
+                                    <input type="text" name="shelf_name" placeholder="+ New Location (e.g. <?= $prefix_placeholder ?>1)" required
+                                        value="<?= htmlspecialchars($prefix_placeholder) ?>"
+                                        style="width:100%; border:none; background:transparent; text-align:center; font-weight:800; outline:none; font-size:0.85rem;">
+                                </form>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     <div id="gate-no-results"
                         style="display:none; text-align:center; padding: 40px; color: #94a3b8; font-weight: 600;">
                         No matching zones found.
@@ -657,7 +737,7 @@ if (UI::is_ajax()) {
                                 </tr>
                                 <?php foreach ($items as $item):
                                     $specs = json_decode($item['specs_json'], true) ?: [];
-                                    
+
                                     // Timezone conversion to America/Los_Angeles
                                     $created_date = '';
                                     $created_date_only = '';
@@ -682,8 +762,7 @@ if (UI::is_ajax()) {
                                         data-brand="<?= htmlspecialchars($item['brand']) ?>"
                                         data-model="<?= htmlspecialchars($item['model']) ?>"
                                         data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
-                                        data-created-date="<?= $created_date_only ?>"
-                                        data-created-time="<?= $created_time_only ?>"
+                                        data-created-date="<?= $created_date_only ?>" data-created-time="<?= $created_time_only ?>"
                                         data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
                                         data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['location_code'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['cpu_gen'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['series'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
 

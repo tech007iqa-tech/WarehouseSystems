@@ -220,16 +220,16 @@ if (UI::is_ajax()) {
     </div>
 
     <!-- Live Search & Filters -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px; gap:20px;">
+    <div class="leads-controls-bar">
         <div class="orders-search-wrapper" style="flex:1; margin:0;">
             <i class="search-icon">🔍</i>
             <input type="text" id="lead-search" placeholder="Search by Company, Lead Source, or Status..." aria-label="Search leads" onkeyup="filterLeads()">
         </div>
-        <div style="display:flex; gap:12px; align-items:center;">
+        <div class="leads-actions-group">
             <button onclick="openAddLeadModal()" class="btn-main" style="margin:0; background:var(--accent-color); color:white; white-space:nowrap; height:42px; padding:0 20px; font-size:0.85rem; border:none; box-shadow:var(--shadow-sm);">
                 <span>+ Add New Lead</span>
             </button>
-            <div class="orders-tabs" style="margin:0; height:42px; display:flex; align-items:center;">
+            <div class="orders-tabs leads-tabs-container">
                 <a href="#" class="orders-tab-link active" onclick="filterByStatus('all')">All Accounts</a>
                 <a href="#" class="orders-tab-link" onclick="filterByStatus('lead')">Leads</a>
                 <a href="#" class="orders-tab-link" onclick="filterByStatus('active')">Customers</a>

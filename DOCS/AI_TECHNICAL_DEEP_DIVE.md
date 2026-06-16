@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive & Handover 6/8/2026 3:06 PM
+# 🧠 AI Technical Deep Dive & Handover 6/16/2026 3:11 PM
 
 This document serves as a "shortcut" for AI agents to understand the underlying logic of the IQA Warehouse Systems without reading every single file.
 
@@ -28,7 +28,7 @@ The system uses a **Single Source of Truth** for people (Leads/Customers).
     - **AppSync Client (`assets/js/sync.js`)**: An EventSource listener that triggers an instant AJAX fetch when notified. It uses a lightweight virtual DOM diffing algorithm to perform row-by-row replacements on the registered container (`#leads-list`) and standard innerHTML swaps for other containers (`#priority-section-container`). Input active states are automatically guarded during swaps.
 
 ### 2. Self-Healing Schemas
-Every module has a `schema_guard.php`.
+Every module has a `schema_guard.php` or `Schema::runMigrations()` setup.
 *   **Trigger**: Executed on every database connection initialization.
 *   **Logic**: Uses `CREATE TABLE IF NOT EXISTS` and `PRAGMA table_info()` to check for missing columns and run `ALTER TABLE` migrations automatically.
 
@@ -41,10 +41,12 @@ Every module has a `schema_guard.php`.
 *   **Touch Targets**: Buttons are strictly `48px` minimum height.
 *   **Colors**: High-contrast light themes for operational modules; vibrant Teal/Lime for Marketing.
 
-## ⚠️ Recent Critical Fixes (April 2026)
+## ⚠️ Recent Critical Fixes & Features (June 2026)
+*   **Warehouse Working Zones**: Refactored locations into a nested working zones grid (`working_zones` table). Click to drill-down into specific locations, automatically pre-filled with prefixes (e.g. `A-` inside Zone A) when creating sub-locations. Added inline renaming functionality.
+*   **CPU Pricing Analytics**: Added an interactive pricing modal in Trends that queries `api/get_cpu_pricing_details.php` to analyze price statistics (min/max/average) and transaction logs for CPU models. Supports drilling down further with `api/get_order_details.php` to preview the transaction manifest.
+*   **Dark Mode Visual Contrast**: Upgraded styling variables in `style.css` to cover settings cards, gate cards, location badges, and inputs, ensuring excellent readability for night/warehouse shifts.
 *   **CRM Sync**: Integrated Marketing Hub with the Master CRM (`customers.db`) using a dual-database singleton pattern.
 *   **ID Integrity**: Fixed `NOT NULL` constraint issues by implementing custom `CUST-` ID generation in the Marketing leads module.
-*   **Marketing Fixes**: Resolved pathing issues by switching assets to relative paths.
 
 ## 🔍 Token-Saving Tips
 *   Don't read `hardware_form.php` unless editing labels; it's a massive UI component.

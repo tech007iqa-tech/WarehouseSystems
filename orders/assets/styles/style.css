@@ -689,21 +689,88 @@ tr:hover .btn-delete {
 [data-theme="dark"] .dashboard-card,
 [data-theme="dark"] .pipeline-card,
 [data-theme="dark"] .bulk-action-bar,
+[data-theme="dark"] .settings-card,
+[data-theme="dark"] .gate-card,
+[data-theme="dark"] .loc-active-badge,
 [data-theme="dark"] [style*="background: white"],
 [data-theme="dark"] [style*="background:white"],
 [data-theme="dark"] [style*="background-color: white"],
 [data-theme="dark"] [style*="background-color:white"],
 [data-theme="dark"] [style*="background: #ffffff"],
-[data-theme="dark"] [style*="background:#ffffff"],
+[data-theme="dark"] [style*="background:#ffffff"] {
+    background: var(--bg-panel) !important;
+    background-color: var(--bg-panel) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .loc-item,
+[data-theme="dark"] .sector-card,
+[data-theme="dark"] [style*="background: #f8fafc"],
+[data-theme="dark"] [style*="background:#f8fafc"],
+[data-theme="dark"] [style*="background-color: #f8fafc"],
+[data-theme="dark"] [style*="background-color:#f8fafc"],
 [data-theme="dark"] [style*="background: #fafafa"],
 [data-theme="dark"] [style*="background:#fafafa"],
+[data-theme="dark"] [style*="background-color: #fafafa"],
+[data-theme="dark"] [style*="background-color:#fafafa"],
+[data-theme="dark"] [style*="background: #f1f5f9"],
+[data-theme="dark"] [style*="background:#f1f5f9"],
+[data-theme="dark"] [style*="background-color: #f1f5f9"],
+[data-theme="dark"] [style*="background-color:#f1f5f9"],
+[data-theme="dark"] [style*="background: #e0f2fe"],
+[data-theme="dark"] [style*="background:#e0f2fe"],
+[data-theme="dark"] [style*="background-color: #e0f2fe"],
+[data-theme="dark"] [style*="background-color:#e0f2fe"],
 [data-theme="dark"] [style*="background: #fff0f2"],
 [data-theme="dark"] [style*="background:#fff0f2"],
 [data-theme="dark"] [style*="background: #fdf2f8"],
 [data-theme="dark"] [style*="background:#fdf2f8"] {
-    background: var(--bg-panel) !important;
-    background-color: var(--bg-panel) !important;
+    background: var(--bg-surface-2) !important;
+    background-color: var(--bg-surface-2) !important;
     border-color: var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .sector-card.active {
+    background: var(--bg-surface-2) !important;
+    border: 2px solid var(--accent-color) !important;
+}
+
+[data-theme="dark"] .btn-rename-zone {
+    background: var(--bg-surface-2) !important;
+    color: var(--text-main) !important;
+}
+
+[data-theme="dark"] .search-input {
+    background: var(--bg-panel) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] [style*="border: 1px solid #e2e8f0"],
+[data-theme="dark"] [style*="border:1px solid #e2e8f0"],
+[data-theme="dark"] [style*="border: 1px solid #cbd5e1"],
+[data-theme="dark"] [style*="border:1px solid #cbd5e1"] {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] [style*="background: var(--text-main)"],
+[data-theme="dark"] [style*="background:var(--text-main)"],
+[data-theme="dark"] .btn-main.dark {
+    background: var(--bg-surface-2) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+}
+[data-theme="dark"] [style*="background: var(--text-main)"]:hover,
+[data-theme="dark"] [style*="background:var(--text-main)"]:hover,
+[data-theme="dark"] .btn-main.dark:hover {
+    background: var(--border-color) !important;
+}
+
+[data-theme="dark"] th[style*="color: #475569"],
+[data-theme="dark"] td[style*="color: #64748b"],
+[data-theme="dark"] .ppp-cell {
     color: var(--text-main) !important;
 }
 

@@ -104,7 +104,7 @@ function renderDetailView(data) {
                 <div class="detail-item" style="margin:0;">
                     <div class="detail-label">Billing Account</div>
                     <div class="detail-value text-main" style="font-size: 1.4rem; letter-spacing: -0.02em;">${escapeHTML(data.company_name)}</div>
-                    <div style="margin-top: 6px; font-size: 0.75rem; font-family: monospace; background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 8px; display: inline-block; font-weight: 700; letter-spacing: 0.05em;">${escapeHTML(data.customer_id)}</div>
+                    <div class="cust-id-badge">${escapeHTML(data.customer_id)}</div>
                 </div>
                 <button onclick='handleEditClick(${JSON.stringify(data).replace(/'/g, "&apos;")})' class="btn-view-cust" title="Edit Account" style="width: 44px; height: 44px; font-size: 1.2rem;">✎</button>
             </div>
@@ -166,7 +166,7 @@ function renderDetailView(data) {
                                 <button type="submit" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.2rem; opacity:0.3; transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.3">🗑️</button>
                             </form>
                         </div>
-                    `).join('') : '<div class="empty-state" style="padding: 20px; font-size: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px dashed #e2e8f0; color: #94a3b8;">No active batches.</div>'}
+                    `).join('') : '<div class="empty-state" style="padding: 20px; font-size: 0.8rem; border-radius: 12px; border: 1px dashed var(--border-color); color: var(--text-dim);">No active batches.</div>'}
                 </div>
             </div>
 
@@ -174,7 +174,7 @@ function renderDetailView(data) {
                 <a href="index.php?customer_id=${encodeURIComponent(data.customer_id)}&action=create_new_order" class="btn-register" style="display:flex; align-items:center; justify-content:center; gap: 10px; height: 54px; font-size: 1rem; margin: 0;">
                     <span>+</span> Create New Fresh Batch
                 </a>
-                <button type="button" onclick="openImportModal('${escapeHTML(data.customer_id)}')" class="btn-register" style="display:flex; align-items:center; justify-content:center; gap: 10px; height: 54px; font-size: 1rem; background: #f8fafc; color: var(--text-main); border: 1px dashed #cbd5e1; margin: 0;">
+                <button type="button" onclick="openImportModal('${escapeHTML(data.customer_id)}')" class="btn-secondary-action" style="margin: 0;">
                     <span>📋</span> Import from Clipboard
                 </button>
             </div>
@@ -187,12 +187,12 @@ function renderDetailView(data) {
                             <a href="checkout.php?customer_id=${encodeURIComponent(data.customer_id)}&order_id=${encodeURIComponent(o.order_id)}"
                                class="order-row-link completed" style="flex:1;">
                                 <div style="flex: 1;">
-                                    <div style="font-weight: 700; font-size: 0.9rem; color: #64748b;">${o.order_id}</div>
-                                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">${o.created_at}</div>
+                                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-secondary);">${o.order_id}</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">${o.created_at}</div>
                                 </div>
                                 <div style="text-align: right; display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
                                     <span class="badge badge-completed" style="font-size: 0.65rem; opacity: 0.8;">${o.total_qty || 0} Items</span>
-                                    <div style="font-weight: 700; font-size: 0.9rem; color: #64748b;">${currencyFormatter.format(o.total_value || 0)}</div>
+                                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-secondary);">${currencyFormatter.format(o.total_value || 0)}</div>
                                 </div>
                             </a>
                             <form method="POST" onsubmit="return confirm('Delete this completed order permanently?')" style="margin:0;">
@@ -202,11 +202,11 @@ function renderDetailView(data) {
                                 <button type="submit" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.2rem; opacity:0.1; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.6" onmouseout="this.style.opacity=0.1">🗑️</button>
                             </form>
                         </div>
-                    `).join('') : '<div class="empty-state" style="padding: 20px; font-size: 0.8rem; border-radius: 12px; background: #f8fafc; border: 1px dashed #e2e8f0; color: #94a3b8;">No completion history.</div>'}
+                    `).join('') : '<div class="empty-state" style="padding: 20px; font-size: 0.8rem; border-radius: 12px; border: 1px dashed var(--border-color); color: var(--text-dim);">No completion history.</div>'}
                 </div>
             </div>
 
-            <div class="detail-item" style="background: #f8fafc; padding: 16px; border-radius: 12px; margin-top: 15px; border: 1px solid var(--border-color);">
+            <div class="detail-item crm-notes-box">
                 <div class="detail-label" style="display: flex; align-items: center; gap: 5px; color: var(--text-main); font-size: 0.65rem; opacity: 0.8;">📜 Internal CRM Notes</div>
                 <div class="detail-value" style="font-size: 0.9rem; white-space: pre-wrap; color: var(--text-secondary); line-height: 1.5; font-weight: 500; margin-top: 6px;">${data.internal_notes ? escapeHTML(data.internal_notes) : '<i style="opacity:0.4;">No internal notes recorded.</i>'}</div>
             </div>

@@ -20,7 +20,7 @@ try {
                (SELECT GROUP_CONCAT(DISTINCT location_code) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status = '') as stock_locations,
                (SELECT SUM(quantity) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status != '') as incoming_stock,
                GROUP_CONCAT(DISTINCT c.customers.company_name) as buyer_names,
-               GROUP_CONCAT(DISTINCT items.order_id || '|' || SUBSTR(orders.created_at, 1, 10)) as order_ids
+               GROUP_CONCAT(DISTINCT items.order_id || '|' || SUBSTR(orders.created_at, 1, 10) || '|' || orders.customer_id) as order_ids
         FROM items
         JOIN orders ON items.order_id = orders.order_id
         LEFT JOIN c.customers ON items.customer_id = c.customers.customer_id
@@ -244,11 +244,11 @@ $is_using_mock_data = false;
 if (empty($velocity)) {
     $is_using_mock_data = true;
     $velocity = [
-        ['brand' => 'Apple', 'model' => 'MacBook Air A1932', 'total_qty' => 148, 'avg_price' => 245.00, 'in_stock' => 12, 'stock_locations' => 'A1, B2', 'incoming_stock' => 2, 'buyer_names' => 'Acme Corp, Global Tech', 'order_ids' => 'ORD-993A7|2026-05-10, ORD-882B2|2026-04-25'],
-        ['brand' => 'Lenovo', 'model' => 'ThinkPad T480', 'total_qty' => 112, 'avg_price' => 165.00, 'in_stock' => 8, 'stock_locations' => 'C3', 'incoming_stock' => 0, 'buyer_names' => 'Acme Corp', 'order_ids' => 'ORD-771C3|2026-05-10'],
-        ['brand' => 'Dell', 'model' => 'Latitude 7490', 'total_qty' => 95, 'avg_price' => 135.00, 'in_stock' => 0, 'stock_locations' => '', 'incoming_stock' => 4, 'buyer_names' => 'Global Tech, Stark Industries', 'order_ids' => 'ORD-993A7|2026-05-10, ORD-882B2|2026-04-25'],
-        ['brand' => 'HP', 'model' => 'EliteBook 840 G5', 'total_qty' => 74, 'avg_price' => 155.00, 'in_stock' => 5, 'stock_locations' => 'D1', 'incoming_stock' => 1, 'buyer_names' => 'Stark Industries', 'order_ids' => 'ORD-882B2|2026-04-25'],
-        ['brand' => 'Apple', 'model' => 'MacBook Pro A1708', 'total_qty' => 58, 'avg_price' => 220.00, 'in_stock' => 2, 'stock_locations' => 'A3', 'incoming_stock' => 0, 'buyer_names' => 'Acme Corp', 'order_ids' => 'ORD-993A7|2026-05-10']
+        ['brand' => 'Apple', 'model' => 'MacBook Air A1932', 'total_qty' => 148, 'avg_price' => 245.00, 'in_stock' => 12, 'stock_locations' => 'A1, B2', 'incoming_stock' => 2, 'buyer_names' => 'Acme Corp, Global Tech', 'order_ids' => 'ORD-993A7|2026-05-10|CUST-ACME, ORD-882B2|2026-04-25|CUST-GLOBAL'],
+        ['brand' => 'Lenovo', 'model' => 'ThinkPad T480', 'total_qty' => 112, 'avg_price' => 165.00, 'in_stock' => 8, 'stock_locations' => 'C3', 'incoming_stock' => 0, 'buyer_names' => 'Acme Corp', 'order_ids' => 'ORD-771C3|2026-05-10|CUST-ACME'],
+        ['brand' => 'Dell', 'model' => 'Latitude 7490', 'total_qty' => 95, 'avg_price' => 135.00, 'in_stock' => 0, 'stock_locations' => '', 'incoming_stock' => 4, 'buyer_names' => 'Global Tech, Stark Industries', 'order_ids' => 'ORD-993A7|2026-05-10|CUST-ACME, ORD-882B2|2026-04-25|CUST-GLOBAL'],
+        ['brand' => 'HP', 'model' => 'EliteBook 840 G5', 'total_qty' => 74, 'avg_price' => 155.00, 'in_stock' => 5, 'stock_locations' => 'D1', 'incoming_stock' => 1, 'buyer_names' => 'Stark Industries', 'order_ids' => 'ORD-882B2|2026-04-25|CUST-GLOBAL'],
+        ['brand' => 'Apple', 'model' => 'MacBook Pro A1708', 'total_qty' => 58, 'avg_price' => 220.00, 'in_stock' => 2, 'stock_locations' => 'A3', 'incoming_stock' => 0, 'buyer_names' => 'Acme Corp', 'order_ids' => 'ORD-993A7|2026-05-10|CUST-ACME']
     ];
 }
 
@@ -455,36 +455,38 @@ if ($is_using_mock_data) {
                                             }
                                             ?>
                                         </div>
-                                        <div class="order-cell" style="display: none; font-size: 0.8rem; font-family: monospace;">
-                                            <?php
-                                            if (!empty($item['order_ids'])) {
-                                                $ords = explode(',', $item['order_ids']);
-                                                $rendered = [];
-                                                $current_year = date('Y');
-                                                foreach ($ords as $ord) {
-                                                    $parts = explode('|', trim($ord));
-                                                    $o_id = $parts[0] ?? '';
-                                                    $o_date = $parts[1] ?? '';
-                                                    if ($o_date) {
-                                                        $date_parts = explode('-', $o_date);
-                                                        $display_date = $o_date;
-                                                        if (count($date_parts) === 3) {
-                                                            if ($date_parts[0] === $current_year) {
-                                                                $display_date = $date_parts[1] . '-' . $date_parts[2];
-                                                            }
-                                                        }
-                                                        $rendered[] = '<span><code>' . htmlspecialchars($o_id) . '</code> <span style="font-size: 0.7rem; color: var(--text-secondary); font-family: var(--font-main);">(' . htmlspecialchars($display_date) . ')</span></span>';
-                                                    } else {
-                                                        $rendered[] = '<code>' . htmlspecialchars($o_id) . '</code>';
-                                                    }
-                                                }
-                                                echo implode(', ', $rendered);
-                                            } else {
-                                                echo '—';
-                                            }
-                                            ?>
-                                        </div>
-                                    </td>
+                                         <div class="order-cell" style="display: none; font-size: 0.8rem; font-family: monospace;">
+                                             <?php
+                                             if (!empty($item['order_ids'])) {
+                                                 $ords = explode(',', $item['order_ids']);
+                                                 $rendered = [];
+                                                 $current_year = date('Y');
+                                                 foreach ($ords as $ord) {
+                                                     $parts = explode('|', trim($ord));
+                                                     $o_id = $parts[0] ?? '';
+                                                     $o_date = $parts[1] ?? '';
+                                                     if ($o_id) {
+                                                         $display_date = '';
+                                                         if ($o_date) {
+                                                             $date_parts = explode('-', $o_date);
+                                                             $display_date = $o_date;
+                                                             if (count($date_parts) === 3) {
+                                                                 if ($date_parts[0] === $current_year) {
+                                                                     $display_date = $date_parts[1] . '-' . $date_parts[2];
+                                                                 }
+                                                             }
+                                                             $display_date = ' <span style="font-size: 0.7rem; color: var(--text-secondary); font-family: var(--font-main);">(' . htmlspecialchars($display_date) . ')</span>';
+                                                         }
+                                                         $rendered[] = '<span><a href="#" onclick="openOrderPreviewModal(event, \'' . htmlspecialchars($o_id) . '\')" class="order-preview-link"><code>' . htmlspecialchars($o_id) . '</code></a>' . $display_date . '</span>';
+                                                     }
+                                                 }
+                                                 echo implode(', ', $rendered);
+                                             } else {
+                                                 echo '—';
+                                             }
+                                             ?>
+                                         </div>
+                                     </td>
                                     <td data-sort-val="<?= $item['avg_price'] ?>">$<?= number_format($item['avg_price'], 2) ?></td>
                                     <td data-sort-val="<?= $item['total_qty'] ?>"><span class="qty-chip" style="box-shadow: none; font-size: 0.75rem; padding: 4px 10px;"><?= $item['total_qty'] ?></span></td>
                                 </tr>
@@ -593,7 +595,7 @@ if ($is_using_mock_data) {
                                     $max_p = $cpu['max_price'] ?? $cpu['avg_price'];
                                     $search_blob = strtolower($cpu_name . ' ' . $cpu['avg_price'] . ' ' . $min_p . ' ' . $max_p);
                                 ?>
-                                <tr data-search="<?= htmlspecialchars($search_blob) ?>">
+                                <tr class="clickable-row" data-search="<?= htmlspecialchars($search_blob) ?>" onclick="openCpuPricingModal('<?= htmlspecialchars($cpu_name) ?>')">
                                     <td>⚙️ <strong><?= htmlspecialchars($cpu_name) ?></strong></td>
                                     <td data-sort-val="<?= $min_p ?>"><span style="color: #10b981; font-weight: 600;">$<?= number_format($min_p, 2) ?></span></td>
                                     <td data-sort-val="<?= $max_p ?>"><span style="color: #3b82f6; font-weight: 600;">$<?= number_format($max_p, 2) ?></span></td>
@@ -1550,5 +1552,392 @@ function handleDragEnd(e) {
     this.style.border = '1px solid var(--border-color)';
     const cols = document.querySelectorAll('#widget-board .trend-card');
     cols.forEach(col => col.style.border = '1px solid var(--border-color)');
+}
+</script>
+
+<!-- Order Preview Modal -->
+<div id="orderPreviewModal" class="modal-overlay no-print" onclick="if(event.target === this) closeOrderPreviewModal()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal-box" onclick="event.stopPropagation()" style="background:var(--bg-panel); border-radius:20px; width:90%; max-width:650px; padding:25px; box-shadow:var(--shadow-lg); border: 1px solid var(--border-color); display:flex; flex-direction:column; max-height:85vh;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size: 1.5rem;">📦</span>
+                <div>
+                    <h3 id="preview-order-id" style="font-weight: 800; font-size: 1.25rem; margin:0; font-family: monospace; color: var(--text-main);">Order</h3>
+                    <span id="preview-company-name" style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color);">Account Name</span>
+                </div>
+            </div>
+            <button type="button" onclick="closeOrderPreviewModal()" style="background:none; border:none; cursor:pointer; font-size:1.5rem; color:var(--text-secondary); opacity:0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">&times;</button>
+        </div>
+        
+        <div id="preview-loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; gap: 15px;">
+            <div class="preview-spinner" style="width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">Loading manifest details...</span>
+        </div>
+
+        <div id="preview-error" style="display:none; text-align: center; padding: 30px 0; color: #ef4444; font-weight: 700;">
+            ⚠️ Failed to load order details.
+        </div>
+
+        <div id="preview-body" style="display:none; overflow-y:auto; flex:1; padding-right:5px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 20px; font-size: 0.85rem; background: var(--bg-surface-2); padding: 12px 16px; border-radius: 10px;">
+                <div>
+                    <span style="color:var(--text-secondary); font-weight: 600;">Status:</span>
+                    <span id="preview-status" class="order-badge" style="font-weight: 800; text-transform: uppercase; margin-left: 5px;">Active</span>
+                </div>
+                <div>
+                    <span style="color:var(--text-secondary); font-weight: 600;">Date Created:</span>
+                    <span id="preview-date" style="font-weight: 700; color: var(--text-main); margin-left: 5px;">-</span>
+                </div>
+            </div>
+
+            <table class="preview-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 2px solid var(--border-color); font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 800;">
+                        <th style="padding: 10px 0;">Item Description</th>
+                        <th style="padding: 10px 0; text-align: center; width: 60px;">Qty</th>
+                        <th style="padding: 10px 0; text-align: right; width: 100px;">Price</th>
+                        <th style="padding: 10px 0; text-align: right; width: 100px;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="preview-items-list">
+                    <!-- Items inserted dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; justify-content: flex-end; gap: 10px;">
+            <a id="preview-full-details-link" href="#" class="btn-main" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; text-decoration: none; background: var(--accent-color); color: white;">
+                Edit Full Order →
+            </a>
+            <button type="button" onclick="closeOrderPreviewModal()" class="btn-main dark" style="padding: 10px 20px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; border: none; box-shadow: none;">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- CPU Pricing Details Modal -->
+<div id="cpuPricingModal" class="modal-overlay no-print" onclick="if(event.target === this) closeCpuPricingModal()" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal-box" onclick="event.stopPropagation()" style="background:var(--bg-panel); border-radius:20px; width:90%; max-width:800px; padding:25px; box-shadow:var(--shadow-lg); border: 1px solid var(--border-color); display:flex; flex-direction:column; max-height:85vh;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="font-size: 1.5rem;">💻</span>
+                <div>
+                    <h3 id="cpu-pricing-title" style="font-weight: 800; font-size: 1.25rem; margin:0; color: var(--text-main);">CPU Family Details</h3>
+                    <span style="font-size: 0.85rem; font-weight: 700; color: var(--accent-color);">Pricing, Models & Recent Sales</span>
+                </div>
+            </div>
+            <button type="button" onclick="closeCpuPricingModal()" style="background:none; border:none; cursor:pointer; font-size:1.5rem; color:var(--text-secondary); opacity:0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">&times;</button>
+        </div>
+        
+        <div id="cpu-loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; gap: 15px;">
+            <div class="preview-spinner" style="width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">Loading CPU metrics...</span>
+        </div>
+
+        <div id="cpu-error" style="display:none; text-align: center; padding: 30px 0; color: #ef4444; font-weight: 700;">
+            ⚠️ Failed to load CPU pricing details.
+        </div>
+
+        <div id="cpu-body" style="display:none; overflow-y:auto; flex:1; padding-right:5px;">
+            <h4 style="margin-top: 0; margin-bottom: 10px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Model Pricing Summary</h4>
+            <div class="trends-table-container" style="margin-bottom: 25px; max-height: 250px; overflow-y: auto;">
+                <table class="preview-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-color); font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 800;">
+                            <th style="padding: 10px 5px;">Model</th>
+                            <th style="padding: 10px 5px; text-align: center;">Units</th>
+                            <th style="padding: 10px 5px; text-align: right;">Min Price</th>
+                            <th style="padding: 10px 5px; text-align: right;">Max Price</th>
+                            <th style="padding: 10px 5px; text-align: right;">Avg Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cpu-models-list">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 style="margin-bottom: 10px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Latest Sales Transactions</h4>
+            <div class="trends-table-container" style="max-height: 250px; overflow-y: auto;">
+                <table class="preview-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid var(--border-color); font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 800;">
+                            <th style="padding: 10px 5px;">Date</th>
+                            <th style="padding: 10px 5px;">Customer</th>
+                            <th style="padding: 10px 5px;">Model / Spec</th>
+                            <th style="padding: 10px 5px; text-align: center;">Qty</th>
+                            <th style="padding: 10px 5px; text-align: right;">Unit Price</th>
+                            <th style="padding: 10px 5px; text-align: right;">Order</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cpu-sales-list">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; justify-content: flex-end;">
+            <button type="button" onclick="closeCpuPricingModal()" class="btn-main dark" style="padding: 10px 20px; border-radius: 10px; font-weight: 800; font-size: 0.85rem; border: none; box-shadow: none;">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+}
+.clickable-row:hover {
+    background-color: var(--bg-surface-2) !important;
+}
+.clickable-row:active {
+    transform: scale(0.995);
+}
+.order-preview-link {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.15s ease;
+}
+.order-preview-link:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<script>
+const currentTrendsFilter = '<?= htmlspecialchars($filter) ?>';
+let activeOrderPreviewEscHandler = null;
+let activeCpuPricingEscHandler = null;
+
+function openOrderPreviewModal(event, orderId) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    const modal = document.getElementById('orderPreviewModal');
+    const loading = document.getElementById('preview-loading');
+    const error = document.getElementById('preview-error');
+    const body = document.getElementById('preview-body');
+
+    document.getElementById('preview-order-id').innerText = orderId;
+    document.getElementById('preview-company-name').innerText = 'Loading...';
+
+    loading.style.display = 'flex';
+    error.style.display = 'none';
+    body.style.display = 'none';
+    modal.style.display = 'flex';
+
+    const localEscapeHTML = (str) => {
+        if (!str) return '—';
+        return str.toString().replace(/[&<>"']/g, m => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[m]));
+    };
+
+    fetch(`api/get_order_details.php?order_id=${encodeURIComponent(orderId)}`)
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to load');
+            return res.json();
+        })
+        .then(data => {
+            document.getElementById('preview-company-name').innerText = data.order.company_name || 'Unknown Account';
+            document.getElementById('preview-date').innerText = new Date(data.order.created_at.replace(/-/g, "/")).toLocaleDateString(undefined, {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+
+            // Set badge status class
+            const statusEl = document.getElementById('preview-status');
+            statusEl.innerText = data.order.status;
+            statusEl.className = 'order-badge status-' + data.order.status.toLowerCase();
+
+            // Set link to full checkout/edit order details page
+            const editLink = document.getElementById('preview-full-details-link');
+            editLink.href = `checkout.php?customer_id=${encodeURIComponent(data.order.customer_id)}&order_id=${encodeURIComponent(data.order.order_id)}`;
+
+            // Populate table items
+            const list = document.getElementById('preview-items-list');
+            list.innerHTML = '';
+            let grandTotal = 0;
+
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(item => {
+                    const qty = parseFloat(item.quantity) || 0;
+                    const price = parseFloat(item.unit_price) || 0;
+                    const subtotal = qty * price;
+                    grandTotal += subtotal;
+
+                    const desc = [item.series, item.cpu].filter(v => v && v !== 'N/A').join(' / ') || item.description || '';
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--border-color)';
+                    tr.innerHTML = `
+                        <td style="padding: 12px 0;">
+                            <div style="font-weight: 700; color: var(--text-main);">${localEscapeHTML(item.brand)} ${localEscapeHTML(item.model)}</div>
+                            ${desc ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">${localEscapeHTML(desc)}</div>` : ''}
+                        </td>
+                        <td style="padding: 12px 0; text-align: center; font-weight: 700; color: var(--text-main);">${qty}</td>
+                        <td style="padding: 12px 0; text-align: right; font-weight: 600; color: var(--text-secondary);">$${price.toFixed(2)}</td>
+                        <td style="padding: 12px 0; text-align: right; font-weight: 700; color: var(--text-main);">$${subtotal.toFixed(2)}</td>
+                    `;
+                    list.appendChild(tr);
+                });
+            } else {
+                list.innerHTML = `<tr><td colspan="4" style="padding: 30px; text-align: center; color: var(--text-secondary); font-style: italic;">No items in this batch.</td></tr>`;
+            }
+
+            // Total row
+            const totalTr = document.createElement('tr');
+            totalTr.style.fontWeight = '800';
+            totalTr.innerHTML = `
+                <td style="padding: 15px 0; font-size: 0.95rem; color: var(--text-main);">Total Valuation</td>
+                <td></td>
+                <td></td>
+                <td style="padding: 15px 0; text-align: right; font-size: 1rem; color: var(--accent-color);">$${grandTotal.toFixed(2)}</td>
+            `;
+            list.appendChild(totalTr);
+
+            loading.style.display = 'none';
+            body.style.display = 'block';
+        })
+        .catch(err => {
+            console.error(err);
+            document.getElementById('preview-company-name').innerText = 'Error';
+            loading.style.display = 'none';
+            error.style.display = 'block';
+        });
+
+    activeOrderPreviewEscHandler = (e) => {
+        if (e.key === 'Escape') closeOrderPreviewModal();
+    };
+    window.addEventListener('keydown', activeOrderPreviewEscHandler);
+}
+
+function closeOrderPreviewModal() {
+    const modal = document.getElementById('orderPreviewModal');
+    modal.style.display = 'none';
+    if (activeOrderPreviewEscHandler) {
+        window.removeEventListener('keydown', activeOrderPreviewEscHandler);
+        activeOrderPreviewEscHandler = null;
+    }
+}
+
+function openCpuPricingModal(cpuCategory) {
+    const modal = document.getElementById('cpuPricingModal');
+    const loading = document.getElementById('cpu-loading');
+    const error = document.getElementById('cpu-error');
+    const body = document.getElementById('cpu-body');
+
+    document.getElementById('cpu-pricing-title').innerText = cpuCategory;
+
+    loading.style.display = 'flex';
+    error.style.display = 'none';
+    body.style.display = 'none';
+    modal.style.display = 'flex';
+
+    const localEscapeHTML = (str) => {
+        if (!str) return '—';
+        return str.toString().replace(/[&<>"']/g, m => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[m]));
+    };
+
+    fetch(`api/get_cpu_pricing_details.php?cpu=${encodeURIComponent(cpuCategory)}&filter=${encodeURIComponent(currentTrendsFilter)}`)
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to load');
+            return res.json();
+        })
+        .then(data => {
+            // Populate models table
+            const modelsList = document.getElementById('cpu-models-list');
+            modelsList.innerHTML = '';
+            if (data.models && data.models.length > 0) {
+                data.models.forEach(model => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--border-color)';
+                    tr.innerHTML = `
+                        <td style="padding: 10px 5px;">
+                            <strong>${localEscapeHTML(model.brand)}</strong> ${localEscapeHTML(model.model)}
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">${localEscapeHTML(model.series)}</div>
+                        </td>
+                        <td style="padding: 10px 5px; text-align: center; font-weight: 700;">${model.total_qty}</td>
+                        <td style="padding: 10px 5px; text-align: right; color: #10b981;">$${parseFloat(model.min_price).toFixed(2)}</td>
+                        <td style="padding: 10px 5px; text-align: right; color: #3b82f6;">$${parseFloat(model.max_price).toFixed(2)}</td>
+                        <td style="padding: 10px 5px; text-align: right; font-weight: 700;">$${parseFloat(model.avg_price).toFixed(2)}</td>
+                    `;
+                    modelsList.appendChild(tr);
+                });
+            } else {
+                modelsList.innerHTML = `<tr><td colspan="5" style="padding: 20px; text-align: center; color: var(--text-secondary); font-style: italic;">No model statistics found.</td></tr>`;
+            }
+
+            // Populate sales table
+            const salesList = document.getElementById('cpu-sales-list');
+            salesList.innerHTML = '';
+            if (data.recent_sales && data.recent_sales.length > 0) {
+                data.recent_sales.forEach(sale => {
+                    const desc = [sale.series, sale.cpu].filter(v => v && v !== 'N/A').join(' / ') || sale.description || '';
+                    const dateObj = new Date(sale.created_at.replace(/-/g, "/"));
+                    const formattedDate = dateObj.toLocaleDateString(undefined, {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                    });
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid var(--border-color)';
+                    tr.innerHTML = `
+                        <td style="padding: 10px 5px; font-size: 0.8rem; white-space: nowrap;">${formattedDate}</td>
+                        <td style="padding: 10px 5px; font-weight: 600; color: var(--accent-color); font-size: 0.85rem;">${localEscapeHTML(sale.company_name)}</td>
+                        <td style="padding: 10px 5px;">
+                            <span style="font-weight: 700;">${localEscapeHTML(sale.brand)} ${localEscapeHTML(sale.model)}</span>
+                            ${desc ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 1px;">${localEscapeHTML(desc)}</div>` : ''}
+                        </td>
+                        <td style="padding: 10px 5px; text-align: center; font-weight: 700;">${sale.quantity}</td>
+                        <td style="padding: 10px 5px; text-align: right; font-weight: 600;">$${parseFloat(sale.unit_price).toFixed(2)}</td>
+                        <td style="padding: 10px 5px; text-align: right; font-family: monospace;">
+                            <a href="#" onclick="openOrderPreviewModal(event, '${localEscapeHTML(sale.order_id)}')" class="order-preview-link"><code>${localEscapeHTML(sale.order_id)}</code></a>
+                        </td>
+                    `;
+                    salesList.appendChild(tr);
+                });
+            } else {
+                salesList.innerHTML = `<tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--text-secondary); font-style: italic;">No recent transactions.</td></tr>`;
+            }
+
+            loading.style.display = 'none';
+            body.style.display = 'block';
+        })
+        .catch(err => {
+            console.error(err);
+            loading.style.display = 'none';
+            error.style.display = 'block';
+        });
+
+    activeCpuPricingEscHandler = (e) => {
+        if (e.key === 'Escape') closeCpuPricingModal();
+    };
+    window.addEventListener('keydown', activeCpuPricingEscHandler);
+}
+
+function closeCpuPricingModal() {
+    const modal = document.getElementById('cpuPricingModal');
+    modal.style.display = 'none';
+    if (activeCpuPricingEscHandler) {
+        window.removeEventListener('keydown', activeCpuPricingEscHandler);
+        activeCpuPricingEscHandler = null;
+    }
 }
 </script>

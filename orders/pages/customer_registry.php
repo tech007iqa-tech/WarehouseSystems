@@ -449,14 +449,14 @@ try {
                                 <span class='badge status-active' style='background:#f0f9ff; color:#0369a1;'>💰 $" . number_format($c['lifetime_value'], 0) . "</span>
                                 <span class='badge status-idle'>Last Order: " . (!empty($c['orders_list']) ? date('M d, Y', strtotime($c['orders_list'][0]['created_at'])) : 'None') . "</span>
                             </div>
-                            <div class='crm-summary-row' style='display:flex; gap:25px; margin-top:10px; padding-top:8px; border-top:1px solid #f1f5f9;'>
+                            <div class='crm-summary-row' style='display:flex; gap:25px; margin-top:10px; padding-top:8px; border-top:1px solid var(--border-color);'>
                                 <div class='crm-stat'>
-                                    <div style='font-size:0.6rem; font-weight:800; color:#94a3b8; text-transform:uppercase;'>📅 Next Callback</div>
-                                    <div style='font-size:0.75rem; font-weight:700; color:" . (!empty($c['callback_date']) ? "#be123c" : "#64748b") . ";'>" . (!empty($c['callback_date']) ? htmlspecialchars($c['callback_date']) : "Not Set") . "</div>
+                                    <div style='font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;'>📅 Next Callback</div>
+                                    <div style='font-size:0.75rem; font-weight:700; color:" . (!empty($c['callback_date']) ? "#be123c" : "var(--text-secondary)") . ";'>" . (!empty($c['callback_date']) ? htmlspecialchars($c['callback_date']) : "Not Set") . "</div>
                                 </div>
                                 <div class='crm-stat'>
-                                    <div style='font-size:0.6rem; font-weight:800; color:#94a3b8; text-transform:uppercase;'>✉️ Last Contact</div>
-                                    <div style='font-size:0.75rem; font-weight:700; color:#64748b;'>" . (!empty($c['message_date']) ? htmlspecialchars($c['message_date']) : "Not Set") . "</div>
+                                    <div style='font-size:0.6rem; font-weight:800; color:var(--text-dim); text-transform:uppercase;'>✉️ Last Contact</div>
+                                    <div style='font-size:0.75rem; font-weight:700; color:var(--text-secondary);'>" . (!empty($c['message_date']) ? htmlspecialchars($c['message_date']) : "Not Set") . "</div>
                                 </div>
                             </div>
                         </div>
