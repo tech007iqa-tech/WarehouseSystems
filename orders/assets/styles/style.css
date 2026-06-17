@@ -225,6 +225,55 @@ input {
     appearance: none;
 }
 
+input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-panel);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+}
+
+input[type="checkbox"]:focus {
+    transform: none !important;
+    box-shadow: 0 0 0 3px rgba(140, 198, 63, 0.25) !important;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--accent-color) !important;
+    border-color: var(--accent-color) !important;
+}
+
+input[type="checkbox"]:checked::after {
+    content: "";
+    width: 6px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+    position: absolute;
+    top: 2px;
+}
+
+/* Highlight table rows with selected checkboxes */
+tr:has(input[type="checkbox"]:checked) td {
+    background-color: rgba(140, 198, 63, 0.08) !important;
+    border-color: var(--accent-color) !important;
+}
+
+[data-theme="dark"] tr:has(input[type="checkbox"]:checked) td {
+    background-color: rgba(163, 230, 53, 0.12) !important;
+}
+
+
 select:focus,
 input:focus {
     outline: none;

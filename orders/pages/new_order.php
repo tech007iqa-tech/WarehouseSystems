@@ -958,6 +958,39 @@ foreach ($items as $item)
         }
     }
 
+    let lastChecked = null;
+    document.addEventListener('DOMContentLoaded', () => {
+        const whImportList = document.getElementById('wh-import-list');
+        if (whImportList) {
+            whImportList.addEventListener('click', function (e) {
+                const tr = e.target.closest('tr');
+                if (!tr) return;
+
+                const cb = tr.querySelector('.wh-import-row-select');
+                if (!cb) return;
+
+                if (e.target === cb) {
+                    handleCheckboxClick(cb, e.shiftKey);
+                    return;
+                }
+
+                cb.checked = !cb.checked;
+                handleCheckboxClick(cb, e.shiftKey);
+            });
+        }
+    });
+
+    function handleCheckboxClick(cb, shiftKey) {
+        const checkboxes = Array.from(document.querySelectorAll('.wh-import-row-select'));
+        if (shiftKey && lastChecked) {
+            let start = checkboxes.indexOf(cb);
+            let end = checkboxes.indexOf(lastChecked);
+            checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1)
+                      .forEach(c => c.checked = lastChecked.checked);
+        }
+        lastChecked = cb;
+    }
+
     function toggleAllWarehouseImport(master) {
         const checkboxes = document.querySelectorAll('.wh-import-row-select');
         checkboxes.forEach(cb => cb.checked = master.checked);
