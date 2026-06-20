@@ -95,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+    initWarehouseSpreadsheetEvents();
 });
 
 /**
@@ -384,10 +385,18 @@ function filterWarehouse() {
         if (isMatch) {
             cards[i].style.display = "";
             visibleCount++;
+            
+            let qty = 0;
             const qtyPill = cards[i].querySelector('.qty-pill');
             if (qtyPill) {
-                visibleQtyTotal += parseInt(qtyPill.innerText, 10) || 0;
+                qty = parseInt(qtyPill.innerText, 10) || 0;
+            } else {
+                const qtyInput = cards[i].querySelector('[data-field="quantity"] .cell-input');
+                if (qtyInput) {
+                    qty = parseInt(qtyInput.value, 10) || 0;
+                }
             }
+            visibleQtyTotal += qty;
         } else {
             cards[i].style.display = "none";
         }
@@ -634,9 +643,19 @@ function downloadWarehouseCSV() {
 
             const brand = card.getAttribute('data-brand') || '';
             const model = card.getAttribute('data-model') || '';
+            let qty = '0';
             const qtyElement = card.querySelector('.qty-pill');
-            const qty = qtyElement ? qtyElement.innerText.trim() : '0';
-            const price = card.getAttribute('data-price') || '0.00';
+            if (qtyElement) {
+                qty = qtyElement.innerText.trim();
+            } else {
+                const qtyInput = card.querySelector('[data-field="quantity"] .cell-input');
+                if (qtyInput) qty = qtyInput.value.trim();
+            }
+
+            let price = card.getAttribute('data-price') || '0.00';
+            const priceInput = card.querySelector('[data-field="price"] .cell-input');
+            if (priceInput) price = priceInput.value.trim();
+
             const total = (parseFloat(price) * parseInt(qty)).toFixed(2);
             const createdDate = card.getAttribute('data-created-date') || '';
             const createdTime = card.getAttribute('data-created-time') || '';
@@ -1117,6 +1136,262 @@ function updateSelectColors() {
             selectEl.style.color = selectedOpt.style.color || '';
         }
     });
+}
+
+// --- SPREADSHEET MODE EVENT HANDLING & ACTIONS ---
+
+function initWarehouseSpreadsheetEvents() {
+    const listContainer = document.getElementById('inventory-list');
+    if (!listContainer) return;
+    
+    // Check if we are in spreadsheet mode (metadata block is present)
+    const metadata = document.getElementById('warehouse-metadata');
+    if (!metadata) return;
+
+    // Handle blur updates (Auto-save)
+    listContainer.addEventListener('focusout', (e) => {
+        if (e.target && e.target.classList.contains('cell-input')) {
+            handleWarehouseCellSave(e.target);
+        }
+    });
+
+    // Keyboard navigation: arrow keys, Enter, and Tab handling
+    listContainer.addEventListener('keydown', (e) => {
+        if (!e.target || !e.target.classList.contains('cell-input')) return;
+
+        const input = e.target;
+        const cell = input.closest('td');
+        const row = input.closest('tr');
+        if (!cell || !row) return;
+
+        const colIndex = Array.from(row.cells).indexOf(cell);
+        const allRows = Array.from(listContainer.querySelectorAll('.summary-row'));
+        const rowIndex = allRows.indexOf(row);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            focusWarehouseCell(allRows, rowIndex + 1, colIndex);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            focusWarehouseCell(allRows, rowIndex - 1, colIndex);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+            focusWarehouseCell(allRows, rowIndex + 1, colIndex);
+        }
+    });
+
+    // Handle click on ➕ indicator to clone/copy row data
+    listContainer.addEventListener('click', (e) => {
+        const cloneBtn = e.target.closest('.btn-clone-row');
+        if (cloneBtn) {
+            e.preventDefault();
+            const sourceRow = cloneBtn.closest('tr');
+            const templateRow = listContainer.querySelector('.new-blank-row');
+            if (sourceRow && templateRow) {
+                // Fetch values from the selected row
+                const brand = sourceRow.querySelector('[data-field="brand"] .cell-input')?.value || '';
+                const model = sourceRow.querySelector('[data-field="model"] .cell-input')?.value || '';
+                const qty = sourceRow.querySelector('[data-field="quantity"] .cell-input')?.value || '1';
+                const price = sourceRow.querySelector('[data-field="price"] .cell-input')?.value || '0';
+                
+                const condition = sourceRow.querySelector('[data-field="condition"] .cell-input')?.value || 'Used';
+                const notes = sourceRow.querySelector('[data-field="notes"] .cell-input')?.value || '';
+
+                // Clone the blank template row
+                const newRow = templateRow.cloneNode(true);
+
+                // Populate with copied data
+                newRow.querySelector('[data-field="brand"] .cell-input').value = brand;
+                newRow.querySelector('[data-field="model"] .cell-input').value = model;
+                newRow.querySelector('[data-field="quantity"] .cell-input').value = qty;
+                newRow.querySelector('[data-field="price"] .cell-input').value = price;
+                newRow.querySelector('[data-field="condition"] .cell-input').value = condition;
+                newRow.querySelector('[data-field="notes"] .cell-input').value = notes;
+
+                // Sector specific fields
+                const whMetadata = document.getElementById('warehouse-metadata');
+                const sector = whMetadata.getAttribute('data-sector');
+
+                if (sector === 'Laptops') {
+                    newRow.querySelector('[data-field="series"] .cell-input').value = sourceRow.querySelector('[data-field="series"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="cpu"] .cell-input').value = sourceRow.querySelector('[data-field="cpu"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="gen"] .cell-input').value = sourceRow.querySelector('[data-field="gen"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="ram"] .cell-input').value = sourceRow.querySelector('[data-field="ram"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="storage"] .cell-input').value = sourceRow.querySelector('[data-field="storage"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="battery"] .cell-input').value = sourceRow.querySelector('[data-field="battery"] .cell-input')?.value || '';
+                } else if (sector === 'Gaming') {
+                    newRow.querySelector('[data-field="gaming_category"] .cell-input').value = sourceRow.querySelector('[data-field="gaming_category"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="series"] .cell-input').value = sourceRow.querySelector('[data-field="series"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="cpu"] .cell-input').value = sourceRow.querySelector('[data-field="cpu"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="gpu"] .cell-input').value = sourceRow.querySelector('[data-field="gpu"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="ram"] .cell-input').value = sourceRow.querySelector('[data-field="ram"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="storage"] .cell-input').value = sourceRow.querySelector('[data-field="storage"] .cell-input')?.value || '';
+                } else if (sector === 'Desktops') {
+                    newRow.querySelector('[data-field="cpu_gen"] .cell-input').value = sourceRow.querySelector('[data-field="cpu_gen"] .cell-input')?.value || '';
+                } else {
+                    newRow.querySelector('[data-field="type"] .cell-input').value = sourceRow.querySelector('[data-field="type"] .cell-input')?.value || '';
+                    newRow.querySelector('[data-field="voltage"] .cell-input').value = sourceRow.querySelector('[data-field="voltage"] .cell-input')?.value || '';
+                }
+
+                // Append new row at the bottom
+                templateRow.parentNode.appendChild(newRow);
+
+                // Focus QTY input of the new row and select it for quick editing
+                const qtyInput = newRow.querySelector('[data-field="quantity"] .cell-input');
+                if (qtyInput) {
+                    qtyInput.focus();
+                    if (typeof qtyInput.select === 'function') qtyInput.select();
+                }
+            }
+        }
+    });
+}
+
+function focusWarehouseCell(rows, rowIndex, colIndex) {
+    if (rowIndex >= 0 && rowIndex < rows.length) {
+        const targetRow = rows[rowIndex];
+        if (colIndex >= 0 && colIndex < targetRow.cells.length) {
+            const targetCell = targetRow.cells[colIndex];
+            const targetInput = targetCell.querySelector('.cell-input');
+            if (targetInput) {
+                targetInput.focus();
+                if (typeof targetInput.select === 'function') {
+                    targetInput.select();
+                }
+            }
+        }
+    }
+}
+
+async function handleWarehouseCellSave(input) {
+    const cell = input.closest('td');
+    const row = input.closest('tr');
+    if (!cell || !row) return;
+
+    const rowId = row.getAttribute('data-id');
+    const field = cell.getAttribute('data-field');
+    const val = input.value.trim();
+
+    // Skip save if empty and it's a new row
+    if (rowId === 'new') {
+        const brandVal = row.querySelector('[data-field="brand"] .cell-input').value.trim();
+        const modelVal = row.querySelector('[data-field="model"] .cell-input').value.trim();
+
+        if (brandVal !== '' && modelVal !== '') {
+            createWarehouseRowFromBlank(row);
+        }
+        return;
+    }
+
+    const metadata = document.getElementById('warehouse-metadata');
+    if (!metadata) return;
+    const csrfToken = metadata.getAttribute('data-csrf');
+
+    try {
+        const response = await fetch('api/update_inventory_field.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                csrf_token: csrfToken,
+                item_id: rowId,
+                field: field,
+                value: val
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            // Update Totals
+            const counter = document.getElementById('sidebar-total-qty');
+            if (counter && result.new_total !== undefined) {
+                counter.textContent = result.new_total + ' Units';
+                counter.classList.add('pulse');
+                setTimeout(() => counter.classList.remove('pulse'), 500);
+            }
+            // Add visual save indicator to cell
+            cell.style.backgroundColor = 'rgba(140, 198, 63, 0.15)';
+            setTimeout(() => {
+                cell.style.backgroundColor = '';
+            }, 600);
+        } else {
+            console.error('Save failed:', result.error);
+        }
+    } catch (err) {
+        console.error('Error updating cell field:', err);
+    }
+}
+
+async function createWarehouseRowFromBlank(row) {
+    const metadata = document.getElementById('warehouse-metadata');
+    if (!metadata) return;
+
+    const sector = metadata.getAttribute('data-sector');
+    const locationCode = metadata.getAttribute('data-location-code');
+    const csrfToken = metadata.getAttribute('data-csrf');
+
+    const brand = row.querySelector('[data-field="brand"] .cell-input').value.trim();
+    const model = row.querySelector('[data-field="model"] .cell-input').value.trim();
+    const qty = parseInt(row.querySelector('[data-field="quantity"] .cell-input').value) || 1;
+    const price = parseFloat(row.querySelector('[data-field="price"] .cell-input').value) || 0.00;
+    const condition = row.querySelector('[data-field="condition"] .cell-input').value.trim();
+    const notes = row.querySelector('[data-field="notes"] .cell-input').value.trim();
+
+    const formData = new FormData();
+    formData.set('csrf_token', csrfToken);
+    formData.set('sector', sector);
+    formData.set('location_code', locationCode);
+    formData.set('brand', brand);
+    formData.set('model', model);
+    formData.set('quantity', qty);
+    formData.set('price', price);
+    formData.set('condition', condition);
+    formData.set('notes', notes);
+
+    // Sector specific
+    if (sector === 'Laptops') {
+        formData.set('series', row.querySelector('[data-field="series"] .cell-input')?.value.trim() || '');
+        formData.set('cpu', row.querySelector('[data-field="cpu"] .cell-input')?.value.trim() || '');
+        formData.set('gen', row.querySelector('[data-field="gen"] .cell-input')?.value.trim() || '');
+        formData.set('ram', row.querySelector('[data-field="ram"] .cell-input')?.value.trim() || '');
+        formData.set('storage', row.querySelector('[data-field="storage"] .cell-input')?.value.trim() || '');
+        formData.set('battery', row.querySelector('[data-field="battery"] .cell-input')?.value.trim() || '');
+    } else if (sector === 'Gaming') {
+        formData.set('gaming_category', row.querySelector('[data-field="gaming_category"] .cell-input')?.value.trim() || 'PC');
+        formData.set('series', row.querySelector('[data-field="series"] .cell-input')?.value.trim() || '');
+        formData.set('cpu', row.querySelector('[data-field="cpu"] .cell-input')?.value.trim() || '');
+        formData.set('gpu', row.querySelector('[data-field="gpu"] .cell-input')?.value.trim() || '');
+        formData.set('ram', row.querySelector('[data-field="ram"] .cell-input')?.value.trim() || '');
+        formData.set('storage', row.querySelector('[data-field="storage"] .cell-input')?.value.trim() || '');
+    } else if (sector === 'Desktops') {
+        formData.set('cpu_gen', row.querySelector('[data-field="cpu_gen"] .cell-input')?.value.trim() || '');
+    } else {
+        formData.set('type', row.querySelector('[data-field="type"] .cell-input')?.value.trim() || '');
+        formData.set('voltage', row.querySelector('[data-field="voltage"] .cell-input')?.value.trim() || '');
+    }
+
+    const btnIndicator = row.querySelector('.btn-add-row-indicator');
+    if (btnIndicator) btnIndicator.textContent = '⏳';
+
+    try {
+        const response = await fetch('api/add_inventory_item.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            if (window.IQA_Notify) {
+                window.IQA_Notify.success('Item successfully added ✨');
+            }
+            window.location.reload();
+        }
+    } catch (err) {
+        console.error('Error adding row:', err);
+        if (btnIndicator) btnIndicator.textContent = '➕';
+    }
 }
 
 

@@ -63,7 +63,7 @@ if ($current_customer) {
 }
 
 // Fetch current order items
-$stmt = $conn->prepare("SELECT * FROM items WHERE order_id = ? AND customer_id = ? ORDER BY id DESC");
+$stmt = $conn->prepare("SELECT * FROM items WHERE order_id = ? AND customer_id = ? ORDER BY id ASC");
 $stmt->execute([$current_order, $current_customer]);
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -74,242 +74,166 @@ foreach ($items as $item)
 
 ?>
 
-<div class="new-order-layout">
-    <!-- Sidebar: Customer & Batch Info -->
-    <aside class="order-sidebar">
-        <div class="sidebar-card">
-            <h2 id="batch-builder-top">Batch Builder</h2>
-
-            <div class="batch-meta">
+<div class="new-order-layout spreadsheet-mode">
+    <!-- Top Horizontal Summary Banner Card -->
+    <header class="order-summary-banner card">
+        <div class="banner-left">
+            <h2 id="batch-builder-top">Order Batch Builder</h2>
+            <div class="customer-info-badges">
                 <?php if ($customer_info): ?>
                     <?php if (!empty(trim($customer_info['company_name'] ?? ''))): ?>
-                        <div class="meta-item">
-                            <span class="label">Company Name:</span>
-                            <span class="value"><?= htmlspecialchars($customer_info['company_name']) ?></span>
-                        </div>
+                        <span class="info-badge company">🏢 <?= htmlspecialchars($customer_info['company_name']) ?></span>
                     <?php endif; ?>
                     <?php if (!empty(trim($customer_info['contact_name'] ?? ''))): ?>
-                        <div class="meta-item">
-                            <span class="label">Contact Name:</span>
-                            <span class="value"><?= htmlspecialchars($customer_info['contact_name']) ?></span>
-                        </div>
+                        <span class="info-badge contact">👤 <?= htmlspecialchars($customer_info['contact_name']) ?></span>
                     <?php endif; ?>
                 <?php endif; ?>
-                <div class="meta-item">
-                    <span class="label">Order ID:</span>
-                    <span class="value"><?= htmlspecialchars($current_order) ?></span>
-                </div>
-                <div class="meta-item">
-                    <span class="label">Total Units:</span>
-                    <span class="value counter" id="sidebar-total-qty"><?= $total_units ?></span>
-                </div>
+                <span class="info-badge order-id">📦 ID: <?= htmlspecialchars($current_order) ?></span>
             </div>
-
-            <a href="checkout.php?customer_id=<?= urlencode($current_customer) ?>&order_id=<?= urlencode($current_order) ?>"
-                class="btn-finalize">
-                Finalize & Checkout →
-            </a>
         </div>
-    </aside>
+        <div class="banner-right">
+            <div class="total-units-container">
+                <span class="label">Total Units:</span>
+                <span class="value counter" id="sidebar-total-qty"><?= $total_units ?></span>
+            </div>
+            <div class="banner-actions">
+                <button type="button" class="btn-repeat"
+                    onclick="openImportModal('<?= htmlspecialchars($current_customer) ?>', '<?= htmlspecialchars($current_order) ?>')"
+                    title="Import from Clipboard">📋 Import Bulk</button>
+                <a href="checkout.php?customer_id=<?= urlencode($current_customer) ?>&order_id=<?= urlencode($current_order) ?>"
+                    class="btn-finalize">
+                    Finalize & Checkout →
+                </a>
+            </div>
+        </div>
+    </header>
 
-    <!-- Main Content: Entry Form & Summary -->
+    <!-- Main Content: Spreadsheet Editable Table -->
     <main class="order-main">
-
-
-        <section class="entry-form-section card">
-            <h3>Add Items to Batch</h3>
-            <form id="ajax-batch-form" class="batch-form" onsubmit="handleBatchSubmit(event)">
-                <input type="hidden" name="customer_id" value="<?= htmlspecialchars($current_customer) ?>">
-                <input type="hidden" name="order_id" value="<?= htmlspecialchars($current_order) ?>">
-                <?= UI::csrf_field() ?>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="brand">Brand</label>
-                        <input type="text" id="brand" name="brand" list="brand-options" placeholder="Dell, HP..."
-                            required>
-                    </div>
-                    <div class="form-group">
-                        <label for="models">Model</label>
-                        <div style="position: relative; display: flex; align-items: center;">
-                            <span id="apple-prefix"
-                                style="display: none; position: absolute; left: 12px; color: var(--text-main); font-weight: 700; pointer-events: none;">A-</span>
-                            <input type="text" id="models" name="model" list="model-options" placeholder="A1465..."
-                                required style="width: 100%; transition: padding 0.2s;">
-                            <datalist id="model-options"></datalist>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group" style="flex: 1.2;">
-                        <label for="series">Series / Project</label>
-                        <input type="text" id="series" name="series" list="series-options" placeholder="E2024-001">
-                        <datalist id="series-options"></datalist>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="cpu_series">CPU</label>
-                        <select id="cpu_series" name="cpu_series" style="width: 100%;">
-                            <option value="" disabled selected hidden><small style="color: rgb(97, 97, 97);">i3, i5, i7,
-                                    i9</small></option>
-                            <option value=""></option>
-                            <option value="i5">i5</option>
-                            <option value="i7">i7</option>
-                            <option value="i9">i9</option>
-                            <option value="Ryzen 5">Ryzen 5</option>
-                            <option value="Ryzen 7">Ryzen 7</option>
-                            <option value="i3">i3</option>
-                            <option value="i3">Celeron</option>
-                            <option value="Ryzen 3">Ryzen 3</option>
-                            <option value="Ryzen 2">Ryzen 2</option>
-                            <option value="Ryzen 9">Ryzen 9</option>
-                        </select>
-                    </div>
-                    <div class="form-group" style="flex: 1;">
-                        <label for="cpu_gen">GEN</label>
-                        <input type="text" id="cpu_gen" name="cpu_gen" list="cpu-gen-options"
-                            placeholder="e.g. 8th / 8350U">
-                        <datalist id="cpu-gen-options">
-                            <option value="6th & 7th">
-                            <option value="8th">
-                            <option value="9th">
-                            <option value="10th">
-                            <option value="11th">
-                            <option value="2nd & 3rd">
-                            <option value="4th & 5th">
-                            <option value="12th">
-                            <option value="13th">
-                            <option value="14th">
-                            <option value="Core 2 Duo">
-                        </datalist>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="description">Description / Condition</label>
-                    <textarea id="description" name="description" placeholder="Used, No major defects..."></textarea>
-                    <!-- Premium Interactive Keyword Chips -->
-                    <div class="keyword-chips-container">
-                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Tested')"
-                            data-keyword="Tested">Tested</span>
-                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Untested')"
-                            data-keyword="Untested">Untested</span>
-                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Working')"
-                            data-keyword="Working">Working</span>
-                        <span class="keyword-chip" onclick="toggleDescriptionKeyword('Parts')"
-                            data-keyword="Parts">Parts</span>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="qty">Quantity</label>
-                        <input type="number" id="qty" name="quantity" placeholder="1" step="any" min="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="price">Unit Price ($)</label>
-                        <input type="number" id="price" name="unit_price" placeholder="0.00" step="0.01">
-                    </div>
-                </div>
-
-                <div class="form-actions" style="display: flex; gap: 10px;">
-                    <button type="submit" class="btn-add" style="flex: 2;">Add to Batch</button>
-                    <button type="button" class="btn-repeat"
-                        onclick="openImportModal('<?= htmlspecialchars($current_customer) ?>', '<?= htmlspecialchars($current_order) ?>')"
-                        title="Import from Clipboard"
-                        style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; gap: 6px;">📋
-                        Import</button>
-                    <button type="button" id="btn-repeat-last" class="btn-repeat" onclick="repeatLastEntry()"
-                        title="Fill with last entry"
-                        style="flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); cursor: pointer; border-radius: 8px; font-size: 0.9rem; <?= isset($_SESSION['last_entry']) ? '' : 'display: none;' ?>">✨
-                        Repeat Last</button>
-                </div>
-            </form>
-        </section>
-
-        <!-- Inject Last Entry State -->
-        <script type="application/json" id="lastEntryState">
-        <?= json_encode($_SESSION['last_entry'] ?? null) ?>
-        </script>
-
-        <section class="summary-section card">
+        <section class="summary-section card spreadsheet-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
                 <h3>Current Batch Summary</h3>
                 <div style="display:flex; gap:10px; align-items:center;">
                     <select id="summary-sort" onchange="sortSummary()"
                         style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
+                        <option value="oldest">Older First</option>
                         <option value="newest">Newest Added</option>
                         <option value="desc_asc">Description</option>
                         <option value="qty_desc">Quantity (High-Low)</option>
                         <option value="price_desc">Price (High-Low)</option>
                     </select>
-                    <div class="search-box" style="max-width: 160px; width: 100%;">
+                    <div class="search-box" style="max-width: 240px; width: 100%;">
                         <input type="text" id="summary-search" placeholder="Filter items..." onkeyup="filterSummary()"
                             style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; width: 100%;">
                     </div>
                 </div>
             </div>
 
-            <div class="summary-table-wrapper">
-                <table class="summary-table">
+            <!-- Injected csrf token and batch details for JS use -->
+            <div id="batch-metadata" data-csrf="<?= htmlspecialchars(Security::getToken()) ?>"
+                data-customer-id="<?= htmlspecialchars($current_customer) ?>"
+                data-order-id="<?= htmlspecialchars($current_order) ?>" style="display:none;"></div>
+
+            <div class="summary-table-wrapper spreadsheet-table-wrapper">
+                <table class="summary-table spreadsheet-table">
                     <thead>
                         <tr>
-                            <th>Item Details</th>
-                            <th style="text-align:center;">Qty</th>
-                            <th style="text-align:right;">Price</th>
-                            <th style="text-align:right;">Actions</th>
+                            <th style="width: 12%;">Brand</th>
+                            <th style="width: 12%;">Model</th>
+                            <th style="width: 12%;">Series</th>
+                            <th style="width: 12%;">CPU</th>
+                            <th style="width: 18%;">Description</th>
+                            <th style="width: 11%; text-align:center;">Qty</th>
+                            <th style="width: 15%; text-align:right;">Price</th>
+                            <th style="width: 8%; text-align:right;"></th>
                         </tr>
                     </thead>
                     <tbody id="summary-list">
-                        <?php if (empty($items)): ?>
-                            <tr class="empty-row">
-                                <td colspan="4" style="text-align:center; padding: 40px; color: #94a3b8;">No items added
-                                    yet.</td>
+                        <?php foreach ($items as $item): ?>
+                            <tr class="summary-row" data-id="<?= $item['id'] ?>"
+                                data-desc="<?= htmlspecialchars($item['description']) ?>"
+                                data-qty="<?= $item['quantity'] ?>" data-price="<?= $item['unit_price'] ?>"
+                                data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['series'])) ?>">
+                                <td class="editable-cell" data-field="brand">
+                                    <input type="text" class="cell-input" value="<?= htmlspecialchars($item['brand']) ?>"
+                                        list="brand-options" placeholder="...">
+                                </td>
+                                <td class="editable-cell" data-field="model">
+                                    <input type="text" class="cell-input" value="<?= htmlspecialchars($item['model']) ?>"
+                                        placeholder="...">
+                                </td>
+                                <td class="editable-cell" data-field="series">
+                                    <input type="text" class="cell-input" value="<?= htmlspecialchars($item['series']) ?>"
+                                        placeholder="...">
+                                </td>
+                                <td class="editable-cell" data-field="cpu">
+                                    <input type="text" class="cell-input" value="<?= htmlspecialchars($item['cpu']) ?>"
+                                        placeholder="...">
+                                </td>
+                                <td class="editable-cell" data-field="description">
+                                    <input type="text" class="cell-input"
+                                        value="<?= htmlspecialchars($item['description']) ?>" placeholder="...">
+                                </td>
+                                <td class="editable-cell numeric" data-field="quantity" style="text-align:center;">
+                                    <input type="number" step="any" min="0" class="cell-input text-center font-bold"
+                                        value="<?= $item['quantity'] ?>">
+                                </td>
+                                <td class="editable-cell numeric" data-field="unit_price" style="text-align:right;">
+                                    <input type="number" step="0.01" class="cell-input text-right"
+                                        value="<?= number_format($item['unit_price'], 2, '.', '') ?>">
+                                </td>
+                                <td style="text-align:right;">
+                                    <div class="action-buttons">
+                                        <button type="button" class="btn-clone-row" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px;" title="Clone Row">➕</button>
+                                        <form method="POST" style="display:inline;"
+                                            onsubmit="return confirm('Remove this item?');">
+                                            <input type="hidden" name="action" value="delete">
+                                            <input type="hidden" name="delete_id" value="<?= $item['id'] ?>">
+                                            <?= UI::csrf_field() ?>
+                                            <button type="submit" class="btn-delete" title="Delete Row">🗑</button>
+                                        </form>
+                                    </div>
+                                </td>
                             </tr>
-                        <?php else: ?>
-                            <?php foreach ($items as $item): ?>
-                                <tr class="summary-row" data-id="<?= $item['id'] ?>"
-                                    data-desc="<?= htmlspecialchars($item['description']) ?>"
-                                    data-qty="<?= $item['quantity'] ?>" data-price="<?= $item['unit_price'] ?>"
-                                    data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . $item['series'])) ?>">
-                                    <td>
-                                        <div class="item-primary"><?= htmlspecialchars($item['brand']) ?>
-                                            <?= htmlspecialchars($item['model']) ?>
-                                        </div>
-                                        <div class="item-secondary"><?= htmlspecialchars($item['series']) ?> |
-                                            <?= htmlspecialchars($item['cpu']) ?>
-                                        </div>
-                                        <?php if (!empty(trim($item['description']))): ?>
-                                            <div class="item-description"
-                                                style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">
-                                                <?= nl2br(htmlspecialchars($item['description'])) ?>
-                                            </div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="text-align:center; font-weight:700;"><?= $item['quantity'] ?></td>
-                                    <td style="text-align:right;">$<?= number_format($item['unit_price'], 2) ?></td>
-                                    <td style="text-align:right;">
-                                        <div class="action-buttons">
-                                            <button type="button" class="btn-edit"
-                                                onclick="openEditModal(<?= htmlspecialchars(json_encode($item)) ?>)">✎</button>
-                                            <form method="POST" style="display:inline;"
-                                                onsubmit="return confirm('Remove this item?');">
-                                                <input type="hidden" name="action" value="delete">
-                                                <input type="hidden" name="delete_id" value="<?= $item['id'] ?>">
-                                                <?= UI::csrf_field() ?>
-                                                <button type="submit" class="btn-delete">🗑</button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                        <?php endforeach; ?>
+
+                        <!-- Permanent Blank entry row at the bottom for quick appending -->
+                        <tr class="summary-row new-blank-row" data-id="new">
+                            <td class="editable-cell" data-field="brand">
+                                <input type="text" class="cell-input" list="brand-options" placeholder="Brand...">
+                            </td>
+                            <td class="editable-cell" data-field="model">
+                                <input type="text" class="cell-input" placeholder="Model...">
+                            </td>
+                            <td class="editable-cell" data-field="series">
+                                <input type="text" class="cell-input" placeholder="Series...">
+                            </td>
+                            <td class="editable-cell" data-field="cpu">
+                                <input type="text" class="cell-input" placeholder="CPU...">
+                            </td>
+                            <td class="editable-cell" data-field="description">
+                                <input type="text" class="cell-input" placeholder="Desc...">
+                            </td>
+                            <td class="editable-cell numeric" data-field="quantity" style="text-align:center;">
+                                <input type="number" step="any" min="0" class="cell-input text-center font-bold"
+                                    placeholder="Qty">
+                            </td>
+                            <td class="editable-cell numeric" data-field="unit_price" style="text-align:right;">
+                                <input type="number" step="0.01" class="cell-input text-right" placeholder="Price">
+                            </td>
+                            <td style="text-align:right;">
+                                <div class="action-buttons">
+                                    <button type="button" class="btn-add-row-indicator" style="background: none; border: none; font-size: 1rem; opacity: 0.3;">➕</button>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </section>
     </main>
 </div>
+
 
 <!-- Edit Modal -->
 <div id="editModal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closeEditModal()">
@@ -574,8 +498,13 @@ foreach ($items as $item)
         const tbody = document.getElementById('summary-list');
         const rows = Array.from(tbody.querySelectorAll('.summary-row'));
 
-        rows.sort((a, b) => {
-            if (sortBy === 'newest') {
+        const blankRow = rows.find(row => row.classList.contains('new-blank-row'));
+        const activeRows = rows.filter(row => !row.classList.contains('new-blank-row'));
+
+        activeRows.sort((a, b) => {
+            if (sortBy === 'oldest') {
+                return parseInt(a.getAttribute('data-id')) - parseInt(b.getAttribute('data-id'));
+            } else if (sortBy === 'newest') {
                 return parseInt(b.getAttribute('data-id')) - parseInt(a.getAttribute('data-id'));
             } else if (sortBy === 'desc_asc') {
                 const descA = a.getAttribute('data-desc').toLowerCase();
@@ -594,8 +523,13 @@ foreach ($items as $item)
             return 0;
         });
 
-        // Re-append rows in sorted order
-        rows.forEach(row => tbody.appendChild(row));
+        // Re-append active rows in sorted order
+        activeRows.forEach(row => tbody.appendChild(row));
+
+        // Always append blank row at the very bottom
+        if (blankRow) {
+            tbody.appendChild(blankRow);
+        }
     }
 
     function repeatLastEntry() {
@@ -986,7 +920,7 @@ foreach ($items as $item)
             let start = checkboxes.indexOf(cb);
             let end = checkboxes.indexOf(lastChecked);
             checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1)
-                      .forEach(c => c.checked = lastChecked.checked);
+                .forEach(c => c.checked = lastChecked.checked);
         }
         lastChecked = cb;
     }
@@ -1479,4 +1413,5 @@ foreach ($items as $item)
             });
         }
     });
+</script>
 </script>

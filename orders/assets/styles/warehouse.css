@@ -1052,3 +1052,143 @@
 [data-theme="dark"] #wh-notes:focus {
     background-color: var(--bg-panel) !important;
 }
+
+/* --- SPREADSHEET REGISTRATION TABLE OVERRIDES --- */
+.warehouse-layout.spreadsheet-mode {
+    grid-template-columns: 1fr;
+}
+
+.spreadsheet-table-wrapper {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow-x: auto;
+    background: #fff;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04);
+}
+
+.spreadsheet-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.spreadsheet-table th {
+    display: table-cell;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    padding: 10px 12px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #475569;
+    text-transform: uppercase;
+}
+
+.spreadsheet-table th:last-child {
+    border-right: none;
+}
+
+.spreadsheet-table td {
+    padding: 0;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
+    height: 44px;
+    vertical-align: middle;
+}
+
+.spreadsheet-table tr {
+    transition: background-color 0.15s ease;
+}
+
+.spreadsheet-table tr:hover {
+    background-color: rgba(140, 198, 63, 0.02);
+}
+
+.spreadsheet-table tr:focus-within {
+    background-color: rgba(140, 198, 63, 0.06) !important;
+}
+
+[data-theme="dark"] .spreadsheet-table tr:hover {
+    background-color: rgba(163, 230, 53, 0.03);
+}
+
+[data-theme="dark"] .spreadsheet-table tr:focus-within {
+    background-color: rgba(163, 230, 53, 0.08) !important;
+}
+
+.spreadsheet-table td:last-child {
+    border-right: none;
+}
+
+/* Interactive Cell Input */
+.editable-cell {
+    position: relative;
+}
+
+.cell-input {
+    width: 100%;
+    height: 44px !important;
+    line-height: 44px !important;
+    border: none !important;
+    outline: none !important;
+    padding: 0 10px !important;
+    font-size: 0.85rem;
+    font-weight: 500;
+    background: transparent !important;
+    color: var(--text-main) !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    transition: background-color 0.15s, box-shadow 0.15s;
+}
+
+.cell-input:hover {
+    background-color: rgba(140, 198, 63, 0.04);
+}
+
+.cell-input:focus {
+    background-color: #fff;
+    box-shadow: inset 0 0 0 2px var(--accent-color);
+}
+
+[data-theme="dark"] .cell-input:focus {
+    background-color: var(--bg-surface-2);
+}
+
+/* Numeric / Center Alignment overrides */
+.cell-input.text-center {
+    text-align: center;
+}
+
+.cell-input.text-right {
+    text-align: right;
+}
+
+.cell-input.font-bold {
+    font-weight: 700;
+}
+
+/* Custom indicator for new dynamic rows */
+.new-blank-row {
+    background-color: rgba(248, 250, 252, 0.5);
+}
+
+[data-theme="dark"] .new-blank-row {
+    background-color: rgba(30, 41, 59, 0.2);
+}
+
+.new-blank-row:hover {
+    background-color: rgba(248, 250, 252, 1);
+}
+
+.new-blank-row .cell-input {
+    font-style: italic;
+    color: #94a3b8;
+}
+
+.new-blank-row .cell-input:focus {
+    font-style: normal;
+    color: var(--text-main);
+}
