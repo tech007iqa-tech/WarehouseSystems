@@ -2,6 +2,31 @@
 <?php
 require_once 'core/database.php';
 
+// Handle live pricing matrix updates via AJAX
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'update_pricing_matrix') {
+    header('Content-Type: application/json');
+    $input = json_decode(file_get_contents('php://input'), true);
+    $category = $input['category'] ?? '';
+    $cpu_gen = $input['cpu_gen'] ?? '';
+    $grade = $input['grade'] ?? '';
+    $price = isset($input['price']) ? (float)$input['price'] : 0.00;
+    
+    if (!empty($category) && !empty($cpu_gen) && !empty($grade)) {
+        try {
+            $conn_wh = Database::warehouse();
+            $stmt = $conn_wh->prepare("UPDATE pricing_rules SET price = ? WHERE category = ? AND cpu_gen = ? AND grade = ?");
+            $stmt->execute([$price, $category, $cpu_gen, $grade]);
+            echo json_encode(['success' => true]);
+            exit();
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            exit();
+        }
+    }
+    echo json_encode(['success' => false, 'error' => 'Invalid parameters']);
+    exit();
+}
+
 $filter = $_GET['filter'] ?? 'all';
 $date_condition = "";
 if ($filter === '30d') {
@@ -223,6 +248,15 @@ try {
             $total_ryzen_sold = $cpu['total_qty'];
         }
     }
+    
+    // Fetch Pricing Matrix Rules
+    $conn_wh = Database::warehouse();
+    $pricing_rules_raw = $conn_wh->query("SELECT * FROM pricing_rules ORDER BY category ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
+    
+    $pricing_matrix = [];
+    foreach ($pricing_rules_raw as $rule) {
+        $pricing_matrix[$rule['category']][$rule['cpu_gen']][$rule['grade']] = $rule['price'];
+    }
 
 } catch (Exception $e) {
     // Graceful fallbacks for empty schema or startup database
@@ -237,6 +271,7 @@ try {
     $popular_brand_qty = 0;
     $peak_month = "N/A";
     $total_ryzen_sold = 0;
+    $pricing_matrix = [];
 }
 
 // Fallback seed mock data if database is empty so the user can see beautiful visualizations!
@@ -349,6 +384,7 @@ if ($is_using_mock_data) {
         <button type="button" class="tab-btn" onclick="switchTrendsTab('tab-pricing')">📊 Pricing Curves</button>
         <button type="button" class="tab-btn" onclick="switchTrendsTab('tab-cpu')">💻 CPU Generations</button>
         <button type="button" class="tab-btn" onclick="switchTrendsTab('tab-customers')">👥 Customer Insights</button>
+        <button type="button" class="tab-btn" onclick="switchTrendsTab('tab-matrix')">💵 Pricing Matrix</button>
     </div>
 
     <!-- Global Flexible Search Input -->
@@ -374,6 +410,7 @@ if ($is_using_mock_data) {
                     </div>
                 </div>
 
+                <div class="scroll-hint">↔️ Swipe horizontally to view all columns</div>
                 <div class="trends-table-container">
                     <table class="trends-table" id="table-velocity">
                         <thead>
@@ -540,6 +577,7 @@ if ($is_using_mock_data) {
             <div class="trend-card" style="flex: 1;">
                 <h2 style="font-weight: 800; font-size: 1.1rem; margin-top: 0;">📅 Pricing & Valuation History</h2>
 
+                <div class="scroll-hint">↔️ Swipe horizontally to view all columns</div>
                 <div class="trends-table-container">
                     <table class="trends-table" id="table-pricing">
                         <thead>
@@ -576,6 +614,7 @@ if ($is_using_mock_data) {
             <div class="trend-card" style="flex: 1.2;">
                 <h2 style="font-weight: 800; font-size: 1.1rem; margin-top: 0;">💻 CPU Family Dominance</h2>
 
+                <div class="scroll-hint">↔️ Swipe horizontally to view all columns</div>
                 <div class="trends-table-container">
                     <table class="trends-table" id="table-cpu">
                         <thead>
@@ -623,6 +662,7 @@ if ($is_using_mock_data) {
             <div class="trend-card" style="flex: 1;">
                 <h2 style="font-weight: 800; font-size: 1.1rem; margin-top: 0;">🤝 Top B2B Clients by Volume</h2>
 
+                <div class="scroll-hint">↔️ Swipe horizontally to view all columns</div>
                 <div class="trends-table-container">
                     <table class="trends-table" id="table-customers">
                         <thead>
@@ -661,6 +701,416 @@ if ($is_using_mock_data) {
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab 5: Pricing Matrix Editor -->
+    <div id="tab-matrix" class="tab-content">
+        <div class="trends-grid" style="display: flex; flex-direction: column; gap: 24px;">
+            <div class="trend-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
+                    <div>
+                        <h2 style="font-weight: 800; font-size: 1.25rem; margin: 0;">💵 Live Pricing Matrix Reference</h2>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">Directly edit the values below. Updates will automatically apply to incoming inventory CSV imports.</p>
+                    </div>
+                </div>
+
+                <!-- Regular Laptop Pricing Table -->
+                <h3 style="font-weight: 800; font-size: 1rem; margin-top: 15px; margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">💻 Regular Laptops pricing</h3>
+                <div class="trends-table-container" style="margin-bottom: 30px;">
+                    <table class="trends-table">
+                        <thead>
+                            <tr style="background: #0f172a; color: white;">
+                                <th style="width: 250px;">CPU Generation</th>
+                                <th style="width: 200px;">Untested</th>
+                                <th style="width: 200px;">Parts</th>
+                                <th style="width: 200px;">C Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $gens = ['4th-5th', '6th-7th', 'i5-8th', 'i7-8th', 'i5-9th', 'i7-9th', 'i5-10th', 'i7-10th', 'i5-11th', 'i7-11th', 'i5-12th', 'i7-12th'];
+                            foreach ($gens as $gen):
+                            ?>
+                                <tr data-search="regular <?= htmlspecialchars(strtolower($gen)) ?>">
+                                     <td><strong><?= htmlspecialchars($gen) ?></strong></td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Regular'][$gen]['Untested']) ? number_format($pricing_matrix['Regular'][$gen]['Untested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Regular', '<?= htmlspecialchars($gen) ?>', 'Untested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Regular'][$gen]['Parts']) ? number_format($pricing_matrix['Regular'][$gen]['Parts'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Regular', '<?= htmlspecialchars($gen) ?>', 'Parts', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Regular'][$gen]['C Grade']) ? number_format($pricing_matrix['Regular'][$gen]['C Grade'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Regular', '<?= htmlspecialchars($gen) ?>', 'C Grade', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                 </tr>
+                             <?php endforeach; ?>
+                         </tbody>
+                     </table>
+                 </div>
+
+                <!-- Apple Devices Table -->
+                <h3 style="font-weight: 800; font-size: 1rem; margin-top: 25px; margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">🍏 Apple Devices</h3>
+                <div class="trends-table-container" style="margin-bottom: 30px;">
+                    <table class="trends-table">
+                        <thead>
+                            <tr style="background: #0f172a; color: white;">
+                                <th style="width: 250px;">Model</th>
+                                <th style="width: 200px;">Tested</th>
+                                <th style="width: 200px;">Untested</th>
+                                <th style="width: 200px;">For Parts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $apple_models = ['A1261', 'A1278', 'A1286', 'A1342', 'A1398', 'A1425', 'A1465', 'A1466', 'A1502', 'A1534', 'A1706', 'A1707', 'A1708', 'A1932', 'A2179'];
+                            foreach ($apple_models as $model):
+                            ?>
+                                <tr data-search="apple <?= htmlspecialchars(strtolower($model)) ?>">
+                                     <td><strong><?= htmlspecialchars($model) ?></strong></td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Apple'][$model]['Tested']) ? number_format($pricing_matrix['Apple'][$model]['Tested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Apple', '<?= htmlspecialchars($model) ?>', 'Tested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Apple'][$model]['Untested']) ? number_format($pricing_matrix['Apple'][$model]['Untested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Apple', '<?= htmlspecialchars($model) ?>', 'Untested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Apple'][$model]['For Parts']) ? number_format($pricing_matrix['Apple'][$model]['For Parts'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Apple', '<?= htmlspecialchars($model) ?>', 'For Parts', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                 </tr>
+                             <?php endforeach; ?>
+                         </tbody>
+                    </table>
+                </div>
+
+                <!-- Rugged Devices Table -->
+                <h3 style="font-weight: 800; font-size: 1rem; margin-top: 25px; margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">🏔️ Rugged Devices</h3>
+                <div class="trends-table-container" style="margin-bottom: 30px;">
+                    <table class="trends-table">
+                        <thead>
+                            <tr style="background: #0f172a; color: white;">
+                                <th style="width: 250px;">CPU Generation</th>
+                                <th style="width: 200px;">Untested Complete</th>
+                                <th style="width: 200px;">Untested Parts</th>
+                                <th style="width: 200px;">Tested Complete</th>
+                                <th style="width: 200px;">Tested No Battery</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $rugged_gens = ['4th-5th', '6th-7th', 'i5-8th', 'i7-8th', 'i5-9th', 'i7-9th', 'i5-10th', 'i7-10th'];
+                            foreach ($rugged_gens as $gen):
+                            ?>
+                                <tr data-search="rugged <?= htmlspecialchars(strtolower($gen)) ?>">
+                                     <td><strong><?= htmlspecialchars($gen) ?></strong></td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Rugged'][$gen]['Untested Complete']) ? number_format($pricing_matrix['Rugged'][$gen]['Untested Complete'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Rugged', '<?= htmlspecialchars($gen) ?>', 'Untested Complete', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Rugged'][$gen]['Untested Parts']) ? number_format($pricing_matrix['Rugged'][$gen]['Untested Parts'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Rugged', '<?= htmlspecialchars($gen) ?>', 'Untested Parts', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Rugged'][$gen]['Tested Complete']) ? number_format($pricing_matrix['Rugged'][$gen]['Tested Complete'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Rugged', '<?= htmlspecialchars($gen) ?>', 'Tested Complete', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Rugged'][$gen]['Tested No Battery']) ? number_format($pricing_matrix['Rugged'][$gen]['Tested No Battery'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Rugged', '<?= htmlspecialchars($gen) ?>', 'Tested No Battery', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                 </tr>
+                             <?php endforeach; ?>
+                         </tbody>
+                     </table>
+                 </div>
+
+                                 <!-- Microsoft Devices Table -->
+                <h3 style="font-weight: 800; font-size: 1rem; margin-top: 25px; margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">💻 Microsoft Surface Devices</h3>
+                <div class="trends-table-container" style="margin-bottom: 30px;">
+                    <table class="trends-table">
+                        <thead>
+                            <tr style="background: #0f172a; color: white;">
+                                <th style="width: 300px;">Model / SKU Specification</th>
+                                <th style="width: 200px;">Tested</th>
+                                <th style="width: 200px;">Untested</th>
+                                <th style="width: 200px;">For Parts</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $microsoft_models = [
+                                'Surface Laptop 1 (1769)',
+                                'Surface Laptop 2 (1769)',
+                                'Surface Laptop 2 (1782)',
+                                'Surface Laptop 3 (1867/1868)',
+                                'Surface Laptop 4 (1950/1951)',
+                                'Surface Laptop 5 (1950/1951)',
+                                'Surface Laptop 6 (2033/2035)',
+                                'Surface Laptop Go (1943)',
+                                'Surface Book 1 (1703)',
+                                'Surface Book 2 (1823)',
+                                'Surface Book 2 (1834/1835)',
+                                'Surface Book 3 (1899)',
+                                'Surface Book 3 (1900)',
+                                '15" Surface Book 3 (1899)',
+                                'Surface Pro 1 (1514)',
+                                'Surface Pro 2 (1601)',
+                                'Surface Pro 3 (1631)',
+                                'Surface Pro 4 (1724)',
+                                'Surface Pro 5 (1796)',
+                                'Surface Pro 5 (1807)',
+                                'Surface Pro 6 (1796)',
+                                'Surface Pro 7 (1866)',
+                                'Surface Pro 7+ (1960)',
+                                'Surface Pro 8 (1983)',
+                                'Surface Pro 9 (2038)',
+                                'Surface Pro 10 (2079)',
+                                'Surface Pro 8 (Default)',
+                                'Surface Pro 9 (Default)',
+                                'Surface Pro 10 (Default)'
+                            ];
+                            foreach ($microsoft_models as $model):
+                            ?>
+                                <tr data-search="microsoft surface <?= htmlspecialchars(strtolower($model)) ?>">
+                                     <td><strong><?= htmlspecialchars($model) ?></strong></td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Microsoft'][$model]['Tested']) ? number_format($pricing_matrix['Microsoft'][$model]['Tested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Microsoft', '<?= htmlspecialchars($model) ?>', 'Tested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Microsoft'][$model]['Untested']) ? number_format($pricing_matrix['Microsoft'][$model]['Untested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Microsoft', '<?= htmlspecialchars($model) ?>', 'Untested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Microsoft'][$model]['For Parts']) ? number_format($pricing_matrix['Microsoft'][$model]['For Parts'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Microsoft', '<?= htmlspecialchars($model) ?>', 'For Parts', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                 </tr>
+                             <?php endforeach; ?>
+                         </tbody>
+                     </table>
+                 </div>
+
+                                 <!-- Chromebooks Table -->
+                <h3 style="font-weight: 800; font-size: 1rem; margin-top: 25px; margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">🔌 Chromebooks</h3>
+                <div class="trends-table-container" style="margin-bottom: 30px;">
+                    <table class="trends-table">
+                        <thead>
+                            <tr style="background: #0f172a; color: white;">
+                                <th style="width: 300px;">Brand / Model</th>
+                                <th style="width: 200px;">Untested Lot</th>
+                                <th style="width: 200px;">Tested - Clean (A/B)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $chromebook_models = [
+                                'Dell Chromebook 3180 / HP G5 EE',
+                                'HP Chromebook 11 G6 EE',
+                                'HP Chromebook 11A G6 EE',
+                                'HP Chromebook 11 G7 EE',
+                                'Lenovo 100e / 300e 2nd Gen (MTK)',
+                                'Samsung Chromebook 4 (11")',
+                                'Dell 3100 / 3100 2-in-1',
+                                'HP Chromebook 11 G8 EE',
+                                'HP Chromebook 11A G8 EE',
+                                'HP x360 11 G3 EE (Convertible)',
+                                'Lenovo 100e / 300e 2nd Gen (Intel)',
+                                'Lenovo 500e 2nd Gen (Convertible)',
+                                'HP x360 11 G4 EE (Convertible)',
+                                'Dell Chromebook 3110 / 2-in-1',
+                                'HP Chromebook 11 G9 EE',
+                                'Lenovo 100e / 300e 3rd Gen',
+                                'HP Chromebook 11 G10 EE',
+                                'Dell Chromebook 3120'
+                            ];
+                            foreach ($chromebook_models as $model):
+                            ?>
+                                <tr data-search="chromebook <?= htmlspecialchars(strtolower($model)) ?>">
+                                     <td><strong><?= htmlspecialchars($model) ?></strong></td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Chromebook'][$model]['Untested Lot']) ? number_format($pricing_matrix['Chromebook'][$model]['Untested Lot'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Chromebook', '<?= htmlspecialchars($model) ?>', 'Untested Lot', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Chromebook'][$model]['Tested - Clean (A/B)']) ? number_format($pricing_matrix['Chromebook'][$model]['Tested - Clean (A/B)'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Chromebook', '<?= htmlspecialchars($model) ?>', 'Tested - Clean (A/B)', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                 </tr>
+                             <?php endforeach; ?>
+                         </tbody>
+                     </table>
+                 </div>
+
+                 <!-- Other Categories Pricing Tables -->
+                 <h3 style="font-weight: 800; font-size: 1rem; margin-top: 25px; margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">🏷️ Other Device Categories</h3>
+                 <div class="trends-table-container" style="margin-bottom: 30px;">
+                     <table class="trends-table">
+                         <thead>
+                             <tr style="background: #0f172a; color: white;">
+                                 <th style="width: 250px;">Category</th>
+                                 <th style="width: 200px;">Untested</th>
+                                 <th style="width: 200px;">Parts</th>
+                                 <th style="width: 200px;">C Grade</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             <?php
+                             $cats = ['Gaming'];
+                             foreach ($cats as $cat):
+                             ?>
+                                 <tr data-search="<?= htmlspecialchars(strtolower($cat)) ?>">
+                                     <td><strong><?= htmlspecialchars($cat) ?></strong></td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix[$cat]['Default']['Untested']) ? number_format($pricing_matrix[$cat]['Default']['Untested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('<?= htmlspecialchars($cat) ?>', 'Default', 'Untested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix[$cat]['Default']['Parts']) ? number_format($pricing_matrix[$cat]['Default']['Parts'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('<?= htmlspecialchars($cat) ?>', 'Default', 'Parts', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix[$cat]['Default']['C Grade']) ? number_format($pricing_matrix[$cat]['Default']['C Grade'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('<?= htmlspecialchars($cat) ?>', 'Default', 'C Grade', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                 </tr>
+                             <?php endforeach; ?>
+                         </tbody>
+                     </table>
+                 </div>
+
+                <!-- Memory (RAM) Pricing Table -->
+                <h3 style="font-weight: 800; font-size: 1rem; margin-top: 25px; margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">🧠 Memory (RAM) Pricing</h3>
+                <div class="trends-table-container" style="margin-bottom: 30px;">
+                    <table class="trends-table">
+                        <thead>
+                            <tr style="background: #0f172a; color: white;">
+                                <th style="width: 250px;">Specification</th>
+                                <th style="width: 200px;">untested</th>
+                                <th style="width: 200px;">tested</th>
+                                <th style="width: 200px;">C grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $ram_specs = [
+                                '2GB DDR3', '4GB DDR3', '8GB DDR3', '16GB DDR3', '32GB DDR3',
+                                '2GB DDR4', '4GB DDR4', '8GB DDR4', '16GB DDR4', '32GB DDR4'
+                            ];
+                            foreach ($ram_specs as $spec):
+                            ?>
+                                <tr data-search="ram <?= htmlspecialchars(strtolower($spec)) ?>">
+                                     <td><strong><?= htmlspecialchars($spec) ?></strong></td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['RAM'][$spec]['Untested']) ? number_format($pricing_matrix['RAM'][$spec]['Untested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('RAM', '<?= htmlspecialchars($spec) ?>', 'Untested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['RAM'][$spec]['Tested']) ? number_format($pricing_matrix['RAM'][$spec]['Tested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('RAM', '<?= htmlspecialchars($spec) ?>', 'Tested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['RAM'][$spec]['C Grade']) ? number_format($pricing_matrix['RAM'][$spec]['C Grade'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('RAM', '<?= htmlspecialchars($spec) ?>', 'C Grade', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                 </tr>
+                             <?php endforeach; ?>
+                         </tbody>
+                     </table>
+                 </div>
+
+                <!-- Storage Pricing Table -->
+                <h3 style="font-weight: 800; font-size: 1rem; margin-top: 25px; margin-bottom: 10px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">💾 Storage Pricing</h3>
+                <div class="trends-table-container">
+                    <table class="trends-table">
+                        <thead>
+                            <tr style="background: #0f172a; color: white;">
+                                <th style="width: 250px;">Capacity</th>
+                                <th style="width: 200px;">Untested</th>
+                                <th style="width: 200px;">Tested</th>
+                                <th style="width: 200px;">C Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $storage_specs = ['128GB M.2', '256GB M.2', '512GB M.2', '1TB M.2', '2TB M.2'];
+                            foreach ($storage_specs as $spec):
+                            ?>
+                                <tr data-search="storage <?= htmlspecialchars(strtolower($spec)) ?>">
+                                     <td><strong><?= htmlspecialchars($spec) ?></strong></td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Storage'][$spec]['Untested']) ? number_format($pricing_matrix['Storage'][$spec]['Untested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Storage', '<?= htmlspecialchars($spec) ?>', 'Untested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Storage'][$spec]['Tested']) ? number_format($pricing_matrix['Storage'][$spec]['Tested'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Storage', '<?= htmlspecialchars($spec) ?>', 'Tested', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                     <td>
+                                         <div style="position: relative; display: flex; align-items: center;">
+                                             <span style="position: absolute; left: 10px; font-weight: 800; color: var(--text-secondary);">$</span>
+                                             <input type="number" step="any" class="matrix-cell-input" value="<?= isset($pricing_matrix['Storage'][$spec]['C Grade']) ? number_format($pricing_matrix['Storage'][$spec]['C Grade'], 2, '.', '') : '0.00' ?>" onchange="updateMatrixCell('Storage', '<?= htmlspecialchars($spec) ?>', 'C Grade', this.value)" style="width: 100%; height: 38px; padding-left: 22px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-surface-2); color: var(--text-main); font-weight: 700;">
+                                         </div>
+                                     </td>
+                                 </tr>
+                             <?php endforeach; ?>
+                         </tbody>
+                     </table>
+                 </div>
             </div>
         </div>
     </div>
@@ -1939,5 +2389,50 @@ function closeCpuPricingModal() {
         window.removeEventListener('keydown', activeCpuPricingEscHandler);
         activeCpuPricingEscHandler = null;
     }
+}
+
+function updateMatrixCell(category, cpu_gen, grade, price) {
+    const parsedPrice = parseFloat(price);
+    const sanitizedPrice = isNaN(parsedPrice) ? 0.00 : parsedPrice;
+    
+    fetch('index.php?view=trends&action=update_pricing_matrix', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            category: category,
+            cpu_gen: cpu_gen,
+            grade: grade,
+            price: sanitizedPrice
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            if (window.IQA_Notify && typeof window.IQA_Notify.success === 'function') {
+                window.IQA_Notify.success(`Successfully updated ${category} - ${cpu_gen === 'Default' ? '' : cpu_gen + ' - '}${grade} to $${sanitizedPrice.toFixed(2)}`);
+            }
+        } else {
+            if (window.IQA_Notify && typeof window.IQA_Notify.error === 'function') {
+                window.IQA_Notify.error(data.error || 'Failed to update pricing rule');
+            } else {
+                alert(data.error || 'Failed to update pricing rule');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error updating pricing rule:', error);
+        if (window.IQA_Notify && typeof window.IQA_Notify.error === 'function') {
+            window.IQA_Notify.error('Error connecting to server. Please try again.');
+        } else {
+            alert('Error connecting to server. Please try again.');
+        }
+    });
 }
 </script>

@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intake System - Dictionary Settings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --bg-deep: #030303;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --accent-green: #8cc63f;
+            --accent-blue: #00a8ff;
+            --text-main: #f4f4f5;
+            --text-dim: #a1a1aa;
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-focus: rgba(255, 255, 255, 0.2);
+            --font-family: 'Outfit', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            background: radial-gradient(circle at 50% 5%, #18181b 0%, var(--bg-dark) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(12px);
+            background: rgba(9, 9, 11, 0.5);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 30%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        button, .btn {
+            font-family: var(--font-family);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        button:hover, .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--glass-border-focus);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: #fff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #33bfff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            backdrop-filter: blur(8px);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+        }
+
+        .dict-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .dict-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            padding: 12px 20px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .dict-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: var(--glass-border-focus);
+        }
+
+        .dict-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .dict-key {
+            font-family: monospace;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+        }
+
+        .dict-arrow {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        .dict-val {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .btn-delete {
+            background: rgba(255, 86, 48, 0.1);
+            color: #ff5630;
+            border: 1px solid rgba(255, 86, 48, 0.2);
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 86, 48, 0.2);
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 16px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px dashed var(--glass-border);
+            padding: 20px;
+            border-radius: 16px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: var(--text-main);
+            font-family: var(--font-family);
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(0, 168, 255, 0.1);
+        }
+
+        /* Toast notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            min-width: 250px;
+            animation: toastSlideIn 0.3s ease-out forwards;
+        }
+
+        .toast-success { border-left: 4px solid var(--accent-green); }
+        .toast-error { border-left: 4px solid #ff5630; }
+
+        @keyframes toastSlideIn {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><span>📖</span> System Dictionary Settings</h1>
+        <div class="header-actions">
+            <a href="audit.html" class="btn btn-primary">← Back to Audit Terminal</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="panel">
+            <h2>Common Variation Mappings</h2>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-top: -10px;">
+                Define rules to map handwritten abbreviations or alternate keywords to system-normalized fields (primarily <strong>Serial</strong>).
+            </p>
+
+            <div class="dict-grid" id="dict-grid">
+                <!-- Loaded dynamically -->
+            </div>
+
+            <div class="input-row">
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; display: block;">Abbreviation / Tag</span>
+                    <input type="text" id="dict-key" placeholder="e.g. srl, cpu#, serl">
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; display: block;">Maps to Field</span>
+                    <input type="text" id="dict-val" value="Serial" readonly>
+                </div>
+                <div style="align-self: flex-end;">
+                    <button class="btn btn-primary" style="padding: 11px 24px;" onclick="addDictionaryRule()">Add Rule</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" style="margin-top: 24px;">
+            <h2>Gemini AI OCR Settings</h2>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-top: -10px;">
+                Configure the Gemini API Key to enable state-of-the-art vision-based handwriting extraction.
+            </p>
+            <div class="input-row" style="grid-template-columns: 1fr auto;">
+                <div>
+                    <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; display: block;">Gemini API Key</span>
+                    <input type="password" id="gemini-key" placeholder="AIzaSy..." style="width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 10px; padding: 10px 14px; color: var(--text-main); font-family: var(--font-family); font-size: 0.95rem;">
+                </div>
+                <div style="align-self: flex-end;">
+                    <button class="btn btn-primary" style="padding: 11px 24px;" onclick="saveConfig()">Save API Key</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        let dictionary = {};
+        let config = {};
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDictionary();
+            loadConfig();
+        });
+
+        async function loadConfig() {
+            try {
+                const response = await fetch('process.php?action=get_config');
+                const result = await response.json();
+                if (result.success) {
+                    config = result.config || {};
+                    if (config.gemini_api_key) {
+                        document.getElementById('gemini-key').value = config.gemini_api_key;
+                    }
+                }
+            } catch (e) {
+                showToast('Failed to load API settings', 'error');
+            }
+        }
+
+        async function saveConfig() {
+            const keyVal = document.getElementById('gemini-key').value.trim();
+            config.gemini_api_key = keyVal;
+            try {
+                const response = await fetch('process.php?action=save_config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Gemini API settings saved successfully', 'success');
+                } else {
+                    showToast('Failed to save settings: ' + result.error, 'error');
+                }
+            } catch (e) {
+                showToast('Failed to save API settings', 'error');
+            }
+        }
+
+        async function loadDictionary() {
+            try {
+                const response = await fetch('process.php');
+                const result = await response.json();
+                if (result.success) {
+                    dictionary = result.dictionary || {};
+                    renderDictionary();
+                }
+            } catch (e) {
+                showToast('Failed to load dictionary', 'error');
+            }
+        }
+
+        function renderDictionary() {
+            const grid = document.getElementById('dict-grid');
+            grid.innerHTML = '';
+            
+            const keys = Object.keys(dictionary);
+            if (keys.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px;">No custom dictionary rules defined yet.</p>';
+                return;
+            }
+
+            keys.forEach(key => {
+                const row = document.createElement('div');
+                row.className = 'dict-row';
+                row.innerHTML = `
+                    <div class="dict-info">
+                        <span class="dict-key">${escapeHtml(key)}</span>
+                        <span class="dict-arrow">→</span>
+                        <span class="dict-val">${escapeHtml(dictionary[key])}</span>
+                    </div>
+                    <button class="btn btn-delete" onclick="removeDictionaryRule('${key}')">Delete</button>
+                `;
+                grid.appendChild(row);
+            });
+        }
+
+        async function addDictionaryRule() {
+            const keyInput = document.getElementById('dict-key');
+            const key = keyInput.value.trim().toLowerCase();
+            
+            if (!key) {
+                showToast('Please enter a variation tag', 'error');
+                return;
+            }
+
+            dictionary[key] = 'Serial';
+            keyInput.value = '';
+            renderDictionary();
+            await saveDictionaryToServer();
+        }
+
+        async function removeDictionaryRule(key) {
+            delete dictionary[key];
+            renderDictionary();
+            await saveDictionaryToServer();
+        }
+
+        async function saveDictionaryToServer() {
+            try {
+                const response = await fetch('process.php?action=save_dictionary', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dictionary)
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('Dictionary updated successfully', 'success');
+                } else {
+                    showToast('Failed to save rules: ' + result.error, 'error');
+                }
+            } catch (e) {
+                showToast('Failed to save dictionary', 'error');
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            let icon = type === 'success' ? '✓' : '⚠';
+            toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'toastSlideOut 0.3s ease-in forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

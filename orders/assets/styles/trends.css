@@ -17,7 +17,7 @@
 
 .trends-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
 }
 
@@ -31,6 +31,8 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .trend-card:hover {
@@ -150,6 +152,7 @@
     border-spacing: 0;
     width: 100%;
     border-collapse: collapse;
+    min-width: 900px;
 }
 
 .trends-table thead tr {
@@ -214,4 +217,102 @@
     border-radius: 2px;
     padding: 1px 2px;
 }
+
+/* Scroll Hint for Mobile/Tablet */
+.scroll-hint {
+    display: none;
+    font-size: 0.75rem;
+    color: #64748b;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    text-align: center;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+[data-theme="dark"] .scroll-hint {
+    background-color: rgba(30, 41, 59, 0.4);
+    border-color: rgba(71, 85, 105, 0.3);
+    color: #94a3b8;
+}
+
+@media (max-width: 1024px) {
+    .scroll-hint {
+        display: inline-flex;
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 768px) {
+    .trends-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .trends-header > div {
+        width: 100%;
+    }
+    
+    #trends-filter {
+        width: 100%;
+    }
+
+    .tab-nav {
+        overflow-x: auto;
+        padding-bottom: 8px;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        width: 100%;
+        scrollbar-width: none;
+    }
+    
+    .tab-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .tab-btn {
+        flex: 0 0 auto;
+    }
+
+    /* Prevent CSS bar chart blowout on mobile */
+    .chart-placeholder {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 12px;
+    }
+    
+    .bar-container {
+        min-width: 45px;
+    }
+}
+
+@media (max-width: 480px) {
+    .trends-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    #widget-board {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+/* Pricing Matrix Input Styling */
+.matrix-cell-input {
+    transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+}
+
+.matrix-cell-input:focus {
+    outline: none;
+    border-color: var(--accent-color) !important;
+    background-color: var(--bg-surface) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.25);
+}
+
 

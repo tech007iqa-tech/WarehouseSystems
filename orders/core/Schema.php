@@ -86,6 +86,14 @@ class Schema {
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )",
+            'pricing_rules' => "CREATE TABLE IF NOT EXISTS pricing_rules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category TEXT NOT NULL,
+                cpu_gen TEXT NOT NULL,
+                grade TEXT NOT NULL,
+                price REAL DEFAULT 0.00,
+                UNIQUE(category, cpu_gen, grade)
             )"
         ],
         'users' => [
@@ -140,7 +148,10 @@ class Schema {
         foreach (self::$blueprints[$db_name] as $table => $sql) {
             // Bypass verification and migrations if already verified in this session
             if (Database::isSchemaVerified($db_name, $table)) {
-                continue;
+                $check = $conn->query("SELECT name FROM sqlite_master WHERE type='table' AND name='{$table}'")->fetch();
+                if ($check) {
+                    continue;
+                }
             }
 
             // Always CREATE TABLE IF NOT EXISTS (safe no-op when table exists)
@@ -254,6 +265,188 @@ class Schema {
                 }
             }
         }
+        if ($db_name === 'warehouse' && $table === 'pricing_rules') {
+            $count = $conn->query("SELECT COUNT(*) FROM pricing_rules")->fetchColumn();
+            if ($count == 0) {
+                // Seed Regular laptops cpu/gen pricing
+                $regular_prices = [
+                    ['4th-5th', 35.00, 30.00, 30.00],
+                    ['6th-7th', 55.00, 45.00, 45.00],
+                    ['i5-8th', 60.00, 50.00, 55.00],
+                    ['i7-8th', 65.00, 60.00, 0.00],
+                    ['i5-9th', 85.00, 75.00, 78.00],
+                    ['i7-9th', 90.00, 80.00, 0.00],
+                    ['i5-10th', 95.00, 85.00, 88.00],
+                    ['i7-10th', 100.00, 90.00, 0.00],
+                    ['i5-11th', 100.00, 90.00, 95.00],
+                    ['i7-11th', 110.00, 100.00, 0.00],
+                    ['i5-12th', 115.00, 105.00, 108.00],
+                    ['i7-12th', 120.00, 110.00, 0.00]
+                ];
+
+                $stmt = $conn->prepare("INSERT OR IGNORE INTO pricing_rules (category, cpu_gen, grade, price) VALUES (?, ?, ?, ?)");
+                
+                foreach ($regular_prices as $rp) {
+                    $cpu_gen = $rp[0];
+                    $stmt->execute(['Regular', $cpu_gen, 'Untested', $rp[1]]);
+                    $stmt->execute(['Regular', $cpu_gen, 'Parts', $rp[2]]);
+                    $stmt->execute(['Regular', $cpu_gen, 'C Grade', $rp[3]]);
+                }
+
+                // Seed empty templates for Gaming
+                $other_categories = ['Gaming'];
+                $grades = ['Untested', 'Parts', 'C Grade'];
+                foreach ($other_categories as $cat) {
+                    foreach ($grades as $g) {
+                        $stmt->execute([$cat, 'Default', $g, 0.00]);
+                    }
+                }
+
+                // Seed Chromebook pricing rules (grades: Untested Lot, Tested - Clean (A/B))
+                $chromebook_prices = [
+                    ['Dell Chromebook 3180 / HP G5 EE', 18.00, 30.00],
+                    ['HP Chromebook 11 G6 EE', 18.00, 30.00],
+                    ['HP Chromebook 11A G6 EE', 18.00, 30.00],
+                    ['HP Chromebook 11 G7 EE', 18.00, 30.00],
+                    ['Lenovo 100e / 300e 2nd Gen (MTK)', 18.00, 30.00],
+                    ['Samsung Chromebook 4 (11")', 18.00, 30.00],
+                    ['Dell 3100 / 3100 2-in-1', 27.00, 35.00],
+                    ['HP Chromebook 11 G8 EE', 19.00, 30.00],
+                    ['HP Chromebook 11A G8 EE', 19.00, 30.00],
+                    ['HP x360 11 G3 EE (Convertible)', 27.00, 35.00],
+                    ['Lenovo 100e / 300e 2nd Gen (Intel)', 19.00, 30.00],
+                    ['Lenovo 500e 2nd Gen (Convertible)', 27.00, 35.00],
+                    ['HP x360 11 G4 EE (Convertible)', 27.00, 35.00],
+                    ['Dell Chromebook 3110 / 2-in-1', 27.00, 38.00],
+                    ['HP Chromebook 11 G9 EE', 19.00, 35.00],
+                    ['Lenovo 100e / 300e 3rd Gen', 19.00, 35.00],
+                    ['HP Chromebook 11 G10 EE', 19.00, 45.00],
+                    ['Dell Chromebook 3120', 19.00, 50.00]
+                ];
+                foreach ($chromebook_prices as $cp) {
+                    $model_name = $cp[0];
+                    $stmt->execute(['Chromebook', $model_name, 'Untested Lot', $cp[1]]);
+                    $stmt->execute(['Chromebook', $model_name, 'Tested - Clean (A/B)', $cp[2]]);
+                }
+
+                // Seed Microsoft pricing rules
+                $microsoft_prices = [
+                    ['Surface Laptop 1 (1769)', 81.60, 51.00, 25.50],
+                    ['Surface Laptop 2 (1769)', 76.50, 45.90, 30.60],
+                    ['Surface Laptop 2 (1782)', 107.10, 66.30, 30.60],
+                    ['Surface Laptop 3 (1867/1868)', 158.10, 96.90, 45.90],
+                    ['Surface Laptop 4 (1950/1951)', 193.80, 117.30, 56.10],
+                    ['Surface Laptop 5 (1950/1951)', 265.20, 163.20, 81.60],
+                    ['Surface Laptop 6 (2033/2035)', 428.40, 265.20, 132.60],
+                    ['Surface Laptop Go (1943)', 132.60, 81.60, 40.80],
+                    ['Surface Book 1 (1703)', 71.40, 45.90, 20.40],
+                    ['Surface Book 2 (1823)', 127.50, 81.60, 40.80],
+                    ['Surface Book 2 (1834/1835)', 163.20, 102.00, 51.00],
+                    ['Surface Book 3 (1899)', 209.10, 132.60, 66.30],
+                    ['Surface Book 3 (1900)', 290.70, 178.50, 86.70],
+                    ['15" Surface Book 3 (1899)', 346.80, 214.20, 102.00],
+                    ['Surface Pro 1 (1514)', 40.80, 25.50, 15.30],
+                    ['Surface Pro 2 (1601)', 51.00, 30.60, 15.30],
+                    ['Surface Pro 3 (1631)', 51.00, 30.60, 15.30],
+                    ['Surface Pro 4 (1724)', 66.30, 40.80, 20.40],
+                    ['Surface Pro 5 (1796)', 76.50, 45.90, 20.40],
+                    ['Surface Pro 5 (1807)', 76.50, 45.90, 20.40],
+                    ['Surface Pro 6 (1796)', 112.20, 71.40, 35.70],
+                    ['Surface Pro 7 (1866)', 178.50, 112.20, 56.10],
+                    ['Surface Pro 7+ (1960)', 224.40, 137.70, 66.30],
+                    ['Surface Pro 8 (1983)', 326.40, 204.00, 102.00],
+                    ['Surface Pro 9 (2038)', 453.90, 280.50, 142.80],
+                    ['Surface Pro 10 (2079)', 678.30, 423.30, 209.10],
+                    ['Surface Pro 8 (Default)', 326.40, 204.00, 102.00],
+                    ['Surface Pro 9 (Default)', 453.90, 280.50, 142.80],
+                    ['Surface Pro 10 (Default)', 678.30, 423.30, 209.10]
+                ];
+                foreach ($microsoft_prices as $mp) {
+                    $stmt->execute(['Microsoft', $mp[0], 'Tested', $mp[1]]);
+                    $stmt->execute(['Microsoft', $mp[0], 'Untested', $mp[2]]);
+                    $stmt->execute(['Microsoft', $mp[0], 'For Parts', $mp[3]]);
+                }
+
+                // Seed Apple pricing rules (grades: Tested, Untested, For Parts)
+                $apple_prices = [
+                    ['A1261', 0.00, 20.00, 0.00],
+                    ['A1278', 0.00, 20.00, 16.00],
+                    ['A1286', 0.00, 35.00, 16.00],
+                    ['A1342', 0.00, 20.00, 0.00],
+                    ['A1398', 60.00, 40.00, 16.00],
+                    ['A1425', 0.00, 30.00, 0.00],
+                    ['A1465', 0.00, 20.00, 16.00],
+                    ['A1466', 45.00, 20.00, 16.00],
+                    ['A1502', 60.00, 40.00, 16.00],
+                    ['A1534', 0.00, 27.00, 16.00],
+                    ['A1706', 0.00, 70.00, 50.00],
+                    ['A1707', 0.00, 70.00, 45.00],
+                    ['A1708', 0.00, 70.00, 45.00],
+                    ['A1932', 0.00, 75.00, 40.00],
+                    ['A2179', 0.00, 135.00, 0.00]
+                ];
+                foreach ($apple_prices as $ap) {
+                    $model = $ap[0];
+                    $stmt->execute(['Apple', $model, 'Tested', $ap[1]]);
+                    $stmt->execute(['Apple', $model, 'Untested', $ap[2]]);
+                    $stmt->execute(['Apple', $model, 'For Parts', $ap[3]]);
+                }
+
+                // Seed Rugged pricing rules (grades: Untested Complete, Untested Parts, Tested Complete, Tested No Battery)
+                $rugged_prices = [
+                    ['4th-5th', 50.00, 40.00, 85.00, 65.00],
+                    ['6th-7th', 60.00, 55.00, 107.00, 75.00],
+                    ['i5-8th', 80.00, 60.00, 117.00, 97.00],
+                    ['i7-8th', 90.00, 95.00, 125.00, 105.00],
+                    ['i5-9th', 95.00, 70.00, 0.00, 0.00],
+                    ['i7-9th', 100.00, 73.00, 0.00, 0.00],
+                    ['i5-10th', 105.00, 75.00, 0.00, 0.00],
+                    ['i7-10th', 110.00, 80.00, 0.00, 0.00]
+                ];
+                foreach ($rugged_prices as $rp) {
+                    $cpu_gen = $rp[0];
+                    $stmt->execute(['Rugged', $cpu_gen, 'Untested Complete', $rp[1]]);
+                    $stmt->execute(['Rugged', $cpu_gen, 'Untested Parts', $rp[2]]);
+                    $stmt->execute(['Rugged', $cpu_gen, 'Tested Complete', $rp[3]]);
+                    $stmt->execute(['Rugged', $cpu_gen, 'Tested No Battery', $rp[4]]);
+                }
+
+                // Seed pricing rules for RAM (DDR3 & DDR4 options from 2GB up to 32GB)
+                $ram_prices = [
+                    ['2GB DDR3', 0.00, 0.25, 0.00],
+                    ['4GB DDR3', 0.25, 1.25, 0.10],
+                    ['8GB DDR3', 2.00, 4.50, 0.15],
+                    ['16GB DDR3', 6.00, 16.00, 0.20],
+                    ['32GB DDR3', 0.00, 0.00, 0.00],
+                    ['2GB DDR4', 0.00, 0.00, 0.00],
+                    ['4GB DDR4', 0.50, 2.25, 0.10],
+                    ['8GB DDR4', 3.50, 8.50, 0.15],
+                    ['16GB DDR4', 9.50, 20.00, 0.25],
+                    ['32GB DDR4', 22.00, 48.00, 0.40]
+                ];
+                foreach ($ram_prices as $rp) {
+                    $spec = $rp[0];
+                    $stmt->execute(['RAM', $spec, 'Untested', $rp[1]]);
+                    $stmt->execute(['RAM', $spec, 'Tested', $rp[2]]);
+                    $stmt->execute(['RAM', $spec, 'C Grade', $rp[3]]);
+                }
+
+                // Seed pricing rules for Storage (SSD M.2)
+                $storage_prices = [
+                    ['128GB M.2', 10.00, 20.00, 0.10],
+                    ['256GB M.2', 16.00, 32.00, 0.15],
+                    ['512GB M.2', 26.00, 55.00, 0.25],
+                    ['1TB M.2', 50.00, 105.00, 0.40],
+                    ['2TB M.2', 100.00, 215.00, 0.75]
+                ];
+                foreach ($storage_prices as $sp) {
+                    $spec = $sp[0];
+                    $stmt->execute(['Storage', $spec, 'Untested', $sp[1]]);
+                    $stmt->execute(['Storage', $spec, 'Tested', $sp[2]]);
+                    $stmt->execute(['Storage', $spec, 'C Grade', $sp[3]]);
+                }
+            }
+        }
     }
 
     /**
@@ -296,6 +489,9 @@ class Schema {
             if (!in_array('price', array_column($cols, 'name'))) {
                 $conn->exec("ALTER TABLE inventory ADD COLUMN price REAL DEFAULT 0");
             }
+        }
+
+        if ($db_name === 'warehouse' && $table === 'locations') {
             $cols = $conn->query("PRAGMA table_info(locations)")->fetchAll(PDO::FETCH_ASSOC);
             if (!in_array('working_zone_name', array_column($cols, 'name'))) {
                 $conn->exec("ALTER TABLE locations ADD COLUMN working_zone_name TEXT DEFAULT NULL");

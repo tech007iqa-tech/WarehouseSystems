@@ -712,3 +712,36 @@
     border-color: var(--border-color);
 }
 
+/* Mobile responsive styles to prevent side-to-side scrolling */
+@media (max-width: 768px) {
+    .registry-actions {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px;
+    }
+    
+    .registry-actions .btn-register {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .registry-actions .sort-wrapper {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .registry-actions .sort-wrapper select {
+        flex: 1;
+    }
+    
+    .crm-summary-row {
+        flex-wrap: wrap;
+        gap: 12px !important;
+    }
+    
+    .profile-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+}
+

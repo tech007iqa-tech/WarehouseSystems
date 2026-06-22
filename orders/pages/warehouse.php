@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $conn_wh->beginTransaction();
         try {
             $stmt_inv = $conn_wh->prepare("
-                DELETE FROM inventory 
+                DELETE FROM inventory
                 WHERE location_code IN (
                     SELECT location_code FROM locations WHERE working_zone_name = ?
                 )
@@ -267,8 +267,13 @@ if ($selected_loc) {
         $stmt_check = $conn_wh->prepare("INSERT OR IGNORE INTO locations (location_code, status) VALUES (?, 'Idle')");
         $stmt_check->execute([$selected_loc]);
 
-        $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? AND location_code = ? ORDER BY id DESC");
-        $stmt_i->execute([$selected_sector, $selected_loc]);
+        if ($selected_sector === 'Master') {
+            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE location_code = ? ORDER BY id DESC");
+            $stmt_i->execute([$selected_loc]);
+        } else {
+            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? AND location_code = ? ORDER BY id DESC");
+            $stmt_i->execute([$selected_sector, $selected_loc]);
+        }
         $items = $stmt_i->fetchAll(PDO::FETCH_ASSOC);
     }
 }
@@ -314,7 +319,7 @@ if (UI::is_ajax()) {
                     <td class="editable-cell" data-field="model">
                         <input type="text" class="cell-input" value="<?= htmlspecialchars($item['model']) ?>" placeholder="...">
                     </td>
-                    
+
                     <?php if ($selected_sector === 'Laptops'): ?>
                         <td class="editable-cell" data-field="series">
                             <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>" placeholder="...">
@@ -474,17 +479,34 @@ if (UI::is_ajax()) {
                         </td>
                     <?php elseif ($selected_sector === 'Master'): ?>
                         <td>
-                            <div class="spec-value" style="font-size: 0.75rem;">
-                                <?php
-                                if ($item['sector'] === 'Laptops')
-                                    echo htmlspecialchars(($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? ''));
-                                elseif ($item['sector'] === 'Gaming')
-                                    echo htmlspecialchars(($specs['category'] ?? '') . ' ' . ($specs['gpu'] ?? ''));
-                                elseif ($item['sector'] === 'Desktops')
-                                    echo htmlspecialchars($specs['cpu_gen'] ?? '');
-                                else
-                                    echo '-';
-                                ?>
+                            <div class="master-specs-wrapper">
+                                <?php if ($item['sector'] === 'Laptops'): ?>
+                                    <?php if (!empty($specs['cpu'])): ?>
+                                        <span class="spec-tag cpu" title="CPU">💻 <?= htmlspecialchars($specs['cpu']) ?><?php if (!empty($specs['gen']) && $specs['gen'] !== '-'): ?> <small>(<?= htmlspecialchars($specs['gen']) ?>)</small><?php endif; ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($specs['ram']) || !empty($specs['storage'])): ?>
+                                        <span class="spec-tag memory" title="RAM / Storage">💾 <?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($specs['series'])): ?>
+                                        <span class="spec-tag series" title="Series">🏷️ <?= htmlspecialchars($specs['series']) ?></span>
+                                    <?php endif; ?>
+                                <?php elseif ($item['sector'] === 'Gaming'): ?>
+                                    <?php if (!empty($specs['category'])): ?>
+                                        <span class="spec-tag category" title="Category">🎮 <?= htmlspecialchars($specs['category']) ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($specs['gpu'])): ?>
+                                        <span class="spec-tag gpu" title="GPU">⚡ <?= htmlspecialchars($specs['gpu']) ?></span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($specs['ram']) || !empty($specs['storage'])): ?>
+                                        <span class="spec-tag memory" title="RAM / Storage">💾 <?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?></span>
+                                    <?php endif; ?>
+                                <?php elseif ($item['sector'] === 'Desktops'): ?>
+                                    <?php if (!empty($specs['cpu_gen'])): ?>
+                                        <span class="spec-tag cpu" title="CPU/Gen">🖥️ <?= htmlspecialchars($specs['cpu_gen']) ?></span>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <span class="spec-tag empty">-</span>
+                                <?php endif; ?>
                             </div>
                         </td>
                     <?php endif; ?>
@@ -496,7 +518,11 @@ if (UI::is_ajax()) {
                                     <span
                                         class="status-badge status-<?= htmlspecialchars($item['status']) ?>"><?= htmlspecialchars($item['status']) ?></span>
                                 <?php endif; ?>
-                                <span class="condition-label"><?= htmlspecialchars($specs['condition'] ?? 'Used') ?></span>
+                                <?php
+                                $cond = $specs['condition'] ?? 'Used';
+                                $cond_class = 'cond-' . strtolower(str_replace(' ', '-', $cond));
+                                ?>
+                                <span class="condition-badge <?= $cond_class ?>"><?= htmlspecialchars($cond) ?></span>
                                 <?php if ($item['sector'] === 'Laptops'): ?>
                                     <span class="battery-badge <?= empty($specs['battery']) ? 'missing' : '' ?>" title="Battery Status">
                                         🔋
@@ -553,7 +579,7 @@ if (UI::is_ajax()) {
                 <td class="editable-cell" data-field="model">
                     <input type="text" class="cell-input" placeholder="Model...">
                 </td>
-                
+
                 <?php if ($selected_sector === 'Laptops'): ?>
                     <td class="editable-cell" data-field="series">
                         <input type="text" class="cell-input" placeholder="Series...">
@@ -643,7 +669,7 @@ if (UI::is_ajax()) {
     <header class="warehouse-header">
         <div class="warehouse-header-main">
             <div class="warehouse-title-block">
-                <h1>Warehouse Control Center</h1>
+                <h1><a href="index.php?view=import_warehouse">Warehouse Control Center</a></h1>
                 <p class="subtitle">Managing stock and locations across all inventory sectors.</p>
             </div>
             <?php if ($selected_loc):
@@ -732,7 +758,7 @@ if (UI::is_ajax()) {
 
                     // Fetch working zones for the grid
                     $working_zones = $conn_wh->query("
-                        SELECT wz.*, 
+                        SELECT wz.*,
                             (SELECT COUNT(*) FROM locations l WHERE l.working_zone_name = wz.name) as location_count,
                             (SELECT SUM((SELECT COUNT(*) FROM inventory i WHERE i.location_code = l.location_code)) FROM locations l WHERE l.working_zone_name = wz.name) as total_items
                         FROM working_zones wz
@@ -760,7 +786,7 @@ if (UI::is_ajax()) {
                                         class="loc-item gate-loc-item" data-loc-name="<?= htmlspecialchars(strtolower($wz_name)) ?>"
                                         data-status="working" data-count="<?= $wz_locations ?>">
                                         <div style="position:absolute; top:8px; left:12px; font-size:0.6rem; font-weight:900; text-transform:uppercase; color:#3b82f6; letter-spacing:0.05em;">
-                                            <?= $wz_locations ?> Locations
+                                            <small><?= $wz_locations ?></small> <?= $wz_locations == 1 ? "<small>Shelf</small>" : "<small>Locations</small>" ?>
                                         </div>
                                         <span class="loc-icon">📁</span>
                                         <span class="loc-name"><?= htmlspecialchars($wz_name) ?></span>
@@ -796,7 +822,7 @@ if (UI::is_ajax()) {
                                     <input type="hidden" name="action" value="add_sub_zone">
                                     <input type="hidden" name="parent_zone" value="<?= htmlspecialchars($active_zone_name) ?>">
                                     <?= UI::csrf_field() ?>
-                                    <?php 
+                                    <?php
                                         $prefix_placeholder = '';
                                         if (preg_match('/Zone\s+([a-zA-Z0-9]+)/i', $active_zone_name, $m)) {
                                             $prefix_placeholder = strtoupper($m[1]) . '-';
@@ -879,10 +905,10 @@ if (UI::is_ajax()) {
 
             <?php if ($is_spreadsheet): ?>
                 <!-- Metadata helper for JS -->
-                <div id="warehouse-metadata" 
+                <div id="warehouse-metadata"
                      data-csrf="<?= htmlspecialchars(Security::getToken()) ?>"
                      data-sector="<?= htmlspecialchars($selected_sector) ?>"
-                     data-location-code="<?= htmlspecialchars($selected_loc) ?>" 
+                     data-location-code="<?= htmlspecialchars($selected_loc) ?>"
                      style="display:none;"></div>
 
                 <!-- Inventory List (Spreadsheet Mode) -->
@@ -917,6 +943,7 @@ if (UI::is_ajax()) {
                         </div>
                     </div>
 
+                    <div class="scroll-hint">↔️ Swipe horizontally to edit/view all columns</div>
                     <div class="spreadsheet-table-wrapper">
                         <table class="spreadsheet-table">
                             <thead>
@@ -993,7 +1020,7 @@ if (UI::is_ajax()) {
                                         <td class="editable-cell" data-field="model">
                                             <input type="text" class="cell-input" value="<?= htmlspecialchars($item['model']) ?>" placeholder="...">
                                         </td>
-                                        
+
                                         <?php if ($selected_sector === 'Laptops'): ?>
                                             <td class="editable-cell" data-field="series">
                                                 <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>" placeholder="...">
@@ -1081,7 +1108,7 @@ if (UI::is_ajax()) {
                                     <td class="editable-cell" data-field="model">
                                         <input type="text" class="cell-input" placeholder="Model...">
                                     </td>
-                                    
+
                                     <?php if ($selected_sector === 'Laptops'): ?>
                                         <td class="editable-cell" data-field="series">
                                             <input type="text" class="cell-input" placeholder="Series...">
@@ -1154,7 +1181,13 @@ if (UI::is_ajax()) {
                             </tbody>
                             <tfoot style="border-top: 2px solid #e2e8f0; background: #f8fafc;">
                                 <tr>
-                                    <td style="padding: 15px;">
+                                    <?php
+                                    $total_cols_sp = 9;
+                                    if ($selected_sector === 'Laptops') $total_cols_sp = 13;
+                                    elseif ($selected_sector === 'Gaming') $total_cols_sp = 13;
+                                    elseif ($selected_sector === 'Desktops') $total_cols_sp = 8;
+                                    ?>
+                                    <td colspan="<?= $total_cols_sp - 3 ?>" style="padding: 15px;">
                                         <div class="search-container footer-search" style="max-width: 300px; margin: 0;">
                                             <i class="search-icon">🔍</i>
                                             <input type="text" id="wh-search-footer" placeholder="Filter these results..."
@@ -1166,18 +1199,12 @@ if (UI::is_ajax()) {
                                     <td style="text-align: right; padding: 15px; font-size: 1.1rem; color: #334155; font-weight: 800;">
                                         Inventory Total:
                                     </td>
-                                    <td style="padding: 15px;">
-                                        <span class="qty-pill" id="table-total-qty" style="background: #1e293b; color: white; font-size: 1.1rem; padding: 6px 12px;">
+                                    <td style="padding: 15px; text-align: center;">
+                                        <span class="qty-pill" id="table-total-qty" style="background: #1e293b; color: white; font-size: 1.1rem; padding: 6px 12px; display: inline-block;">
                                             <?= number_format($total_qty) ?>
                                         </span>
                                     </td>
-                                    <?php
-                                    $total_cols_sp = 8;
-                                    if ($selected_sector === 'Laptops') $total_cols_sp = 13;
-                                    elseif ($selected_sector === 'Gaming') $total_cols_sp = 13;
-                                    elseif ($selected_sector === 'Desktops') $total_cols_sp = 8;
-                                    ?>
-                                    <td colspan="<?= $total_cols_sp - 3 ?>"></td>
+                                    <td></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -1280,6 +1307,7 @@ if (UI::is_ajax()) {
                         </div>
                     </div>
 
+                    <div class="scroll-hint">↔️ Swipe horizontally to view all columns</div>
                     <div class="inventory-table-container">
                         <table class="inventory-table">
                             <thead>
@@ -1419,17 +1447,34 @@ if (UI::is_ajax()) {
                                                 </td>
                                             <?php elseif ($selected_sector === 'Master'): ?>
                                                 <td>
-                                                    <div class="spec-value" style="font-size: 0.75rem;">
-                                                        <?php
-                                                        if ($item['sector'] === 'Laptops')
-                                                            echo htmlspecialchars(($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? ''));
-                                                        elseif ($item['sector'] === 'Gaming')
-                                                            echo htmlspecialchars(($specs['category'] ?? '') . ' ' . ($specs['gpu'] ?? ''));
-                                                        elseif ($item['sector'] === 'Desktops')
-                                                            echo htmlspecialchars($specs['cpu_gen'] ?? '');
-                                                        else
-                                                            echo '-';
-                                                        ?>
+                                                    <div class="master-specs-wrapper">
+                                                        <?php if ($item['sector'] === 'Laptops'): ?>
+                                                            <?php if (!empty($specs['cpu'])): ?>
+                                                                <span class="spec-tag cpu" title="CPU">💻 <?= htmlspecialchars($specs['cpu']) ?><?php if (!empty($specs['gen']) && $specs['gen'] !== '-'): ?> <small>(<?= htmlspecialchars($specs['gen']) ?>)</small><?php endif; ?></span>
+                                                            <?php endif; ?>
+                                                            <?php if (!empty($specs['ram']) || !empty($specs['storage'])): ?>
+                                                                <span class="spec-tag memory" title="RAM / Storage">💾 <?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?></span>
+                                                            <?php endif; ?>
+                                                            <?php if (!empty($specs['series'])): ?>
+                                                                <span class="spec-tag series" title="Series">🏷️ <?= htmlspecialchars($specs['series']) ?></span>
+                                                            <?php endif; ?>
+                                                        <?php elseif ($item['sector'] === 'Gaming'): ?>
+                                                            <?php if (!empty($specs['category'])): ?>
+                                                                <span class="spec-tag category" title="Category">🎮 <?= htmlspecialchars($specs['category']) ?></span>
+                                                            <?php endif; ?>
+                                                            <?php if (!empty($specs['gpu'])): ?>
+                                                                <span class="spec-tag gpu" title="GPU">⚡ <?= htmlspecialchars($specs['gpu']) ?></span>
+                                                            <?php endif; ?>
+                                                            <?php if (!empty($specs['ram']) || !empty($specs['storage'])): ?>
+                                                                <span class="spec-tag memory" title="RAM / Storage">💾 <?= htmlspecialchars(($specs['ram'] ?? '-') . ' / ' . ($specs['storage'] ?? '-')) ?></span>
+                                                            <?php endif; ?>
+                                                        <?php elseif ($item['sector'] === 'Desktops'): ?>
+                                                            <?php if (!empty($specs['cpu_gen'])): ?>
+                                                                <span class="spec-tag cpu" title="CPU/Gen">🖥️ <?= htmlspecialchars($specs['cpu_gen']) ?></span>
+                                                            <?php endif; ?>
+                                                        <?php else: ?>
+                                                            <span class="spec-tag empty">-</span>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </td>
                                             <?php endif; ?>
@@ -1441,8 +1486,11 @@ if (UI::is_ajax()) {
                                                             <span
                                                                 class="status-badge status-<?= htmlspecialchars($item['status']) ?>"><?= htmlspecialchars($item['status']) ?></span>
                                                         <?php endif; ?>
-                                                        <span
-                                                            class="condition-label"><?= htmlspecialchars($specs['condition'] ?? 'Used') ?></span>
+                                                        <?php
+                                                        $cond = $specs['condition'] ?? 'Used';
+                                                        $cond_class = 'cond-' . strtolower(str_replace(' ', '-', $cond));
+                                                        ?>
+                                                        <span class="condition-badge <?= $cond_class ?>"><?= htmlspecialchars($cond) ?></span>
                                                         <?php if ($item['sector'] === 'Laptops'): ?>
                                                             <span class="battery-badge <?= empty($specs['battery']) ? 'missing' : '' ?>"
                                                                 title="Battery Status">

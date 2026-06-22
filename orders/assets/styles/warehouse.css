@@ -165,7 +165,7 @@
     margin-bottom: 24px;
     gap: 20px;
     flex-wrap: wrap;
-    width: fit-content;
+    width: 100%;
 }
 
 .inventory-summary-title h2 {
@@ -274,7 +274,7 @@
 .inventory-table th {
     display: table-cell;
     /* Override global th{display:none} from style.css */
-    padding: 18px 16px;
+    padding: 24px 16px 18px 16px;
     text-align: left;
     font-size: 0.7rem;
     font-weight: 800;
@@ -637,7 +637,7 @@
     }
 
     .inventory-table {
-        min-width: 600px;
+        min-width: 1100px;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         margin-top: 20px;
@@ -674,6 +674,25 @@
     .btn-export {
         width: 100%;
         justify-content: center;
+    }
+
+    .bulk-action-bar {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .bulk-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .bulk-actions input,
+    .bulk-actions button {
+        flex: 1 1 calc(50% - 10px);
+        min-width: 120px;
     }
 
     .gate-card {
@@ -1071,6 +1090,7 @@
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
+    min-width: 1300px;
 }
 
 .spreadsheet-table th {
@@ -1078,7 +1098,7 @@
     background: #f8fafc;
     border-bottom: 2px solid #e2e8f0;
     border-right: 1px solid #e2e8f0;
-    padding: 10px 12px;
+    padding: 16px 12px 10px 12px;
     font-size: 0.72rem;
     font-weight: 800;
     color: #475569;
@@ -1191,4 +1211,206 @@
 .new-blank-row .cell-input:focus {
     font-style: normal;
     color: var(--text-main);
+}
+
+/* Master Overview Specs & Condition Badges styling */
+.master-specs-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    max-width: 320px;
+}
+
+.spec-tag {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.spec-tag.cpu {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border-color: #bae6fd;
+}
+
+.spec-tag.memory {
+    background-color: #dcfce7;
+    color: #15803d;
+    border-color: #bbf7d0;
+}
+
+.spec-tag.series {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+    border-color: #e9d5ff;
+}
+
+.spec-tag.category {
+    background-color: #fef3c7;
+    color: #b45309;
+    border-color: #fde68a;
+}
+
+.spec-tag.gpu {
+    background-color: #ffe4e6;
+    color: #be123c;
+    border-color: #fecdd3;
+}
+
+.spec-tag.empty {
+    background-color: #f1f5f9;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+}
+
+/* Dark Mode Overrides */
+[data-theme="dark"] .spec-tag.cpu {
+    background-color: rgba(3, 105, 161, 0.15);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+[data-theme="dark"] .spec-tag.memory {
+    background-color: rgba(21, 128, 61, 0.15);
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.3);
+}
+
+[data-theme="dark"] .spec-tag.series {
+    background-color: rgba(126, 34, 206, 0.15);
+    color: #c084fc;
+    border-color: rgba(192, 132, 252, 0.3);
+}
+
+[data-theme="dark"] .spec-tag.category {
+    background-color: rgba(180, 83, 9, 0.15);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .spec-tag.gpu {
+    background-color: rgba(190, 18, 60, 0.15);
+    color: #fb7185;
+    border-color: rgba(251, 113, 133, 0.3);
+}
+
+[data-theme="dark"] .spec-tag.empty {
+    background-color: rgba(71, 85, 105, 0.15);
+    color: #64748b;
+    border-color: rgba(100, 116, 139, 0.3);
+}
+
+/* Condition Badges */
+.condition-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border: 1px solid transparent;
+}
+
+.condition-badge.cond-untested {
+    background-color: #fef3c7;
+    color: #d97706;
+    border-color: #fcd34d;
+}
+
+.condition-badge.cond-used {
+    background-color: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+
+.condition-badge.cond-a-grade,
+.condition-badge.cond-b-grade {
+    background-color: #dcfce7;
+    color: #16a34a;
+    border-color: #86efac;
+}
+
+.condition-badge.cond-c-grade {
+    background-color: #ffedd5;
+    color: #ea580c;
+    border-color: #fdba74;
+}
+
+.condition-badge.cond-no-power,
+.condition-badge.cond-no-post {
+    background-color: #fee2e2;
+    color: #dc2626;
+    border-color: #fca5a5;
+}
+
+/* Dark Mode Overrides for Conditions */
+[data-theme="dark"] .condition-badge.cond-untested {
+    background-color: rgba(217, 119, 6, 0.15);
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
+}
+
+[data-theme="dark"] .condition-badge.cond-used {
+    background-color: rgba(37, 99, 235, 0.15);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.3);
+}
+
+[data-theme="dark"] .condition-badge.cond-a-grade,
+[data-theme="dark"] .condition-badge.cond-b-grade {
+    background-color: rgba(22, 163, 74, 0.15);
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.3);
+}
+
+[data-theme="dark"] .condition-badge.cond-c-grade {
+    background-color: rgba(234, 88, 12, 0.15);
+    color: #fb923c;
+    border-color: rgba(251, 146, 60, 0.3);
+}
+
+[data-theme="dark"] .condition-badge.cond-no-power,
+[data-theme="dark"] .condition-badge.cond-no-post {
+    background-color: rgba(220, 38, 38, 0.15);
+    color: #f87171;
+    border-color: rgba(248, 113, 113, 0.3);
+}
+
+/* Scroll Hint for Mobile/Tablet */
+.scroll-hint {
+    display: none;
+    font-size: 0.75rem;
+    color: #64748b;
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    text-align: center;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+[data-theme="dark"] .scroll-hint {
+    background-color: rgba(30, 41, 59, 0.4);
+    border-color: rgba(71, 85, 105, 0.3);
+    color: #94a3b8;
+}
+
+@media (max-width: 1024px) {
+    .scroll-hint {
+        display: inline-flex;
+        width: 100%;
+        box-sizing: border-box;
+    }
 }
