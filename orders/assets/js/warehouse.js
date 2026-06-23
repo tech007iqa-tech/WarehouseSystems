@@ -377,7 +377,17 @@ function filterWarehouse() {
     let visibleCount = 0;
 
     for (let i = 0; i < cards.length; i++) {
-        const text = (cards[i].getAttribute('data-search') || "").toLowerCase();
+        let text = "";
+        const cellInputs = cards[i].querySelectorAll('.cell-input');
+        if (cellInputs.length > 0) {
+            const values = [];
+            cellInputs.forEach(input => {
+                values.push(input.value);
+            });
+            text = values.join(' ').toLowerCase();
+        } else {
+            text = (cards[i].getAttribute('data-search') || "").toLowerCase();
+        }
 
         // Every term must be present in the text (AND logic)
         const isMatch = terms.every(term => text.includes(term));
@@ -1316,6 +1326,9 @@ async function handleWarehouseCellSave(input) {
             setTimeout(() => {
                 cell.style.backgroundColor = '';
             }, 600);
+            
+            // Re-apply search filter to reflect edited value immediately
+            filterWarehouse();
         } else {
             console.error('Save failed:', result.error);
         }

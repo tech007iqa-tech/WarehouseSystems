@@ -113,7 +113,7 @@ function mapCpuToMatrixGen($cpu, $gen) {
 }
 
 function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
-    $brands = ['Dell', 'HP', 'Lenovo', 'Apple', 'Microsoft', 'Samsung', 'Asus', 'Acer', 'MSI', 'Sony', 'Nintendo'];
+    $brands = ['Dell', 'HP', 'Lenovo', 'Apple', 'Microsoft', 'Samsung', 'Asus', 'Acer', 'MSI', 'Sony', 'Nintendo', 'Panasonic', 'Getac'];
     $brand = 'Unknown';
     $model = 'Unknown';
     $series = '';
@@ -160,7 +160,9 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
         'Samsung' => ["ChromeBook","Galaxy Book","Galaxy Book Flex","Galaxy Book Ion","Notebook"],
         'Asus' => ["ChromeBook","ExpertBook","VivoBook","ZenBook"],
         'Acer' => ["Aspire","ChromeBook","Nitro","Predator","Spin","Swift","TravelMate"],
-        'MSI' => ["Modern","Prestige","Stealth","Creator"]
+        'MSI' => ["Modern","Prestige","Stealth","Creator"],
+        'Panasonic' => ["Toughbook","Toughpad"],
+        'Getac' => ["Rugged","S410","A140","V110","B300","F110"]
     ];
 
     if ($brand !== 'Unknown' && isset($modelsMap[$brand])) {
@@ -187,6 +189,10 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
             $model = 'ThinkPad';
         } elseif ($brand === 'Dell') {
             $model = 'Latitude';
+        } elseif ($brand === 'Panasonic') {
+            $model = 'Toughbook';
+        } elseif ($brand === 'Getac') {
+            $model = 'Rugged';
         }
     }
 
@@ -266,6 +272,11 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
         $series = 'X1 Yoga';
     } elseif (preg_match('/X1/i', $itemStr)) {
         $series = 'X1';
+    } elseif (preg_match('/\b(CF\-?[A-Z0-9]+|FZ\-?[A-Z0-9]+|S410|A140|V110|B300|F110)\b/i', $itemStr, $matches)) {
+        $series = strtoupper($matches[1]);
+        if (strcasecmp($series, 'CF54') === 0) {
+            $series = 'CF-54';
+        }
     } elseif (preg_match('/\b(x360\-?\d{3,4}(?:\-?G\d{1,2})?)\b/i', $itemStr, $matches)) {
         $series = $matches[1];
     } elseif (preg_match('#\b(\d{3,4}\s*[-/]?\s*G\d{1,2})\b#i', $itemStr, $matches)) {
@@ -274,6 +285,8 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
         $series = $matches[1];
     } elseif (preg_match('/\b(G\d{1,2})\b/i', $itemStr, $matches)) {
         $series = $matches[1];
+    } elseif (preg_match('/\b(P\d{2,3}[A-Z])\b/i', $itemStr, $matches)) {
+        $series = strtoupper($matches[1]);
     } elseif (preg_match('/\b(P\-?\d{2,3}[s-z]?)\b/i', $itemStr, $matches)) {
         $series = $matches[1];
     } elseif (preg_match('/\b(L\-?\d{2,3}[s-z]?)\b/i', $itemStr, $matches)) {

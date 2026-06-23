@@ -386,6 +386,9 @@ if (UI::is_ajax()) {
                     <td style="text-align:right;">
                         <div class="action-buttons">
                             <button type="button" class="btn-clone-row" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px;" title="Clone Row">➕</button>
+                            <button type="button" class="btn-label"
+                                onclick="downloadWarehouseLabel(<?= (int) $item['id'] ?>, this)"
+                                title="Generate & Download Label" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">🏷️</button>
                             <form method="POST" style="display:inline;" onsubmit="return confirm('Remove this item?');">
                                 <input type="hidden" name="action" value="delete_inventory">
                                 <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
@@ -1087,6 +1090,9 @@ if (UI::is_ajax()) {
                                         <td style="text-align:right;">
                                             <div class="action-buttons">
                                                 <button type="button" class="btn-clone-row" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px;" title="Clone Row">➕</button>
+                                                <button type="button" class="btn-label"
+                                                    onclick="downloadWarehouseLabel(<?= (int) $item['id'] ?>, this)"
+                                                    title="Generate & Download Label" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">🏷️</button>
                                                 <form method="POST" style="display:inline;" onsubmit="return confirm('Remove this item?');">
                                                     <input type="hidden" name="action" value="delete_inventory">
                                                     <input type="hidden" name="item_id" value="<?= $item['id'] ?>">

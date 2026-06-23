@@ -3,10 +3,11 @@ header('Content-Type: application/json');
 
 $csvFile = __DIR__ . '/sample_data/intakeform.csv';
 $dictFile = __DIR__ . '/dictionary.json';
-$configFile = __DIR__ . '/config.json';
+$configFile = dirname(__DIR__) . '/db/config.json';
 
 // Helper to send json error
-function sendError($msg) {
+function sendError($msg)
+{
     echo json_encode(['success' => false, 'error' => $msg]);
     exit;
 }
@@ -35,23 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $date = $row['Date'] ?? date('Y-m-d');
             $qty = $row['QTY'] ?? '1';
             $item = $row['Item'] ?? 'Unknown Item';
-            $serial = $row['Serial'] ?? ''; 
+            $serial = $row['Serial'] ?? '';
             $location = $row['Location'] ?? 'UNKNOWN';
             $notes = $row['Notes'] ?? '';
-
-            // Append serial in parentheses to Item if present, and keep Serial column empty
-            if (!empty($serial)) {
-                if (stripos($item, 'Serial:') === false) {
-                    $item = rtrim($item) . " (Serial: $serial)";
-                }
-                $serial = ''; // Keep serial empty in the column as requested by the user
-            }
 
             fputcsv($fp, [
                 $date,
                 $qty,
                 $item,
-                $serial, // keeps empty
+                $serial,
                 $location,
                 $notes
             ]);
@@ -299,17 +292,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $imageData = base64_encode(file_get_contents($tmpName));
 
             // Prepare request to Gemini
-            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" . urlencode($apiKey);
-            
+            $url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" . urlencode($apiKey);
+
             $prompt = "You are a warehouse inventory auditor. Analyze this handwritten intake form image and extract all table rows. "
-                    . "For each row, extract: \n"
-                    . "- 'Date' (format as YYYY-MM-DD. Note that the date is written once at the start of a section and should propagate downward to all rows in that section, e.g. 6/19 should format as 2026-06-19)\n"
-                    . "- 'QTY' (integer, quantity value)\n"
-                    . "- 'Item' (string, name of the item. Correct handwriting spelling mistakes and translate abbreviations using these rules: pb -> ProBook, eb -> EliteBook, tp -> ThinkPad, pd -> ProDesk)\n"
-                    . "- 'Serial' (string, empty unless a serial tag is explicitly printed in the Serial column)\n"
-                    . "- 'Location' (string, standardized as Letter-Number format like E-9, C-3, M-1, etc.)\n"
-                    . "- 'Notes' (string, any additional comments written)\n\n"
-                    . "Return a JSON array of these row objects. If a field is empty, return an empty string. Output ONLY the JSON array (do not wrap in markdown ```json blocks).";
+                . "For each row, extract: \n"
+                . "- 'Date' (format as YYYY-MM-DD. Note that the date is written once at the start of a section and should propagate downward to all rows in that section, e.g. 6/19 should format as 2026-06-19)\n"
+                . "- 'QTY' (integer, quantity value)\n"
+                . "- 'Item' (string, name of the item. Correct handwriting spelling mistakes and translate abbreviations using these rules: pb -> ProBook, eb -> EliteBook, tp -> ThinkPad, pd -> ProDesk. Prepend brand names where missing, e.g., HP ProBook, Lenovo ThinkPad, Dell Latitude, Panasonic, Getac)\n"
+                . "- 'Serial' (string, containing whatever is written in the Serial column of the sheet. If a CPU configuration (e.g. i5, i5-8th, i7-6th, 6th-7th) or model number is written in the Serial column, do NOT ignore it; extract it into the 'Serial' field so that our system can merge it into the 'Item' name. Leave empty ONLY if the Serial column on the sheet is physically blank.)\n"
+                . "- 'Location' (string, standardized as Letter-Number format like E-9, C-3, M-1, etc.)\n"
+                . "- 'Notes' (string, any additional comments written)\n\n"
+                . "Normalization rules for 'Item' name:\n"
+                . "1. Correct handwriting misreadings: '15' or '17' representing CPU processors must be formatted as 'i5' or 'i7' (e.g., output 'i5-8th' instead of '15-8th' or '15-8').\n"
+                . "2. Generation suffix: Standalone CPU generation numbers (like 4, 6, 7, 8) must be standardized to include 'th' (e.g. '6th', '7th', '8th', '4th'). Ensure there are no double suffixes like '8thth'.\n"
+                . "3. Include model names/numbers (like 5414, 5410, A140, V110, B300, FZ-G1, CF33, 5400, F110) in the 'Item' name itself.\n\n"
+                . "Return a JSON array of these row objects. If a field is empty, return an empty string. Output ONLY the JSON array (do not wrap in markdown ```json blocks).";
 
             $requestData = [
                 'contents' => [
@@ -348,7 +345,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $resDecoded = json_decode($response, true);
             $textResult = $resDecoded['candidates'][0]['content']['parts'][0]['text'] ?? '';
-            
+
             // Try parsing JSON
             $rows = json_decode(trim($textResult), true);
             if (!is_array($rows)) {
@@ -373,22 +370,130 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Ensure all fields exist
                 $row['Date'] = $row['Date'] ?? date('Y-m-d');
-                $row['QTY'] = $row['QTY'] ?? '1';
+                $row['QTY'] = $row['Qty'] ?? $row['QTY'] ?? 'N/A';
                 $row['Item'] = $row['Item'] ?? '';
                 $row['Serial'] = $row['Serial'] ?? '';
                 $row['Location'] = $row['Location'] ?? '';
                 $row['Notes'] = $row['Notes'] ?? '';
-                
+
+                // Get clean inputs
+                $item = trim($row['Item']);
+                $serial = trim($row['Serial']);
+
+                // 1. If Serial is a CPU configuration or a model number, merge it into Item
+                if (!empty($serial)) {
+                    // Check if Serial is actually a CPU configuration
+                    $is_cpu_serial = false;
+                    if (preg_match('/^(i[3579]|ryzen|amd|celeron|pentium|xeon|core|dual[- ]*core|\d+th(?:[- \/]\d+th)?)$/i', $serial)) {
+                        $is_cpu_serial = true;
+                    } elseif (preg_match('/^(i|1|i5|i7|i9|15|17|19)?[- ]*(\d{1,2})(th)?$/i', $serial)) {
+                        $is_cpu_serial = true;
+                    } elseif (preg_match('/\b(i[3579]-\d+th|i[3579]\s+\d+th|\d+th\s+gen)\b/i', $serial)) {
+                        $is_cpu_serial = true;
+                    }
+
+                    if ($is_cpu_serial) {
+                        $item .= " " . $serial;
+                        $serial = '';
+                    } elseif (preg_match('/^(CF-?\d+|FZ-?\w+|A\d+|V\d+|B\d+|\d{3,})$/i', $serial)) {
+                        // If it's a model number, append it directly to Item
+                        $item .= " " . $serial;
+                        $serial = '';
+                    }
+                }
+
+                // 2. Clean up Item name CPU and Suffix typos
+                // Avoid converting screen sizes (e.g. "Inspiron 15", "Inspiron 17") or series (e.g. "15 3000 Series") into i5/i7.
+                $item = preg_replace('/\b15([- ]\d+th?)\b/i', 'i5-$1', $item);
+                $item = preg_replace('/\b17\b([- ]\d+th?)\b/i', 'i7-$1', $item);
+                $item = preg_replace('/\b15\s+(\d+th?)\b/i', 'i5-$1', $item);
+                $item = preg_replace('/\b17\s+(\d+th?)\b/i', 'i7-$1', $item);
+
+                // Standardize generation patterns: e.g. "i5-8" -> "i5-8th", "i7 6" -> "i7-6th"
+                $item = preg_replace('/\b(i[3579]|core|gen|generation)[- ]*(\d{1,2})\b/i', '$1-$2th', $item);
+                $item = preg_replace('/\b(\d{1,2})th[- ]*(\d{1,2})\b/i', '$1th-$2th', $item);
+
+                // Hyphenate any space-separated CPU spec (e.g. "i5 8th" -> "i5-8th")
+                $item = preg_replace('/\b(i[3579])[- ]+(\d{1,2}th)\b/i', '$1-$2', $item);
+
+                // Clean double suffixes like 8thth
+                $item = preg_replace('/(\d+)thth/i', '$1th', $item);
+
+                // Clean lowercase generation suffixes (e.g., 6TH-7TH -> 6th-7th)
+                $item = preg_replace_callback('/(\d+)(th|rd|nd|st)/i', function($m) { return $m[1] . strtolower($m[2]); }, $item);
+
+                // Remove trailing "Gen" or "gen" or "generation" after a CPU spec or generation (e.g. "i5-8th Gen" -> "i5-8th")
+                $item = preg_replace('/\b(\d+(?:th|rd|nd|st))\s+(gen|generation)\b/i', '$1', $item);
+
+                // Remove parentheses around CPU specifications or generation specs
+                $item = preg_replace('/\((i[3579]-\d+th)\)/i', '$1', $item);
+                $item = preg_replace('/\((i[3579])\)/i', '$1', $item);
+                $item = preg_replace('/\(([0-9]+th(?:-[0-9]+th)?)\)/i', '$1', $item);
+                // 3. Reorder: Swap CPU specs if they are placed before Series/Generation (e.g. "i5-8th 3000 Series" -> "3000 Series i5-8th")
+                $item = preg_replace('/\b(i[3579])[- ]*(\d+th)\s+(\d+00\s+Series)\b/i', '$3 $1-$2', $item);
+                $item = preg_replace('/\b(i[3579])[- ]*(\d+th)\s+(G\d+)\b/i', '$3 $1-$2', $item);
+
+                // 4. Specs slash rule: ensure no spaces around slashes in specs like "8 / 256" -> "8/256"
+                $item = preg_replace('/\b(\d+)\s*\/+\s*(\d+)\b/', '$1/$2', $item);
+ 
+                // 4b. Reorder CPU and Specs: Swap CPU specs if they are placed before RAM/Storage specs (e.g. "i5-8th 8/256" -> "8/256 i5-8th")
+                $item = preg_replace('/\b(i[3579]-\d+th)\s+(\d+\/\d+)\b/i', '$2 $1', $item);
+
+                // If it is Panasonic and contains CF or FZ but doesn't have Toughbook/Toughpad, add Toughbook
+                if (stripos($item, 'Panasonic') !== false && stripos($item, 'Toughbook') === false && stripos($item, 'Toughpad') === false) {
+                    if (preg_match('/(CF\-?[A-Z0-9]+|FZ\-?[A-Z0-9]+)/i', $item)) {
+                        $item = preg_replace('/Panasonic/i', 'Panasonic Toughbook', $item);
+                    }
+                }
+
+                // 5. Title Case Standardisation for brand names and model series
+                $words = explode(' ', $item);
+                foreach ($words as &$word) {
+                    if (preg_match('/^[a-z0-9]+$/i', $word)) {
+                        if (preg_match('/^XPS(\d*)$/i', $word, $m)) {
+                            $word = 'XPS' . $m[1];
+                            continue;
+                        }
+                        if (in_array(strtoupper($word), ['HP', 'CF', 'FZ', 'GB', 'TB', 'SSD', 'HDD', 'PC', 'OS', 'UI', 'AI', 'S/N'])) {
+                            $word = strtoupper($word);
+                            continue;
+                        }
+                        if (preg_match('/^[A-Z]\d{2,3}[A-Z]$/i', $word)) {
+                            $word = strtoupper($word);
+                            continue;
+                        }
+                        if (strcasecmp($word, 'DELL') === 0) { $word = 'Dell'; continue; }
+                        if (strcasecmp($word, 'LATITUDE') === 0) { $word = 'Latitude'; continue; }
+                        if (strcasecmp($word, 'PRECISION') === 0) { $word = 'Precision'; continue; }
+                        if (strcasecmp($word, 'INSPIRON') === 0) { $word = 'Inspiron'; continue; }
+                        if (strcasecmp($word, 'GETAC') === 0) { $word = 'Getac'; continue; }
+                        if (strcasecmp($word, 'PANASONIC') === 0) { $word = 'Panasonic'; continue; }
+                        if (strcasecmp($word, 'ELITEBOOK') === 0) { $word = 'EliteBook'; continue; }
+                        if (strcasecmp($word, 'PROBOOK') === 0) { $word = 'ProBook'; continue; }
+                        if (strcasecmp($word, 'THINKPAD') === 0) { $word = 'ThinkPad'; continue; }
+                        if (strcasecmp($word, 'YOGA') === 0) { $word = 'Yoga'; continue; }
+                        if (strcasecmp($word, 'PRODESK') === 0) { $word = 'ProDesk'; continue; }
+                        
+                        if (preg_match('/[a-zA-Z]/', $word)) {
+                            $word = ucfirst(strtolower($word));
+                        }
+                    }
+                }
+                $item = implode(' ', $words);
+
+                $row['Item'] = $item;
+                $row['Serial'] = $serial;
+
                 // Map item abbreviations
                 if (!empty($dictionary)) {
                     $words = explode(' ', $row['Item']);
-                    $mapped = array_map(function($word) use ($dictionary) {
+                    $mapped = array_map(function ($word) use ($dictionary) {
                         $clean = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($word));
                         return $dictionary[$clean] ?? $word;
                     }, $words);
                     $row['Item'] = implode(' ', $mapped);
                 }
-                
+
                 $row['Confidence'] = 98; // High confidence from AI
             }
 
@@ -413,7 +518,7 @@ if ($action === 'get_config') {
     if (file_exists($configFile)) {
         $config = json_decode(file_get_contents($configFile), true) ?: [];
     }
-    echo json_encode(['success' => true, 'config' => $config]);
+    echo json_encode(['success' => true, 'config' => (object) $config]);
     exit;
 }
 

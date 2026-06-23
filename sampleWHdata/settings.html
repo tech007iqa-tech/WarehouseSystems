@@ -323,7 +323,7 @@
                 const response = await fetch('process.php?action=get_config');
                 const result = await response.json();
                 if (result.success) {
-                    config = result.config || {};
+                    config = (result.config && !Array.isArray(result.config)) ? result.config : {};
                     if (config.gemini_api_key) {
                         document.getElementById('gemini-key').value = config.gemini_api_key;
                     }
