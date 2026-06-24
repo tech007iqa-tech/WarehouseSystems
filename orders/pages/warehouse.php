@@ -31,22 +31,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if (!empty($new_loc)) {
             $conn_wh->beginTransaction();
             try {
-                // Update items
+                // Check if the new location code already exists
+                $stmt_check = $conn_wh->prepare("SELECT COUNT(*) FROM locations WHERE location_code = ?");
+                $stmt_check->execute([$new_loc]);
+                $exists = $stmt_check->fetchColumn() > 0;
+
+                // Update items in inventory from old to new location code
                 $stmt = $conn_wh->prepare("UPDATE inventory SET location_code = ? WHERE location_code = ?");
                 $stmt->execute([$new_loc, $old_loc]);
 
-                // Update or Create location entry
-                $stmt_loc = $conn_wh->prepare("INSERT OR REPLACE INTO locations (location_code, status, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)");
-                $stmt_loc->execute([$new_loc, $new_status]);
+                if ($exists) {
+                    // Merge: update status and timestamp of the existing target location, then delete old location entry
+                    $stmt_loc = $conn_wh->prepare("UPDATE locations SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE location_code = ?");
+                    $stmt_loc->execute([$new_status, $new_loc]);
 
-                // If renamed, delete old location entry if it's different
-                if ($new_loc !== $old_loc) {
-                    $stmt_del = $conn_wh->prepare("DELETE FROM locations WHERE location_code = ?");
-                    $stmt_del->execute([$old_loc]);
+                    if ($new_loc !== $old_loc) {
+                        $stmt_del = $conn_wh->prepare("DELETE FROM locations WHERE location_code = ?");
+                        $stmt_del->execute([$old_loc]);
+                    }
+                    $msg = "zone_merged";
+                } else {
+                    // Rename: target location doesn't exist, we can just update the existing location row
+                    $stmt_loc = $conn_wh->prepare("UPDATE locations SET location_code = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE location_code = ?");
+                    $stmt_loc->execute([$new_loc, $new_status, $old_loc]);
+                    $msg = "zone_updated";
                 }
 
                 $conn_wh->commit();
-                header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=zone_updated");
+                header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=" . $msg);
                 exit();
             } catch (Exception $e) {
                 $conn_wh->rollBack();
@@ -62,14 +74,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         if (!empty($new_zone)) {
             $conn_wh->beginTransaction();
             try {
-                $stmt = $conn_wh->prepare("UPDATE working_zones SET name = ? WHERE name = ?");
-                $stmt->execute([$new_zone, $old_zone]);
+                // Check if the new working zone name already exists
+                $stmt_check = $conn_wh->prepare("SELECT COUNT(*) FROM working_zones WHERE name = ?");
+                $stmt_check->execute([$new_zone]);
+                $exists = $stmt_check->fetchColumn() > 0;
 
-                $stmt_loc = $conn_wh->prepare("UPDATE locations SET working_zone_name = ? WHERE working_zone_name = ?");
-                $stmt_loc->execute([$new_zone, $old_zone]);
+                if ($exists) {
+                    // Merge: If target zone exists, we update locations' working_zone_name to the new zone
+                    $stmt_loc = $conn_wh->prepare("UPDATE locations SET working_zone_name = ? WHERE working_zone_name = ?");
+                    $stmt_loc->execute([$new_zone, $old_zone]);
+
+                    // Delete the old working zone as it's now empty/merged
+                    if ($new_zone !== $old_zone) {
+                        $stmt_del = $conn_wh->prepare("DELETE FROM working_zones WHERE name = ?");
+                        $stmt_del->execute([$old_zone]);
+                    }
+                    $msg = "working_zone_merged";
+                } else {
+                    // Rename: normal update of the working zone name
+                    $stmt = $conn_wh->prepare("UPDATE working_zones SET name = ? WHERE name = ?");
+                    $stmt->execute([$new_zone, $old_zone]);
+
+                    // Update locations pointing to the old zone name
+                    $stmt_loc = $conn_wh->prepare("UPDATE locations SET working_zone_name = ? WHERE working_zone_name = ?");
+                    $stmt_loc->execute([$new_zone, $old_zone]);
+                    $msg = "working_zone_updated";
+                }
 
                 $conn_wh->commit();
-                header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=working_zone_updated");
+                header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=" . $msg);
                 exit();
             } catch (Exception $e) {
                 $conn_wh->rollBack();

@@ -1,4 +1,4 @@
-# 🤖 AI Agent Instructions & Architecture Guidelines 6/16/2026 3:11 PM
+# 🤖 AI Agent Instructions & Architecture Guidelines 6/23/2026 8:39 PM
 
 ## 🎯 Overview
 This document is for future AI coding assistants working on the **IQA Warehouse Systems**. This project is a lean, high-performance ecosystem designed for speed and reliability in a physical warehouse environment.

@@ -1,10 +1,10 @@
-# 📦 IQA Warehouse Systems 6/16/2026 3:11 PM
+# 📦 IQA Warehouse Systems 6/23/2026 8:39 PM
 
-[![Version](https://img.shields.io/badge/version-2.0.0-green.svg)](https://github.com/)
+[![Version](https://img.shields.io/badge/version-2.2.0-green.svg)](https://github.com/)
 [![Tech](https://img.shields.io/badge/Stack-Vanilla_PHP_|_SQLite_|_JS-blue.svg)](https://github.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/)
 
-A premium, high-performance warehouse management ecosystem designed for speed, reliability, and precision. Built for physical warehouse environments where quick hardware intake and accurate label logistics are mission-critical.
+A premium, high-performance warehouse management ecosystem designed for speed, reliability, and precision. Built for physical warehouse environments where quick hardware intake, accurate label logistics, and customer relation lifecycles are mission-critical.
 
 ---
 
@@ -19,11 +19,20 @@ A premium, high-performance warehouse management ecosystem designed for speed, r
 
 ### 📊 Order Manager (`/orders`)
 *B2B Relationship & Batch Fulfillment*
-- **CRM Hub**: Advanced lead tracking with interaction timelines and status priority. Outfitted with real-time, timer-free Server-Sent Events (SSE) synchronization across all workstations.
+- **CRM Hub**: Advanced lead tracking with interaction timelines and status priority. Real-time, timer-free Server-Sent Events (SSE) synchronization across all workstations.
 - **Batch Logistics**: Manage complex hardware orders with real-time stock allocation.
-- **Warehouse Working Zones & Gates**: Nested zones mapping (e.g. Zone A, Zone B, General) that drills down to manage specific locations/shelves, add sub-zones with automatic prefixing, and rename zones/locations.
-- **CPU Pricing Insights**: Interactive pricing details modal on the Trends tab providing CPU model averages, ranges, and recent transaction logs linked to order batch details.
+- **Warehouse Working Zones & Gates**: Nested zone mapping (e.g. Zone A, Zone B, General) with drill-down to specific locations/shelves.
+- **CPU Pricing Insights**: Interactive pricing details modal with CPU model averages, ranges, and linked transaction logs.
 - **Global Registry**: Searchable customer database with session-persistent filters.
+
+### 📥 Inbound Intake Terminal (`/sampleWHdata`)
+*AI-Powered Handwritten Sheet Digitization — Offline-capable & System-integrated*
+- **AI OCR Extraction**: Sends handwritten intake sheet images to the **Gemini Vision API** and extracts structured tabular data (Date, QTY, Item, Serial, Location, Notes).
+- **Manual Grid Overlay**: Transparent grid overlay mode for manually keying in data directly over the image.
+- **Configurable AI Prompt**: Dictionary Settings panel for managing Gemini API Key, AI persona, brand abbreviation mappings, and handwriting normalization rules.
+- **Committed History View**: Hierarchical location breadcrumbs (group by shelf letter → drill down to bin), full-text search, sortable columns, and CSV export.
+- **Database Management**: Admin module in settings to permanently clear committed intake records.
+- **Dual Access**: Accessible standalone at `sampleWHdata/audit.html` (offline) or embedded within the main system at `orders/index.php?view=inbound`.
 
 ---
 
@@ -34,6 +43,7 @@ A premium, high-performance warehouse management ecosystem designed for speed, r
 | **Backend** | PHP 8.1+ | Lean, procedural-focused logic with modular routing. |
 | **Database** | SQLite 3 | Zero-config, portable database files with optimistic locking. |
 | **Frontend** | Vanilla JS / CSS3 | Modern "App-like" experience using Glassmorphism & HSL variables. |
+| **AI / OCR** | Gemini Vision API | Handwritten intake sheet image extraction and field normalization. |
 | **Documents** | Flat XML (FODT) | Dependency-free OpenDocument generation for LibreOffice compatibility. |
 | **Automation** | PowerShell | Native Windows integration for direct file launching. |
 
@@ -44,6 +54,14 @@ A premium, high-performance warehouse management ecosystem designed for speed, r
 ```text
 ├── labels/                # Module: Inventory & Rapid Label Printing
 ├── orders/                # Module: CRM, Batching & Fulfillment
+│   └── pages/
+│       └── inbound.php    # Embeds sampleWHdata/audit.html via seamless iframe
+├── sampleWHdata/          # Module: Offline-capable AI Intake Terminal
+│   ├── audit.html         # Main intake terminal UI
+│   ├── history.html       # Committed intake log with location breadcrumbs
+│   ├── settings.html      # Gemini API config, prompt settings & DB management
+│   ├── process.php        # Backend API router (OCR, save, config, clear)
+│   └── src/               # PHP classes (OcrEngine, Normalizer, DbHandler, Config)
 ├── DOCS/                  # System-wide Documentation
 │   ├── AI_AGENT_INSTRUCTIONS.md   # Guidelines for AI coding assistants
 │   ├── CODE_REVIEW_CHECKLIST.md   # Quality control standards
@@ -60,15 +78,18 @@ A premium, high-performance warehouse management ecosystem designed for speed, r
 - **PHP 8.1+** (XAMPP / WAMP recommended for Windows environments).
 - **SQLite3 Extension** enabled in `php.ini`.
 - **LibreOffice** (optional, for viewing/printing generated `.odt` labels).
+- **Gemini API Key** (optional, required for AI OCR in the Inbound Terminal).
 
 ### 2. Installation
-1. Clone the repository into your web root (e.g., `htdocs/app`).
-2. Ensure the `/db` and `/assets/db` directories have **Write Permissions**.
-3. Access the system via `http://localhost/app/`.
+1. Clone the repository into your web root (e.g., `htdocs/WarehouseSystems-main`).
+2. Ensure the `/db` directory has **Write Permissions**.
+3. Access the system via `http://localhost/WarehouseSystems-main/orders/index.php`.
+4. For the standalone intake terminal: `http://localhost/WarehouseSystems-main/sampleWHdata/audit.html`.
 
 ### 3. Usage
-- Start in the **Portal** to choose between label generation or order management.
+- Start in the **Portal** to navigate between label generation or order management.
 - Databases are automatically initialized on the first run via the **Schema Guard** system.
+- For AI-powered intake, navigate to **Inbound** from the sidebar, or open `audit.html` directly for offline use.
 
 ---
 
@@ -83,4 +104,4 @@ If you are an AI assistant or a human code reviewer, please consult the followin
 > [!TIP]
 > Built for durability. Every interaction is audited, every database is self-healing, and every UI element is touch-optimized for warehouse hardware.
 
-&copy; 2026 IQA Metal Inventory Systems
+© 2026 IQA Metal Inventory Systems

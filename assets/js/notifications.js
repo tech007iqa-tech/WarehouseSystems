@@ -78,6 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
             'order_finalized': 'Order manifest finalized and archived ✅',
             'item_removed': 'Item removed from batch',
             'zone_deleted': 'Warehouse zone cleared 🧹',
+            'zone_merged': 'Locations successfully merged 🔄',
+            'working_zone_merged': 'Working zones successfully merged 🔄',
+            'working_zone_updated': 'Working zone renamed successfully 💾',
             'error': 'An unexpected error occurred ⚠️',
             'unauthorized': 'Security access denied 🚫'
         };

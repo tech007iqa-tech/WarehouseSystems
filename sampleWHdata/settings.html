@@ -3,272 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Intake System - Dictionary Settings</title>
+    <title>Intake System - API & Prompt Settings</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/settings.css">
     <style>
-        :root {
-            --bg-dark: #09090b;
-            --bg-deep: #030303;
-            --card-bg: rgba(255, 255, 255, 0.03);
-            --accent-green: #8cc63f;
-            --accent-blue: #00a8ff;
-            --text-main: #f4f4f5;
-            --text-dim: #a1a1aa;
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-border-focus: rgba(255, 255, 255, 0.2);
-            --font-family: 'Outfit', sans-serif;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: var(--font-family);
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            min-height: 100vh;
-            background: radial-gradient(circle at 50% 5%, #18181b 0%, var(--bg-dark) 100%);
+        .settings-section {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            gap: 16px;
+            margin-top: 10px;
         }
-
-        header {
-            width: 100%;
-            padding: 20px 40px;
-            border-bottom: 1px solid var(--glass-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(12px);
-            background: rgba(9, 9, 11, 0.5);
-        }
-
-        header h1 {
-            font-size: 1.5rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #fff 30%, #a1a1aa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        button, .btn {
-            font-family: var(--font-family);
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-main);
-            padding: 10px 20px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-
-        button:hover, .btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: var(--glass-border-focus);
-            transform: translateY(-1px);
-        }
-
-        .btn-primary {
-            background: var(--accent-blue);
-            color: #fff;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background: #33bfff;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 800px;
-            padding: 40px 20px;
+        .form-group {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 6px;
         }
-
-        .panel {
-            background: var(--card-bg);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            backdrop-filter: blur(8px);
-            padding: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .panel h2 {
-            font-size: 1.25rem;
+        .form-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
             font-weight: 700;
-            color: #fff;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 12px;
+            letter-spacing: 0.5px;
         }
-
-        .dict-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            max-height: 400px;
+        .rules-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 250px;
             overflow-y: auto;
             padding-right: 8px;
         }
-
-        .dict-row {
+        .rule-item {
             display: flex;
-            justify-content: space-between;
+            gap: 10px;
             align-items: center;
             background: rgba(255, 255, 255, 0.02);
             border: 1px solid var(--glass-border);
-            padding: 12px 20px;
-            border-radius: 12px;
-            transition: all 0.2s ease;
+            padding: 8px 12px;
+            border-radius: 8px;
         }
-
-        .dict-row:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: var(--glass-border-focus);
-        }
-
-        .dict-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .dict-key {
-            font-family: monospace;
-            background: rgba(255, 255, 255, 0.08);
-            padding: 4px 8px;
-            border-radius: 6px;
+        .rule-text {
+            flex: 1;
             font-size: 0.9rem;
-            color: var(--accent-blue);
-        }
-
-        .dict-arrow {
-            color: var(--text-dim);
-            font-size: 0.9rem;
-        }
-
-        .dict-val {
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .btn-delete {
-            background: rgba(255, 86, 48, 0.1);
-            color: #ff5630;
-            border: 1px solid rgba(255, 86, 48, 0.2);
-            padding: 6px 12px;
-            font-size: 0.8rem;
-        }
-
-        .btn-delete:hover {
-            background: rgba(255, 86, 48, 0.2);
-        }
-
-        .input-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr auto;
-            gap: 16px;
-            align-items: center;
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px dashed var(--glass-border);
-            padding: 20px;
-            border-radius: 16px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--glass-border);
-            border-radius: 10px;
-            padding: 10px 14px;
             color: var(--text-main);
-            font-family: var(--font-family);
-            font-size: 0.95rem;
-            transition: all 0.2s ease;
         }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 10px rgba(0, 168, 255, 0.1);
-        }
-
-        /* Toast notifications */
-        #toast-container {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast {
-            background: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 12px 20px;
+        .preview-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            min-width: 250px;
-            animation: toastSlideIn 0.3s ease-out forwards;
+            padding: 16px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: #39ff14;
+            max-height: 350px;
+            overflow-y: auto;
+            white-space: pre-wrap;
         }
-
-        .toast-success { border-left: 4px solid var(--accent-green); }
-        .toast-error { border-left: 4px solid #ff5630; }
-
-        @keyframes toastSlideIn {
-            from { opacity: 0; transform: translateX(100%); }
-            to { opacity: 1; transform: translateX(0); }
+        .schema-grid {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+        .schema-field {
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--accent-blue);
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1><span>📖</span> System Dictionary Settings</h1>
+        <h1><span>📖</span> AI OCR & System Prompt Settings</h1>
         <div class="header-actions">
             <a href="audit.html" class="btn btn-primary">← Back to Audit Terminal</a>
         </div>
     </header>
 
     <div class="container">
+        <!-- API Key panel -->
         <div class="panel">
-            <h2>Common Variation Mappings</h2>
+            <h2>Gemini AI API Configuration</h2>
+            <div class="settings-section">
+                <div class="form-group">
+                    <span class="form-label">Gemini API Key</span>
+                    <input type="password" id="gemini-key" placeholder="AIzaSy..." style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 10px; padding: 10px 14px; color: var(--text-main); font-family: var(--font-family); font-size: 0.95rem;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Management Panel -->
+        <div class="panel" style="border: 1px solid rgba(255, 82, 82, 0.2); background: rgba(255, 82, 82, 0.02);">
+            <h2 style="color: #ff5252;">Database Management</h2>
             <p style="font-size: 0.9rem; color: var(--text-dim); margin-top: -10px;">
-                Define rules to map handwritten abbreviations or alternate keywords to system-normalized fields (primarily <strong>Serial</strong>).
+                Perform administrative operations on the intake logs database.
+            </p>
+            <div class="settings-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+                    <div>
+                        <span class="form-label" style="color: #ff5252;">Clear Committed Intakes</span>
+                        <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Permanently delete all committed inventory intake records from SQLite database. This cannot be undone.</p>
+                    </div>
+                    <button class="btn" style="color: #ff5252; background: rgba(255, 82, 82, 0.1); border-color: rgba(255, 82, 82, 0.2);" onclick="clearHistoryLog()">🗑️ Clear Database</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Structured prompt: Role & Schema -->
+        <div class="panel">
+            <h2>System Prompt Tuning</h2>
+            
+            <div class="settings-section">
+                <div class="form-group">
+                    <span class="form-label">AI Persona / Role</span>
+                    <textarea id="prompt-role" style="width: 100%; height: 60px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 10px; padding: 10px; color: var(--text-main); font-family: var(--font-family); font-size: 0.9rem; resize: vertical;" oninput="updatePreview()"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <span class="form-label" style="margin-bottom: 8px;">Target Extraction Fields Guidance</span>
+                    <div class="schema-grid" id="schema-rules-container">
+                        <!-- Loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Structured prompt: Brand translations -->
+        <div class="panel">
+            <h2>Brand Abbreviation Mappings</h2>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-top: -10px;">
+                Define shorthand translations (e.g. pb -> ProBook) to inject into the Gemini AI prompt.
             </p>
 
             <div class="dict-grid" id="dict-grid">
@@ -277,102 +145,140 @@
 
             <div class="input-row">
                 <div>
-                    <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; display: block;">Abbreviation / Tag</span>
-                    <input type="text" id="dict-key" placeholder="e.g. srl, cpu#, serl">
+                    <span class="form-label">Abbreviation / Tag</span>
+                    <input type="text" id="dict-key" placeholder="e.g. pb, eb">
                 </div>
                 <div>
-                    <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; display: block;">Maps to Field</span>
-                    <input type="text" id="dict-val" value="Serial" readonly>
+                    <span class="form-label">Maps to / Expansion</span>
+                    <input type="text" id="dict-val" placeholder="e.g. ProBook, EliteBook">
                 </div>
                 <div style="align-self: flex-end;">
-                    <button class="btn btn-primary" style="padding: 11px 24px;" onclick="addDictionaryRule()">Add Rule</button>
+                    <button class="btn btn-primary" onclick="addTranslationRule()">Add Translation</button>
                 </div>
             </div>
         </div>
 
-        <div class="panel" style="margin-top: 24px;">
-            <h2>Gemini AI OCR Settings</h2>
+        <!-- Structured prompt: Normalization Rules -->
+        <div class="panel">
+            <h2>Handwriting Normalization Rules</h2>
             <p style="font-size: 0.9rem; color: var(--text-dim); margin-top: -10px;">
-                Configure the Gemini API Key to enable state-of-the-art vision-based handwriting extraction.
+                Inject custom instructions into the prompt instructing Gemini how to clean handwriting spelling and formatting errors.
             </p>
-            <div class="input-row" style="grid-template-columns: 1fr auto;">
-                <div>
-                    <span style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 6px; display: block;">Gemini API Key</span>
-                    <input type="password" id="gemini-key" placeholder="AIzaSy..." style="width: 100%; background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 10px; padding: 10px 14px; color: var(--text-main); font-family: var(--font-family); font-size: 0.95rem;">
-                </div>
-                <div style="align-self: flex-end;">
-                    <button class="btn btn-primary" style="padding: 11px 24px;" onclick="saveConfig()">Save API Key</button>
-                </div>
+
+            <div class="rules-list" id="rules-list">
+                <!-- Loaded dynamically -->
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-top: 10px;">
+                <input type="text" id="new-rule" placeholder="e.g. Standardize screen sizes to have double quotes like 15.6 inch -> 15.6&quot;" style="flex: 1;">
+                <button class="btn btn-primary" onclick="addNormalizationRule()">Add Rule</button>
+            </div>
+        </div>
+
+        <!-- Panel: Compiled Preview -->
+        <div class="panel">
+            <h2>Compiled System Prompt Preview</h2>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-top: -10px;">
+                This is the exact string generated from the settings above and sent as context to the Gemini Vision API.
+            </p>
+            <div class="preview-card" id="compiled-preview">
+                Loading preview...
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+                <button class="btn btn-secondary" onclick="resetDefaultPromptSettings()">Reset to Defaults</button>
+                <button class="btn btn-primary" style="padding: 12px 28px;" onclick="saveAllSettings()">Save Settings</button>
             </div>
         </div>
     </div>
 
     <div id="toast-container"></div>
 
+    <script src="assets/js/api.js"></script>
     <script>
-        let dictionary = {};
-        let config = {};
+        let promptSettings = {
+            role: '',
+            translations: {},
+            formatting_rules: [],
+            schema_rules: {}
+        };
+        let geminiApiKey = '';
+
+        const DEFAULT_ROLE = "You are a warehouse inventory auditor. Analyze this handwritten intake form image and extract all table rows.";
+        const DEFAULT_TRANSLATIONS = {
+            "pb": "ProBook",
+            "eb": "EliteBook",
+            "tp": "ThinkPad",
+            "pd": "ProDesk"
+        };
+        const DEFAULT_FORMATTING_RULES = [
+            "Correct handwriting misreadings: '15' or '17' representing CPU processors must be formatted as 'i5' or 'i7' (e.g., output 'i5-8th' instead of '15-8th' or '15-8').",
+            "Generation suffix: Standalone CPU generation numbers (like 4, 6, 7, 8) must be standardized to include 'th' (e.g. '6th', '7th', '8th', '4th'). Ensure there are no double suffixes like '8thth'.",
+            "Include model names/numbers (like 5414, 5410, A140, V110, B300, FZ-G1, CF33, 5400, F110) in the 'Item' name itself.",
+            "Specs slash rule: ensure no spaces around slashes in specs like '8 / 256' -> '8/256'."
+        ];
+        const DEFAULT_SCHEMA_RULES = {
+            'Date': "format as YYYY-MM-DD. Note that the date is written once at the start of a section and should propagate downward to all rows in that section, e.g. 6/19 should format as 2026-06-19",
+            'QTY': "integer, quantity value",
+            'Item': "string, name of the item. Correct handwriting spelling mistakes, translate abbreviations using the translation rules, and prepend brand names where missing (e.g., HP ProBook, Lenovo ThinkPad, Dell Latitude, Panasonic, Getac)",
+            'Serial': "string, containing whatever is written in the Serial column of the sheet. If a CPU configuration (e.g. i5, i5-8th, i7-6th, 6th-7th) or model number is written in the Serial column, do NOT ignore it; extract it into the 'Serial' field so that our system can merge it into the 'Item' name. Leave empty ONLY if the Serial column on the sheet is physically blank.",
+            'Location': "string, standardized as Letter-Number format like E-9, C-3, M-1, etc.",
+            'Notes': "string, any additional comments written"
+        };
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadDictionary();
             loadConfig();
         });
 
         async function loadConfig() {
-            try {
-                const response = await fetch('process.php?action=get_config');
-                const result = await response.json();
-                if (result.success) {
-                    config = (result.config && !Array.isArray(result.config)) ? result.config : {};
-                    if (config.gemini_api_key) {
-                        document.getElementById('gemini-key').value = config.gemini_api_key;
-                    }
-                }
-            } catch (e) {
-                showToast('Failed to load API settings', 'error');
-            }
+            const config = await API.getConfig() || {};
+            geminiApiKey = config.gemini_api_key || '';
+            document.getElementById('gemini-key').value = geminiApiKey;
+
+            promptSettings = config.prompt_settings || {};
+            if (!promptSettings.role) promptSettings.role = DEFAULT_ROLE;
+            if (!promptSettings.translations) promptSettings.translations = { ...DEFAULT_TRANSLATIONS };
+            if (!promptSettings.formatting_rules) promptSettings.formatting_rules = [...DEFAULT_FORMATTING_RULES];
+            if (!promptSettings.schema_rules) promptSettings.schema_rules = { ...DEFAULT_SCHEMA_RULES };
+
+            initUI();
         }
 
-        async function saveConfig() {
-            const keyVal = document.getElementById('gemini-key').value.trim();
-            config.gemini_api_key = keyVal;
-            try {
-                const response = await fetch('process.php?action=save_config', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(config)
-                });
-                const result = await response.json();
-                if (result.success) {
-                    showToast('Gemini API settings saved successfully', 'success');
-                } else {
-                    showToast('Failed to save settings: ' + result.error, 'error');
-                }
-            } catch (e) {
-                showToast('Failed to save API settings', 'error');
-            }
+        function initUI() {
+            document.getElementById('prompt-role').value = promptSettings.role;
+            
+            // Build Schema UI
+            const schemaContainer = document.getElementById('schema-rules-container');
+            schemaContainer.innerHTML = '';
+            Object.keys(promptSettings.schema_rules).forEach(field => {
+                const label = document.createElement('div');
+                label.className = 'schema-field';
+                label.textContent = field;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = promptSettings.schema_rules[field];
+                input.oninput = (e) => {
+                    promptSettings.schema_rules[field] = e.target.value;
+                    updatePreview();
+                };
+
+                schemaContainer.appendChild(label);
+                schemaContainer.appendChild(input);
+            });
+
+            renderTranslations();
+            renderFormattingRules();
+            updatePreview();
         }
 
-        async function loadDictionary() {
-            try {
-                const response = await fetch('process.php');
-                const result = await response.json();
-                if (result.success) {
-                    dictionary = result.dictionary || {};
-                    renderDictionary();
-                }
-            } catch (e) {
-                showToast('Failed to load dictionary', 'error');
-            }
-        }
-
-        function renderDictionary() {
+        function renderTranslations() {
             const grid = document.getElementById('dict-grid');
             grid.innerHTML = '';
             
-            const keys = Object.keys(dictionary);
+            const keys = Object.keys(promptSettings.translations);
             if (keys.length === 0) {
-                grid.innerHTML = '<p style="color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px;">No custom dictionary rules defined yet.</p>';
+                grid.innerHTML = '<p style="color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px;">No custom translations added yet.</p>';
                 return;
             }
 
@@ -383,55 +289,154 @@
                     <div class="dict-info">
                         <span class="dict-key">${escapeHtml(key)}</span>
                         <span class="dict-arrow">→</span>
-                        <span class="dict-val">${escapeHtml(dictionary[key])}</span>
+                        <span class="dict-val">${escapeHtml(promptSettings.translations[key])}</span>
                     </div>
-                    <button class="btn btn-delete" onclick="removeDictionaryRule('${key}')">Delete</button>
+                    <button class="btn btn-delete" onclick="removeTranslationRule('${key}')">Delete</button>
                 `;
                 grid.appendChild(row);
             });
         }
 
-        async function addDictionaryRule() {
+        function addTranslationRule() {
             const keyInput = document.getElementById('dict-key');
+            const valInput = document.getElementById('dict-val');
             const key = keyInput.value.trim().toLowerCase();
-            
-            if (!key) {
-                showToast('Please enter a variation tag', 'error');
+            const val = valInput.value.trim();
+
+            if (!key || !val) {
+                showToast('Please enter both abbreviation tag and replacement value', 'error');
                 return;
             }
 
-            dictionary[key] = 'Serial';
+            promptSettings.translations[key] = val;
             keyInput.value = '';
-            renderDictionary();
-            await saveDictionaryToServer();
+            valInput.value = '';
+            renderTranslations();
+            updatePreview();
         }
 
-        async function removeDictionaryRule(key) {
-            delete dictionary[key];
-            renderDictionary();
-            await saveDictionaryToServer();
+        function removeTranslationRule(key) {
+            delete promptSettings.translations[key];
+            renderTranslations();
+            updatePreview();
         }
 
-        async function saveDictionaryToServer() {
-            try {
-                const response = await fetch('process.php?action=save_dictionary', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(dictionary)
-                });
-                const result = await response.json();
-                if (result.success) {
-                    showToast('Dictionary updated successfully', 'success');
-                } else {
-                    showToast('Failed to save rules: ' + result.error, 'error');
-                }
-            } catch (e) {
-                showToast('Failed to save dictionary', 'error');
+        function renderFormattingRules() {
+            const list = document.getElementById('rules-list');
+            list.innerHTML = '';
+            
+            if (promptSettings.formatting_rules.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px;">No custom formatting rules defined.</p>';
+                return;
             }
+
+            promptSettings.formatting_rules.forEach((rule, idx) => {
+                const item = document.createElement('div');
+                item.className = 'rule-item';
+                item.innerHTML = `
+                    <span class="dict-key" style="background: rgba(255,255,255,0.05); color: var(--text-dim);">${idx + 1}</span>
+                    <span class="rule-text">${escapeHtml(rule)}</span>
+                    <button class="btn btn-delete" style="padding: 4px 8px; font-size: 0.75rem;" onclick="removeFormattingRule(${idx})">Remove</button>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function addFormattingRule() {
+            const input = document.getElementById('new-rule');
+            const rule = input.value.trim();
+
+            if (!rule) {
+                showToast('Please enter a formatting rule', 'error');
+                return;
+            }
+
+            promptSettings.formatting_rules.push(rule);
+            input.value = '';
+            renderFormattingRules();
+            updatePreview();
+        }
+
+        function removeFormattingRule(index) {
+            promptSettings.formatting_rules.splice(index, 1);
+            renderFormattingRules();
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const role = document.getElementById('prompt-role').value.trim();
+            promptSettings.role = role || DEFAULT_ROLE;
+
+            let prompt = promptSettings.role + "\n\nFor each row, extract:\n";
+            Object.keys(promptSettings.schema_rules).forEach(field => {
+                prompt += `- '${field}' (${promptSettings.schema_rules[field]})\n`;
+            });
+
+            const trans = [];
+            Object.keys(promptSettings.translations).forEach(abbr => {
+                const val = promptSettings.translations[abbr];
+                if (abbr && val) {
+                    trans.push(`${abbr} -> ${val}`);
+                }
+            });
+            if (trans.length > 0) {
+                prompt += `\nUse these translation rules for abbreviations in item names: ${trans.join(', ')}.\n`;
+            }
+
+            if (promptSettings.formatting_rules.length > 0) {
+                prompt += "\nNormalization rules for 'Item' name:\n";
+                promptSettings.formatting_rules.forEach((rule, i) => {
+                    if (rule.trim()) {
+                        prompt += `${i + 1}. ${rule}\n`;
+                    }
+                });
+            }
+
+            prompt += "\nReturn a JSON array of these row objects. If a field is empty, return an empty string. Output ONLY the JSON array (do not wrap in markdown ```json blocks).";
+
+            document.getElementById('compiled-preview').textContent = prompt;
+        }
+
+        async function saveAllSettings() {
+            geminiApiKey = document.getElementById('gemini-key').value.trim();
+            const config = {
+                gemini_api_key: geminiApiKey,
+                prompt_settings: promptSettings
+            };
+
+            const result = await API.saveConfig(config);
+            if (result && result.success) {
+                showToast('All settings and compiled prompt settings saved successfully', 'success');
+            } else {
+                showToast('Failed to save settings: ' + (result?.error || 'Unknown error'), 'error');
+            }
+        }
+
+        function resetDefaultPromptSettings() {
+            promptSettings = {
+                role: DEFAULT_ROLE,
+                translations: { ...DEFAULT_TRANSLATIONS },
+                formatting_rules: [...DEFAULT_FORMATTING_RULES],
+                schema_rules: { ...DEFAULT_SCHEMA_RULES }
+            };
+            initUI();
+            showToast('Settings reset to defaults. Click Save Settings to persist.', 'info');
         }
 
         function escapeHtml(str) {
             return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        async function clearHistoryLog() {
+            if (!confirm('Are you sure you want to clear all committed records from the SQLite database? This cannot be undone.')) {
+                return;
+            }
+            const success = await API.clearCommitted();
+            if (success) {
+                showToast('Database log cleared successfully', 'success');
+            } else {
+                showToast('Failed to clear database log', 'error');
+            }
         }
 
         function showToast(message, type = 'success') {
@@ -439,7 +444,7 @@
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
             
-            let icon = type === 'success' ? '✓' : '⚠';
+            let icon = type === 'success' ? '✓' : (type === 'info' ? 'ℹ' : '⚠');
             toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
             
             container.appendChild(toast);

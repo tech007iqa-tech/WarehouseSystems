@@ -13,6 +13,7 @@ $routes = [
     'leads'             => ['page' =>'pages/leads.php',            'css' => 'leads.css'],
     'warehouse'         => ['page' =>'pages/warehouse.php',        'css' => 'warehouse.css'],
     'import_warehouse'  => ['page' =>'pages/import_warehouse.php', 'css' => 'warehouse.css'],
+    'inbound'           => ['page' =>'pages/inbound.php',          'css' => 'inbound.css'],
     'settings'          => ['page' =>'pages/settings.php',         'css' => 'style.css'],
     'calendar'          => ['page' =>'pages/calendar.php',         'css' => 'calendar.css'],
     'default'           => ['page' =>'pages/customer_registry.php','css' => 'customer_registry.css'],
@@ -26,7 +27,7 @@ $active_key = $is_new_order ? 'new_order' : (isset($routes[$view]) ? $view : 'de
 // --- ROLE BASED ACCESS CONTROL ---
 $user_role = $_SESSION['role'] ?? 'Operator';
 if ($user_role === 'Operator') {
-    $allowed_operator_keys = ['warehouse', 'import_warehouse', 'settings'];
+    $allowed_operator_keys = ['warehouse', 'import_warehouse', 'inbound', 'settings'];
     if (!in_array($active_key, $allowed_operator_keys)) {
         $active_key = 'warehouse';
     }
@@ -131,6 +132,13 @@ $page_content = ob_get_clean();
                 </a>
                 <?php endif; ?>
 
+                <?php if (isset($_GET['view']) && $_GET['view'] === 'inbound'): ?>
+                <span class="separator">/</span>
+                <a href="#" class="crumb active">
+                    <span class="step-num">📥</span> Inbound
+                </a>
+                <?php endif; ?>
+
                 <?php if (isset($_GET['view']) && $_GET['view'] === 'settings'): ?>
                 <span class="separator">/</span>
                 <a href="#" class="crumb active">
@@ -157,6 +165,12 @@ $page_content = ob_get_clean();
                 <a href="index.php?view=warehouse" class="crumb <?= !isset($_GET['view']) || $_GET['view'] === 'warehouse' ? 'active' : '' ?>">
                     <span class="step-num">🏬</span> Warehouse Portal
                 </a>
+                <?php if (isset($_GET['view']) && $_GET['view'] === 'inbound'): ?>
+                <span class="separator">/</span>
+                <a href="#" class="crumb active">
+                    <span class="step-num">📥</span> Inbound Portal
+                </a>
+                <?php endif; ?>
                 <?php if (isset($_GET['view']) && $_GET['view'] === 'settings'): ?>
                 <span class="separator">/</span>
                 <a href="#" class="crumb active">
@@ -202,6 +216,12 @@ $page_content = ob_get_clean();
                     </a>
                 <?php endif; ?>
 
+                <?php if ($user_role === 'Admin' || $user_role === 'Operator'): ?>
+                    <a href="index.php?view=inbound" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'inbound' ? 'active' : '' ?>">
+                        <span>📥</span> Inbound
+                    </a>
+                <?php endif; ?>
+
                 <a href="index.php?view=settings" class="dropdown-item <?= isset($_GET['view']) && $_GET['view'] === 'settings' ? 'active' : '' ?>">
                     <span>⚙️</span> Settings
                 </a>
@@ -230,7 +250,7 @@ $page_content = ob_get_clean();
         </script>
     </div>
 
-    <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse', 'calendar']) ? 'order-view' : '' ?>" role="main">
+    <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse', 'calendar', 'inbound']) ? 'order-view' : '' ?>" role="main">
         <?= $page_content ?>
     </div>
     <?php if ($active_key !== 'calendar'): ?>
@@ -250,6 +270,8 @@ $page_content = ob_get_clean();
         <script src="assets/js/leads.js?v=<?= filemtime('assets/js/leads.js') ?>" defer></script>
     <?php elseif ($active_key === 'orders'): ?>
         <script src="assets/js/orders.js?v=<?= filemtime('assets/js/orders.js') ?>" defer></script>
+    <?php elseif ($active_key === 'inbound'): ?>
+        <script src="assets/js/inbound.js?v=<?= filemtime('assets/js/inbound.js') ?>" defer></script>
     <?php endif; ?>
     <!-- Global Dialog Engine -->
     <script src="assets/js/dialogEngine.js?v=<?= filemtime('assets/js/dialogEngine.js') ?>"></script>
