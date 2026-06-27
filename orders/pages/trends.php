@@ -1150,70 +1150,110 @@ function filterActiveTable() {
     const activeTab = document.querySelector('.tab-content.active');
     if (!activeTab) return;
 
-    const table = activeTab.querySelector('.trends-table');
-    if (!table) return;
+    const tables = activeTab.querySelectorAll('.trends-table');
+    if (tables.length === 0) return;
 
     const showInStockOnly = activeTab.querySelector('.in-stock-only-checkbox')?.checked || false;
-    const rows = table.querySelectorAll('tbody tr:not(.no-results-row)');
-    let visibleCount = 0;
-
-    // Split query into individual keywords
     const queryWords = query.split(/\s+/).filter(w => w.length > 0);
     const isSearchActive = queryWords.length > 0;
 
-    if (table.id === 'table-velocity') {
-        // Toggle Rank vs Customer and Latest Sold vs Customer Order columns based on search state
-        const rankHeaders = table.querySelectorAll('.rank-header');
-        const buyerHeaders = table.querySelectorAll('.buyer-header');
-        const rankCells = table.querySelectorAll('.rank-cell');
-        const buyerCells = table.querySelectorAll('.buyer-cell');
+    let totalVisibleCount = 0;
 
-        const stockHeaders = table.querySelectorAll('.stock-header');
-        const orderHeaders = table.querySelectorAll('.order-header');
-        const stockCells = table.querySelectorAll('.stock-cell');
-        const orderCells = table.querySelectorAll('.order-cell');
+    tables.forEach(table => {
+        const rows = table.querySelectorAll('tbody tr:not(.no-results-row)');
+        let visibleCount = 0;
 
-        rankHeaders.forEach(el => el.style.display = isSearchActive ? 'none' : '');
-        buyerHeaders.forEach(el => el.style.display = isSearchActive ? '' : 'none');
-        rankCells.forEach(el => el.style.display = isSearchActive ? 'none' : '');
-        buyerCells.forEach(el => el.style.display = isSearchActive ? '' : 'none');
+        if (table.id === 'table-velocity') {
+            // Toggle Rank vs Customer and Latest Sold vs Customer Order columns based on search state
+            const rankHeaders = table.querySelectorAll('.rank-header');
+            const buyerHeaders = table.querySelectorAll('.buyer-header');
+            const rankCells = table.querySelectorAll('.rank-cell');
+            const buyerCells = table.querySelectorAll('.buyer-cell');
 
-        stockHeaders.forEach(el => el.style.display = isSearchActive ? 'none' : '');
-        orderHeaders.forEach(el => el.style.display = isSearchActive ? '' : 'none');
-        stockCells.forEach(el => el.style.display = isSearchActive ? 'none' : '');
-        orderCells.forEach(el => el.style.display = isSearchActive ? '' : 'none');
-    }
+            const stockHeaders = table.querySelectorAll('.stock-header');
+            const orderHeaders = table.querySelectorAll('.order-header');
+            const stockCells = table.querySelectorAll('.stock-cell');
+            const orderCells = table.querySelectorAll('.order-cell');
 
-    rows.forEach(row => {
-        const searchText = row.getAttribute('data-search') || '';
-        const inStock = parseInt(row.getAttribute('data-instock') || '1', 10);
+            rankHeaders.forEach(el => el.style.display = isSearchActive ? 'none' : '');
+            buyerHeaders.forEach(el => el.style.display = isSearchActive ? '' : 'none');
+            rankCells.forEach(el => el.style.display = isSearchActive ? 'none' : '');
+            buyerCells.forEach(el => el.style.display = isSearchActive ? '' : 'none');
 
-        // Multi-keyword flexible matching: every keyword must be present
-        const matchesSearch = !isSearchActive || queryWords.every(word => searchText.includes(word));
-        const matchesStock = !showInStockOnly || inStock > 0;
+            stockHeaders.forEach(el => el.style.display = isSearchActive ? 'none' : '');
+            orderHeaders.forEach(el => el.style.display = isSearchActive ? '' : 'none');
+            stockCells.forEach(el => el.style.display = isSearchActive ? 'none' : '');
+            orderCells.forEach(el => el.style.display = isSearchActive ? '' : 'none');
+        }
 
-        if (matchesSearch && matchesStock) {
-            row.style.display = '';
-            visibleCount++;
-            highlightRowText(row, queryWords);
-        } else {
-            row.style.display = 'none';
-            clearHighlight(row);
+        rows.forEach(row => {
+            const searchText = row.getAttribute('data-search') || '';
+            const inStock = parseInt(row.getAttribute('data-instock') || '1', 10);
+
+            // Multi-keyword flexible matching: every keyword must be present
+            const matchesSearch = !isSearchActive || queryWords.every(word => searchText.includes(word));
+            const matchesStock = !showInStockOnly || inStock > 0;
+
+            if (matchesSearch && matchesStock) {
+                row.style.display = '';
+                visibleCount++;
+                totalVisibleCount++;
+                highlightRowText(row, queryWords);
+            } else {
+                row.style.display = 'none';
+                clearHighlight(row);
+            }
+        });
+
+        // Toggle visibility of the table's container and its preceding heading based on visible row count
+        const container = table.closest('.trends-table-container');
+        if (container) {
+            let prev = container.previousElementSibling;
+            while (prev && prev.tagName !== 'H3' && prev.className !== 'tab-content') {
+                prev = prev.previousElementSibling;
+            }
+
+            if (visibleCount === 0 && isSearchActive) {
+                container.style.display = 'none';
+                if (prev && prev.tagName === 'H3') {
+                    prev.style.display = 'none';
+                }
+            } else {
+                container.style.display = '';
+                if (prev && prev.tagName === 'H3') {
+                    prev.style.display = '';
+                }
+            }
+        }
+
+        let noResultsRow = table.querySelector('.no-results-row');
+        if (visibleCount === 0 && !isSearchActive) {
+            if (!noResultsRow) {
+                const cols = table.querySelectorAll('thead th').length;
+                noResultsRow = document.createElement('tr');
+                noResultsRow.className = 'no-results-row';
+                noResultsRow.innerHTML = `<td colspan="${cols}" style="text-align: center; padding: 30px; font-style: italic; color: var(--text-secondary);">No records match the current filters.</td>`;
+                table.querySelector('tbody').appendChild(noResultsRow);
+            }
+            noResultsRow.style.display = '';
+        } else if (noResultsRow) {
+            noResultsRow.style.display = 'none';
         }
     });
 
-    let noResultsRow = table.querySelector('.no-results-row');
-    if (visibleCount === 0) {
-        if (!noResultsRow) {
-            const cols = table.querySelectorAll('thead th').length;
-            noResultsRow = document.createElement('tr');
-            noResultsRow.className = 'no-results-row';
-            noResultsRow.innerHTML = `<td colspan="${cols}" style="text-align: center; padding: 30px; font-style: italic; color: var(--text-secondary);">No records match the current filters.</td>`;
-            table.querySelector('tbody').appendChild(noResultsRow);
+    // Global no-results feedback for multi-table views when everything is hidden
+    let globalNoResults = activeTab.querySelector('.global-no-results');
+    if (totalVisibleCount === 0 && isSearchActive) {
+        if (!globalNoResults) {
+            globalNoResults = document.createElement('div');
+            globalNoResults.className = 'global-no-results';
+            globalNoResults.style.cssText = 'text-align: center; padding: 40px; font-style: italic; color: var(--text-secondary); background: var(--bg-surface); border-radius: 8px; border: 1px solid var(--border-color); margin-top: 20px;';
+            globalNoResults.innerText = 'No records match the search query across any category.';
+            activeTab.appendChild(globalNoResults);
         }
-        noResultsRow.style.display = '';
-    } else if (noResultsRow) {
-        noResultsRow.style.display = 'none';
+        globalNoResults.style.display = 'block';
+    } else if (globalNoResults) {
+        globalNoResults.style.display = 'none';
     }
 }
 
