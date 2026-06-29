@@ -86,7 +86,7 @@
 /* Grid System */
 .calendar-grid-header {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     background: #1e293b;
     color: white;
     border-bottom: 1px solid var(--border-color);
@@ -140,13 +140,12 @@
 
 .calendar-month-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(5, 1fr);
 }
 
 /* Weekly Rows */
 .weekly-scroll-area {
-    max-height: 700px;
-    overflow-y: auto;
+    /* Stretch to page height without vertical scroll restriction */
 }
 
 .weekly-row {
@@ -155,6 +154,17 @@
     border-bottom: 1px solid #f1f5f9;
     position: relative;
     /* Context for children */
+}
+
+/* Colorless calendar improvement: Zebra striping/alternative row colors using light blue */
+.weekly-row:nth-child(even) {
+    background-color: #f0f9ff;
+}
+.weekly-row:nth-child(even) .grid-cell {
+    background-color: #f0f9ff;
+}
+.weekly-row:nth-child(even) .time-slot-label {
+    background-color: #e0f2fe;
 }
 
 .time-slot-label {
@@ -643,6 +653,9 @@
 [data-theme="dark"] .calendar-grid-header { background: var(--bg-surface-2) !important; color: var(--text-main) !important; border-color: var(--border-color) !important; }
 [data-theme="dark"] .grid-cell { border-color: var(--border-color) !important; }
 [data-theme="dark"] .grid-cell:hover { background: var(--bg-surface-2) !important; }
+[data-theme="dark"] .weekly-row:nth-child(even) { background-color: rgba(56, 189, 248, 0.03) !important; }
+[data-theme="dark"] .weekly-row:nth-child(even) .grid-cell { background-color: rgba(56, 189, 248, 0.03) !important; }
+[data-theme="dark"] .weekly-row:nth-child(even) .time-slot-label { background-color: rgba(56, 189, 248, 0.07) !important; }
 [data-theme="dark"] .time-slot-label { background: var(--bg-panel) !important; border-color: var(--border-color) !important; color: var(--text-secondary) !important; }
 [data-theme="dark"] .modal-content-glass { background: var(--bg-panel) !important; color: var(--text-main) !important; }
 [data-theme="dark"] .view-controls, [data-theme="dark"] .month-controls { background: var(--bg-surface-2) !important; border-color: var(--border-color) !important; }

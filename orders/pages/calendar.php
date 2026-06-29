@@ -196,15 +196,25 @@ if ($current_view === 'week') {
         <?php else: ?>
             <!-- Monthly View -->
             <div class="calendar-grid-header">
-                <div class="header-cell">Sun</div><div class="header-cell">Mon</div><div class="header-cell">Tue</div><div class="header-cell">Wed</div><div class="header-cell">Thu</div><div class="header-cell">Fri</div><div class="header-cell">Sat</div>
+                <div class="header-cell">Mon</div><div class="header-cell">Tue</div><div class="header-cell">Wed</div><div class="header-cell">Thu</div><div class="header-cell">Fri</div>
             </div>
             <div class="calendar-month-grid">
                 <?php
-                for ($x = 0; $x < $day_of_week; $x++) {
+                $first_day_dw = (int)date('N', $first_day_of_month); // 1 (Mon) to 7 (Sun)
+                $offset = ($first_day_dw <= 5) ? ($first_day_dw - 1) : 0;
+                $rendered_days_count = 0;
+
+                for ($x = 0; $x < $offset; $x++) {
                     echo '<div class="grid-cell muted"></div>';
                 }
 
                 for ($i = 1; $i <= $number_of_days; $i++):
+                    $current_date_ts = mktime(0, 0, 0, $month, $i, $year);
+                    $dw = (int)date('N', $current_date_ts);
+                    if ($dw > 5) {
+                        continue; // Skip Saturday and Sunday
+                    }
+                    $rendered_days_count++;
                     $current_date = sprintf('%04d-%02d-%02d', $year, $month, $i);
                     $is_today = ($current_date == date('Y-m-d')) ? 'is-today' : '';
                 ?>
@@ -232,9 +242,9 @@ if ($current_view === 'week') {
                     </div>
                 <?php endfor;
 
-                // Fill remaining cells for a consistent 6-row grid (42 cells)
-                $total_cells = $day_of_week + $number_of_days;
-                $remaining_cells = 42 - $total_cells;
+                // Fill remaining cells for a clean grid layout (multiples of 5)
+                $total_cells = $offset + $rendered_days_count;
+                $remaining_cells = (5 - ($total_cells % 5)) % 5;
                 for ($x = 0; $x < $remaining_cells; $x++) {
                     echo '<div class="grid-cell muted"></div>';
                 }

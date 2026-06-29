@@ -250,7 +250,7 @@ $page_content = ob_get_clean();
         </script>
     </div>
 
-    <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse', 'calendar', 'inbound']) ? 'order-view' : '' ?>" role="main">
+    <div class="container <?= in_array($active_key, ['new_order', 'orders', 'warehouse', 'leads', 'import_warehouse', 'calendar', 'inbound', 'trends']) ? 'order-view' : '' ?>" role="main">
         <?= $page_content ?>
     </div>
     <?php if ($active_key !== 'calendar'): ?>

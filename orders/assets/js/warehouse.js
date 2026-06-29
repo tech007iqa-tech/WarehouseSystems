@@ -96,6 +96,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     initWarehouseSpreadsheetEvents();
+
+    // Intercept delete forms to prevent full-page reload and scrolling
+    document.addEventListener('submit', async (e) => {
+        const form = e.target;
+        const actionInput = form.querySelector('input[name="action"]');
+        if (actionInput && actionInput.value === 'delete_inventory') {
+            if (e.defaultPrevented) {
+                return;
+            }
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(form.action || window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.ok) {
+                    const row = form.closest('tr');
+                    if (row) {
+                        row.style.transition = 'all 0.3s ease';
+                        row.style.opacity = '0';
+                        row.style.transform = 'translateX(20px)';
+                        setTimeout(() => {
+                            row.remove();
+                            // Force sync to update sums/totals if AppSync exists
+                            if (window.AppSync && typeof window.AppSync.sync === 'function') {
+                                window.AppSync.sync('inventory-list');
+                            }
+                        }, 300);
+                    }
+                } else {
+                    alert("Failed to delete the item. Please try again.");
+                    if (submitBtn) submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Error deleting item:", error);
+                alert("An error occurred. Please try again.");
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        }
+    });
 });
 
 /**

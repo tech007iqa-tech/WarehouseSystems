@@ -67,7 +67,8 @@
     border-radius: 8px;
     font-weight: 800;
     font-size: 1.1rem;
-    background: #fff;
+    background: var(--bg-panel);
+    color: var(--text-main);
     transition: all 0.2s;
 }
 
@@ -80,7 +81,8 @@
     border-radius: 8px;
     font-weight: 800;
     font-size: 1.1rem;
-    background: #fff;
+    background: var(--bg-panel);
+    color: var(--text-main);
     transition: all 0.2s;
 }
 
@@ -352,4 +354,19 @@
 @media (max-width: 500px) {
     .modal-grid { grid-template-columns: 1fr; }
     .modal-grid .form-group { grid-column: span 1 !important; }
+}
+
+/* Prevent inputs from inheriting global checkmark background and padding overrides on value validation */
+.qty-input {
+    background-image: none !important;
+    padding-right: 0 !important;
+    padding-left: 0 !important;
+    animation: none !important;
+}
+
+.price-input {
+    background-image: none !important;
+    padding-right: 10px !important;
+    padding-left: 10px !important;
+    animation: none !important;
 }

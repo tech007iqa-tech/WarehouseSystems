@@ -114,6 +114,7 @@
                 <h2>2. Verify & Normalize Rows</h2>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <button id="btn-undo" class="btn btn-secondary" onclick="undoCapture()" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 8px; display: none;">↩ Undo Last Capture</button>
+                    <button id="btn-validate-warehouse" class="btn btn-primary" onclick="Grid.sendToWarehouseImport()" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 8px; background: var(--accent-blue); border: none;">🔍 Validate & Preview</button>
                     <div class="confidence-summary" id="confidence-summary">
                         Confidence: --
                     </div>
@@ -159,8 +160,8 @@
 
     <script src="assets/js/api.js"></script>
     <script src="assets/js/viewer.js"></script>
-    <script src="assets/js/grid.js"></script>
+    <script src="assets/js/grid.js?v=1.0.1"></script>
     <script src="assets/js/dragdrop.js"></script>
-    <script src="assets/js/audit.js"></script>
+    <script src="assets/js/audit.js?v=1.0.1"></script>
 </body>
 </html>

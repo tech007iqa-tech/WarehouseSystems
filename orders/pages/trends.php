@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['ac
     $cpu_gen = $input['cpu_gen'] ?? '';
     $grade = $input['grade'] ?? '';
     $price = isset($input['price']) ? (float)$input['price'] : 0.00;
-    
+
     if (!empty($category) && !empty($cpu_gen) && !empty($grade)) {
         try {
             $conn_wh = Database::warehouse();
@@ -248,11 +248,11 @@ try {
             $total_ryzen_sold = $cpu['total_qty'];
         }
     }
-    
+
     // Fetch Pricing Matrix Rules
     $conn_wh = Database::warehouse();
     $pricing_rules_raw = $conn_wh->query("SELECT * FROM pricing_rules ORDER BY category ASC, id ASC")->fetchAll(PDO::FETCH_ASSOC);
-    
+
     $pricing_matrix = [];
     foreach ($pricing_rules_raw as $rule) {
         $pricing_matrix[$rule['category']][$rule['cpu_gen']][$rule['grade']] = $rule['price'];
@@ -412,7 +412,7 @@ if ($is_using_mock_data) {
 
                 <div class="scroll-hint">↔️ Swipe horizontally to view all columns</div>
                 <div class="trends-table-container">
-                    <table class="trends-table" id="table-velocity">
+                    <table class="trends-table" id="table-velocity" style="width: max-content; margin-right: 0;margin-left:0">
                         <thead>
                             <tr>
                                 <th onclick="sortTable('table-velocity', 0, 'num')">
@@ -1721,7 +1721,7 @@ function loadWidgetConfig() {
     } else {
         widgetsConfig = [...DEFAULT_WIDGET_CONFIG];
     }
-    
+
     // Ensure all default metrics are in config
     DEFAULT_WIDGET_CONFIG.forEach(def => {
         if (!widgetsConfig.some(w => w.id === def.id)) {
@@ -1734,7 +1734,7 @@ function loadWidgetConfig() {
     const board = document.getElementById('widget-board');
     const toggleBtn = document.getElementById('toggle-widgets-btn');
     const configBtn = document.getElementById('config-widgets-btn');
-    
+
     if (boardVisible) {
         board.style.display = 'grid';
         toggleBtn.textContent = '🙈 Hide Summary Cards';
@@ -1792,7 +1792,7 @@ function renderWidgetToggles() {
 
         const label = document.createElement('label');
         label.style.cssText = 'display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; background: var(--bg-surface-2); padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border-color);';
-        
+
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.style.cssText = 'width: 16px; height: 16px; margin: 0; cursor: pointer;';
@@ -1854,8 +1854,8 @@ function renderWidgetBoard() {
             card.innerHTML += `
                 <div style="font-size: 2rem;">📝</div>
                 <div style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary);">${item.title || 'Note'}</div>
-                <textarea style="width: 100%; height: 80px; background: var(--bg-surface-2); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-family: inherit; font-size: 0.85rem; padding: 8px; resize: none; outline: none; margin-top: 4px;" 
-                          placeholder="Type your notes here..." 
+                <textarea style="width: 100%; height: 80px; background: var(--bg-surface-2); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-main); font-family: inherit; font-size: 0.85rem; padding: 8px; resize: none; outline: none; margin-top: 4px;"
+                          placeholder="Type your notes here..."
                           oninput="updateNoteText('${item.id}', this.value)">${noteText}</textarea>
             `;
         } else if (item.type === 'custom') {
@@ -2058,7 +2058,7 @@ function handleDragEnd(e) {
             </div>
             <button type="button" onclick="closeOrderPreviewModal()" style="background:none; border:none; cursor:pointer; font-size:1.5rem; color:var(--text-secondary); opacity:0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">&times;</button>
         </div>
-        
+
         <div id="preview-loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; gap: 15px;">
             <div class="preview-spinner" style="width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
             <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">Loading manifest details...</span>
@@ -2119,7 +2119,7 @@ function handleDragEnd(e) {
             </div>
             <button type="button" onclick="closeCpuPricingModal()" style="background:none; border:none; cursor:pointer; font-size:1.5rem; color:var(--text-secondary); opacity:0.6; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.6">&times;</button>
         </div>
-        
+
         <div id="cpu-loading" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 0; gap: 15px;">
             <div class="preview-spinner" style="width: 40px; height: 40px; border: 4px solid var(--border-color); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite;"></div>
             <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">Loading CPU metrics...</span>
@@ -2434,7 +2434,7 @@ function closeCpuPricingModal() {
 function updateMatrixCell(category, cpu_gen, grade, price) {
     const parsedPrice = parseFloat(price);
     const sanitizedPrice = isNaN(parsedPrice) ? 0.00 : parsedPrice;
-    
+
     fetch('index.php?view=trends&action=update_pricing_matrix', {
         method: 'POST',
         headers: {

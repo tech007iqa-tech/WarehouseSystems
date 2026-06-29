@@ -39,9 +39,22 @@ const Grid = {
             `;
             tbody.appendChild(tr);
         });
+        
+        this.updateActionButtons();
 
         if (document.getElementById('mode-selector')?.value === 'overlay') {
             this.renderOverlayGrid();
+        }
+    },
+
+    updateActionButtons() {
+        const tbody = document.getElementById('audit-table-body');
+        const btn = document.getElementById('btn-validate-warehouse');
+        if (btn && tbody) {
+            const hasRows = tbody.querySelectorAll('.audit-row-item').length > 0;
+            btn.disabled = !hasRows;
+            btn.style.opacity = hasRows ? '1' : '0.5';
+            btn.style.cursor = hasRows ? 'pointer' : 'not-allowed';
         }
     },
 
@@ -69,6 +82,8 @@ const Grid = {
             </td>
         `;
         tbody.appendChild(tr);
+        
+        this.updateActionButtons();
 
         if (document.getElementById('mode-selector')?.value === 'overlay') {
             this.renderOverlayGrid();
@@ -88,6 +103,8 @@ const Grid = {
                     </td>
                 </tr>`;
         }
+        
+        this.updateActionButtons();
 
         if (document.getElementById('mode-selector')?.value === 'overlay') {
             this.renderOverlayGrid();
@@ -337,6 +354,82 @@ const Grid = {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    },
+
+    async sendToWarehouseImport() {
+        const allRows = document.querySelectorAll('.audit-row-item');
+        const checkedRows = Array.from(allRows).filter(tr => {
+            const chk = tr.querySelector('.cell-approve');
+            return chk && chk.checked;
+        });
+
+        if (checkedRows.length === 0) {
+            window.showToast?.('No approved rows to send', 'error');
+            return;
+        }
+
+        let csvContent = "Date,QTY,Item,Serial,Location,Notes\n";
+        let isValid = true;
+
+        checkedRows.forEach(tr => {
+            const date = tr.querySelector('.cell-date').value;
+            const qty = tr.querySelector('.cell-qty').value;
+            let item = tr.querySelector('.cell-item').value.trim();
+            let serial = tr.querySelector('.cell-serial').value.trim();
+            const location = tr.querySelector('.cell-location').value.trim();
+            const notes = tr.querySelector('.cell-notes').value.trim();
+
+            if (!item || !location) {
+                isValid = false;
+            }
+
+            if (serial) {
+                if (item.toLowerCase().indexOf('serial:') === -1) {
+                    item = `${item} (Serial: ${serial})`;
+                }
+                serial = '';
+            }
+
+            const escapeCSV = (val) => {
+                if (val.indexOf(',') !== -1 || val.indexOf('"') !== -1 || val.indexOf('\n') !== -1) {
+                    return `"${val.replace(/"/g, '""')}"`;
+                }
+                return val;
+            };
+
+            csvContent += `${date},${qty},${escapeCSV(item)},${escapeCSV(serial)},${escapeCSV(location)},${escapeCSV(notes)}\n`;
+        });
+
+        if (!isValid) {
+            window.showToast?.('All approved rows must have an Item Name and Location', 'error');
+            return;
+        }
+
+        try {
+            window.showToast?.('Exporting to warehouse import...', 'success');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const file = new File([blob], 'temp_import.csv', { type: 'text/csv' });
+
+            const formData = new FormData();
+            formData.append('inventory_csv', file);
+
+            const response = await fetch('../orders/index.php?view=import_warehouse', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                window.showToast?.('Redirecting to Warehouse Import preview...', 'success');
+                setTimeout(() => {
+                    window.location.href = '../orders/index.php?view=import_warehouse';
+                }, 800);
+            } else {
+                window.showToast?.('Failed to process CSV on server.', 'error');
+            }
+        } catch (e) {
+            console.error('Error sending CSV to warehouse:', e);
+            window.showToast?.('Network or system error occurred.', 'error');
+        }
     }
 };
 window.Grid = Grid;

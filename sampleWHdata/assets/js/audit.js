@@ -243,6 +243,7 @@ function undoCapture() {
         undoBtn.style.display = 'none';
     }
     
+    Grid.updateActionButtons();
     showToast('Last upload undone successfully', 'success');
 }
 
@@ -263,6 +264,7 @@ function resetAuditState() {
     document.getElementById('ocr-console').textContent = 'Ready to stream extraction text...';
     document.getElementById('confidence-summary').textContent = 'Confidence: --';
     uploadedFiles = [];
+    Grid.updateActionButtons();
 
     undoTableHTML = null;
     undoUploadedFiles = null;
