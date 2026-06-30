@@ -69,7 +69,7 @@ function handleFileSelect(e) {
 function handleFiles(files) {
     if (files.length === 0) return;
     const newFiles = Array.from(files);
-    
+
     // Save state for undo BEFORE adding new files
     const tbody = document.getElementById('audit-table-body');
     if (tbody) {
@@ -82,12 +82,12 @@ function handleFiles(files) {
     if (undoBtn) {
         undoBtn.style.display = 'inline-flex';
     }
-    
+
     const prevLength = uploadedFiles.length;
     uploadedFiles = uploadedFiles.concat(newFiles);
-    
+
     renderThumbnails();
-    
+
     // Sequentially process OCR for newly uploaded files only
     (async () => {
         for (let i = 0; i < newFiles.length; i++) {
@@ -104,15 +104,15 @@ function renderThumbnails() {
     const strip = document.getElementById('thumbnail-strip');
     if (!strip) return;
     strip.innerHTML = '';
-    
+
     uploadedFiles.forEach((file, index) => {
         const thumb = document.createElement('div');
         thumb.className = `thumb ${index === activeImageIndex ? 'active' : ''}`;
         thumb.onclick = () => selectActiveImage(index, false);
-        
+
         const img = document.createElement('img');
         img.src = URL.createObjectURL(file);
-        
+
         thumb.appendChild(img);
         strip.appendChild(thumb);
     });
@@ -129,7 +129,7 @@ function selectActiveImage(index, triggerOCR = false) {
 
     const stage = document.getElementById('viewer-stage');
     if (!stage) return;
-    
+
     // Clear only images and paragraphs
     const existingImgs = stage.querySelectorAll('img');
     existingImgs.forEach(img => img.remove());
@@ -147,11 +147,11 @@ function selectActiveImage(index, triggerOCR = false) {
         if (controls) {
             controls.style.display = 'flex';
         }
-        
+
         currentRotation = 0;
         currentZoom = 1;
         applyImageTransforms();
-        
+
         // Trigger OCR ONLY if explicitly forced
         if (triggerOCR) {
             processOCR();
@@ -162,12 +162,12 @@ function selectActiveImage(index, triggerOCR = false) {
 function resetViewer() {
     const stage = document.getElementById('viewer-stage');
     if (!stage) return;
-    
+
     const existingImgs = stage.querySelectorAll('img');
     existingImgs.forEach(img => img.remove());
     const existingPs = stage.querySelectorAll('p');
     existingPs.forEach(p => p.remove());
-    
+
     const p = document.createElement('p');
     p.style.color = 'var(--text-dim)';
     p.style.fontSize = '0.9rem';
@@ -221,7 +221,7 @@ function preprocessImageForOCR(file) {
         img.onload = () => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            
+
             // Limit max dimension to 2000px to maintain speed while keeping details high
             let width = img.width;
             let height = img.height;
@@ -235,20 +235,20 @@ function preprocessImageForOCR(file) {
                     height = maxDimension;
                 }
             }
-            
+
             canvas.width = width;
             canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
-            
+
             try {
                 const imageData = ctx.getImageData(0, 0, width, height);
                 const data = imageData.data;
-                
+
                 let min = 255;
                 let max = 0;
                 const len = data.length;
                 const brightnessValues = new Uint8Array(len / 4);
-                
+
                 // Grayscale conversion and min/max detection
                 for (let i = 0; i < len; i += 4) {
                     const v = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
@@ -256,11 +256,11 @@ function preprocessImageForOCR(file) {
                     if (v < min) min = v;
                     if (v > max) max = v;
                 }
-                
+
                 // Dynamic thresholding based on the contrast range
                 const range = max - min || 1;
                 const threshold = min + range * 0.45; // 45% threshold
-                
+
                 for (let i = 0; i < len; i += 4) {
                     const v = brightnessValues[i / 4];
                     const newVal = v < threshold ? 0 : 255;
@@ -268,7 +268,7 @@ function preprocessImageForOCR(file) {
                     data[i + 1] = newVal;
                     data[i + 2] = newVal;
                 }
-                
+
                 ctx.putImageData(imageData, 0, 0);
             } catch (e) {
                 console.error("Canvas pixel manipulation failed, using raw canvas:", e);
@@ -499,29 +499,29 @@ async function processOCR() {
         ];
         rows.forEach(r => { r.Item = applyDictionaryMappings(r.Item); });
         rawOCRText = "B2B SALES INTAKE SHEET - 2026-06-20\n\n"
-                + "DATE | QTY | Item | Serial | Location | Notes\n"
-                + "6/19 | 46  | HP 2600K G3 i7 6th | | E-9 |\n"
-                + "     | 1   | PB 430 G4 i5 7th   | | E-2 |\n"
-                + "     | 2   | PB 640 G3 i5 7th   | | E-3 |\n"
-                + "     | 6   | PB 640 G2 i5 6th   | | E-2 |\n"
-                + "     | 7   | PD 640 G2 i7 6th   | | E-1 |\n"
-                + "     | 1   | PB 640 G4 i5 7th   | | E-3 |\n"
-                + "     | 3   | PB 650 G2 i5 6th   | | E-2 |\n"
-                + "     | 3   | EB Folio 1040 G3 i5 6th | | F-1 |\n"
-                + "     | 2   | EB 840 G3 i5 6th   | | C-7 |\n"
-                + "     | 2   | EB 840 G4 i7 6th   | | C-1 |\n"
-                + "     | 2   | PB 430 G3 6th 7th  | | A-2 |\n"
-                + "     | 5   | EB 850 G3 i5 6th   | | C-2 |\n"
-                + "     | 9   | TP 460 i5 6th      | | G-2 |\n"
-                + "     | 6   | TP 470 i5 6th      | | G-1 |\n"
-                + "     | 2   | TP 480 7th         | | G-2 |\n"
-                + "     | 1   | TP 460 i7 6th      | | G-3 |\n"
-                + "     | 5   | TP 470 i7 6th      | | G-3 |\n"
-                + "     | 7   | TP 490 15-8th      | | G-2 |\n"
-                + "     | 2   | TP X1 Carbon 15-G6 | | G-1 |\n"
-                + "     | 1   | TP X1 Carbon 15-8  | | G-1 |\n"
-                + "6-19 | 2   | TP X1 Carbon i7-8  | | G-1 |\n"
-                + "     | 1   | TP AMD Ryzen Pro T495 | | G-3 |";
+            + "DATE | QTY | Item | Serial | Location | Notes\n"
+            + "6/19 | 46  | HP 2600K G3 i7 6th | | E-9 |\n"
+            + "     | 1   | PB 430 G4 i5 7th   | | E-2 |\n"
+            + "     | 2   | PB 640 G3 i5 7th   | | E-3 |\n"
+            + "     | 6   | PB 640 G2 i5 6th   | | E-2 |\n"
+            + "     | 7   | PD 640 G2 i7 6th   | | E-1 |\n"
+            + "     | 1   | PB 640 G4 i5 7th   | | E-3 |\n"
+            + "     | 3   | PB 650 G2 i5 6th   | | E-2 |\n"
+            + "     | 3   | EB Folio 1040 G3 i5 6th | | F-1 |\n"
+            + "     | 2   | EB 840 G3 i5 6th   | | C-7 |\n"
+            + "     | 2   | EB 840 G4 i7 6th   | | C-1 |\n"
+            + "     | 2   | PB 430 G3 6th 7th  | | A-2 |\n"
+            + "     | 5   | EB 850 G3 i5 6th   | | C-2 |\n"
+            + "     | 9   | TP 460 i5 6th      | | G-2 |\n"
+            + "     | 6   | TP 470 i5 6th      | | G-1 |\n"
+            + "     | 2   | TP 480 7th         | | G-2 |\n"
+            + "     | 1   | TP 460 i7 6th      | | G-3 |\n"
+            + "     | 5   | TP 470 i7 6th      | | G-3 |\n"
+            + "     | 7   | TP 490 15-8th      | | G-2 |\n"
+            + "     | 2   | TP X1 Carbon 15-G6 | | G-1 |\n"
+            + "     | 1   | TP X1 Carbon 15-8  | | G-1 |\n"
+            + "6-19 | 2   | TP X1 Carbon i7-8  | | G-1 |\n"
+            + "     | 1   | TP AMD Ryzen Pro T495 | | G-3 |";
     }
 
     if (isTemplate) {
@@ -570,7 +570,7 @@ async function processOCR() {
         }
 
         renderTableRows(rows);
-        
+
         const avgConf = ocrData.AvgConfidence || 98;
         const confSummary = document.getElementById('confidence-summary');
         if (confSummary) {
@@ -730,12 +730,12 @@ async function submitToCSV() {
             body: JSON.stringify(payload)
         });
         const result = await response.json();
-        
+
         if (result.success) {
             showToast(`${payload.length} rows committed to CSV successfully!`, 'success');
             // Remove only the checked/committed rows from the UI instead of resetting the whole state
             checkedRows.forEach(tr => tr.remove());
-            
+
             const tbody = document.getElementById('audit-table-body');
             if (tbody && tbody.rows.length === 0) {
                 resetAuditState();
@@ -748,7 +748,7 @@ async function submitToCSV() {
         showToast(`${payload.length} rows committed successfully (Local Fallback - PHP Offline)`, 'success');
         // Remove only the checked/committed rows from the UI instead of resetting the whole state
         checkedRows.forEach(tr => tr.remove());
-        
+
         const tbody = document.getElementById('audit-table-body');
         if (tbody && tbody.rows.length === 0) {
             resetAuditState();
@@ -770,7 +770,7 @@ function resetAuditState() {
     resetViewer();
     const strip = document.getElementById('thumbnail-strip');
     if (strip) strip.innerHTML = '';
-    
+
     document.getElementById('ocr-console').textContent = 'Ready to stream extraction text...';
     document.getElementById('confidence-summary').textContent = 'Confidence: --';
     uploadedFiles = [];
@@ -790,12 +790,12 @@ function showToast(message, type = 'success') {
     if (!container) return;
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    
+
     let icon = type === 'success' ? '✓' : '⚠';
     toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
-    
+
     container.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.style.animation = 'toastSlideOut 0.3s ease-in forwards';
         setTimeout(() => toast.remove(), 300);
@@ -808,12 +808,12 @@ function toggleMode() {
     const overlayContainer = document.getElementById('grid-overlay-container');
     const adjustmentControls = document.getElementById('overlay-adjustment-controls');
     const floatingAdd = document.getElementById('floating-add-row');
-    
+
     if (mode === 'overlay') {
         overlayContainer.style.display = 'block';
         adjustmentControls.style.display = 'flex';
         if (floatingAdd) floatingAdd.style.display = 'flex';
-        
+
         // If there are currently no rows or just the placeholder, generate 1 blank row
         const tbody = document.getElementById('audit-table-body');
         const rows = document.querySelectorAll('.audit-row-item');
@@ -869,7 +869,7 @@ function renderOverlayGrid() {
         // Sync inputs from overlay back to original table and add keyboard helpers
         overlayInputs.forEach((inp, colIndex) => {
             const targetInput = [dateInput, qtyInput, itemInput, serialInput, locInput, notesInput][colIndex];
-            
+
             inp.oninput = (e) => { targetInput.value = e.target.value; };
             targetInput.oninput = (e) => { inp.value = e.target.value; };
 
@@ -916,15 +916,15 @@ function renderOverlayGrid() {
 function adjustOverlay() {
     const offset = document.getElementById('slider-offset').value;
     const height = document.getElementById('slider-height').value;
-    
+
     document.getElementById('label-offset').textContent = `${offset}px`;
     document.getElementById('label-height').textContent = `${height}px`;
-    
+
     const container = document.getElementById('grid-overlay-container');
     if (container) {
         container.style.paddingTop = `${offset}px`;
     }
-    
+
     const rows = document.querySelectorAll('.overlay-row td');
     rows.forEach(td => {
         td.style.height = `${height}px`;
@@ -943,7 +943,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container.addEventListener('mousedown', (e) => {
         // Prevent dragging if clicking on an input cell
         if (e.target.classList.contains('overlay-input')) return;
-        
+
         isDraggingOffset = true;
         dragStartY = e.clientY;
         dragStartOffset = parseInt(document.getElementById('slider-offset').value) || 0;
@@ -955,7 +955,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isDraggingOffset) return;
         const deltaY = e.clientY - dragStartY;
         let newOffset = dragStartOffset + deltaY;
-        
+
         const slider = document.getElementById('slider-offset');
         if (slider) {
             newOffset = Math.max(parseInt(slider.min), Math.min(parseInt(slider.max), newOffset));
@@ -981,10 +981,10 @@ function loadExistingCSV(event) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         const text = e.target.result;
         const lines = text.split('\n');
-        
+
         let loadedRows = [];
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
@@ -1015,7 +1015,7 @@ function loadExistingCSV(event) {
                 Notes: cols[5] || '',
                 Confidence: 100
             };
-            
+
             const serialMatch = /\(Serial:\s*([^\)]+)\)/i.exec(row.Item);
             if (serialMatch && !row.Serial) {
                 row.Serial = serialMatch[1];
@@ -1115,11 +1115,11 @@ function downloadCSV() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    
+
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-    
+
     link.setAttribute("href", url);
     link.setAttribute("download", `intakeform_${dateStr}_${timeStr}.csv`);
     link.style.visibility = 'hidden';
@@ -1130,7 +1130,7 @@ function downloadCSV() {
     showToast(`${checkedRows.length} rows downloaded successfully!`, 'success');
 
     checkedRows.forEach(tr => tr.remove());
-    
+
     const tbody = document.getElementById('audit-table-body');
     if (tbody && tbody.rows.length === 0) {
         resetAuditState();
@@ -1142,31 +1142,31 @@ function undoLastCapture() {
         showToast('No capture to undo.', 'warning');
         return;
     }
-    
+
     // Restore table
     document.getElementById('audit-table-body').innerHTML = undoTableHTML;
-    
+
     // Restore files
     uploadedFiles = [...undoUploadedFiles];
     activeImageIndex = undoActiveImageIndex;
-    
+
     // Re-render thumbnails
     renderThumbnails();
-    
+
     // If we are in overlay mode, refresh the overlay grid
     if (document.getElementById('mode-selector')?.value === 'overlay') {
         renderOverlayGrid();
     }
-    
+
     // Clear undo state
     undoTableHTML = null;
     undoUploadedFiles = null;
-    
+
     // Hide undo button
     const undoBtn = document.getElementById('btn-undo');
     if (undoBtn) {
         undoBtn.style.display = 'none';
     }
-    
+
     showToast('Last capture successfully reversed.', 'success');
 }

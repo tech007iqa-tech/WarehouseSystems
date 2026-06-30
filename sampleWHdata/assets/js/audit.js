@@ -17,7 +17,7 @@ function handleFileSelect(e) {
 function handleFiles(files) {
     if (files.length === 0) return;
     const newFiles = Array.from(files);
-    
+
     const tbody = document.getElementById('audit-table-body');
     if (tbody) {
         undoTableHTML = tbody.innerHTML;
@@ -29,12 +29,12 @@ function handleFiles(files) {
     if (undoBtn) {
         undoBtn.style.display = 'inline-flex';
     }
-    
+
     const prevLength = uploadedFiles.length;
     uploadedFiles = uploadedFiles.concat(newFiles);
-    
+
     renderThumbnails();
-    
+
     (async () => {
         for (let i = 0; i < newFiles.length; i++) {
             const targetIdx = prevLength + i;
@@ -49,15 +49,15 @@ function renderThumbnails() {
     const strip = document.getElementById('thumbnail-strip');
     if (!strip) return;
     strip.innerHTML = '';
-    
+
     uploadedFiles.forEach((file, index) => {
         const thumb = document.createElement('div');
         thumb.className = `thumb ${index === activeImageIndex ? 'active' : ''}`;
         thumb.onclick = () => selectActiveImage(index, false);
-        
+
         const img = document.createElement('img');
         img.src = URL.createObjectURL(file);
-        
+
         thumb.appendChild(img);
         strip.appendChild(thumb);
     });
@@ -74,7 +74,7 @@ function selectActiveImage(index, triggerOCR = false) {
 
     const stage = document.getElementById('viewer-stage');
     if (!stage) return;
-    
+
     const existingImgs = stage.querySelectorAll('img');
     existingImgs.forEach(img => img.remove());
     const existingPs = stage.querySelectorAll('p');
@@ -90,11 +90,11 @@ function selectActiveImage(index, triggerOCR = false) {
         if (controls) {
             controls.style.display = 'flex';
         }
-        
+
         Viewer.currentRotation = 0;
         Viewer.currentZoom = 1;
         Viewer.applyTransforms();
-        
+
         if (triggerOCR) {
             processOCR();
         }
@@ -137,7 +137,7 @@ async function processOCR() {
         }
 
         Grid.renderTableRows(rows);
-        
+
         const avgConf = ocrData.AvgConfidence || 98;
         const confSummary = document.getElementById('confidence-summary');
         if (confSummary) {
@@ -198,11 +198,11 @@ async function submitToCSV() {
 
     try {
         const result = await API.saveRows(payload);
-        
+
         if (result.success) {
             showToast(`${payload.length} rows committed to database successfully!`, 'success');
             checkedRows.forEach(tr => tr.remove());
-            
+
             const tbody = document.getElementById('audit-table-body');
             if (tbody && tbody.rows.length === 0) {
                 resetAuditState();
@@ -214,7 +214,7 @@ async function submitToCSV() {
         console.warn('API save failed, simulating local save.', e);
         showToast(`${payload.length} rows committed successfully (Local Fallback - PHP Offline)`, 'success');
         checkedRows.forEach(tr => tr.remove());
-        
+
         const tbody = document.getElementById('audit-table-body');
         if (tbody && tbody.rows.length === 0) {
             resetAuditState();
@@ -224,25 +224,25 @@ async function submitToCSV() {
 
 function undoCapture() {
     if (undoUploadedFiles === null) return;
-    
+
     uploadedFiles = [...undoUploadedFiles];
     activeImageIndex = undoActiveImageIndex;
-    
+
     const tbody = document.getElementById('audit-table-body');
     if (tbody && undoTableHTML !== null) {
         tbody.innerHTML = undoTableHTML;
     }
-    
+
     renderThumbnails();
-    
+
     undoTableHTML = null;
     undoUploadedFiles = null;
-    
+
     const undoBtn = document.getElementById('btn-undo');
     if (undoBtn) {
         undoBtn.style.display = 'none';
     }
-    
+
     Grid.updateActionButtons();
     showToast('Last upload undone successfully', 'success');
 }
@@ -260,7 +260,7 @@ function resetAuditState() {
     Viewer.resetViewer();
     const strip = document.getElementById('thumbnail-strip');
     if (strip) strip.innerHTML = '';
-    
+
     document.getElementById('ocr-console').textContent = 'Ready to stream extraction text...';
     document.getElementById('confidence-summary').textContent = 'Confidence: --';
     uploadedFiles = [];
@@ -279,12 +279,12 @@ function showToast(message, type = 'success') {
     if (!container) return;
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    
+
     let icon = type === 'success' ? '✓' : '⚠';
     toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
-    
+
     container.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.style.animation = 'toastSlideOut 0.3s ease-in forwards';
         setTimeout(() => toast.remove(), 300);

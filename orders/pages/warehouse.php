@@ -1243,7 +1243,11 @@ if (UI::is_ajax()) {
                                             <?= number_format($total_qty) ?>
                                         </span>
                                     </td>
-                                    <td></td>
+                                    <td style="text-align: right; padding: 15px;">
+                                        <button type="button" id="btn-consolidate-spreadsheet" class="btn-consolidate" onclick="consolidateWarehouseRows()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.75rem; color: #475569;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'" title="Consolidate duplicate rows">
+                                            🔄 Consolidate
+                                        </button>
+                                    </td>
                                 </tr>
                             </tfoot>
                         </table>
