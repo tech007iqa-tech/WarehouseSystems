@@ -49,7 +49,7 @@ try {
         FROM items
         JOIN orders ON items.order_id = orders.order_id
         LEFT JOIN c.customers ON items.customer_id = c.customers.customer_id
-        WHERE 1=1 $date_condition
+        WHERE orders.status = 'paid' $date_condition
         GROUP BY items.brand, items.model, items.series, items.cpu, items.description
         ORDER BY total_qty DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
@@ -62,7 +62,7 @@ try {
                ROUND(SUM(items.unit_price * items.quantity), 2) as total_valuation
         FROM items
         JOIN orders ON items.order_id = orders.order_id
-        WHERE 1=1 $date_condition
+        WHERE orders.status = 'paid' $date_condition
         GROUP BY sales_month
         ORDER BY sales_month DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
@@ -74,7 +74,7 @@ try {
                items.unit_price
         FROM items
         JOIN orders ON items.order_id = orders.order_id
-        WHERE items.cpu IS NOT NULL $date_condition
+        WHERE orders.status = 'paid' AND items.cpu IS NOT NULL $date_condition
     ")->fetchAll(PDO::FETCH_ASSOC);
 
     // Classification helper
@@ -190,7 +190,7 @@ try {
         SELECT SUM(items.quantity) as total_qty, COUNT(DISTINCT items.order_id) as total_orders, ROUND(AVG(items.unit_price * items.quantity), 2) as avg_order_val
         FROM items
         JOIN orders ON items.order_id = orders.order_id
-        WHERE 1=1 $date_condition
+        WHERE orders.status = 'paid' $date_condition
     ")->fetch(PDO::FETCH_ASSOC);
 
     // 5. Customer Insights
@@ -203,7 +203,7 @@ try {
         FROM items
         JOIN orders ON items.order_id = orders.order_id
         JOIN c.customers ON items.customer_id = c.customers.customer_id
-        WHERE 1=1 $date_condition
+        WHERE orders.status = 'paid' $date_condition
         GROUP BY items.customer_id
         ORDER BY total_units_bought DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
@@ -222,7 +222,7 @@ try {
         SELECT items.brand, SUM(items.quantity) as qty
         FROM items
         JOIN orders ON items.order_id = orders.order_id
-        WHERE 1=1 $date_condition
+        WHERE orders.status = 'paid' $date_condition
         GROUP BY items.brand
         ORDER BY qty DESC
         LIMIT 1
