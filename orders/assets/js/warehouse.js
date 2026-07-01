@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     initWarehouseSpreadsheetEvents();
+    restoreWarehouseCursorFocus();
 
     // Intercept delete forms to prevent full-page reload and scrolling
     document.addEventListener('submit', async (e) => {
@@ -1444,11 +1445,51 @@ async function createWarehouseRowFromBlank(row) {
             if (window.IQA_Notify) {
                 window.IQA_Notify.success('Item successfully added ✨');
             }
+
+            // Capture currently focused field if any
+            const activeEl = document.activeElement;
+            if (activeEl && activeEl.classList.contains('cell-input')) {
+                const cell = activeEl.closest('td');
+                if (cell) {
+                    const field = cell.getAttribute('data-field');
+                    if (field) {
+                        sessionStorage.setItem('warehouse_restore_field', field);
+                        sessionStorage.setItem('warehouse_restore_item_id', result.new_id);
+                    }
+                }
+            }
+
             window.location.reload();
         }
     } catch (err) {
         console.error('Error adding row:', err);
         if (btnIndicator) btnIndicator.textContent = '➕';
+    }
+}
+
+function restoreWarehouseCursorFocus() {
+    const restoreField = sessionStorage.getItem('warehouse_restore_field');
+    const restoreItemId = sessionStorage.getItem('warehouse_restore_item_id');
+
+    if (restoreField && restoreItemId) {
+        sessionStorage.removeItem('warehouse_restore_field');
+        sessionStorage.removeItem('warehouse_restore_item_id');
+
+        const row = document.querySelector(`.inventory-card[data-id="${restoreItemId}"]`);
+        if (row) {
+            const cell = row.querySelector(`[data-field="${restoreField}"]`);
+            if (cell) {
+                const input = cell.querySelector('.cell-input');
+                if (input) {
+                    setTimeout(() => {
+                        input.focus();
+                        if (typeof input.select === 'function') {
+                            input.select();
+                        }
+                    }, 50);
+                }
+            }
+        }
     }
 }
 

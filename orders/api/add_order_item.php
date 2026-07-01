@@ -61,6 +61,7 @@ try {
 
         echo json_encode([
             'success' => true,
+            'item_id' => $new_id,
             'new_total' => $total_units,
             'last_entry' => $_SESSION['last_entry'],
             'row_html' => "

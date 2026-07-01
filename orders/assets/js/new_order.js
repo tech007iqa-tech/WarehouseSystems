@@ -5,7 +5,34 @@
 document.addEventListener('DOMContentLoaded', () => {
     initSpreadsheetEvents();
     initSummarySearch();
+    restoreCursorFocus();
 });
+
+function restoreCursorFocus() {
+    const restoreField = sessionStorage.getItem('new_order_restore_field');
+    const restoreItemId = sessionStorage.getItem('new_order_restore_item_id');
+
+    if (restoreField && restoreItemId) {
+        sessionStorage.removeItem('new_order_restore_field');
+        sessionStorage.removeItem('new_order_restore_item_id');
+
+        const row = document.querySelector(`.summary-row[data-id="${restoreItemId}"]`);
+        if (row) {
+            const cell = row.querySelector(`[data-field="${restoreField}"]`);
+            if (cell) {
+                const input = cell.querySelector('.cell-input');
+                if (input) {
+                    setTimeout(() => {
+                        input.focus();
+                        if (typeof input.select === 'function') {
+                            input.select();
+                        }
+                    }, 50);
+                }
+            }
+        }
+    }
+}
 
 function initSpreadsheetEvents() {
     const listContainer = document.getElementById('summary-list');
@@ -233,6 +260,19 @@ async function createNewRowFromBlank(row) {
         if (result.success) {
             if (window.IQA_Notify) {
                 window.IQA_Notify.success('Row successfully added ✨');
+            }
+
+            // Capture currently focused field if any
+            const activeEl = document.activeElement;
+            if (activeEl && activeEl.classList.contains('cell-input')) {
+                const cell = activeEl.closest('td');
+                if (cell) {
+                    const field = cell.getAttribute('data-field');
+                    if (field) {
+                        sessionStorage.setItem('new_order_restore_field', field);
+                        sessionStorage.setItem('new_order_restore_item_id', result.item_id);
+                    }
+                }
             }
 
             // Reload page to re-render clean spreadsheet inputs
