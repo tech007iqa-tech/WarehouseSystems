@@ -74,10 +74,11 @@ class UI {
     /**
      * Renders a dashboard statistic card
      */
-    public static function stat_card($title, $value, $class = '') {
+    public static function stat_card($title, $value, $class = '', $id = '') {
         $class_attr = $class ? ' ' . $class : '';
+        $id_attr = $id ? ' id="' . htmlspecialchars($id) . '"' : '';
         return '
-        <div class="dashboard-card' . $class_attr . '" style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; height: 110px;">
+        <div class="dashboard-card' . $class_attr . '"' . $id_attr . ' style="background: white; padding: 20px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between; height: 110px;">
             <div style="font-size: 0.65rem; font-weight: 800; color: var(--text-secondary); text-transform: uppercase;">' . htmlspecialchars($title) . '</div>
             <div style="font-size: 1.8rem; font-weight: 900; color: var(--text-main); line-height: 1.1;">' . htmlspecialchars($value) . '</div>
         </div>

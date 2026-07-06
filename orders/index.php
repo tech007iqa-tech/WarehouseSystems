@@ -261,6 +261,7 @@ $page_content = ob_get_clean();
     <!-- Load view-specific JavaScript -->
     <?php if ($active_key === 'new_order'): ?>
         <script src="assets/js/new_order.js?v=<?= filemtime('assets/js/new_order.js') ?>" defer></script>
+        <script src="assets/js/import_work_order.js?v=<?= filemtime('assets/js/import_work_order.js') ?>" defer></script>
     <?php elseif ($active_key === 'warehouse' || $active_key === 'import_warehouse'): ?>
         <script src="assets/js/warehouse.js?v=<?= filemtime('assets/js/warehouse.js') ?>" defer></script>
     <?php elseif ($active_key === 'default' || $active_key === 'register'): ?>

@@ -796,7 +796,8 @@ if (UI::is_ajax()) {
                     $working_zones = $conn_wh->query("
                         SELECT wz.*,
                             (SELECT COUNT(*) FROM locations l WHERE l.working_zone_name = wz.name) as location_count,
-                            (SELECT SUM((SELECT COUNT(*) FROM inventory i WHERE i.location_code = l.location_code)) FROM locations l WHERE l.working_zone_name = wz.name) as total_items
+                            (SELECT SUM((SELECT COUNT(*) FROM inventory i WHERE i.location_code = l.location_code)) FROM locations l WHERE l.working_zone_name = wz.name) as total_items,
+                            (SELECT COUNT(*) FROM locations l WHERE l.working_zone_name = wz.name AND l.status IN ('Audit', 'Idle')) as alert_count
                         FROM working_zones wz
                         ORDER BY wz.name ASC
                     ")->fetchAll(PDO::FETCH_ASSOC);
@@ -816,11 +817,12 @@ if (UI::is_ajax()) {
                                 $wz_name = $wz['name'];
                                 $wz_locations = (int) $wz['location_count'];
                                 $wz_items = (int) $wz['total_items'];
+                                $has_alerts = (int) ($wz['alert_count'] ?? 0) > 0;
                                 ?>
                                 <div class="loc-item-wrapper" style="position:relative;">
                                     <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&zone=<?= urlencode($wz_name) ?>"
                                         class="loc-item gate-loc-item" data-loc-name="<?= htmlspecialchars(strtolower($wz_name)) ?>"
-                                        data-status="working" data-count="<?= $wz_locations ?>">
+                                        data-status="<?= $has_alerts ? 'audit' : 'working' ?>" data-count="<?= $wz_locations ?>">
                                         <div style="position:absolute; top:8px; left:12px; font-size:0.6rem; font-weight:900; text-transform:uppercase; color:#3b82f6; letter-spacing:0.05em;">
                                             <small><?= $wz_locations ?></small> <?= $wz_locations == 1 ? "<small>Shelf</small>" : "<small>Locations</small>" ?>
                                         </div>

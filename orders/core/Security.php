@@ -59,13 +59,14 @@ class Security {
      * - At least one digit
      * - At least one special character
      */
-    public static function validatePassword($password, &$error_msg = '') {
+    public static function validatePassword($password, &$error_msg = '', $min_len = 25) {
         $len = strlen($password);
-        if ($len < 25 || $len > 125) {
-            $error_msg = "Password length must be between 25 and 125 characters.";
+        if ($len < $min_len || $len > 125) {
+            $error_msg = "Password length must be between {$min_len} and 125 characters.";
             return false;
         }
-        if (preg_match('/^[!#%+23456789:=?@ABCDEFGHJKLMNPRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/', $password)) {
+        // Only allow bypassing complexity checks for system-generated PPP passcodes (default length 25+)
+        if ($min_len >= 25 && preg_match('/^[!#%+23456789:=?@ABCDEFGHJKLMNPRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$/', $password)) {
             return true;
         }
         if (!preg_match('/[A-Z]/', $password)) {

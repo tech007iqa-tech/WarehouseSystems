@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (submitBtn) submitBtn.disabled = true;
 
             try {
-                const response = await fetch(form.action || window.location.href, {
+                const response = await fetch(form.getAttribute('action') || window.location.href, {
                     method: 'POST',
                     body: formData
                 });
@@ -1507,7 +1507,7 @@ async function consolidateWarehouseRows() {
     const locationCode = metadata.getAttribute('data-location-code');
     const csrfToken = metadata.getAttribute('data-csrf');
 
-    if (!confirm("Are you sure you want to consolidate rows with identical values in this zone/shelf? Duplicate items will be merged and their quantities added together. Items with notes will not be merged.")) {
+    if (!confirm("Are you sure you want to consolidate rows with identical values in this zone/shelf? Duplicate items will be merged and their quantities added together. Items with different notes will not be merged.")) {
         return;
     }
 

@@ -114,8 +114,11 @@ try {
 
         if ($verified_old) {
             if ($new_pass === $confirm_pass) {
-                if (Security::validatePassword($new_pass, $error)) {
-                    if (!empty($new_seq_key)) {
+                $bypass_ppp = isset($_POST['bypass_ppp']) && $_POST['bypass_ppp'] === '1';
+                $min_len = $bypass_ppp ? 12 : 25;
+
+                if (Security::validatePassword($new_pass, $error, $min_len)) {
+                    if (!$bypass_ppp && !empty($new_seq_key)) {
                         if (!preg_match('/^[a-fA-F0-9]{64}$/', $new_seq_key)) {
                             $error = "Sequence key must be exactly 64 hexadecimal characters.";
                         }
@@ -123,23 +126,28 @@ try {
 
                     if (!$error) {
                         $hash_password = $new_pass;
-                        if (!empty($new_seq_key)) {
-                            $seq_key = strtoupper($new_seq_key);
-                            $hash_password .= $seq_key;
-                            $stmt_u = $conn_u->prepare("UPDATE users SET password = ?, ppp_sequence_key = ?, ppp_row_index = ?, ppp_password_len = ? WHERE username = ?");
-                            $stmt_u->execute([password_hash($hash_password, PASSWORD_BCRYPT), $seq_key, $ppp_row_index, strlen($new_pass), $user_id]);
+                        if ($bypass_ppp) {
+                            $stmt_u = $conn_u->prepare("UPDATE users SET password = ?, ppp_sequence_key = '', ppp_row_index = 0, ppp_password_len = 0 WHERE username = ?");
+                            $stmt_u->execute([password_hash($hash_password, PASSWORD_BCRYPT), $user_id]);
                         } else {
-                            $stmt_key = $conn_u->prepare("SELECT ppp_sequence_key FROM users WHERE username = ?");
-                            $stmt_key->execute([$user_id]);
-                            $existing_key = $stmt_key->fetchColumn();
-                            if (!empty($existing_key)) {
-                                $hash_password .= $existing_key;
+                            if (!empty($new_seq_key)) {
+                                $seq_key = strtoupper($new_seq_key);
+                                $hash_password .= $seq_key;
+                                $stmt_u = $conn_u->prepare("UPDATE users SET password = ?, ppp_sequence_key = ?, ppp_row_index = ?, ppp_password_len = ? WHERE username = ?");
+                                $stmt_u->execute([password_hash($hash_password, PASSWORD_BCRYPT), $seq_key, $ppp_row_index, strlen($new_pass), $user_id]);
+                            } else {
+                                $stmt_key = $conn_u->prepare("SELECT ppp_sequence_key FROM users WHERE username = ?");
+                                $stmt_key->execute([$user_id]);
+                                $existing_key = $stmt_key->fetchColumn();
+                                if (!empty($existing_key)) {
+                                    $hash_password .= $existing_key;
+                                }
+                                $stmt_u = $conn_u->prepare("UPDATE users SET password = ?, ppp_row_index = ?, ppp_password_len = ? WHERE username = ?");
+                                $stmt_u->execute([password_hash($hash_password, PASSWORD_BCRYPT), $ppp_row_index, strlen($new_pass), $user_id]);
                             }
-                            $stmt_u = $conn_u->prepare("UPDATE users SET password = ?, ppp_row_index = ?, ppp_password_len = ? WHERE username = ?");
-                            $stmt_u->execute([password_hash($hash_password, PASSWORD_BCRYPT), $ppp_row_index, strlen($new_pass), $user_id]);
                         }
                         $_SESSION['settings_success_message'] = "Password and security settings updated successfully!";
-                        $_SESSION['ppp_password_len'] = strlen($new_pass);
+                        $_SESSION['ppp_password_len'] = $bypass_ppp ? 0 : strlen($new_pass);
                         if (isset($_SESSION['force_password_change'])) {
                             unset($_SESSION['force_password_change']);
                         }
@@ -610,9 +618,27 @@ try {
             <?php endif; ?>
 
             <div style="border-top: 1px dashed var(--border-color); padding-top: 20px; margin-top: 20px;">
+                <!-- Bypass PPP Checkbox and Warnings -->
+                <div style="margin-bottom: 20px; background: #fffbeb; border: 1px solid #fde68a; padding: 15px; border-radius: 12px; box-sizing: border-box;">
+                    <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; text-transform: none; color: #b45309; font-weight: bold; font-size: 0.9rem; line-height: 1.4; margin-bottom: 0;">
+                        <input type="checkbox" name="bypass_ppp" id="bypass_ppp" value="1" onchange="toggleBypassPPP(this.checked)" style="width: 18px; height: 18px; margin: 0; margin-top: 2px;" <?= (isset($_POST['bypass_ppp']) && $_POST['bypass_ppp'] === '1') ? 'checked' : '' ?>>
+                        <span>Bypass Perfect Paper Passwords (PPP) grid and set a custom password</span>
+                    </label>
+                    <div id="ppp-bypass-warning" style="display: none; margin-top: 10px; font-size: 0.8rem; color: #b45309; line-height: 1.4; border-top: 1px dashed #fcd34d; padding-top: 8px;">
+                        ⚠️ <strong>Security Warning:</strong> Bypassing the PPP system allows you to use a custom password. Custom passwords are significantly more vulnerable to keylogging, guessing, and database leaks than GRC's pseudo-random high-entropy passcodes. Make sure to choose a strong password containing letters, numbers, and symbols.
+                    </div>
+                </div>
+
                 <div class="form-group" style="margin-bottom: 20px;">
                     <label for="new_password">New Password</label>
                     <input type="password" id="new_password" name="new_password" placeholder="Min 24 chars, complex (A-Z, a-z, 0-9, symbol)" <?= $is_forced ? 'readonly' : '' ?> required>
+                    <!-- Password Strength Meter -->
+                    <div id="strength-meter-container" style="margin-top: 8px; display: none; flex-direction: column; gap: 5px;">
+                        <div style="background: #e2e8f0; height: 6px; width: 100%; border-radius: 3px; overflow: hidden;">
+                            <div id="strength-meter-bar" style="height: 100%; width: 0%; transition: width 0.3s ease, background-color 0.3s ease;"></div>
+                        </div>
+                        <span id="strength-meter-text" style="font-size: 0.75rem; font-weight: bold;"></span>
+                    </div>
                 </div>
                 <div class="form-group" style="margin-bottom: 30px;">
                     <label for="confirm_password">Confirm New Password</label>
@@ -1079,10 +1105,94 @@ try {
         }
     }
 
+    function toggleBypassPPP(isChecked) {
+        const warning = document.getElementById('ppp-bypass-warning');
+        const meter = document.getElementById('strength-meter-container');
+        const newPasswordInput = document.getElementById('new_password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+        const isForced = <?= $is_forced ? 'true' : 'false' ?>;
+
+        if (warning) {
+            warning.style.display = isChecked ? 'block' : 'none';
+        }
+        if (meter) {
+            meter.style.display = isChecked ? 'flex' : 'none';
+        }
+
+        if (isChecked) {
+            newPasswordInput.removeAttribute('readonly');
+            newPasswordInput.placeholder = "Min 12 chars, complex (A-Z, a-z, 0-9, symbol)";
+            updatePasswordStrength(newPasswordInput.value);
+        } else {
+            if (isForced) {
+                newPasswordInput.setAttribute('readonly', 'readonly');
+            }
+            newPasswordInput.placeholder = "Min 24 chars, complex (A-Z, a-z, 0-9, symbol)";
+            if (meter) {
+                meter.style.display = 'none';
+            }
+        }
+    }
+
+    function updatePasswordStrength(password) {
+        const bar = document.getElementById('strength-meter-bar');
+        const text = document.getElementById('strength-meter-text');
+        if (!bar || !text) return;
+
+        if (!password) {
+            bar.style.width = '0%';
+            bar.style.backgroundColor = '#e2e8f0';
+            text.innerText = '';
+            return;
+        }
+
+        let score = 0;
+        if (password.length >= 8) score++;
+        if (password.length >= 12) score++;
+        if (password.length >= 16) score++;
+        if (/[A-Z]/.test(password)) score++;
+        if (/[a-z]/.test(password)) score++;
+        if (/[0-9]/.test(password)) score++;
+        if (/[^A-Za-z0-9]/.test(password)) score++;
+
+        let percentage = (score / 7) * 100;
+        let color = '#ef4444'; // Red
+        let label = 'Weak';
+
+        if (score >= 6) {
+            color = '#10b981'; // Green
+            label = 'Strong';
+        } else if (score >= 4) {
+            color = '#f59e0b'; // Yellow
+            label = 'Medium';
+        }
+
+        bar.style.width = `${percentage}%`;
+        bar.style.backgroundColor = color;
+        text.innerText = `Strength: ${label}`;
+        text.style.color = color;
+    }
+
     // Initialize on page load
     window.addEventListener('DOMContentLoaded', () => {
         if (activeSeqKey) {
             fetchGridPreview(activeSeqKey);
+        }
+
+        // Initialize bypass PPP checkbox state
+        const bypassCheckbox = document.getElementById('bypass_ppp');
+        if (bypassCheckbox) {
+            toggleBypassPPP(bypassCheckbox.checked);
+        }
+
+        const newPasswordInput = document.getElementById('new_password');
+        if (newPasswordInput) {
+            newPasswordInput.addEventListener('input', () => {
+                const checkbox = document.getElementById('bypass_ppp');
+                if (checkbox && checkbox.checked) {
+                    updatePasswordStrength(newPasswordInput.value);
+                }
+            });
         }
     });
     </script>

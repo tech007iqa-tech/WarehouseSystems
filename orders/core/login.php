@@ -272,7 +272,10 @@ try {
                     $_SESSION['role'] = $user['role'] ?? 'Operator';
                     $_SESSION['ppp_password_len'] = strlen($password);
 
-                    if (($user['username'] === 'admin' && password_verify('123', $user['password'])) || strlen($password) < 25) {
+                    $is_ppp_user = !empty($user['ppp_sequence_key']);
+                    $min_len = $is_ppp_user ? 25 : 12;
+
+                    if (($user['username'] === 'admin' && password_verify('123', $user['password'])) || strlen($password) < $min_len) {
                         $_SESSION['force_password_change'] = true;
                     }
 

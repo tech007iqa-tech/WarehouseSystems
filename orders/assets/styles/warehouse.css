@@ -1414,3 +1414,32 @@
         box-sizing: border-box;
     }
 }
+
+/* Zone Alerts Attention Framing Styles (Audit and Idle highlights) */
+.loc-item[data-status="audit"],
+.loc-item[data-status="idle"] {
+    border-color: #fecdd3 !important; /* Soft permanent red border */
+    background: #fff8f8; /* Soft red background tint */
+}
+
+/* Red frame on hover for audited/idle locations and zones */
+.loc-item[data-status="audit"]:hover,
+.loc-item[data-status="idle"]:hover {
+    border-color: #ef4444 !important; /* Vibrant red border */
+    background: #fef2f2 !important; /* Slightly stronger red background */
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* Dark mode compatibility */
+[data-theme="dark"] .loc-item[data-status="audit"],
+[data-theme="dark"] .loc-item[data-status="idle"] {
+    border-color: rgba(239, 68, 68, 0.4) !important;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+[data-theme="dark"] .loc-item[data-status="audit"]:hover,
+[data-theme="dark"] .loc-item[data-status="idle"]:hover {
+    border-color: #f87171 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
+    box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25) !important;
+}

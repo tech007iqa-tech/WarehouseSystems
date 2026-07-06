@@ -54,28 +54,24 @@ try {
     $groups = [];
     foreach ($items as $item) {
         $specs = json_decode($item['specs_json'], true) ?: [];
-        $notes = trim($specs['notes'] ?? '');
+        $notes = strtolower(trim($specs['notes'] ?? ''));
 
-        if ($notes !== '') {
-            // Cannot be consolidated; assign a unique group key
-            $group_key = 'unique_notes_' . $item['id'];
-        } else {
-            // Normalize values for comparison
-            unset($specs['notes']);
-            ksort($specs);
-            $normalized_specs = [];
-            foreach ($specs as $k => $v) {
-                $normalized_specs[$k] = strtolower(trim((string)$v));
-            }
-
-            $group_parts = [
-                'brand' => strtolower(trim($item['brand'])),
-                'model' => strtolower(trim($item['model'])),
-                'price' => number_format((float)$item['price'], 4, '.', ''),
-                'specs' => $normalized_specs
-            ];
-            $group_key = md5(json_encode($group_parts));
+        // Normalize values for comparison
+        unset($specs['notes']);
+        ksort($specs);
+        $normalized_specs = [];
+        foreach ($specs as $k => $v) {
+            $normalized_specs[$k] = strtolower(trim((string)$v));
         }
+
+        $group_parts = [
+            'brand' => strtolower(trim($item['brand'])),
+            'model' => strtolower(trim($item['model'])),
+            'price' => number_format((float)$item['price'], 4, '.', ''),
+            'notes' => $notes,
+            'specs' => $normalized_specs
+        ];
+        $group_key = md5(json_encode($group_parts));
 
         $groups[$group_key][] = $item;
     }

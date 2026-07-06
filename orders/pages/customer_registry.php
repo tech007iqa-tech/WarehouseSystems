@@ -214,6 +214,23 @@ try {
     ], JSON_HEX_TAG);
     ?>
     <script id="pipeline-data" type="application/json"><?= $pipeline_json ?></script>
+    <style>
+        .clickable-card {
+            cursor: pointer;
+            transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s, border-color 0.18s !important;
+            position: relative;
+        }
+        .clickable-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+            border-color: var(--accent-color, #4f46e5) !important;
+        }
+        /* Override generic linked-text-info color changing on hover inside stat cards */
+        .clickable-card.linked-text-info:hover,
+        .clickable-card.linked-text-info:hover * {
+            color: inherit !important;
+        }
+    </style>
 
     <div class="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 30px;">
         <!-- Pipeline card spans full width so the order list has room -->
@@ -259,7 +276,37 @@ try {
 
         <?= UI::stat_card("Active Batches", $active_batches_count) ?>
         <?= UI::stat_card("Callbacks", $pending_callbacks_count, $pending_callbacks_count > 0 ? 'text-danger' : '') ?>
-        <?= UI::stat_card("Zone Alerts", $warehouse_audit_count, $warehouse_audit_count > 5 ? 'text-warning' : '') ?>
+        
+        <div class="multi-link-container" style="display: contents;">
+            <?= UI::stat_card("Zone Alerts", $warehouse_audit_count, 'clickable-card linked-text-info ' . ($warehouse_audit_count > 5 ? 'text-warning' : ''), 'zone-alerts-card') ?>
+            
+            <!-- Zone Alerts Information Dialog -->
+            <div class="info-dialog" id="dialog_zone_alerts" style="max-width: 500px; width: 90%; text-align: left; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">
+                <button type="button" class="btn-close-dialog" aria-label="Close dialog">&times;</button>
+                <div style="font-family: system-ui, -apple-system, sans-serif; color: #1e293b;">
+                    <h2 style="font-size: 1.25rem; font-weight: 800; margin-top: 0; margin-bottom: 12px; color: #1e293b; display: flex; align-items: center; gap: 8px;">⚠️ Warehouse Zone Alerts</h2>
+                    
+                    <p style="font-size: 0.9rem; color: #475569; margin-bottom: 16px; line-height: 1.5;">
+                        This statistic shows the total number of warehouse locations (storage shelves or bins) currently flagged with a status of <strong>Audit</strong> or <strong>Idle</strong>.
+                    </p>
+                    
+                    <h3 style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 8px;">📋 Action Required</h3>
+                    <p style="font-size: 0.85rem; color: #475569; margin-bottom: 12px; line-height: 1.5;">
+                        As the account coordinator responsible for managing leads and presenting inventory to potential customers, maintaining high data integrity is critical. Stock level accuracy directly impacts customer trust and sales cycles:
+                    </p>
+                    <ul style="font-size: 0.85rem; color: #475569; padding-left: 20px; margin-bottom: 20px; line-height: 1.6;">
+                        <li style="margin-bottom: 8px;"><strong>Verify Audits:</strong> Manual counts must be performed in these zones to ensure the system catalog matches physical stock before pitching to clients.</li>
+                        <li style="margin-bottom: 8px;"><strong>Review Idle Zones:</strong> Check empty shelves to organize newly received stock and optimize active lead distribution.</li>
+                    </ul>
+
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; text-align: center;">
+                        <a href="index.php?view=warehouse" class="btn-main" style="text-decoration: none; background: var(--accent-color, #4f46e5); color: white; padding: 10px 20px; border-radius: 10px; font-weight: 800; display: inline-block; font-size: 0.85rem;">
+                            Go to Warehouse Control Center
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
 
