@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive 6/16/2026 3:11 PM
+# 🧠 AI Technical Deep Dive 7/6/2026 4:24 PM
 
 This document details the database schemas, query abstractions, concurrency controls, document generation formulas, and security patterns implemented in the **IQA Warehouse Systems**.
 
@@ -147,6 +147,10 @@ To keep layouts updated in real-time across multiple workstations without spammi
 ### 3. CPU Pricing details Dialog & Order Preview Modal (Trends Page)
 - **CPU Details**: In `trends.php`, clicking a row in the CPU dominance table calls `api/get_cpu_pricing_details.php?cpu=[Name]`. This endpoint computes statistics (min, max, avg unit prices) and fetches recent sales containing this CPU category from `orders.db` and `customers.db`.
 - **Order Preview**: Clicking a transaction Order ID inside the CPU details modal calls `api/get_order_details.php?order_id=[ID]`. This queries `orders.db` and `customers.db` to load full B2B client details, line items, and grand totals, displaying them in a manifest preview modal.
+
+### 4. Inventory Consolidation & Maintenance
+- **Deduplication**: In physical environments, identical hardware is frequently ingested multiple times. `api/consolidate_inventory.php` normalizes specifications and merges duplicate rows within the same location/sector by summing quantities and cleaning up redundant entries.
+
 
 ---
 

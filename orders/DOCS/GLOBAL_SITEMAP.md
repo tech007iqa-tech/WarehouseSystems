@@ -1,4 +1,4 @@
-# 🗺️ Global System Sitemap 6/16/2026 3:11 PM
+# 🗺️ Global System Sitemap 7/6/2026 4:24 PM
 
 This document outlines the file layout and component structure of the **IQA Warehouse Systems** workspace.
 
@@ -52,6 +52,7 @@ These files are buffered and rendered dynamically within `prod/index.php`.
 - `add_order_item.php`: Appends a single line item to an active batch order.
 - `bulk_update_inventory.php`: Batch relocates or reprices inventory lines.
 - `bulk_update_orders.php`: Bulk marks orders as completed or active.
+- `consolidate_inventory.php`: Automates deduplication and quantity merging for identical warehouse items.
 - `generate_backup.php`: Generates a zip export containing all SQLite databases.
 - `generate_warehouse_label.php`: Generates and exports a 2"x1" Flat XML ODT thermal label for a specific inventory ID.
 - `get_cpu_pricing_details.php`: API endpoint returning price metrics and recent transactions for CPU families.

@@ -1,4 +1,4 @@
-# 🗺️ Global System Sitemap
+# 🗺️ Global System Sitemap 7/6/2026 4:21 PM
 
 This map outlines the tri-module structure of the IQA Warehouse Systems.
 
@@ -38,7 +38,7 @@ This map outlines the tri-module structure of the IQA Warehouse Systems.
 - `index.php`: Application Router (all pages below are routed through here via `?view=` parameter).
 - `pages/`:
     - `warehouse.php`: Stock & location management with nested working zones.
-    - `inbound.php`: Embeds `sampleWHdata/audit.html` via seamless iframe for AI-powered intake.
+    - `inbound.php`: Embeds `sampleWHdata/audit.html` via seamless iframe for AI-powered intake (with parent-window navigation escaping).
     - `customer_registry.php`: B2B account list.
     - `leads.php`: CRM interaction hub with SSE real-time sync.
     - `new_order.php`: Batch builder.

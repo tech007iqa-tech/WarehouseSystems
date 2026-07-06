@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive & Handover 6/16/2026 3:11 PM
+# 🧠 AI Technical Deep Dive & Handover 7/6/2026 4:21 PM
 
 This document serves as a "shortcut" for AI agents to understand the underlying logic of the IQA Warehouse Systems without reading every single file.
 
@@ -40,6 +40,10 @@ Every module has a `schema_guard.php` or `Schema::runMigrations()` setup.
 ### 4. iOS / Warehouse Optimization
 *   **Touch Targets**: Buttons are strictly `48px` minimum height.
 *   **Colors**: High-contrast light themes for operational modules; vibrant Teal/Lime for Marketing.
+
+## ⚠️ Recent Critical Fixes & Features (July 2026)
+*   **Inventory Consolidation**: Added `api/consolidate_inventory.php` to automate the merging of identical inventory items within the same warehouse location.
+*   **Iframe Escaping**: Improved UX in the inbound module (`orders/index.php?view=inbound`) by ensuring navigation actions escape the iframe and target the parent window/tab.
 
 ## ⚠️ Recent Critical Fixes & Features (June 2026)
 *   **Warehouse Working Zones**: Refactored locations into a nested working zones grid (`working_zones` table). Click to drill-down into specific locations, automatically pre-filled with prefixes (e.g. `A-` inside Zone A) when creating sub-locations. Added inline renaming functionality.

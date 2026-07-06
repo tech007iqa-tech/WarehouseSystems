@@ -1,4 +1,4 @@
-# 📦 IQA Warehouse Systems 6/23/2026 8:39 PM
+# 📦 IQA Warehouse Systems 7/6/2026 4:17 PM
 
 [![Version](https://img.shields.io/badge/version-2.2.0-green.svg)](https://github.com/)
 [![Tech](https://img.shields.io/badge/Stack-Vanilla_PHP_|_SQLite_|_JS-blue.svg)](https://github.com/)
@@ -22,6 +22,7 @@ A premium, high-performance warehouse management ecosystem designed for speed, r
 - **CRM Hub**: Advanced lead tracking with interaction timelines and status priority. Real-time, timer-free Server-Sent Events (SSE) synchronization across all workstations.
 - **Batch Logistics**: Manage complex hardware orders with real-time stock allocation.
 - **Warehouse Working Zones & Gates**: Nested zone mapping (e.g. Zone A, Zone B, General) with drill-down to specific locations/shelves.
+- **Inventory Consolidation**: Automated deduplication and quantity merging for identical warehouse items within the same location.
 - **CPU Pricing Insights**: Interactive pricing details modal with CPU model averages, ranges, and linked transaction logs.
 - **Global Registry**: Searchable customer database with session-persistent filters.
 
@@ -32,7 +33,7 @@ A premium, high-performance warehouse management ecosystem designed for speed, r
 - **Configurable AI Prompt**: Dictionary Settings panel for managing Gemini API Key, AI persona, brand abbreviation mappings, and handwriting normalization rules.
 - **Committed History View**: Hierarchical location breadcrumbs (group by shelf letter → drill down to bin), full-text search, sortable columns, and CSV export.
 - **Database Management**: Admin module in settings to permanently clear committed intake records.
-- **Dual Access**: Accessible standalone at `sampleWHdata/audit.html` (offline) or embedded within the main system at `orders/index.php?view=inbound`.
+- **Dual Access**: Accessible standalone at `sampleWHdata/audit.html` (offline) or embedded within the main system at `orders/index.php?view=inbound` with seamless parent-window navigation escaping.
 
 ---
 

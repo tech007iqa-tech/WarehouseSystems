@@ -1,4 +1,5 @@
 # 📦 IQA Warehouse Systems User Manual
+*Last Updated: 7/6/2026 4:21 PM*
 
 Welcome to the **IQA Warehouse Systems** user manual. This guide provides comprehensive instructions on how to navigate and utilize the ecosystem for warehouse management, sales logistics, and customer relations.
 
@@ -56,6 +57,7 @@ The Warehouse module (`/prod/pages/warehouse.php`) is where you manage physical 
 - **Dynamic Addition**: Administrators can create new top-level Working Zones. When inside a Working Zone, new locations/shelves can be added with automatic code prefixing (e.g. `A-` for Zone A).
 - **Zone Renaming**: Use the inline rename pencil icon on a shelf/location or parent zone to instantly rename it in the system.
 - **Relocation**: Use the **Bulk Action Bar** to select multiple items and move them to a different zone in one click.
+- **Inventory Consolidation**: Automatic deduplication and quantity merging for identical items within the same location.
 
 ### Label Printing
 - **Thermal Labels**: Generate 2"×1" Flat XML labels directly from the inventory list. These are optimized for thermal printers and can be opened in LibreOffice.
