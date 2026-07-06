@@ -22,7 +22,7 @@ const Grid = {
         rows.forEach((row, index) => {
             const tr = document.createElement('tr');
             tr.className = 'audit-row-item';
-            
+
             let cleanItem = row.Item || '';
 
             tr.innerHTML = `
@@ -39,7 +39,7 @@ const Grid = {
             `;
             tbody.appendChild(tr);
         });
-        
+
         this.updateActionButtons();
 
         if (document.getElementById('mode-selector')?.value === 'overlay') {
@@ -82,7 +82,7 @@ const Grid = {
             </td>
         `;
         tbody.appendChild(tr);
-        
+
         this.updateActionButtons();
 
         if (document.getElementById('mode-selector')?.value === 'overlay') {
@@ -103,7 +103,7 @@ const Grid = {
                     </td>
                 </tr>`;
         }
-        
+
         this.updateActionButtons();
 
         if (document.getElementById('mode-selector')?.value === 'overlay') {
@@ -116,12 +116,12 @@ const Grid = {
         const overlayContainer = document.getElementById('grid-overlay-container');
         const adjustmentControls = document.getElementById('overlay-adjustment-controls');
         const floatingAdd = document.getElementById('floating-add-row');
-        
+
         if (mode === 'overlay') {
             overlayContainer.style.display = 'block';
             adjustmentControls.style.display = 'flex';
             if (floatingAdd) floatingAdd.style.display = 'flex';
-            
+
             const tbody = document.getElementById('audit-table-body');
             const rows = document.querySelectorAll('.audit-row-item');
             if (rows.length === 0 || (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1)) {
@@ -175,7 +175,7 @@ const Grid = {
 
             overlayInputs.forEach((inp, colIndex) => {
                 const targetInput = [dateInput, qtyInput, itemInput, serialInput, locInput, notesInput][colIndex];
-                
+
                 inp.oninput = (e) => { targetInput.value = e.target.value; };
                 targetInput.oninput = (e) => { inp.value = e.target.value; };
 
@@ -220,15 +220,15 @@ const Grid = {
     adjustOverlay() {
         const offset = document.getElementById('slider-offset').value;
         const height = document.getElementById('slider-height').value;
-        
+
         document.getElementById('label-offset').textContent = `${offset}px`;
         document.getElementById('label-height').textContent = `${height}px`;
-        
+
         const container = document.getElementById('grid-overlay-container');
         if (container) {
             container.style.paddingTop = `${offset}px`;
         }
-        
+
         const rows = document.querySelectorAll('.overlay-row td');
         rows.forEach(td => {
             td.style.height = `${height}px`;
@@ -240,10 +240,10 @@ const Grid = {
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
             const text = e.target.result;
             const lines = text.split('\n');
-            
+
             let loadedRows = [];
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i].trim();
@@ -274,7 +274,7 @@ const Grid = {
                     Notes: cols[5] || '',
                     Confidence: 100
                 };
-                
+
                 const serialMatch = /\(Serial:\s*([^\)]+)\)/i.exec(row.Item);
                 if (serialMatch && !row.Serial) {
                     row.Serial = serialMatch[1];
@@ -421,7 +421,7 @@ const Grid = {
             if (response.ok) {
                 window.showToast?.('Redirecting to Warehouse Import preview...', 'success');
                 setTimeout(() => {
-                    window.location.href = '../orders/index.php?view=import_warehouse';
+                    window.parent.location.href = '../orders/index.php?view=import_warehouse';
                 }, 800);
             } else {
                 window.showToast?.('Failed to process CSV on server.', 'error');
