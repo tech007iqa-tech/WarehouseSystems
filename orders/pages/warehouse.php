@@ -1981,7 +1981,7 @@ if (UI::is_ajax()) {
             <p style="font-size:0.85rem; color:#64748b; margin-bottom:25px;">Update the name or operational status of
                 this location.</p>
 
-            <form method="POST">
+            <form method="POST" onsubmit="submitRenameZoneAjax(event)">
                 <?= UI::csrf_field() ?>
                 <input type="hidden" name="action" value="rename_zone">
                 <input type="hidden" name="old_loc" id="rename-old-loc">
@@ -2057,7 +2057,7 @@ if (UI::is_ajax()) {
             <h2 style="font-weight:900; margin-bottom:10px; font-size:1.25rem;">📁 Manage Working Zone</h2>
             <p style="font-size:0.85rem; color:#64748b; margin-bottom:25px;">Update the name of this working zone.</p>
 
-            <form method="POST">
+            <form method="POST" onsubmit="submitRenameWorkingZoneAjax(event)">
                 <?= UI::csrf_field() ?>
                 <input type="hidden" name="action" value="rename_working_zone">
                 <input type="hidden" name="old_zone_name" id="rename-old-zone-name">
@@ -2094,6 +2094,47 @@ if (UI::is_ajax()) {
             document.getElementById('rename-working-zone-modal').style.display = 'none';
         }
 
+        async function submitRenameWorkingZoneAjax(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const oldLoc = formData.get('old_zone_name');
+            const newLoc = formData.get('new_zone_name');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Updating...';
+            }
+
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok || response.redirected) {
+                    const url = new URL(window.location.href);
+                    if (url.searchParams.get('zone') === oldLoc) {
+                        url.searchParams.set('zone', newLoc);
+                        window.location.href = url.toString();
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alert("Failed to update.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred.");
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Update Zone';
+                }
+            }
+        }
+
         function openRenameModal(locData) {
             // locData is now an object
             const loc = locData.location_code;
@@ -2111,6 +2152,48 @@ if (UI::is_ajax()) {
         function closeRenameModal() {
             document.getElementById('rename-modal').style.display = 'none';
             document.getElementById('manage-statuses-block').style.display = 'none';
+        }
+
+        async function submitRenameZoneAjax(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData(form);
+            const oldLoc = formData.get('old_loc');
+            const newLoc = formData.get('new_loc');
+            const status = formData.get('location_status');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'Updating...';
+            }
+
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok || response.redirected) {
+                    const url = new URL(window.location.href);
+                    if (url.searchParams.get('loc') === oldLoc) {
+                        url.searchParams.set('loc', newLoc);
+                        window.location.href = url.toString();
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alert("Failed to update.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred.");
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Update Zone';
+                }
+            }
         }
 
         function toggleManageStatuses() {

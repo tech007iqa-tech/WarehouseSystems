@@ -1,0 +1,22 @@
+Inside the Warehouse control center /orders/index.php?view=warehouse&sector=Laptops&loc=A-1
+
+I need to add a solution to collect photographs of the location, ( Moslty the bottom layers of each Row location)
+
+
+I would love to make a copy of the image and that would be the one the system will use.
+I will take the original image and compress it for archival.
+
+The problem is: How do I manage system growth?
+ I need it to make it simple, reliable, and robust.
+ Keep in mind the sytem has to run unatended for years.
+
+ I think I could tell the system to save the originals, somewhere else,
+ I was thinking to use a spnning drive instead of the default server ssd.
+ I guess we can choose a location in a siple way, maybe the a future admin might want to use an online bucket of some kind for image storage.
+
+
+In another instance, I would like to backup the whole year, and have separate databases per year. the system will work normally because it will know to use a certain database, given the year.
+
+but also maybe the current solution will succesfully manage the passage of time, and the inevitable out of control growth, when the user base increases.
+
+
