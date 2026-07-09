@@ -708,28 +708,55 @@ if (UI::is_ajax()) {
                 <h1><a href="index.php?view=import_warehouse">Warehouse Control Center</a></h1>
                 <p class="subtitle">Managing stock and locations across all inventory sectors.</p>
             </div>
-            <?php if ($selected_loc):
-                $active_l_stmt = $conn_wh->prepare("SELECT l.*, ls.color FROM locations l LEFT JOIN location_statuses ls ON l.status = ls.name WHERE l.location_code = ?");
-                $active_l_stmt->execute([$selected_loc]);
-                $active_l = $active_l_stmt->fetch(PDO::FETCH_ASSOC);
-                $active_l_status = $active_l['status'] ?? 'Idle';
-                $active_l_color = $active_l['color'] ?? '#94a3b8';
+            <div class="header-right-side">
+                <?php 
+                $parent_zone = null;
+                $active_l_color = '#94a3b8';
+                $active_l_status = 'Idle';
+                if ($selected_loc) {
+                    $active_l_stmt = $conn_wh->prepare("SELECT l.*, ls.color FROM locations l LEFT JOIN location_statuses ls ON l.status = ls.name WHERE l.location_code = ?");
+                    $active_l_stmt->execute([$selected_loc]);
+                    $active_l = $active_l_stmt->fetch(PDO::FETCH_ASSOC);
+                    if ($active_l) {
+                        $active_l_status = $active_l['status'] ?? 'Idle';
+                        $active_l_color = $active_l['color'] ?? '#94a3b8';
+                        $parent_zone = $active_l['working_zone_name'] ?? 'General';
+                    }
+                }
+                $active_zone_name = $_GET['zone'] ?? $parent_zone;
                 ?>
-                <div class="active-loc-display" style="display:flex; align-items:center; gap:15px;">
-                    <div style="text-align:right;">
-                        <div class="loc-label">Active Location</div>
-                        <div
-                            style="font-size:0.65rem; font-weight:900; text-transform:uppercase; color:<?= $active_l_color ?>; letter-spacing:0.05em;">
-                            <?= htmlspecialchars($active_l_status) ?>
-                        </div>
-                    </div>
-                    <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>" class="loc-active-badge">
-                        <span class="loc-pin">📍</span>
-                        <span class="loc-text"><?= htmlspecialchars($selected_loc) ?></span>
-                        <span class="loc-change">Change</span>
-                    </a>
+                <div class="warehouse-breadcrumbs">
+                    <a href="index.php?view=warehouse">Warehouse</a>
+                    <?php if ($selected_loc): ?>
+                        <span class="separator">/</span>
+                        <?php if ($active_zone_name): ?>
+                            <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&zone=<?= urlencode($active_zone_name) ?>"><?= htmlspecialchars($active_zone_name) ?></a>
+                            <span class="separator">/</span>
+                        <?php endif; ?>
+                        <span class="current-crumb"><?= htmlspecialchars($selected_loc) ?></span>
+                    <?php elseif ($active_zone_name): ?>
+                        <span class="separator">/</span>
+                        <span class="current-crumb"><?= htmlspecialchars($active_zone_name) ?></span>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
+
+                <?php if ($selected_loc): ?>
+                    <div class="active-loc-display" style="display:flex; align-items:center; gap:15px;">
+                        <div style="text-align:right;">
+                            <div class="loc-label">Active Location</div>
+                            <div
+                                style="font-size:0.65rem; font-weight:900; text-transform:uppercase; color:<?= $active_l_color ?>; letter-spacing:0.05em;">
+                                <?= htmlspecialchars($active_l_status) ?>
+                            </div>
+                        </div>
+                        <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?><?= $active_zone_name ? '&zone=' . urlencode($active_zone_name) : '' ?>" class="loc-active-badge">
+                            <span class="loc-pin">📍</span>
+                            <span class="loc-text"><?= htmlspecialchars($selected_loc) ?></span>
+                            <span class="loc-change">Change</span>
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
     </header>
 
@@ -826,7 +853,7 @@ if (UI::is_ajax()) {
                                         <div style="position:absolute; top:8px; left:12px; font-size:0.6rem; font-weight:900; text-transform:uppercase; color:#3b82f6; letter-spacing:0.05em;">
                                             <small><?= $wz_locations ?></small> <?= $wz_locations == 1 ? "<small>Shelf</small>" : "<small>Locations</small>" ?>
                                         </div>
-                                        <span class="loc-icon">📁</span>
+                                        <span class="loc-icon"><small>☷</small></span>
                                         <span class="loc-name"><?= htmlspecialchars($wz_name) ?></span>
                                         <div style="font-size:0.7rem; color:#94a3b8; font-weight:700;"><?= $wz_items ?> Items</div>
                                     </a>
@@ -2101,7 +2128,7 @@ if (UI::is_ajax()) {
             const oldLoc = formData.get('old_zone_name');
             const newLoc = formData.get('new_zone_name');
             const submitBtn = form.querySelector('button[type="submit"]');
-            
+
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = 'Updating...';
@@ -2112,7 +2139,7 @@ if (UI::is_ajax()) {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 if (response.ok || response.redirected) {
                     const url = new URL(window.location.href);
                     if (url.searchParams.get('zone') === oldLoc) {
@@ -2162,7 +2189,7 @@ if (UI::is_ajax()) {
             const newLoc = formData.get('new_loc');
             const status = formData.get('location_status');
             const submitBtn = form.querySelector('button[type="submit"]');
-            
+
             if (submitBtn) {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = 'Updating...';
@@ -2173,7 +2200,7 @@ if (UI::is_ajax()) {
                     method: 'POST',
                     body: formData
                 });
-                
+
                 if (response.ok || response.redirected) {
                     const url = new URL(window.location.href);
                     if (url.searchParams.get('loc') === oldLoc) {
@@ -2244,6 +2271,44 @@ if (UI::is_ajax()) {
         .btn-hidden-delete:hover { opacity: 0.8 !important; transform: scale(1.2); color: #ef4444; }
     `;
         document.head.appendChild(style);
+
+        // Sticky table headers synchronization for scroll when viewport moves
+        let ticking = false;
+        window.addEventListener('scroll', () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    document.querySelectorAll('.spreadsheet-table-wrapper, .inventory-table-container').forEach(wrapper => {
+                        const table = wrapper.querySelector('table');
+                        if (!table) return;
+                        const thead = table.querySelector('thead');
+                        if (!thead) return;
+                        const ths = thead.querySelectorAll('th');
+                        const rect = wrapper.getBoundingClientRect();
+                        
+                        if (rect.top < 0) {
+                            const headerHeight = thead.offsetHeight;
+                            const maxTranslate = rect.height - headerHeight - 60; 
+                            const translateVal = Math.min(-rect.top, maxTranslate);
+                            
+                            if (translateVal > 0) {
+                                ths.forEach(th => {
+                                    th.style.transform = `translateY(${translateVal - 1}px)`;
+                                    th.style.zIndex = '10';
+                                });
+                                ticking = false;
+                                return;
+                            }
+                        }
+                        
+                        ths.forEach(th => {
+                            th.style.transform = '';
+                        });
+                    });
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
 
         // Ensure gaming fields are correctly toggled on load if Gaming is selected
         if (typeof toggleGamingFields === 'function') toggleGamingFields();

@@ -266,44 +266,59 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
     }
 
     // Detect Series
-    if (preg_match('/X1\s+Carbon/i', $itemStr)) {
-        $series = 'X1 Carbon';
-    } elseif (preg_match('/X1\s+Yoga/i', $itemStr)) {
-        $series = 'X1 Yoga';
-    } elseif (preg_match('/X1/i', $itemStr)) {
-        $series = 'X1';
-    } elseif (preg_match('/\b(CF\-?[A-Z0-9]+|FZ\-?[A-Z0-9]+|S410|A140|V110|B300|F110)\b/i', $itemStr, $matches)) {
-        $series = strtoupper($matches[1]);
-        if (strcasecmp($series, 'CF54') === 0) {
-            $series = 'CF-54';
+    if (stripos($itemStr, 'zbook') !== false || stripos($itemStr, 'z-book') !== false) {
+        if (preg_match('/\b((?:Firefly|Fury|Studio|Power|Create)\s*(?:x360)?\s*(?:\d{2})?[a-z]?\s*[-\/]?\s*G\d{1,2})\b/i', $itemStr, $matches)) {
+            $series = ucwords(strtolower($matches[1]));
+            $series = preg_replace('/\bg(\d+)\b/i', 'G$1', $series);
+        } elseif (preg_match('/\b(Fury)\b/i', $itemStr, $matches)) {
+            $series = 'Fury';
+        } elseif (preg_match('/\b(\d{2,3}[a-z]?\s*[-\/]?\s*G\d{1,2})\b/i', $itemStr, $matches)) {
+            $series = strtoupper($matches[1]);
+        } elseif (preg_match('/\b(\d{2,3}[a-z]?)\b/i', $itemStr, $matches)) {
+            $series = strtoupper($matches[1]);
         }
-    } elseif (preg_match('/\b(x360\-?\d{3,4}(?:\-?G\d{1,2})?)\b/i', $itemStr, $matches)) {
-        $series = $matches[1];
-    } elseif (preg_match('#\b(\d{3,4}\s*[-/]?\s*G\d{1,2})\b#i', $itemStr, $matches)) {
-        $series = $matches[1];
-    } elseif (preg_match('/\b((?:13|14|15|17)\-[a-z0-9]+)\b/i', $itemStr, $matches)) {
-        $series = $matches[1];
-    } elseif (preg_match('/\b(G\d{1,2})\b/i', $itemStr, $matches)) {
-        $series = $matches[1];
-    } elseif (preg_match('/\b(P\d{2,3}[A-Z])\b/i', $itemStr, $matches)) {
-        $series = strtoupper($matches[1]);
-    } elseif (preg_match('/\b(P\-?\d{2,3}[s-z]?)\b/i', $itemStr, $matches)) {
-        $series = $matches[1];
-    } elseif (preg_match('/\b(L\-?\d{2,3}[s-z]?)\b/i', $itemStr, $matches)) {
-        $series = $matches[1];
-    } elseif (preg_match('/\b(T\-?\d{2,3}[s-z]?)\b/i', $itemStr, $matches)) {
-        $series = $matches[1];
-    } elseif (preg_match('/\b(X\-?\d{1,3}[s-z]?)\b/i', $itemStr, $matches)) {
-        $series = $matches[1];
-    } elseif (preg_match('/\b(13|14|15|17|15s|14s)\b/i', $itemStr, $matches)) {
-        $series = $matches[1];
-    } else {
-        $tokens = preg_split('/[\s,\-\/]+/', $itemStr);
-        foreach ($tokens as $token) {
-            $token = trim($token);
-            if (empty($token)) continue;
-            if (preg_match('/^[A-Z]?\d{3,4}[s-z]?$/i', $token)) {
-                $series = $token;
+    }
+
+    if (empty($series)) {
+        if (preg_match('/X1\s+Carbon/i', $itemStr)) {
+            $series = 'X1 Carbon';
+        } elseif (preg_match('/X1\s+Yoga/i', $itemStr)) {
+            $series = 'X1 Yoga';
+        } elseif (preg_match('/X1/i', $itemStr)) {
+            $series = 'X1';
+        } elseif (preg_match('/\b(CF\-?[A-Z0-9]+|FZ\-?[A-Z0-9]+|S410|A140|V110|B300|F110)\b/i', $itemStr, $matches)) {
+            $series = strtoupper($matches[1]);
+            if (strcasecmp($series, 'CF54') === 0) {
+                $series = 'CF-54';
+            }
+        } elseif (preg_match('/\b(x360\-?\d{3,4}(?:\-?G\d{1,2})?)\b/i', $itemStr, $matches)) {
+            $series = $matches[1];
+        } elseif (preg_match('#\b(\d{3,4}\s*[-/]?\s*G\d{1,2})\b#i', $itemStr, $matches)) {
+            $series = $matches[1];
+        } elseif (preg_match('/\b((?:13|14|15|17)\-[a-z0-9]+)\b/i', $itemStr, $matches)) {
+            $series = $matches[1];
+        } elseif (preg_match('/\b(G\d{1,2})\b/i', $itemStr, $matches)) {
+            $series = $matches[1];
+        } elseif (preg_match('/\b(P\d{2,3}[A-Z])\b/i', $itemStr, $matches)) {
+            $series = strtoupper($matches[1]);
+        } elseif (preg_match('/\b(P\-?\d{2,3}[s-z]?)\b/i', $itemStr, $matches)) {
+            $series = $matches[1];
+        } elseif (preg_match('/\b(L\-?\d{2,3}[s-z]?)\b/i', $itemStr, $matches)) {
+            $series = $matches[1];
+        } elseif (preg_match('/\b(T\-?\d{2,3}[s-z]?)\b/i', $itemStr, $matches)) {
+            $series = $matches[1];
+        } elseif (preg_match('/\b(X\-?\d{1,3}[s-z]?)\b/i', $itemStr, $matches)) {
+            $series = $matches[1];
+        } elseif (preg_match('/\b(13|14|15|17|15s|14s)\b/i', $itemStr, $matches)) {
+            $series = $matches[1];
+        } else {
+            $tokens = preg_split('/[\s,\-\/]+/', $itemStr);
+            foreach ($tokens as $token) {
+                $token = trim($token);
+                if (empty($token)) continue;
+                if (preg_match('/^[A-Z]?\d{3,4}[s-z]?$/i', $token)) {
+                    $series = $token;
+                }
             }
         }
     }
