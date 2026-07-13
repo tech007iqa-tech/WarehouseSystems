@@ -24,16 +24,17 @@ class OcrEngine
             ],
             'formatting_rules' => [
                 "Correct handwriting misreadings: '15' or '17' representing CPU processors must be formatted as 'i5' or 'i7' (e.g., output 'i5-8th' instead of '15-8th' or '15-8').",
-                "Generation suffix: Standalone CPU generation numbers (like 4, 6, 7, 8) must be standardized to include 'th' (e.g. '6th', '7th', '8th', '4th'). Ensure there are no double suffixes like '8thth'.",
+                "Always extract and include the CPU generation (ranging from 4th up to 14th, including ranges like '6th-7th' or standalone numbers like '4th', '7th', '8th') in the 'Item' name for all laptop models if it is written on the handwritten sheet (e.g. Dell XPS 13 7th, Dell Inspiron 14 8th, Latitude 3380 6th-7th). Only omit the generation if none is written on the sheet.",
                 "Include model names/numbers (like 5414, 5410, A140, V110, B300, FZ-G1, CF33, 5400, F110) in the 'Item' name itself.",
-                "Specs slash rule: ensure no spaces around slashes in specs like '8 / 256' -> '8/256'."
+                "Specs slash rule: ensure no spaces around slashes in specs like '8 / 256' -> '8/256'.",
+                "If a row's Item column is handwritten with a blank space or has no brand/model prefix (e.g., just '3380 6th-7th' under 'Latitude 3380 6th'), propagate and prepend the brand and model from the preceding row (e.g. format as 'Dell Latitude 3380 6th-7th')."
             ],
             'schema_rules' => [
                 'Date' => "format as YYYY-MM-DD. Note that the date is written once at the start of a section and should propagate downward to all rows in that section, e.g. 6/19 should format as 2026-06-19",
                 'QTY' => "integer, quantity value",
                 'Item' => "string, name of the item. Correct handwriting spelling mistakes, translate abbreviations using the translation rules, and prepend brand names where missing (e.g., HP ProBook, Lenovo ThinkPad, Dell Latitude, Panasonic, Getac)",
                 'Serial' => "string, containing whatever is written in the Serial column of the sheet. If a CPU configuration (e.g. i5, i5-8th, i7-6th, 6th-7th) or model number is written in the Serial column, do NOT ignore it; extract it into the 'Serial' field so that our system can merge it into the 'Item' name. Leave empty ONLY if the Serial column on the sheet is physically blank.",
-                'Location' => "string, standardized as Letter-Number format like E-9, C-3, M-1, etc.",
+                'Location' => "string, standardized as either a simple Zone (e.g., E-9) or a Zone with Level (e.g., G2-L3). If the location is blank, propagate the last filled location downward. If a relative Level suffix (e.g., '-L4' or 'L4') is written while the active Zone prefix is 'G2', combine them as 'G2-L4'. Do NOT add a dash within the Zone prefix itself (keep it G2, not G-2).",
                 'Notes' => "string, any additional comments written"
             ]
         ];

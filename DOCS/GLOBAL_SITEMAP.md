@@ -1,4 +1,4 @@
-# 🗺️ Global System Sitemap 7/6/2026 4:21 PM
+# 🗺️ Global System Sitemap 7/11/2026 11:56 PM
 
 This map outlines the tri-module structure of the IQA Warehouse Systems.
 
@@ -47,11 +47,15 @@ This map outlines the tri-module structure of the IQA Warehouse Systems.
     - `calendar.php`: Scheduler with lead conversion badging.
     - `settings.php`: Administrative control panel (schema repair, backup, audit logs).
     - `import_warehouse.php`: Warehouse batch import from intake CSV.
+- `download_archive.php`: Endpoint for fetching raw archived photographs.
 - `core/`:
     - `database.php`: Cross-DB PDO Singleton with self-healing Schema Guard.
     - `auth.php`: Role-based security (Admin, Operator, Front Desk).
     - `Schema.php`: All database table blueprints and migration rules.
     - `UI.php`: Server-side UI helpers (notifications, theme init).
+    - `LocationPhotoProcessor.php`: Resizes, optimizes, generates thumbnails, and saves original raw photos to the archive.
+    - `Storage.php`: Storage Abstraction layer for Location Photos (SSD and Archive).
+    - `BackupManager.php`: Handles `.tar` package creation and restoration for photo assets and database metadata.
 - `api/`:
     - `get_cpu_pricing_details.php`: Price metrics and recent transactions for CPU families.
     - `get_order_details.php`: Item batch list and totals for a given order ID.

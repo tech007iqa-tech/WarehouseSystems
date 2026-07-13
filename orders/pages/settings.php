@@ -81,6 +81,77 @@ try {
         exit();
     }
 
+    if (isset($_GET['action']) && $_GET['action'] === 'list_dirs') {
+        header('Content-Type: application/json');
+        if ($_SESSION['username'] !== 'admin') {
+            echo json_encode(['error' => 'Unauthorized']);
+            exit();
+        }
+        
+        $path = $_GET['path'] ?? '';
+        if (empty($path)) {
+            $drives = [];
+            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+                foreach (range('C', 'Z') as $letter) {
+                    if (@is_dir($letter . ':\\')) {
+                        $drives[] = $letter . ':\\';
+                    }
+                }
+            } else {
+                $drives[] = '/';
+            }
+            echo json_encode(['current' => '', 'drives' => $drives, 'dirs' => []]);
+            exit();
+        }
+        
+        $path = str_replace('\\', '/', $path);
+        $path = preg_replace('#/+#', '/', $path);
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' && preg_match('#^[A-Z]:#i', $path)) {
+            if (substr($path, 2, 1) !== '/') {
+                $path = substr($path, 0, 2) . '/' . substr($path, 2);
+            }
+        }
+        
+        $real = @realpath($path);
+        if ($real) {
+            $path = str_replace('\\', '/', $real);
+        }
+        $path = rtrim($path, '/') . '/';
+        
+        $dirs = [];
+        try {
+            if (@is_dir($path)) {
+                $files = @scandir($path);
+                if ($files) {
+                    foreach ($files as $file) {
+                        if ($file === '.' || $file === '..') continue;
+                        $full = $path . $file;
+                        if (@is_dir($full)) {
+                            $dirs[] = $file;
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {}
+        
+        $parent = dirname($path);
+        $parent = str_replace('\\', '/', $parent);
+        if ($parent === $path || $parent === '.' || $parent === '/' || preg_match('#^[A-Z]:/$#i', $path)) {
+            $parent = '';
+        } else {
+            $parent = rtrim($parent, '/') . '/';
+        }
+        
+        echo json_encode([
+            'current' => $path,
+            'parent' => $parent,
+            'drives' => [],
+            'dirs' => $dirs
+        ]);
+        exit();
+    }
+
+
     // 1. Handle Password Change (All Users)
     if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action']) && $_POST['action'] === 'change_password') {
         $old_pass = $_POST['old_password'] ?? '';
@@ -262,6 +333,70 @@ try {
                 $message = "⚠️ Integrity check done. {$fixed_count} table(s) OK. {$err_count} error(s): " . implode(' | ', $report['errors']);
             }
             $_SESSION['integrity_report'] = $report;
+        }
+
+        if ($_POST['action'] === 'update_archive_path') {
+            $newPath = trim($_POST['archive_photos_path'] ?? '');
+            if (!empty($newPath)) {
+                $newPath = rtrim(str_replace('\\', '/', $newPath), '/') . '/';
+                try {
+                    $conn_w = Database::warehouse();
+                    $stmt = $conn_w->prepare("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)");
+                    $stmt->execute(['archive_photos_path', $newPath]);
+                    $message = "Archive storage path updated successfully to: " . htmlspecialchars($newPath);
+                } catch (Exception $e) {
+                    $error = "Failed to update storage path: " . $e->getMessage();
+                }
+            } else {
+                $error = "Storage path cannot be empty.";
+            }
+        }
+
+        if ($_POST['action'] === 'export_photos_backup') {
+            require_once __DIR__ . '/../core/BackupManager.php';
+            try {
+                $backupDir = dirname(__DIR__) . '/../db';
+                if (!is_dir($backupDir)) {
+                    @mkdir($backupDir, 0755, true);
+                }
+                $tarPath = $backupDir . '/photos_backup_' . date('Y-m-d') . '.tar';
+                $conn_w = Database::warehouse();
+                $backupManager = new BackupManager($conn_w);
+                
+                if ($backupManager->export($tarPath)) {
+                    if (ob_get_level() > 0) ob_clean();
+                    header('Content-Description: File Transfer');
+                    header('Content-Type: application/x-tar');
+                    header('Content-Disposition: attachment; filename="' . basename($tarPath) . '"');
+                    header('Expires: 0');
+                    header('Cache-Control: must-revalidate');
+                    header('Pragma: public');
+                    header('Content-Length: ' . filesize($tarPath));
+                    readfile($tarPath);
+                    @unlink($tarPath);
+                    exit();
+                } else {
+                    $error = "Failed to generate backup archive.";
+                }
+            } catch (Exception $e) {
+                $error = "Backup failed: " . $e->getMessage();
+            }
+        }
+
+        if ($_POST['action'] === 'import_photos_backup') {
+            if (isset($_FILES['backup_tar']) && $_FILES['backup_tar']['error'] === UPLOAD_ERR_OK) {
+                require_once __DIR__ . '/../core/BackupManager.php';
+                try {
+                    $conn_w = Database::warehouse();
+                    $backupManager = new BackupManager($conn_w);
+                    $backupManager->import($_FILES['backup_tar']['tmp_name']);
+                    $message = "Backup archive restored successfully! All location photos are imported and populated.";
+                } catch (Exception $e) {
+                    $error = "Restore failed: " . $e->getMessage();
+                }
+            } else {
+                $error = "Upload error or no tar backup file selected.";
+            }
         }
     }
     $is_forced = (isset($_SESSION['force_password_change']) && $_SESSION['force_password_change'] === true);
@@ -1331,6 +1466,82 @@ try {
         </ul>
     </div>
     <?php endif; ?>
+    <!-- PHOTO STORAGE & BACKUP CARD (ADMIN ONLY) -->
+    <?php if ($_SESSION['username'] === 'admin'): ?>
+    <?php
+        $currentArchivePath = '';
+        try {
+            $conn_w = Database::warehouse();
+            $stmt = $conn_w->prepare("SELECT value FROM settings WHERE key = ?");
+            $stmt->execute(['archive_photos_path']);
+            $currentArchivePath = $stmt->fetchColumn();
+        } catch (Exception $e) {}
+        
+        if (empty($currentArchivePath)) {
+            $currentArchivePath = dirname(__DIR__) . '/assets/location_photos/archive/';
+        }
+    ?>
+    <div class="settings-card" style="border-top: 4px solid var(--accent-color);">
+        <div class="settings-header">
+            <h1 style="color: var(--accent-color);">📷 Location Photography Settings</h1>
+            <p class="subtitle">Configure raw photo storage and manage database photo backups.</p>
+        </div>
+
+        <form method="POST" style="margin-bottom: 30px;">
+            <?= UI::csrf_field() ?>
+            <input type="hidden" name="action" value="update_archive_path">
+            
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="archive_photos_path" style="display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:#64748b;">Raw Photo Archive Directory</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" name="archive_photos_path" id="archive_photos_path" value="<?= htmlspecialchars($currentArchivePath) ?>" required
+                        style="flex: 1; height:46px; border-radius:12px; border:1px solid #ddd; padding:0 15px; font-weight:600; font-size:0.9rem; background: var(--bg-body); color: var(--text-main);">
+                    <button type="button" onclick="openDirPicker()" style="padding: 0 15px; height: 46px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); font-weight: 700; cursor: pointer; white-space: nowrap;">🔍 Browse...</button>
+                </div>
+                <small style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 6px;">Specify a physical path to save raw photos (e.g. a spinning drive like <code>D:/warehouse_archive_photos/</code>).</small>
+            </div>
+            
+            <button type="submit" class="btn-main" style="width: 100%; padding: 14px; border-radius: 12px; background: var(--accent-color); color: white; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                💾 Save Storage Path
+            </button>
+        </form>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+
+        <div style="margin-bottom: 30px;">
+            <h3 style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 8px;">Export Photos Backup</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 15px;">Download a standard <code>.tar</code> backup containing all raw location photos and database links.</p>
+            <form method="POST">
+                <?= UI::csrf_field() ?>
+                <input type="hidden" name="action" value="export_photos_backup">
+                <button type="submit" class="btn-main" style="width: 100%; padding: 14px; border-radius: 12px; background: var(--text-main); color: white; border: none; font-weight: 800; cursor: pointer;">
+                    📦 Create & Download .tar Backup
+                </button>
+            </form>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+
+        <div>
+            <h3 style="font-size: 0.95rem; color: var(--text-main); margin-bottom: 8px;">Restore / Import Photos Backup</h3>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 15px;">Upload a previously downloaded <code>.tar</code> backup file to populate the photo database and copy files. Duplicate raw files will be auto-renamed gracefully.</p>
+            <form method="POST" enctype="multipart/form-data">
+                <?= UI::csrf_field() ?>
+                <input type="hidden" name="action" value="import_photos_backup">
+                
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <input type="file" name="backup_tar" accept=".tar" required
+                        style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-body); color: var(--text-main);">
+                </div>
+
+                <button type="submit" class="btn-main" style="width: 100%; padding: 14px; border-radius: 12px; background: #059669; color: white; border: none; font-weight: 800; cursor: pointer;">
+                    📥 Upload & Restore .tar Backup
+                </button>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- 4. SYSTEM MAINTENANCE CARD (ADMIN ONLY) -->
     <?php if ($_SESSION['username'] === 'admin'): ?>
     <div class="settings-card" style="border-top: 4px solid #ef4444;">
@@ -1468,4 +1679,115 @@ try {
         <p style="font-size: 0.7rem; color: #94a3b8; margin-top: 15px; text-align: center;">The audit log is read-only and cannot be modified by staff.</p>
     </div>
     <?php endif; ?>
+    <!-- Directory Picker Modal -->
+    <div id="dir-picker-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div class="card" style="width: 95%; max-width: 500px; max-height: 80vh; padding: 1.5rem; display: flex; flex-direction: column; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-shrink: 0;">
+                <h3 style="margin: 0; font-size: 1.25rem;">📂 Select Archive Directory</h3>
+                <button type="button" onclick="closeDirPicker()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dim);">×</button>
+            </div>
+            
+            <div style="margin-bottom: 15px; font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); word-break: break-all; flex-shrink: 0;">
+                Current Path: <span id="dir-picker-current-path" style="color: var(--text-main); font-family: monospace;">-</span>
+            </div>
+            
+            <div id="dir-picker-list" style="overflow-y: auto; flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: var(--bg-body); min-height: 250px;">
+                <!-- Populated by JS -->
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-shrink: 0;">
+                <button type="button" onclick="selectCurrentDir()" class="btn-action" style="flex: 2; padding: 10px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Select Current Folder</button>
+                <button type="button" onclick="closeDirPicker()" class="btn-action" style="flex: 1; padding: 10px; background: var(--text-dim); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    let pickerCurrentPath = '';
+    
+    function openDirPicker() {
+        document.getElementById('dir-picker-modal').style.display = 'flex';
+        const startPath = document.getElementById('archive_photos_path').value || '';
+        loadDir(startPath);
+    }
+    
+    function closeDirPicker() {
+        document.getElementById('dir-picker-modal').style.display = 'none';
+    }
+    
+    async function loadDir(path) {
+        try {
+            const response = await fetch(`index.php?view=settings&action=list_dirs&path=${encodeURIComponent(path)}`);
+            const data = await response.json();
+            if (data.error) {
+                loadDir('');
+                return;
+            }
+            
+            pickerCurrentPath = data.current;
+            document.getElementById('dir-picker-current-path').textContent = pickerCurrentPath || 'System Drives';
+            
+            const listContainer = document.getElementById('dir-picker-list');
+            listContainer.innerHTML = '';
+            
+            if (pickerCurrentPath && data.parent !== undefined) {
+                const item = document.createElement('div');
+                item.style.padding = '8px 12px';
+                item.style.cursor = 'pointer';
+                item.style.fontWeight = 'bold';
+                item.style.color = '#3b82f6';
+                item.textContent = '📁 .. (Up one level)';
+                item.onclick = () => loadDir(data.parent);
+                listContainer.appendChild(item);
+            }
+            
+            if (data.drives && data.drives.length > 0) {
+                data.drives.forEach(drive => {
+                    const item = document.createElement('div');
+                    item.style.padding = '8px 12px';
+                    item.style.cursor = 'pointer';
+                    item.style.borderBottom = '1px solid var(--border-color)';
+                    item.textContent = '💾 ' + drive;
+                    item.onclick = () => loadDir(drive);
+                    listContainer.appendChild(item);
+                });
+            }
+            
+            if (data.dirs && data.dirs.length > 0) {
+                data.dirs.forEach(dir => {
+                    const item = document.createElement('div');
+                    item.style.padding = '8px 12px';
+                    item.style.cursor = 'pointer';
+                    item.style.borderBottom = '1px solid var(--border-color)';
+                    item.textContent = '📁 ' + dir;
+                    item.ondblclick = () => loadDir(pickerCurrentPath + dir + '/');
+                    item.onclick = () => {
+                        Array.from(listContainer.children).forEach(c => c.style.background = '');
+                        item.style.background = 'rgba(59, 130, 246, 0.15)';
+                        pickerCurrentPath = data.current + dir + '/';
+                        document.getElementById('dir-picker-current-path').textContent = pickerCurrentPath;
+                    };
+                    listContainer.appendChild(item);
+                });
+            } else if (!data.drives || data.drives.length === 0) {
+                const item = document.createElement('div');
+                item.style.padding = '12px';
+                item.style.color = 'var(--text-dim)';
+                item.style.textAlign = 'center';
+                item.textContent = 'No subfolders found.';
+                listContainer.appendChild(item);
+            }
+            
+        } catch (err) {
+            console.error(err);
+        }
+    }
+    
+    function selectCurrentDir() {
+        if (pickerCurrentPath) {
+            document.getElementById('archive_photos_path').value = pickerCurrentPath;
+        }
+        closeDirPicker();
+    }
+    </script>
 </div>

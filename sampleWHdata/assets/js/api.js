@@ -19,6 +19,21 @@ const API = {
         return await response.json();
     },
 
+    async normalizeRows(rows) {
+        try {
+            const response = await fetch('process.php?action=normalize', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rows)
+            });
+            const result = await response.json();
+            return result.success ? result.data : rows;
+        } catch (e) {
+            console.warn('Normalization failed, using raw rows:', e);
+            return rows;
+        }
+    },
+
     async extractOCR(file) {
         const formData = new FormData();
         formData.append('images[]', file);

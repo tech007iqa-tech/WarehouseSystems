@@ -16,7 +16,11 @@ function handleFileSelect(e) {
 
 function handleFiles(files) {
     if (files.length === 0) return;
-    const newFiles = Array.from(files);
+    const newFiles = Array.from(files).sort((a, b) => {
+        const nameA = a.name.replace(/\.[^/.]+$/, "");
+        const nameB = b.name.replace(/\.[^/.]+$/, "");
+        return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
+    });
 
     const tbody = document.getElementById('audit-table-body');
     if (tbody) {

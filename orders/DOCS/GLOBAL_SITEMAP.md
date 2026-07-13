@@ -1,4 +1,4 @@
-# 🗺️ Global System Sitemap 7/6/2026 4:24 PM
+# 🗺️ Global System Sitemap 7/11/2026 11:56 PM
 
 This document outlines the file layout and component structure of the **IQA Warehouse Systems** workspace.
 
@@ -21,6 +21,7 @@ Stored in the workspace root, one level above the public web root (`/prod/`).
 - `index.php`: Consolidated router and page layout shell. Dispatches views and manages autolinking of stylesheets/javascript files.
 - `checkout.php`: Customer B2B batch order checkout manifest verification, order backdating, and ownership transfer utility.
 - `generate_odt.php`: Single-label Flat ODT generation helper. Bypasses ZipArchive using flat string overrides.
+- `download_archive.php`: Endpoint for fetching raw archived photographs.
 - `.htaccess`: Handles standard URL directory settings.
 
 ### Core Libraries (`/prod/core/`)
@@ -30,6 +31,9 @@ Stored in the workspace root, one level above the public web root (`/prod/`).
 - `Security.php`: Houses CSRF token generators, password policy checks, and dirty input sanitizers.
 - `UI.php`: Dynamic template rendering for CSS styling loaders, custom dialog triggers, and toast notifications. Adds `UI::is_ajax()` to detect background synchronizations.
 - `warehouse_db.php`: Database connection mapping helper.
+- `LocationPhotoProcessor.php`: Resizes, optimizes, generates thumbnails, and saves original raw photos to the archive.
+- `Storage.php`: Storage Abstraction layer for Location Photos (SSD and Archive).
+- `BackupManager.php`: Handles `.tar` package creation and restoration for photo assets and database metadata.
 - `login.php` / `logout.php`: Standard account access endpoints.
 
 ### View Fragments (`/prod/pages/`)

@@ -289,9 +289,12 @@ const Grid = {
                 return;
             }
 
-            Grid.renderTableRows(loadedRows);
-            window.showToast?.(`Successfully loaded ${loadedRows.length} rows from CSV!`, 'success');
-            event.target.value = '';
+            (async () => {
+                const normalized = await API.normalizeRows(loadedRows);
+                Grid.renderTableRows(normalized);
+                window.showToast?.(`Successfully loaded and normalized ${loadedRows.length} rows from CSV!`, 'success');
+                event.target.value = '';
+            })();
         };
         reader.readAsText(file);
     },

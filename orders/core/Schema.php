@@ -94,6 +94,24 @@ class Schema {
                 grade TEXT NOT NULL,
                 price REAL DEFAULT 0.00,
                 UNIQUE(category, cpu_gen, grade)
+            )",
+            'location_photos' => "CREATE TABLE IF NOT EXISTS location_photos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                location_code TEXT NOT NULL,
+                original_filename TEXT NOT NULL,
+                archive_driver TEXT NOT NULL,
+                archive_path TEXT NOT NULL,
+                optimized_path TEXT NOT NULL,
+                thumbnail_path TEXT NOT NULL,
+                uploaded_by TEXT NOT NULL,
+                category TEXT DEFAULT 'General',
+                sector TEXT NOT NULL DEFAULT 'Laptops',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (location_code) REFERENCES locations(location_code) ON DELETE CASCADE
+            )",
+            'settings' => "CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
             )"
         ],
         'users' => [
@@ -218,6 +236,13 @@ class Schema {
                 foreach ($sectors as $s) $stmt->execute($s);
             }
         }
+        if ($db_name === 'warehouse' && $table === 'settings') {
+            $count = $conn->query("SELECT COUNT(*) FROM settings")->fetchColumn();
+            if ($count == 0) {
+                $stmt = $conn->prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)");
+                $stmt->execute(['archive_photos_path', dirname(__DIR__) . '/assets/location_photos/archive/']);
+            }
+        }
         if ($db_name === 'warehouse' && $table === 'location_statuses') {
             $count = $conn->query("SELECT COUNT(*) FROM location_statuses")->fetchColumn();
             if ($count == 0) {
@@ -285,7 +310,7 @@ class Schema {
                 ];
 
                 $stmt = $conn->prepare("INSERT OR IGNORE INTO pricing_rules (category, cpu_gen, grade, price) VALUES (?, ?, ?, ?)");
-                
+
                 foreach ($regular_prices as $rp) {
                     $cpu_gen = $rp[0];
                     $stmt->execute(['Regular', $cpu_gen, 'Untested', $rp[1]]);

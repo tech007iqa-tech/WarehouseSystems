@@ -53,6 +53,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
+    if ($action === 'normalize') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        if (!is_array($data)) {
+            sendError('Invalid data');
+        }
+        $normalizer = new Normalizer();
+        foreach ($data as &$row) {
+            $row = $normalizer->normalizeRow($row);
+        }
+        echo json_encode(['success' => true, 'data' => $data]);
+        exit;
+    }
+
     if ($action === 'extract') {
         if (empty($_FILES['images']['name'][0])) {
             sendError('No files uploaded');

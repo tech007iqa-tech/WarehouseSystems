@@ -1,5 +1,6 @@
 # 📦 IQA Warehouse Systems User Manual
-*Last Updated: 7/6/2026 4:21 PM*
+*Last Updated: 7/11/2026 11:56 PM*
+
 
 Welcome to the **IQA Warehouse Systems** user manual. This guide provides comprehensive instructions on how to navigate and utilize the ecosystem for warehouse management, sales logistics, and customer relations.
 
@@ -58,6 +59,10 @@ The Warehouse module (`/prod/pages/warehouse.php`) is where you manage physical 
 - **Zone Renaming**: Use the inline rename pencil icon on a shelf/location or parent zone to instantly rename it in the system.
 - **Relocation**: Use the **Bulk Action Bar** to select multiple items and move them to a different zone in one click.
 - **Inventory Consolidation**: Automatic deduplication and quantity merging for identical items within the same location.
+- **Location & Shelf Photos**: Upload photos of physical storage shelves/locations. Photos can be tagged with a category/layer (Layer 1 Bottom to Layer 5 Top, or Row/Overall View) and sector.
+- **Zone Photo Gallery**: Click **View Zone Photos** when inside a parent zone to view an aggregated grid of all photographs uploaded for shelves in that zone. You can also upload new photos directly from this gallery modal.
+- **Hover Zoom Preview**: Hovering over any photo thumbnail instantly displays a larger high-resolution optimized preview window.
+
 
 ### Label Printing
 - **Thermal Labels**: Generate 2"×1" Flat XML labels directly from the inventory list. These are optimized for thermal printers and can be opened in LibreOffice.
@@ -113,6 +118,8 @@ The **Settings** module (`/prod/pages/settings.php`) is reserved for system main
 ### Maintenance Tools
 - **Schema Repair**: If the system behaves unexpectedly, run the "Integrity Schema Repair" to fix database structures and clear cached sessions.
 - **Backup Manager**: Generate a secure ZIP archive containing all SQLite databases for off-site storage.
+- **Photo Backup & Restore**: Create and download `.tar` backups of location/zone photography files and metadata, or restore them using the import utility.
+- **Archive Directory Picker**: Configure the target spinning disk path for raw photo archives with an interactive folder explorer.
 - **Audit Logs**: Review the system audit log to track user actions and maintain security compliance.
 
 ---

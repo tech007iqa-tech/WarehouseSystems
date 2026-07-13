@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive 7/6/2026 4:24 PM
+# 🧠 AI Technical Deep Dive 7/11/2026 11:56 PM
 
 This document details the database schemas, query abstractions, concurrency controls, document generation formulas, and security patterns implemented in the **IQA Warehouse Systems**.
 
@@ -77,6 +77,21 @@ The system contains five SQLite databases situated in the `/db/` directory.
   - `id` (INTEGER, PRIMARY KEY AUTOINCREMENT)
   - `name` (TEXT, UNIQUE): E.g. `'Zone A'`, `'Zone B'`, `'Inbound'`, `'General'`.
   - `created_at` (DATETIME)
+- **`location_photos`** (Tracks uploaded photographs of storage locations/shelves):
+  - `id` (INTEGER, PRIMARY KEY AUTOINCREMENT)
+  - `location_code` (TEXT, FOREIGN KEY): Reference to `locations.location_code`.
+  - `original_filename` (TEXT, NOT NULL)
+  - `archive_driver` (TEXT, NOT NULL)
+  - `archive_path` (TEXT, NOT NULL)
+  - `optimized_path` (TEXT, NOT NULL)
+  - `thumbnail_path` (TEXT, NOT NULL)
+  - `uploaded_by` (TEXT, NOT NULL)
+  - `category` (TEXT, DEFAULT `'General'`): Layer category (e.g. `Layer 1 (Bottom)`, `Row View`, etc.).
+  - `sector` (TEXT, DEFAULT `'Laptops'`)
+  - `created_at` (DATETIME, DEFAULT `CURRENT_TIMESTAMP`)
+- **`settings`** (Application-wide parameters):
+  - `key` (TEXT, PRIMARY KEY)
+  - `value` (TEXT)
 
 ### 4. `users.db`
 - **`users`** (Operator and Administrator credentials):
@@ -151,6 +166,12 @@ To keep layouts updated in real-time across multiple workstations without spammi
 ### 4. Inventory Consolidation & Maintenance
 - **Deduplication**: In physical environments, identical hardware is frequently ingested multiple times. `api/consolidate_inventory.php` normalizes specifications and merges duplicate rows within the same location/sector by summing quantities and cleaning up redundant entries.
 
+### 5. Location & Zone Photo Storage & Backup
+- **GD Optimization & WebP Conversion**: `LocationPhotoProcessor` uses the GD graphics library (if available) to convert and scale uploaded images. It generates optimized full-screen preview WebP images (max width 1920px, 85% quality) and square thumbnails (150px, 75% quality). If GD is unavailable, it gracefully falls back to copying the raw files.
+- **Storage Abstraction (Local vs. Archive)**: The system implements `StorageManager` with a `StorageDriver` interface.
+  - `ssd_local` driver saves optimized previews and thumbnails to `assets/location_photos/` for high-performance rendering.
+  - `spinning_disk` driver archives the original high-resolution raw uploads. The target path is configurable under the settings database (`settings` table inside `warehouse.db`), allowing admins to target high-capacity secondary storage drives.
+- **Backup & Conflict Resolution**: The `BackupManager` packages all photographs and SQLite `location_photos` metadata database rows into a `.tar` archive. During restore/import, if an uploaded filename already exists on the archive disk, it applies a Windows-style auto-rename resolution (e.g. `filename (1).jpg`) to prevent data loss.
 
 ---
 

@@ -74,23 +74,26 @@ $preview_mode = false;
 $rows = [];
 $acceptedCount = 0;
 $rejectedCount = 0;
+$zone_locations_map = [];
+$working_zones = [];
+$suggested_zone = '';
 
 function mapCpuToMatrixGen($cpu, $gen) {
     $cpu = strtolower($cpu);
     $gen = strtolower($gen);
-    
+
     if (strpos($gen, '4') !== false || strpos($gen, '5') !== false) {
         return '4th-5th';
     }
     if (strpos($gen, '6') !== false || strpos($gen, '7') !== false) {
         return '6th-7th';
     }
-    
+
     $gen_num = 0;
     if (preg_match('/(\d+)/', $gen, $m)) {
         $gen_num = (int)$m[1];
     }
-    
+
     if ($gen_num >= 8 && $gen_num <= 12) {
         $tier = 'i5';
         if (strpos($cpu, 'i7') !== false || strpos($cpu, 'i9') !== false) {
@@ -98,7 +101,7 @@ function mapCpuToMatrixGen($cpu, $gen) {
         }
         return $tier . '-' . $gen_num . 'th';
     }
-    
+
     foreach ([8, 9, 10, 11, 12] as $g) {
         if (strpos($cpu, $g . 'th') !== false || strpos($cpu, '-' . $g) !== false) {
             $tier = 'i5';
@@ -108,7 +111,7 @@ function mapCpuToMatrixGen($cpu, $gen) {
             return $tier . '-' . $g . 'th';
         }
     }
-    
+
     return '';
 }
 
@@ -364,7 +367,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
         if ($conn_wh) {
             $category = 'Regular';
             $normalized_item = strtolower($itemStr . ' ' . $notesStr);
-            
+
             if (stripos($brand, 'ram') !== false || stripos($brand, 'memory') !== false || stripos($normalized_item, 'ddr3') !== false || stripos($normalized_item, 'ddr4') !== false || stripos($normalized_item, 'ram') !== false || stripos($normalized_item, 'sodimm') !== false || stripos($normalized_item, 'dimm') !== false) {
                 $category = 'RAM';
             } elseif (stripos($brand, 'ssd') !== false || stripos($brand, 'hdd') !== false || stripos($brand, 'storage') !== false || stripos($normalized_item, 'ssd') !== false || stripos($normalized_item, 'hdd') !== false || stripos($normalized_item, 'hard drive') !== false || stripos($normalized_item, 'nvme') !== false) {
@@ -380,7 +383,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
             } elseif (stripos($normalized_item, 'rugged') !== false || stripos($normalized_item, 'toughbook') !== false || stripos($normalized_item, 'durabook') !== false || stripos($normalized_item, 'getac') !== false) {
                 $category = 'Rugged';
             }
-            
+
             $grade_key = 'Parts'; // default fallback
             $normalized_cond = strtolower($condition);
             if (strpos($normalized_cond, 'untested') !== false) {
@@ -394,7 +397,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
             } elseif (strpos($normalized_cond, 'b grade') !== false || strpos($normalized_cond, 'grade b') !== false) {
                 $grade_key = 'Parts';
             }
-            
+
             try {
                 $query_gen = 'Default';
                 if ($category === 'Regular') {
@@ -416,7 +419,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
                     }
                 } elseif ($category === 'Microsoft') {
                     $query_gen = 'Surface Pro 8 (Default)';
-                    
+
                     if (stripos($normalized_item, '1769') !== false) {
                         if (stripos($normalized_item, '7th') !== false || stripos($normalized_item, 'laptop 1') !== false) {
                             $query_gen = 'Surface Laptop 1 (1769)';
@@ -510,7 +513,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
                             $query_gen = 'Surface Laptop 1 (1769)';
                         }
                     }
-                    
+
                     $is_untested = (strpos($normalized_cond, 'untested') !== false);
                     $is_parts = (stripos($normalized_item, 'parts') !== false || stripos($normalized_item, 'part') !== false || strpos($normalized_cond, 'parts') !== false);
 
@@ -523,7 +526,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
                     }
                 } elseif ($category === 'Chromebook') {
                     $query_gen = 'Dell Chromebook 3180 / HP G5 EE';
-                    
+
                     if (stripos($normalized_item, '3180') !== false || stripos($normalized_item, 'g5') !== false) {
                         $query_gen = 'Dell Chromebook 3180 / HP G5 EE';
                     } elseif (stripos($normalized_item, '11a g6') !== false || stripos($normalized_item, '11a-g6') !== false) {
@@ -563,7 +566,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
                             $query_gen = 'Lenovo 100e / 300e 2nd Gen (MTK)';
                         }
                     }
-                    
+
                     $is_untested = (strpos($normalized_cond, 'untested') !== false || stripos($normalized_item, 'untested') !== false);
                     if ($is_untested) {
                         $grade_key = 'Untested Lot';
@@ -572,7 +575,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
                     }
                 } elseif ($category === 'Apple') {
                     $query_gen = $model;
-                    
+
                     $is_untested = (strpos($normalized_cond, 'untested') !== false);
                     $is_parts = (stripos($normalized_item, 'parts') !== false || stripos($normalized_item, 'part') !== false || strpos($normalized_cond, 'parts') !== false);
 
@@ -598,7 +601,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
                     }
                 } elseif ($category === 'Rugged') {
                     $query_gen = mapCpuToMatrixGen($cpu, $gen);
-                    
+
                     $is_untested = (strpos($normalized_cond, 'untested') !== false);
                     $has_battery_issue = (stripos($normalized_item, 'no battery') !== false || stripos($normalized_item, 'missing battery') !== false);
                     $is_parts = (stripos($normalized_item, 'parts') !== false || stripos($normalized_item, 'part') !== false || strpos($normalized_cond, 'parts') !== false);
@@ -646,7 +649,7 @@ function parseItemString($itemStr, $notesStr = '', $serialStr = '') {
     ];
 }
 
-function getOrCreateLocation($conn, $locCode) {
+function getOrCreateLocation($conn, $locCode, $zoneName = null) {
     $locCode = trim($locCode);
     if (empty($locCode)) return;
 
@@ -655,10 +658,12 @@ function getOrCreateLocation($conn, $locCode) {
     $exists = $stmt->fetchColumn() > 0;
 
     if (!$exists) {
-        $zoneName = 'General';
-        if (preg_match('/^([a-zA-Z]+)/u', $locCode, $matches)) {
-            $prefix = strtoupper($matches[1]);
-            $zoneName = 'Zone ' . $prefix;
+        if ($zoneName === null || trim($zoneName) === '') {
+            $zoneName = 'General';
+            if (preg_match('/^([a-zA-Z]+)/u', $locCode, $matches)) {
+                $prefix = strtoupper($matches[1]);
+                $zoneName = 'Zone ' . $prefix;
+            }
         }
 
         $stmtZone = $conn->prepare("INSERT OR IGNORE INTO working_zones (name) VALUES (?)");
@@ -666,6 +671,14 @@ function getOrCreateLocation($conn, $locCode) {
 
         $stmtLoc = $conn->prepare("INSERT OR IGNORE INTO locations (location_code, status, working_zone_name) VALUES (?, 'Idle', ?)");
         $stmtLoc->execute([$locCode, $zoneName]);
+    } else {
+        if ($zoneName !== null && trim($zoneName) !== '') {
+            $stmtZone = $conn->prepare("INSERT OR IGNORE INTO working_zones (name) VALUES (?)");
+            $stmtZone->execute([$zoneName]);
+
+            $stmtLoc = $conn->prepare("UPDATE locations SET working_zone_name = ? WHERE location_code = ?");
+            $stmtLoc->execute([$zoneName, $locCode]);
+        }
     }
 }
 
@@ -765,19 +778,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['inventory_csv'])) {
 // Phase 2: Confirm and Save to Database
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'confirm_import') {
     if (!empty($_SESSION['import_rows'])) {
+        $override_zone = null;
+        if (!empty($_POST['override_zone_select'])) {
+            if ($_POST['override_zone_select'] === '__NEW_ZONE__' && !empty($_POST['override_zone_custom'])) {
+                $override_zone = trim($_POST['override_zone_custom']);
+            } else if ($_POST['override_zone_select'] !== '__NEW_ZONE__') {
+                $override_zone = trim($_POST['override_zone_select']);
+            }
+        }
+
+        $override_loc = null;
+        if (!empty($_POST['override_location_select'])) {
+            if ($_POST['override_location_select'] === '__NEW_LOC__' && !empty($_POST['override_location_custom'])) {
+                $override_loc = trim(strtoupper($_POST['override_location_custom']));
+            } else if ($_POST['override_location_select'] !== '__NEW_LOC__') {
+                $override_loc = trim($_POST['override_location_select']);
+            }
+        } else if (!empty($_POST['override_location_custom'])) {
+            // In case select is empty but custom text was entered
+            $override_loc = trim(strtoupper($_POST['override_location_custom']));
+        }
+
         $conn_wh->beginTransaction();
         try {
             $count = 0;
             foreach ($_SESSION['import_rows'] as $row) {
                 if ($row['status'] === 'Accept') {
+                    $loc = ($override_loc !== null) ? $override_loc : $row['location'];
                     // Create location if missing
-                    getOrCreateLocation($conn_wh, $row['location']);
+                    getOrCreateLocation($conn_wh, $loc, $override_zone);
 
                     // Set standard fields
                     $brand = $row['parsed']['brand'];
                     $model = $row['parsed']['model'];
                     $sector = 'Laptops'; // Target sector Laptops as requested
-                    $loc = $row['location'];
                     $qty = (int)$row['qty'];
                     $price = (float)$row['parsed']['price'];
 
@@ -896,7 +930,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 </div>
             </div>
         </div>
-    <?php else: 
+    <?php else:
         $display_rows = $_SESSION['import_rows'] ?? $rows;
         $total = count($display_rows);
         $accepted = 0;
@@ -905,6 +939,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             if ($r['status'] === 'Accept') $accepted++;
             else $rejected++;
         }
+        $working_zones = [];
+        $zone_locations_map = [];
+        $suggested_zone = '';
+        try {
+            $stmt_zones = $conn_wh->query("SELECT name FROM working_zones ORDER BY name ASC");
+            $working_zones = $stmt_zones->fetchAll(PDO::FETCH_COLUMN);
+
+            $stmt_locs = $conn_wh->query("SELECT location_code, working_zone_name FROM locations ORDER BY location_code ASC");
+            while ($row_loc = $stmt_locs->fetch(PDO::FETCH_ASSOC)) {
+                $z = $row_loc['working_zone_name'] ?: 'General';
+                $zone_locations_map[$z][] = $row_loc['location_code'];
+            }
+
+            // Detect suggested zone based on first accepted item's location prefix or code
+            $sample_location = '';
+            foreach ($display_rows as $row) {
+                if ($row['status'] === 'Accept' && !empty($row['location'])) {
+                    $sample_location = trim($row['location']);
+                    break;
+                }
+            }
+            if ($sample_location !== '') {
+                // Check if this location exists and has a zone
+                $stmt_suggest = $conn_wh->prepare("SELECT working_zone_name FROM locations WHERE location_code = ?");
+                $stmt_suggest->execute([$sample_location]);
+                $suggested_zone = $stmt_suggest->fetchColumn();
+
+                if (!$suggested_zone) {
+                    if (preg_match('/^([a-zA-Z]+)/u', $sample_location, $matches)) {
+                        $prefix = strtoupper($matches[1]);
+                        foreach ($working_zones as $wz) {
+                            if (strcasecmp($wz, $prefix) === 0 || strcasecmp($wz, 'Zone ' . $prefix) === 0) {
+                                $suggested_zone = $wz;
+                                break;
+                            }
+                        }
+                        if (!$suggested_zone) {
+                            $suggested_zone = 'Zone ' . $prefix;
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {}
     ?>
         <!-- PREVIEW MODE & SANITIZATION REVIEW -->
         <div style="background: white; border-radius: 24px; border: 1px solid #e2e8f0; padding: 30px; box-shadow: var(--shadow-sm); margin-bottom: 40px;">
@@ -913,22 +990,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                     <h2 style="font-weight: 900; font-size: 1.4rem; color: var(--text-main);">Verification & Sanitization Report</h2>
                     <p style="color: var(--text-secondary); font-size: 0.95rem;">Please review the parsed results and validation status before importing.</p>
                 </div>
-                <div style="display: flex; gap: 15px;">
-                    <form action="index.php?view=import_warehouse" method="POST">
-                        <input type="hidden" name="action" value="cancel_import">
-                        <button type="submit" class="btn-main" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; box-shadow: none;">
-                            ❌ Cancel Import
-                        </button>
-                    </form>
-                    <div id="confirm-import-container" style="display: <?= $accepted > 0 ? 'block' : 'none' ?>;">
-                        <form action="index.php?view=import_warehouse" method="POST">
-                            <input type="hidden" name="action" value="confirm_import">
-                            <button type="submit" class="btn-main" style="background: var(--accent-color); color: white;">
-                                🚀 Confirm Import (<?= $accepted ?> items)
-                            </button>
-                        </form>
+                <form action="index.php?view=import_warehouse" method="POST">
+                    <input type="hidden" name="action" value="cancel_import">
+                    <button type="submit" class="btn-main" style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; box-shadow: none; font-size: 0.9rem; padding: 10px 20px; border-radius: 12px;">
+                        ❌ Cancel Import
+                    </button>
+                </form>
+            </div>
+
+            <div id="confirm-import-container" style="display: <?= $accepted > 0 ? 'block' : 'none' ?>; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 25px; margin-bottom: 30px;">
+                <form action="index.php?view=import_warehouse" method="POST" style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 25px; align-items: end;">
+                    <input type="hidden" name="action" value="confirm_import">
+
+                    <!-- Select Target Area / Working Zone -->
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <label for="override_zone_select" style="font-weight: 800; font-size: 0.9rem; color: #475569;">1. Target Area (Zone)</label>
+                        <div style="display: flex; gap: 10px; width: 100%;">
+                            <select name="override_zone_select" id="override_zone_select" style="flex: 1; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: bold; background: white; font-size: 0.95rem; outline: none;" onchange="onZoneChange()">
+                                <option value="__NEW_ZONE__">+ Create New Zone...</option>
+                                <option value="" <?= empty($suggested_zone) ? 'selected' : '' ?>>-- Auto-Detect Zone --</option>
+                                <?php foreach ($working_zones as $wz): ?>
+                                    <option value="<?= htmlspecialchars($wz) ?>" <?= ($suggested_zone === $wz) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($wz) ?><?= ($suggested_zone === $wz) ? ' (Suggested)' : '' ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                            <input type="text" name="override_zone_custom" id="override_zone_custom" placeholder="New Zone Name" style="display: none; width: 140px; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: bold; font-size: 0.95rem; text-transform: uppercase;">
+                        </div>
                     </div>
-                </div>
+
+                    <!-- Select Location (Filtered by chosen Working Zone) -->
+                    <div id="override-location-wrapper" style="display: flex; flex-direction: column; gap: 8px;">
+                        <label for="override_location_select" style="font-weight: 800; font-size: 0.9rem; color: #475569;">2. Shelf / Layer Code</label>
+                        <div style="display: flex; gap: 10px; width: 100%;">
+                            <select name="override_location_select" id="override_location_select" style="flex: 1; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: bold; background: white; font-size: 0.95rem; outline: none;" onchange="toggleCustomLocationInput()">
+                                <option value="">📄 Keep Row-Level Locations (Default)</option>
+                            </select>
+                            <input type="text" name="override_location_custom" id="override_location_custom" placeholder="New Shelf/Box" style="display: none; width: 140px; padding: 12px 16px; border: 1px solid #cbd5e1; border-radius: 12px; font-weight: bold; font-size: 0.95rem; text-transform: uppercase;">
+                        </div>
+                    </div>
+
+                    <!-- Submit Import Button -->
+                    <div>
+                        <button type="submit" class="btn-main" style="background: var(--accent-color); color: white; height: 48px; padding: 0 30px; font-size: 1rem; border-radius: 12px; font-weight: 900; box-shadow: 0 4px 12px rgba(140, 198, 63, 0.25);">
+                            🚀 Confirm Import (<?= $accepted ?> items)
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <!-- Stats Bar -->
@@ -986,7 +1094,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                             <th style="width: 100px;">Brand</th>
                             <th style="width: 120px;">Model</th>
                             <th style="width: 90px;">Series</th>
-                            <th style="width: 80px;">CPU</th>
+                            <th style="width: 80px; position: relative; cursor: pointer; user-select: none;" onclick="toggleCpuBulkMenu(event)">
+                                CPU <span style="font-size: 0.65rem; opacity: 0.6;">▼</span>
+                                <div id="cpu-bulk-menu" style="text-transform: none; display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); background: white; border: 1px solid #cbd5e1; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); z-index: 100; min-width: 140px; padding: 6px 0; margin-top: 5px;">
+                                    <div style="padding: 6px 12px; font-size: 0.7rem; color: #64748b; font-weight: 800; border-bottom: 1px solid #f1f5f9; text-align: center;">Bulk Default CPU</div>
+                                    <a href="#" onclick="bulkUpdateDefaultCpu(event, 'i3')" style="display: block; padding: 8px 12px; color: var(--text-main); font-weight: 700; font-size: 0.85rem; text-decoration: none; text-align: center; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">i3</a>
+                                    <a href="#" onclick="bulkUpdateDefaultCpu(event, 'i5')" style="display: block; padding: 8px 12px; color: var(--text-main); font-weight: 700; font-size: 0.85rem; text-decoration: none; text-align: center; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">i5</a>
+                                    <a href="#" onclick="bulkUpdateDefaultCpu(event, 'i7')" style="display: block; padding: 8px 12px; color: var(--text-main); font-weight: 700; font-size: 0.85rem; text-decoration: none; text-align: center; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">i7</a>
+                                    <a href="#" onclick="bulkUpdateDefaultCpu(event, 'i9')" style="display: block; padding: 8px 12px; color: var(--text-main); font-weight: 700; font-size: 0.85rem; text-decoration: none; text-align: center; transition: background 0.2s;" onmouseover="this.style.backgroundColor='#f1f5f9'" onmouseout="this.style.backgroundColor='transparent'">i9</a>
+                                </div>
+                            </th>
                             <th style="width: 80px;">Gen</th>
                             <th style="width: 80px;">RAM</th>
                             <th style="width: 90px;">Storage</th>
@@ -997,7 +1114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($display_rows as $rowIndex => $row): 
+                        <?php foreach ($display_rows as $rowIndex => $row):
                             $isAccepted = $row['status'] === 'Accept';
                         ?>
                             <tr style="background-color: <?= $isAccepted ? 'rgba(236, 253, 245, 0.4)' : 'rgba(254, 242, 242, 0.6)' ?>;">
@@ -1186,5 +1303,183 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 }
             }
         });
+
+        // Auto-initialize filtered location list if a suggested zone is preselected
+        onZoneChange();
+    });
+    const zoneLocationsMap = <?= json_encode($zone_locations_map) ?>;
+
+    function onZoneChange() {
+        const zoneSelect = document.getElementById('override_zone_select');
+        const customZoneInput = document.getElementById('override_zone_custom');
+        const locSelect = document.getElementById('override_location_select');
+        const customLocInput = document.getElementById('override_location_custom');
+
+        if (!zoneSelect || !locSelect) return;
+
+        // Reset inputs
+        customZoneInput.style.display = 'none';
+        customZoneInput.required = false;
+        customZoneInput.value = '';
+
+        customLocInput.style.display = 'none';
+        customLocInput.required = false;
+        customLocInput.value = '';
+
+        // Reset Location Dropdown options
+        locSelect.innerHTML = '<option value="">📄 Keep Row-Level Locations (Default)</option>';
+
+        if (zoneSelect.value === '__NEW_ZONE__') {
+            customZoneInput.style.display = 'inline-block';
+            customZoneInput.required = true;
+            customZoneInput.focus();
+
+            // Allow custom location creation directly
+            const optNew = document.createElement('option');
+            optNew.value = '__NEW_LOC__';
+            optNew.textContent = '+ Create New Location...';
+            locSelect.appendChild(optNew);
+            locSelect.value = '__NEW_LOC__';
+            toggleCustomLocationInput();
+        } else if (zoneSelect.value !== '') {
+            const selectedZone = zoneSelect.value;
+            const locs = zoneLocationsMap[selectedZone] || [];
+
+            locs.forEach(loc => {
+                const opt = document.createElement('option');
+                opt.value = loc;
+                opt.textContent = loc;
+                locSelect.appendChild(opt);
+            });
+
+            const optNew = document.createElement('option');
+            optNew.value = '__NEW_LOC__';
+            optNew.textContent = '+ Create New Location...';
+            locSelect.appendChild(optNew);
+        }
+    }
+
+    function toggleCustomLocationInput() {
+        const select = document.getElementById('override_location_select');
+        const customInput = document.getElementById('override_location_custom');
+        if (select && customInput) {
+            if (select.value === '__NEW_LOC__') {
+                customInput.style.display = 'inline-block';
+                customInput.required = true;
+                customInput.focus();
+            } else {
+                customInput.style.display = 'none';
+                customInput.required = false;
+                customInput.value = '';
+            }
+        }
+    }
+
+    function toggleCpuBulkMenu(event) {
+        event.stopPropagation();
+        const menu = document.getElementById('cpu-bulk-menu');
+        if (menu) {
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+    }
+
+    async function bulkUpdateDefaultCpu(event, targetCpu) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        const menu = document.getElementById('cpu-bulk-menu');
+        if (menu) menu.style.display = 'none';
+
+        const rows = document.querySelectorAll('.spreadsheet-table tbody tr');
+        let updatePromises = [];
+
+        rows.forEach((row, index) => {
+            const cpuCell = row.querySelector('td[data-field="cpu"]');
+            const genCell = row.querySelector('td[data-field="gen"]');
+            if (cpuCell && genCell) {
+                const input = cpuCell.querySelector('input.cell-input');
+                const genInput = genCell.querySelector('input.cell-input');
+                if (input && genInput) {
+                    const currentVal = input.value.trim();
+                    const genVal = genInput.value.trim();
+                    if ((currentVal === 'i5' || currentVal === '') && genVal !== '' && genVal !== '-') {
+                        input.value = targetCpu;
+                        cpuCell.style.backgroundColor = 'rgba(140, 198, 63, 0.15)';
+                        setTimeout(() => { cpuCell.style.backgroundColor = ''; }, 600);
+
+                        const rowIndex = index;
+                        const promise = fetch('index.php?view=import_warehouse&action=update_import_cell', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                row_index: rowIndex,
+                                field: 'cpu',
+                                val: targetCpu
+                            })
+                        }).then(r => r.json()).then(res => {
+                            if (res.success) {
+                                const statusTd = row.cells[0];
+                                const originalTd = row.cells[1];
+                                const isAccepted = res.status === 'Accept';
+                                row.style.backgroundColor = isAccepted ? 'rgba(236, 253, 245, 0.4)' : 'rgba(254, 242, 242, 0.6)';
+                                
+                                if (isAccepted) {
+                                    statusTd.innerHTML = '<span style="color: #059669; background: #d1fae5; padding: 4px 8px; border-radius: 8px; font-size: 0.75rem;">Accept</span>';
+                                } else {
+                                    const errorsText = res.errors.join(', ');
+                                    statusTd.innerHTML = `<span style="color: #dc2626; background: #fee2e2; padding: 4px 8px; border-radius: 8px; font-size: 0.75rem;" title="${errorsText}">Reject ⚠️</span>`;
+                                }
+
+                                let errorDiv = originalTd.querySelector('.row-error-list');
+                                if (res.errors.length > 0) {
+                                    if (!errorDiv) {
+                                        errorDiv = document.createElement('div');
+                                        errorDiv.className = 'row-error-list';
+                                        errorDiv.style.color = '#b91c1c';
+                                        errorDiv.style.fontSize = '0.7rem';
+                                        errorDiv.style.fontWeight = '700';
+                                        errorDiv.style.marginTop = '4px';
+                                        originalTd.appendChild(errorDiv);
+                                    }
+                                    errorDiv.textContent = res.errors.join(', ');
+                                } else if (errorDiv) {
+                                    errorDiv.remove();
+                                }
+
+                                const totalEl = document.getElementById('stats-total');
+                                const acceptedEl = document.getElementById('stats-accepted');
+                                const rejectedEl = document.getElementById('stats-rejected');
+                                if (totalEl) totalEl.textContent = res.total;
+                                if (acceptedEl) acceptedEl.textContent = res.accepted;
+                                if (rejectedEl) rejectedEl.textContent = res.rejected;
+
+                                const confirmContainer = document.getElementById('confirm-import-container');
+                                if (confirmContainer) {
+                                    if (res.accepted > 0) {
+                                        confirmContainer.style.display = 'block';
+                                        const btn = confirmContainer.querySelector('button');
+                                        if (btn) {
+                                            btn.textContent = `🚀 Confirm Import (${res.accepted} items)`;
+                                        }
+                                    } else {
+                                        confirmContainer.style.display = 'none';
+                                    }
+                                }
+                            }
+                        });
+                        updatePromises.push(promise);
+                    }
+                }
+            }
+        });
+
+        await Promise.all(updatePromises);
+    }
+
+    document.addEventListener('click', () => {
+        const menu = document.getElementById('cpu-bulk-menu');
+        if (menu) {
+            menu.style.display = 'none';
+        }
     });
 </script>

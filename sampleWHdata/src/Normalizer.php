@@ -3,6 +3,10 @@ namespace Src;
 
 class Normalizer
 {
+    private string $lastBaseLocation = '';
+    private string $lastFullLocation = '';
+    private string $lastBrandModelPrefix = '';
+
     public function __construct()
     {
     }
@@ -20,11 +24,58 @@ class Normalizer
         $row['QTY'] = $row['Qty'] ?? $row['QTY'] ?? '1';
         $row['Item'] = $row['Item'] ?? '';
         $row['Serial'] = $row['Serial'] ?? '';
-        $row['Location'] = $row['Location'] ?? '';
         $row['Notes'] = $row['Notes'] ?? '';
+
+        $loc = isset($row['Location']) ? trim($row['Location']) : '';
+        if (!empty($loc)) {
+            if (preg_match('/^[-–—\/]?L(\d+)/i', $loc, $m)) {
+                $level = 'L' . $m[1];
+                if (!empty($this->lastBaseLocation)) {
+                    $loc = $this->lastBaseLocation . '-' . $level;
+                } else {
+                    $loc = $level;
+                }
+            } else {
+                // Parse Letter - Number - (Optional Level)
+                if (preg_match('/^([A-Z])[-–—]?(\d+)(?:[-–—\/\s]?(L\d+))?/i', $loc, $matches)) {
+                    $letter = strtoupper($matches[1]);
+                    $num = $matches[2];
+                    $level = !empty($matches[3]) ? strtoupper($matches[3]) : null;
+
+                    if ($level !== null) {
+                        $zone = $letter . $num;
+                        $this->lastBaseLocation = $zone;
+                        $loc = $zone . '-' . $level;
+                    } else {
+                        $loc = $letter . '-' . $num;
+                        $this->lastBaseLocation = $letter . $num;
+                    }
+                } else {
+                    $loc = strtoupper(str_replace(' ', '', $loc));
+                }
+            }
+            $this->lastFullLocation = $loc;
+        } else {
+            if (!empty($this->lastFullLocation)) {
+                $loc = $this->lastFullLocation;
+            }
+        }
+
+        $row['Location'] = $loc;
 
         $item = trim($row['Item']);
         $serial = trim($row['Serial']);
+
+        // Propagate brand/model prefix if missing (e.g. only "3380 6th-7th")
+        if (!empty($item)) {
+            if (preg_match('/^(Dell\s+(?:Latitude|Precision|Inspiron|XPS)|HP\s+(?:ProBook|EliteBook|ZBook|ProDesk|Pavilion|Envy|Notebook|Laptop)|Lenovo\s+(?:ThinkPad|Yoga|Ideapad)|Panasonic(?:\s+Toughbook)?|Asus|Acer|Getac)/i', $item, $matches)) {
+                $this->lastBrandModelPrefix = $matches[1];
+            } else {
+                if (!empty($this->lastBrandModelPrefix) && !preg_match('/^(Dell|HP|Lenovo|Panasonic|Asus|Acer|Getac|Apple)/i', $item)) {
+                    $item = $this->lastBrandModelPrefix . ' ' . $item;
+                }
+            }
+        }
 
         // 1. If Serial is a CPU configuration or a model number, merge it into Item
         if (!empty($serial)) {

@@ -7,6 +7,15 @@ $selected_sector = $_GET['sector'] ?? 'Laptops';
 $selected_loc = $_GET['loc'] ?? null;
 $is_spreadsheet = ($selected_loc && $selected_loc !== 'GLOBAL');
 
+$location_photos = [];
+if ($is_spreadsheet && $selected_loc) {
+    try {
+        $stmt_lp = $conn_wh->prepare("SELECT * FROM location_photos WHERE location_code = ? AND sector = ? ORDER BY category ASC, created_at DESC");
+        $stmt_lp->execute([$selected_loc, $selected_sector]);
+        $location_photos = $stmt_lp->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {}
+}
+
 // Handle Add/Edit/Delete Item
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if (!Security::validate($_POST['csrf_token'] ?? '')) {
@@ -262,6 +271,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $msg = ($_POST['action'] === 'edit_inventory') ? 'updated' : 'added';
         $hash = ($msg === 'added') ? '#wh-main-form' : '#inventory-list';
         header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=" . $msg . "&last_id=" . $last_id . $hash);
+        exit();
+    }
+    if ($_POST['action'] === 'upload_location_photo') {
+        $loc = $_POST['location_code'] ?? '';
+        $sector = $_POST['sector'] ?? 'Laptops';
+        $category = $_POST['category'] ?? 'General';
+        $redirect_to = $_POST['redirect_to'] ?? 'location';
+        $active_zone = $_POST['active_zone'] ?? '';
+
+        if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
+            require_once __DIR__ . '/../core/LocationPhotoProcessor.php';
+            try {
+                $processor = new LocationPhotoProcessor($conn_wh);
+                $processor->processUpload(
+                    $_FILES['photo']['tmp_name'],
+                    $_FILES['photo']['name'],
+                    $loc,
+                    $sector,
+                    $category,
+                    $current_user
+                );
+                $msg = 'photo_uploaded';
+            } catch (Exception $e) {
+                $msg = 'photo_error&err=' . urlencode($e->getMessage());
+            }
+        } else {
+            $msg = 'photo_error&err=No+file+selected';
+        }
+
+        if ($redirect_to === 'zone' && !empty($active_zone)) {
+            header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&zone=" . urlencode($active_zone) . "&msg=" . $msg);
+        } else {
+            header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=" . $msg);
+        }
+        exit();
+    }
+
+    if ($_POST['action'] === 'delete_location_photo') {
+        $photo_id = (int)($_POST['photo_id'] ?? 0);
+        $loc = $_POST['location_code'] ?? '';
+        $sector = $_POST['sector'] ?? 'Laptops';
+        $redirect_to = $_POST['redirect_to'] ?? 'location';
+        $active_zone = $_POST['active_zone'] ?? '';
+
+        if ($photo_id > 0) {
+            try {
+                $stmt = $conn_wh->prepare("SELECT * FROM location_photos WHERE id = ?");
+                $stmt->execute([$photo_id]);
+                $photo = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($photo) {
+                    require_once __DIR__ . '/../core/Storage.php';
+                    $ssdDriver = StorageManager::getDriver('ssd_local');
+                    $archiveDriver = StorageManager::getDriver('spinning_disk');
+
+                    $archiveDriver->delete($photo['archive_path']);
+                    $ssdDriver->delete(basename($photo['optimized_path']));
+                    $ssdDriver->delete(basename($photo['thumbnail_path']));
+
+                    $stmt_del = $conn_wh->prepare("DELETE FROM location_photos WHERE id = ?");
+                    $stmt_del->execute([$photo_id]);
+
+                    $msg = 'photo_deleted';
+                } else {
+                    $msg = 'photo_not_found';
+                }
+            } catch (Exception $e) {
+                $msg = 'photo_error&err=' . urlencode($e->getMessage());
+            }
+        } else {
+            $msg = 'photo_error&err=Invalid+photo+ID';
+        }
+
+        if ($redirect_to === 'zone' && !empty($active_zone)) {
+            header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&zone=" . urlencode($active_zone) . "&msg=" . $msg);
+        } else {
+            header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=" . $msg);
+        }
         exit();
     }
 }
@@ -709,7 +796,7 @@ if (UI::is_ajax()) {
                 <p class="subtitle">Managing stock and locations across all inventory sectors.</p>
             </div>
             <div class="header-right-side">
-                <?php 
+                <?php
                 $parent_zone = null;
                 $active_l_color = '#94a3b8';
                 $active_l_status = 'Idle';
@@ -871,6 +958,19 @@ if (UI::is_ajax()) {
                                 $filtered_locs[] = $loc;
                             }
                         }
+
+                        $zone_locs = [];
+                        foreach ($filtered_locs as $loc) {
+                            $zone_locs[] = $loc['location_code'];
+                        }
+
+                        $zone_photos = [];
+                        if (!empty($zone_locs)) {
+                            $placeholders = implode(',', array_fill(0, count($zone_locs), '?'));
+                            $stmt_zp = $conn_wh->prepare("SELECT * FROM location_photos WHERE location_code IN ($placeholders) ORDER BY location_code ASC, category ASC, created_at DESC");
+                            $stmt_zp->execute($zone_locs);
+                            $zone_photos = $stmt_zp->fetchAll(PDO::FETCH_ASSOC);
+                        }
                         ?>
                         <div style="margin-bottom: 20px;">
                             <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>" class="btn-export" style="background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; box-shadow:none; display:inline-flex; width:auto; height:36px; padding:0 14px; border-radius:10px;">
@@ -879,6 +979,9 @@ if (UI::is_ajax()) {
                             <span style="margin-left: 15px; font-weight: 800; color: var(--text-main); font-size: 1.1rem; vertical-align: middle;">
                                 Zone: <?= htmlspecialchars($active_zone_name) ?>
                             </span>
+                            <button type="button" onclick="document.getElementById('zone-photos-modal').style.display='flex'" class="btn-export" style="background: var(--accent-secondary); color: var(--text-main); border: 1px solid var(--border-color); display: inline-flex; width: auto; height: 36px; padding: 0 14px; border-radius: 10px; margin-left: 15px; font-weight: 600; cursor: pointer; align-items: center; justify-content: center; gap: 6px; vertical-align: middle;">
+                                📸 View Zone Photos (<?= count($zone_photos) ?>)
+                            </button>
                         </div>
 
                         <div class="loc-grid" id="gate-loc-grid">
@@ -1009,6 +1112,57 @@ if (UI::is_ajax()) {
                     </div>
 
                     <div class="scroll-hint">↔️ Swipe horizontally to edit/view all columns</div>
+
+                    <!-- Collapsible Location Photo Gallery Widget -->
+                    <div style="margin-bottom: 1.5rem; margin-top: 0.5rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); overflow: hidden;">
+                        <details style="padding: 1rem; cursor: pointer;">
+                            <summary style="font-weight: 700; font-size: 0.95rem; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; list-style: none;">
+                                <span>📸 Location Photos for <?= htmlspecialchars($selected_loc) ?> (<?= htmlspecialchars($selected_sector) ?>)</span>
+                                <span class="photo-count" style="font-size: 0.85rem; background: var(--accent-color); color: white; padding: 2px 8px; border-radius: 12px;"><?= count($location_photos) ?> Photos</span>
+                            </summary>
+
+                            <div style="margin-top: 1rem;">
+                                <!-- Gallery Grid -->
+                                <div class="photo-grid-horizontal" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; align-items: center;">
+                                    <?php if (empty($location_photos)): ?>
+                                        <div style="color: var(--text-dim); font-size: 0.85rem; padding: 1rem 0;">No photographs uploaded for this shelf yet.</div>
+                                    <?php else: ?>
+                                        <?php foreach ($location_photos as $photo): ?>
+                                            <div class="photo-card-mini" style="flex: 0 0 100px; text-align: center; border: 1px solid var(--border-color); border-radius: 8px; padding: 4px; background: var(--bg-body); position: relative;">
+                                                <div class="img-preview-container" style="position: relative; width: 100%; height: 75px; overflow: hidden; border-radius: 6px;">
+                                                    <img src="<?= htmlspecialchars($photo['thumbnail_path']) ?>" alt="<?= htmlspecialchars($photo['original_filename']) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <div class="hover-preview" style="display: none; position: fixed; z-index: 2100; width: 450px; height: 350px; background: rgba(0,0,0,0.95); border: 2px solid var(--accent-color); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; pointer-events: none;">
+                                                        <img src="<?= htmlspecialchars($photo['optimized_path']) ?>" style="width: 100%; height: 100%; object-fit: contain;">
+                                                    </div>
+                                                </div>
+                                                <div style="font-size: 0.7rem; font-weight: 700; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="<?= htmlspecialchars($photo['category']) ?>">
+                                                    <?= htmlspecialchars($photo['category']) ?>
+                                                </div>
+                                                <div style="display: flex; justify-content: center; gap: 8px; margin-top: 4px;">
+                                                    <a href="download_archive.php?id=<?= $photo['id'] ?>" class="btn-icon-tiny" title="Download Raw Original" style="font-size: 0.75rem; text-decoration: none;">📥</a>
+                                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Delete this photo?');">
+                                                        <?= UI::csrf_field() ?>
+                                                        <input type="hidden" name="action" value="delete_location_photo">
+                                                        <input type="hidden" name="photo_id" value="<?= $photo['id'] ?>">
+                                                        <input type="hidden" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>">
+                                                        <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
+                                                        <button type="submit" style="background: none; border: none; padding: 0; cursor: pointer; font-size: 0.75rem;" title="Delete Photo">🗑️</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+
+                                    <!-- Add Photo trigger -->
+                                    <button type="button" onclick="document.getElementById('upload-photo-modal').style.display='flex'" style="flex: 0 0 100px; height: 110px; border: 2px dashed var(--border-color); border-radius: 8px; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-dim); transition: all 0.2s;">
+                                        <span style="font-size: 1.5rem;">➕</span>
+                                        <span style="font-size: 0.75rem; font-weight: 600;">Add Photo</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </details>
+                    </div>
+
                     <div class="spreadsheet-table-wrapper">
                         <table class="spreadsheet-table">
                             <thead>
@@ -2066,6 +2220,181 @@ if (UI::is_ajax()) {
         </div>
     </div>
 
+    <?php if ($is_spreadsheet && $selected_loc): ?>
+    <!-- Upload Location Photo Modal -->
+    <div id="upload-photo-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2200; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div class="card" style="width: 100%; max-width: 450px; padding: 1.5rem; animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: #ffffff; color: #1e293b; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0; font-size: 1.25rem;">📸 Upload Photo for <?= htmlspecialchars($selected_loc) ?></h3>
+                <button type="button" onclick="document.getElementById('upload-photo-modal').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dim);">×</button>
+            </div>
+
+            <form action="" method="POST" enctype="multipart/form-data" class="standard-form">
+                <?= UI::csrf_field() ?>
+                <input type="hidden" name="action" value="upload_location_photo">
+                <input type="hidden" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>">
+                <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
+                <input type="hidden" name="redirect_to" value="location">
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Select Photo</label>
+                    <input type="file" name="photo" accept="image/*" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body);">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Layer / Category</label>
+                    <select name="category" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-main);">
+                        <option value="Layer 1 (Bottom)">Layer 1 (Bottom)</option>
+                        <option value="Layer 2">Layer 2</option>
+                        <option value="Layer 3">Layer 3</option>
+                        <option value="Layer 4">Layer 4</option>
+                        <option value="Layer 5 (Top)">Layer 5 (Top)</option>
+                        <option value="Row View">Row / Overall View</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn-action" style="flex: 2; padding: 10px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Upload Photo</button>
+                    <button type="button" onclick="document.getElementById('upload-photo-modal').style.display='none'" class="btn-action" style="flex: 1; padding: 10px; background: var(--text-dim); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($active_zone_name): ?>
+    <!-- Zone Photos Modal -->
+    <div id="zone-photos-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div class="card" style="width: 100%; max-width: 800px; max-height: 85vh; padding: 1.5rem; animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: #ffffff; color: #1e293b; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-shrink: 0;">
+                <h3 style="margin: 0; font-size: 1.25rem;">📸 Photos for Zone: <?= htmlspecialchars($active_zone_name) ?></h3>
+                <div style="display: flex; gap: 10px;">
+                    <button type="button" onclick="document.getElementById('zone-upload-photo-modal').style.display='flex'" class="btn-action" style="background: var(--accent-color); color: white; border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">Upload New Photo</button>
+                    <button type="button" onclick="document.getElementById('zone-photos-modal').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dim);">×</button>
+                </div>
+            </div>
+
+            <div style="overflow-y: auto; flex-grow: 1; padding-right: 5px;">
+                <?php if (empty($zone_photos)): ?>
+                    <div style="text-align: center; padding: 3rem; color: var(--text-dim);">
+                        <div style="font-size: 3rem; opacity: 0.3; margin-bottom: 1rem;">📸</div>
+                        <p>No photos uploaded for any location inside Zone: <?= htmlspecialchars($active_zone_name) ?> yet.</p>
+                    </div>
+                <?php else: ?>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem;">
+                        <?php foreach ($zone_photos as $photo): ?>
+                            <div class="photo-card-mini-zone" style="border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: var(--bg-body); text-align: center;">
+                                <div class="img-preview-container-zone" style="position: relative; width: 100%; height: 130px; overflow: hidden; border-radius: 6px; cursor: pointer;">
+                                    <img src="<?= htmlspecialchars($photo['thumbnail_path']) ?>" alt="<?= htmlspecialchars($photo['original_filename']) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <div class="hover-preview-zone" style="display: none; position: fixed; z-index: 2100; width: 450px; height: 350px; background: rgba(0,0,0,0.95); border: 2px solid var(--accent-primary); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; pointer-events: none;">
+                                        <img src="<?= htmlspecialchars($photo['optimized_path']) ?>" style="width: 100%; height: 100%; object-fit: contain;">
+                                    </div>
+                                </div>
+                                <div style="font-size: 0.8rem; font-weight: 700; margin-top: 6px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                    Location: <?= htmlspecialchars($photo['location_code']) ?>
+                                </div>
+                                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 2px;">
+                                    Sector: <?= htmlspecialchars($photo['sector']) ?>
+                                </div>
+                                <div style="font-size: 0.75rem; font-weight: 600; color: var(--accent-color); margin-top: 2px;">
+                                    <?= htmlspecialchars($photo['category']) ?>
+                                </div>
+                                <div style="display: flex; justify-content: center; gap: 10px; margin-top: 6px;">
+                                    <a href="download_archive.php?id=<?= $photo['id'] ?>" class="btn-icon-tiny" title="Download Raw Original" style="font-size: 0.85rem; text-decoration: none;">📥</a>
+                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Delete this photo?');">
+                                        <?= UI::csrf_field() ?>
+                                        <input type="hidden" name="action" value="delete_location_photo">
+                                        <input type="hidden" name="photo_id" value="<?= $photo['id'] ?>">
+                                        <input type="hidden" name="location_code" value="<?= htmlspecialchars($photo['location_code']) ?>">
+                                        <input type="hidden" name="sector" value="<?= htmlspecialchars($photo['sector']) ?>">
+                                        <input type="hidden" name="redirect_to" value="zone">
+                                        <input type="hidden" name="active_zone" value="<?= htmlspecialchars($active_zone_name) ?>">
+                                        <button type="submit" style="background: none; border: none; padding: 0; cursor: pointer; font-size: 0.85rem;" title="Delete Photo">🗑️</button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <!-- Zone Upload Photo Modal -->
+    <div id="zone-upload-photo-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2200; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        <div class="card" style="width: 100%; max-width: 450px; padding: 1.5rem; animation: modalIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: #ffffff; color: #1e293b; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-lg);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0; font-size: 1.25rem;">Upload Photo for Zone: <?= htmlspecialchars($active_zone_name) ?></h3>
+                <button type="button" onclick="document.getElementById('zone-upload-photo-modal').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dim);">×</button>
+            </div>
+
+            <form action="" method="POST" enctype="multipart/form-data" class="standard-form">
+                <?= UI::csrf_field() ?>
+                <input type="hidden" name="action" value="upload_location_photo">
+                <input type="hidden" name="redirect_to" value="zone">
+                <input type="hidden" name="active_zone" value="<?= htmlspecialchars($active_zone_name) ?>">
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Location / Shelf</label>
+                    <select name="location_code" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-main);">
+                        <?php foreach ($zone_locs as $zl): ?>
+                            <option value="<?= htmlspecialchars($zl) ?>"><?= htmlspecialchars($zl) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Sector</label>
+                    <select name="sector" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-main);">
+                        <?php foreach ($sectors as $s): ?>
+                            <option value="<?= htmlspecialchars($s['name']) ?>" <?= $selected_sector === $s['name'] ? 'selected' : '' ?>><?= htmlspecialchars($s['name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Select Photo</label>
+                    <input type="file" name="photo" accept="image/*" required style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body);">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Layer / Category</label>
+                    <select name="category" style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-body); color: var(--text-main);">
+                        <option value="Layer 1 (Bottom)">Layer 1 (Bottom)</option>
+                        <option value="Layer 2">Layer 2</option>
+                        <option value="Layer 3">Layer 3</option>
+                        <option value="Layer 4">Layer 4</option>
+                        <option value="Layer 5 (Top)">Layer 5 (Top)</option>
+                        <option value="Row View">Row / Overall View</option>
+                    </select>
+                </div>
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn-action" style="flex: 2; padding: 10px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Upload Photo</button>
+                    <button type="button" onclick="document.getElementById('zone-upload-photo-modal').style.display='none'" class="btn-action" style="flex: 1; padding: 10px; background: var(--text-dim); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    document.querySelectorAll('.img-preview-container-zone').forEach(container => {
+        const preview = container.querySelector('.hover-preview-zone');
+        if (!preview) return;
+        container.addEventListener('mouseenter', () => {
+            preview.style.display = 'block';
+        });
+        container.addEventListener('mouseleave', () => {
+            preview.style.display = 'none';
+        });
+        container.addEventListener('mousemove', (e) => {
+            preview.style.left = (e.clientX + 20) + 'px';
+            preview.style.top = (e.clientY - 150) + 'px';
+        });
+    });
+    </script>
+    <?php endif; ?>
+
     <!-- Rename Working Zone Modal -->
     <div id="rename-working-zone-modal" class="modal-overlay no-print"
         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;"
@@ -2284,12 +2613,12 @@ if (UI::is_ajax()) {
                         if (!thead) return;
                         const ths = thead.querySelectorAll('th');
                         const rect = wrapper.getBoundingClientRect();
-                        
+
                         if (rect.top < 0) {
                             const headerHeight = thead.offsetHeight;
-                            const maxTranslate = rect.height - headerHeight - 60; 
+                            const maxTranslate = rect.height - headerHeight - 60;
                             const translateVal = Math.min(-rect.top, maxTranslate);
-                            
+
                             if (translateVal > 0) {
                                 ths.forEach(th => {
                                     th.style.transform = `translateY(${translateVal - 1}px)`;
@@ -2299,7 +2628,7 @@ if (UI::is_ajax()) {
                                 return;
                             }
                         }
-                        
+
                         ths.forEach(th => {
                             th.style.transform = '';
                         });
@@ -2308,6 +2637,22 @@ if (UI::is_ajax()) {
                 });
                 ticking = true;
             }
+        });
+
+        // Location preview hover script
+        document.querySelectorAll('.img-preview-container').forEach(container => {
+            const preview = container.querySelector('.hover-preview');
+            if (!preview) return;
+            container.addEventListener('mouseenter', () => {
+                preview.style.display = 'block';
+            });
+            container.addEventListener('mouseleave', () => {
+                preview.style.display = 'none';
+            });
+            container.addEventListener('mousemove', (e) => {
+                preview.style.left = (e.clientX + 20) + 'px';
+                preview.style.top = (e.clientY - 150) + 'px';
+            });
         });
 
         // Ensure gaming fields are correctly toggled on load if Gaming is selected

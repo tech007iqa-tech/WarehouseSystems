@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive & Handover 7/6/2026 4:21 PM
+# 🧠 AI Technical Deep Dive & Handover 7/11/2026 11:56 PM
 
 This document serves as a "shortcut" for AI agents to understand the underlying logic of the IQA Warehouse Systems without reading every single file.
 
@@ -42,6 +42,8 @@ Every module has a `schema_guard.php` or `Schema::runMigrations()` setup.
 *   **Colors**: High-contrast light themes for operational modules; vibrant Teal/Lime for Marketing.
 
 ## ⚠️ Recent Critical Fixes & Features (July 2026)
+*   **Location & Zone Photography (Photos for Zone)**: Added physical shelf/location photo upload functionality to the Warehouse module. Photos are organized by layer category (Layer 1 Bottom to Layer 5 Top, or Row/Overall View) and sector. Features include a floating hover zoom preview for photo thumbnails, and an aggregated gallery view ("View Zone Photos") for parent storage zones.
+*   **Photo Storage & Backup Architecture**: Implemented `LocationPhotoProcessor`, `StorageManager` (with local SSD and spinning disk drivers), and `BackupManager` allowing admins to pick the archive path, and create/download or restore `.tar` backup archives containing both photo assets and database metadata.
 *   **Inventory Consolidation**: Added `api/consolidate_inventory.php` to automate the merging of identical inventory items within the same warehouse location.
 *   **Iframe Escaping**: Improved UX in the inbound module (`orders/index.php?view=inbound`) by ensuring navigation actions escape the iframe and target the parent window/tab.
 
