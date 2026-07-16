@@ -374,14 +374,24 @@ $sectors = $conn_wh->query("SELECT * FROM sectors")->fetchAll(PDO::FETCH_ASSOC);
 $items = [];
 if ($selected_loc) {
     if ($selected_loc === 'GLOBAL') {
-        if ($selected_sector === 'Master') {
-            $stmt_i = $conn_wh->query("SELECT * FROM inventory ORDER BY sector ASC, id DESC");
-            $items = $stmt_i->fetchAll(PDO::FETCH_ASSOC);
+        $active_zone_name = $_GET['zone'] ?? null;
+        if ($active_zone_name) {
+            if ($selected_sector === 'Master') {
+                $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE location_code IN (SELECT location_code FROM locations WHERE working_zone_name = ?) ORDER BY sector ASC, id DESC");
+                $stmt_i->execute([$active_zone_name]);
+            } else {
+                $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? AND location_code IN (SELECT location_code FROM locations WHERE working_zone_name = ?) ORDER BY id DESC");
+                $stmt_i->execute([$selected_sector, $active_zone_name]);
+            }
         } else {
-            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? ORDER BY id DESC");
-            $stmt_i->execute([$selected_sector]);
-            $items = $stmt_i->fetchAll(PDO::FETCH_ASSOC);
+            if ($selected_sector === 'Master') {
+                $stmt_i = $conn_wh->query("SELECT * FROM inventory ORDER BY sector ASC, id DESC");
+            } else {
+                $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? ORDER BY id DESC");
+                $stmt_i->execute([$selected_sector]);
+            }
         }
+        $items = $stmt_i->fetchAll(PDO::FETCH_ASSOC);
     } else {
         // Ensure location entry exists
         $stmt_check = $conn_wh->prepare("INSERT OR IGNORE INTO locations (location_code, status) VALUES (?, 'Idle')");
@@ -1033,24 +1043,41 @@ if (UI::is_ajax()) {
                     </div>
                 </div>
 
-                <!-- OPTION 2: GLOBAL DASHBOARD (Combined) -->
+                <!-- OPTION 2: GLOBAL OR ZONE DASHBOARD -->
                 <div class="gate-card">
                     <div style="font-size: 3.5rem; margin-bottom: 25px;">📊</div>
-                    <h2 style="font-weight:900; margin-bottom:10px;">Global Dashboard</h2>
-                    <p style="color:var(--text-secondary); margin-bottom:30px;">Managing stock and locations across all
-                        inventory sectors in one easy view.</p>
+                    <?php if ($active_zone_name): ?>
+                        <h2 style="font-weight:900; margin-bottom:10px;">Zone <?= htmlspecialchars($active_zone_name) ?> Dashboard</h2>
+                        <p style="color:var(--text-secondary); margin-bottom:30px;">Managing stock and locations within Zone <?= htmlspecialchars($active_zone_name) ?> in one easy view.</p>
 
-                    <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
-                        <a href="index.php?view=warehouse&sector=Master&loc=GLOBAL"
-                            style="display: block; width: 100%; padding: 18px; background: var(--text-main); color: white; border-radius: 14px; font-weight: 800; text-decoration: none; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-                            🏢 Master Overview (All Stock)
-                        </a>
+                        <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                            <a href="index.php?view=warehouse&sector=Master&loc=GLOBAL&zone=<?= urlencode($active_zone_name) ?>"
+                                style="display: block; width: 100%; padding: 18px; background: var(--text-main); color: white; border-radius: 14px; font-weight: 800; text-decoration: none; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                                🏢 Master Overview (Zone <?= htmlspecialchars($active_zone_name) ?> Stock)
+                            </a>
 
-                        <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=GLOBAL"
-                            style="display: block; width: 100%; padding: 15px; border: 2px solid #e2e8f0; color: #64748b; border-radius: 14px; font-weight: 700; text-decoration: none; transition: 0.2s; font-size: 0.9rem;">
-                            🌐 View Only <?= htmlspecialchars($selected_sector) ?>
-                        </a>
-                    </div>
+                            <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=GLOBAL&zone=<?= urlencode($active_zone_name) ?>"
+                                style="display: block; width: 100%; padding: 15px; border: 2px solid #e2e8f0; color: #64748b; border-radius: 14px; font-weight: 700; text-decoration: none; transition: 0.2s; font-size: 0.9rem;">
+                                🌐 View Only <?= htmlspecialchars($selected_sector) ?> in Zone <?= htmlspecialchars($active_zone_name) ?>
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <h2 style="font-weight:900; margin-bottom:10px;">Global Dashboard</h2>
+                        <p style="color:var(--text-secondary); margin-bottom:30px;">Managing stock and locations across all
+                            inventory sectors in one easy view.</p>
+
+                        <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                            <a href="index.php?view=warehouse&sector=Master&loc=GLOBAL"
+                                style="display: block; width: 100%; padding: 18px; background: var(--text-main); color: white; border-radius: 14px; font-weight: 800; text-decoration: none; transition: 0.2s; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                                🏢 Master Overview (All Stock)
+                            </a>
+
+                            <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>&loc=GLOBAL"
+                                style="display: block; width: 100%; padding: 15px; border: 2px solid #e2e8f0; color: #64748b; border-radius: 14px; font-weight: 700; text-decoration: none; transition: 0.2s; font-size: 0.9rem;">
+                                🌐 View Only <?= htmlspecialchars($selected_sector) ?>
+                            </a>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -1058,8 +1085,13 @@ if (UI::is_ajax()) {
 
         <!-- Sector Navigation -->
         <div class="sector-nav">
-            <?php foreach ($sectors as $s): ?>
-                <a href="index.php?view=warehouse&sector=<?= urlencode($s['name']) ?>&loc=<?= urlencode($selected_loc) ?>"
+            <?php foreach ($sectors as $s): 
+                $sector_url = "index.php?view=warehouse&sector=" . urlencode($s['name']) . "&loc=" . urlencode($selected_loc);
+                if (!empty($active_zone_name)) {
+                    $sector_url .= "&zone=" . urlencode($active_zone_name);
+                }
+            ?>
+                <a href="<?= $sector_url ?>"
                     class="sector-card <?= $selected_sector === $s['name'] ? 'active' : '' ?>"
                     data-sector="<?= htmlspecialchars($s['name']) ?>">
                     <span class="sector-icon"><?= $s['icon'] ?></span>

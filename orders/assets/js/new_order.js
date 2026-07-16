@@ -301,3 +301,61 @@ function filterSummary() {
         row.style.display = text.includes(query) ? '' : 'none';
     });
 }
+
+async function consolidateOrderRows() {
+    if (!confirm("Are you sure you want to consolidate rows with identical values in this order? Duplicate items will be merged and their quantities added together.")) {
+        return;
+    }
+
+    const meta = document.getElementById('batch-metadata');
+    if (!meta) return;
+
+    const customerId = meta.getAttribute('data-customer-id');
+    const orderId = meta.getAttribute('data-order-id');
+    const csrfToken = meta.getAttribute('data-csrf');
+
+    const btn = document.getElementById('btn-consolidate-spreadsheet');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ Merging...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch('api/consolidate_order.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                csrf_token: csrfToken,
+                customer_id: customerId,
+                order_id: orderId
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            if (window.IQA_Notify) {
+                window.IQA_Notify.success(result.message || 'Rows consolidated successfully ✨');
+            } else {
+                alert(result.message || 'Rows consolidated successfully');
+            }
+            // Reload the page to reflect changes
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            if (window.IQA_Notify) {
+                window.IQA_Notify.error('Failed to consolidate: ' + (result.error || 'Unknown error'));
+            } else {
+                alert('Failed to consolidate: ' + (result.error || 'Unknown error'));
+            }
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Network error during consolidation.");
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}

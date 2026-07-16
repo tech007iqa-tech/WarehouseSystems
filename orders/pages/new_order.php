@@ -126,6 +126,9 @@ foreach ($items as $item)
                         <input type="text" id="summary-search" placeholder="Filter items..." onkeyup="filterSummary()"
                             style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; width: 100%;">
                     </div>
+                    <button type="button" id="btn-consolidate-spreadsheet" class="btn-consolidate" onclick="consolidateOrderRows()" style="background: rgb(241, 245, 249); border: 1px solid rgb(203, 213, 225); padding: 4px 8px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.75rem; color: rgb(71, 85, 105); height: 34px;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'" title="Consolidate duplicate rows">
+                        🔄 Consolidate
+                    </button>
                 </div>
             </div>
 
