@@ -26,6 +26,13 @@ $active_key = $is_new_order ? 'new_order' : (isset($routes[$view]) ? $view : 'de
 
 // --- ROLE BASED ACCESS CONTROL ---
 $user_role = $_SESSION['role'] ?? 'Operator';
+
+// Technicians cannot access Orders — redirect to Tech Dashboard
+if ($user_role === 'Technician') {
+    header("Location: ../tech/index.php");
+    exit();
+}
+
 if ($user_role === 'Operator') {
     $allowed_operator_keys = ['warehouse', 'import_warehouse', 'inbound', 'settings'];
     if (!in_array($active_key, $allowed_operator_keys)) {

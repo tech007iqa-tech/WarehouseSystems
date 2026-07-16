@@ -1386,6 +1386,7 @@ try {
                     <select name="new_role" id="new_role" style="width:100%; height:44px; border-radius:10px; border:1px solid #ddd; padding: 0 10px; font-weight:700;">
                         <option value="Operator">Operator</option>
                         <option value="Front Desk">Front Desk</option>
+                        <option value="Technician">Technician</option>
                         <option value="Admin">Administrator</option>
                     </select>
                 </div>
@@ -1439,6 +1440,14 @@ try {
                                     <input type='hidden' name='target_user' value='" . htmlspecialchars($u['username']) . "'>
                                     <input type='hidden' name='target_role' value='Operator'>
                                     <button type='submit' class='btn-delete-small' style='background:#e2e8f0; color:#475569;'>Demote</button>
+                                  </form>";
+                        } elseif ($user_role === 'Technician') {
+                            echo "<form method='POST' style='display:inline;'>
+                                    " . UI::csrf_field() . "
+                                    <input type='hidden' name='action' value='change_role'>
+                                    <input type='hidden' name='target_user' value='" . htmlspecialchars($u['username']) . "'>
+                                    <input type='hidden' name='target_role' value='Operator'>
+                                    <button type='submit' class='btn-delete-small' style='background:#e0e7ff; color:#4338ca;'>→ Operator</button>
                                   </form>";
                         } elseif ($user_role === 'Admin') {
                             echo "<form method='POST' style='display:inline;'>

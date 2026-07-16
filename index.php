@@ -28,11 +28,11 @@
     </header>
 
     <main class="module-grid">
-        <!-- LABELS MODULE -->
-        <a href="labels/index.php" class="module-card">
-            <div class="icon-box">🏷️</div>
-            <h2>Inventory Labels</h2>
-            <p>Rapid hardware intake terminal with ODT thermal label generation and technical sheet management.</p>
+        <!-- TECH MODULE -->
+        <a href="tech/index.php" class="module-card">
+            <div class="icon-box">🔧</div>
+            <h2>Technician Dashboard</h2>
+            <p>Hardware testing, computer logs, and parts inventory management.</p>
             <div class="badge badge-labels">Module Active</div>
         </a>
 
