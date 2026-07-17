@@ -684,7 +684,7 @@ function downloadWarehouseCSV() {
     let csv = `"Active Location","${activeLoc} 📍",,,,,,,\n\n`;
 
     // Updated to match the specified B2B structure with Date & Time first
-    const headers = ["Date", "Time", "Type", "Brand", "Model", "Series", "CPU / Gen", "Description", "QTY", "Price", "Total"];
+    const headers = ["Date", "Time", "Type", "Brand", "Model", "Series", "CPU / Gen", "Description", "Notes", "Battery", "Price", "QTY", "Total"];
     if (isGlobal) headers.splice(2, 0, "Location");
 
     csv += headers.map(h => `"${h}"`).join(",") + "\n";
@@ -726,19 +726,19 @@ function downloadWarehouseCSV() {
             }
             const sectorTheme = card.getAttribute('data-sector-theme') || 'Laptops';
 
-            // Build a richer description for the CSV (includes requested battery info)
-            let specHighlights = "";
-            if (sectorTheme === 'Laptops') {
-                if (specs.ram) specHighlights += ` | RAM: ${specs.ram}`;
-                if (specs.storage) specHighlights += ` | STO: ${specs.storage}`;
-                // Explicit battery status as requested
-                specHighlights += ` | Battery: ${specs.battery || "No Battery/Unchecked"}`;
-            } else if (sectorTheme === 'Gaming') {
-                if (specs.gpu) specHighlights += ` | GPU: ${specs.gpu}`;
-                if (specs.ram) specHighlights += ` | RAM: ${specs.ram}`;
-            }
+            const batteryVal = specs.battery || "";
+            const isBatteryNo = (batteryVal.toLowerCase() === 'no' || batteryVal.toLowerCase() === 'missing' || batteryVal.toLowerCase() === 'dead');
+            const descVal = isBatteryNo ? 'Parts' : 'Untested';
 
-            const fullDesc = (specs.condition || "") + specHighlights + (specs.notes ? " - " + specs.notes : "");
+            let notesVal = "";
+            const ram = specs.ram || "";
+            const storage = specs.storage || "";
+            if (ram || storage) {
+                notesVal = `${ram}/${storage}`;
+            }
+            if (specs.notes) {
+                notesVal += notesVal ? ` - ${specs.notes}` : specs.notes;
+            }
 
             let itemType = "Laptop";
             if (sectorTheme === 'Desktops') itemType = "Desktop";
@@ -753,9 +753,11 @@ function downloadWarehouseCSV() {
                 sanitize(model),                 // Model
                 sanitize(specs.series || ""),    // Series
                 sanitize(cpuGen),                // CPU / Gen
-                sanitize(fullDesc),              // Description
-                sanitize(qty),                   // QTY
+                sanitize(descVal),               // Description
+                sanitize(notesVal),              // Notes
+                sanitize(batteryVal),            // Battery
                 sanitize(price),                 // Price
+                sanitize(qty),                   // QTY
                 sanitize(total)                  // Total
             ];
 

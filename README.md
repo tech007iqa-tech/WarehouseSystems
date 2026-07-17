@@ -1,4 +1,4 @@
-# 📦 IQA Warehouse Systems 7/6/2026 4:17 PM
+# 📦 IQA Warehouse Systems 7/17/2026 1:35 PM
 
 [![Version](https://img.shields.io/badge/version-2.2.0-green.svg)](https://github.com/)
 [![Tech](https://img.shields.io/badge/Stack-Vanilla_PHP_|_SQLite_|_JS-blue.svg)](https://github.com/)
@@ -25,6 +25,12 @@ A premium, high-performance warehouse management ecosystem designed for speed, r
 - **Inventory Consolidation**: Automated deduplication and quantity merging for identical warehouse items within the same location.
 - **CPU Pricing Insights**: Interactive pricing details modal with CPU model averages, ranges, and linked transaction logs.
 - **Global Registry**: Searchable customer database with session-persistent filters.
+
+### 🛠️ Technician Control Center (`/tech`)
+*Hardware Testing & Technician Audits*
+- **Test Logs**: Track daily throughput with detailed good/bad unit tracking per technician.
+- **Parts Inventory**: Live management of warehouse components (RAM, Storage) with low-stock alerts.
+- **Admin Audit Trail**: Searchable, centralized logs for evaluating individual technician performance and throughput.
 
 ### 📥 Inbound Intake Terminal (`/sampleWHdata`)
 *AI-Powered Handwritten Sheet Digitization — Offline-capable & System-integrated*

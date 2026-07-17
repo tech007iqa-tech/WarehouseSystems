@@ -11,8 +11,13 @@ $good_count = 0;
 $bad_count = 0;
 try {
     $conn = Database::tech();
-    $stmt = $conn->prepare("SELECT status, SUM(qty) as total FROM logs WHERE date(created_at) = date('now', 'localtime') GROUP BY status");
-    $stmt->execute();
+    if ($_SESSION['role'] !== 'Admin') {
+        $stmt = $conn->prepare("SELECT status, SUM(qty) as total FROM logs WHERE date(created_at, 'localtime') = date('now', 'localtime') AND tech_id = ? GROUP BY status");
+        $stmt->execute([$_SESSION['username']]);
+    } else {
+        $stmt = $conn->prepare("SELECT status, SUM(qty) as total FROM logs WHERE date(created_at, 'localtime') = date('now', 'localtime') GROUP BY status");
+        $stmt->execute();
+    }
     $daily_stats = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
     
     $good_count = (int)($daily_stats['Good'] ?? 0);
@@ -40,19 +45,14 @@ $total_tested = $good_count + $bad_count;
 </head>
 <body class="modern-theme">
     
-    <div class="breadcrumb-container" role="banner">
+    <div class="breadcrumb-container" role="banner" style="max-width: 1200px; margin: 20px auto; width: 95%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">
-            <a href="../index.php" class="crumb">
-                <span class="step-num">🏠</span> Main Portal
-            </a>
-            <span class="separator">/</span>
             <a href="index.php" class="crumb active">
                 <span class="step-num">🔧</span> Technician Dashboard
             </a>
         </nav>
         <div>
-            <span class="user-info">👤 <?= $user_display ?> (<?= $user_role ?>)</span>
-            <a href="../orders/core/logout.php" class="btn-logout">Sign Out</a>
+            <a href="pages/settings.php" class="btn-settings">⚙️ Settings</a>
         </div>
     </div>
 
@@ -110,12 +110,21 @@ $total_tested = $good_count + $bad_count;
         </div>
 
         <div class="module-grid">
+            <?php if ($_SESSION['role'] !== 'Admin'): ?>
             <a href="pages/logs.php" class="module-card">
                 <div class="icon-box">📋</div>
                 <h2>Hardware Logs</h2>
                 <p>Record hardware tests, track Good/Bad units, and view your daily impact summary.</p>
                 <div class="badge badge-active">Module Active</div>
             </a>
+            <?php else: ?>
+            <a href="pages/admin_audit.php" class="module-card" style="border-color: #4f46e5;">
+                <div class="icon-box" style="background: #e0e7ff; color: #4f46e5;">👥</div>
+                <h2>Admin Audit Logs</h2>
+                <p>Monitor technician log history, search and filter entries by status, dates, and technician name.</p>
+                <div class="badge badge-info" style="background: #e0e7ff; color: #3730a3;">Admin Only</div>
+            </a>
+            <?php endif; ?>
 
             <!-- Inventory Module -->
             <a href="pages/inventory.php" class="module-card">

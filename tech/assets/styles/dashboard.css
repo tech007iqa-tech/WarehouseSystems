@@ -17,10 +17,11 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    color: #ffffff;
 }
 .tech-dashboard-header p {
     margin: 0;
-    color: #94a3b8;
+    color: #cbd5e1;
     font-size: 1rem;
 }
 
@@ -39,10 +40,11 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    color: #ffffff;
 }
 .page-header p {
     margin: 0;
-    color: #94a3b8;
+    color: #cbd5e1;
     font-size: 1rem;
 }
 
@@ -141,3 +143,41 @@ body {
 .search-container { margin-bottom: 30px; position: relative; }
 .search-input { width: 100%; padding: 15px 20px; border-radius: 12px; border: 1px solid #cbd5e1; font-size: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); box-sizing: border-box; }
 .search-results { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 8px; margin-top: 5px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); z-index: 10; max-height: 300px; overflow-y: auto; }
+
+/* Breadcrumb Actions Buttons */
+.btn-settings {
+    text-decoration: none !important;
+    background: #e2e8f0 !important;
+    color: #475569 !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    border: 1px solid #cbd5e1 !important;
+    margin-right: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: background 0.2s !important;
+}
+.btn-settings:hover {
+    background: #cbd5e1 !important;
+}
+
+.btn-signout {
+    text-decoration: none !important;
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    padding: 8px 16px !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    border: 1px solid #fca5a5 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: background 0.2s !important;
+}
+.btn-signout:hover {
+    background: #fca5a5 !important;
+}

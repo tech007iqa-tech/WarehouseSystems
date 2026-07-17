@@ -42,6 +42,9 @@ class Schema {
                 model TEXT NOT NULL,
                 series TEXT NOT NULL,
                 cpu TEXT DEFAULT '',
+                ram TEXT DEFAULT '',
+                storage TEXT DEFAULT '',
+                battery TEXT DEFAULT '',
                 description TEXT NOT NULL,
                 quantity INTEGER NOT NULL,
                 unit_price REAL DEFAULT 0.00,
@@ -498,8 +501,23 @@ class Schema {
             }
         }
 
-        // --- Order & Item Indexes ---
+        // --- Order & Item Schema Evolution & Indexes ---
         if ($db_name === 'orders' && $table === 'items') {
+            $cols = array_column(
+                $conn->query("PRAGMA table_info(items)")->fetchAll(PDO::FETCH_ASSOC),
+                'name'
+            );
+            $migrations = [
+                'ram' => "ALTER TABLE items ADD COLUMN ram TEXT DEFAULT ''",
+                'storage' => "ALTER TABLE items ADD COLUMN storage TEXT DEFAULT ''",
+                'battery' => "ALTER TABLE items ADD COLUMN battery TEXT DEFAULT ''"
+            ];
+            foreach ($migrations as $col => $sql) {
+                if (!in_array($col, $cols)) {
+                    $conn->exec($sql);
+                }
+            }
+
             $conn->exec("CREATE INDEX IF NOT EXISTS idx_items_order ON items(order_id)");
             $conn->exec("CREATE INDEX IF NOT EXISTS idx_items_customer ON items(customer_id)");
         }

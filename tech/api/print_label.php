@@ -31,7 +31,7 @@ try {
     $battery    = htmlspecialchars($log['battery'] ?? 'N/A', ENT_XML1, 'UTF-8');
     $bios_state = htmlspecialchars($log['bios_state'] ?? 'Unknown', ENT_XML1, 'UTF-8');
     $gpu        = htmlspecialchars($log['gpu'] ?? 'Integrated', ENT_XML1, 'UTF-8');
-    $os         = '—';
+    $os         = htmlspecialchars($log['os'] ?? '—', ENT_XML1, 'UTF-8');
 
     // Try to guess gen from CPU string (e.g. i5-8350U -> 8th Gen)
     if (preg_match('/i[3579]-(\d)\d{3}/', $cpu_specs, $matches)) {
@@ -111,7 +111,7 @@ try {
 </office:document>';
 
     // 6. SAVE AND LAUNCH
-    $export_dir = __DIR__ . '/../../labels/exports/labels/';
+    $export_dir = __DIR__ . '/../exports/labels/';
     if (!is_dir($export_dir)) mkdir($export_dir, 0777, true);
 
     $safe_brand = preg_replace('/[^a-zA-Z0-9]/', '', $brand);
@@ -128,7 +128,7 @@ try {
         echo json_encode([
             'success' => true,
             'file_name' => $final_odt_name,
-            'file_path' => '../labels/exports/labels/' . $final_odt_name
+            'file_path' => '../exports/labels/' . $final_odt_name
         ]);
     } else {
         throw new Exception("ODT generation failed: Output file not created.");

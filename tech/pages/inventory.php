@@ -13,89 +13,9 @@ $user_role = htmlspecialchars($_SESSION['role']);
     <title>Parts Inventory | Technician Dashboard</title>
     <link rel="stylesheet" href="../../orders/assets/styles/components.css">
     <link rel="stylesheet" href="../../orders/assets/styles/style.css">
-    <link rel="stylesheet" href="../../orders/assets/styles/dashboard.css">
+    <link rel="stylesheet" href="../assets/styles/dashboard.css">
+    <link rel="stylesheet" href="../assets/styles/inventory.css">
     <link rel="icon" type="image/png" href="../../orders/assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
-    <style>
-        .page-header {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 16px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        .page-header h1 {
-            margin: 0 0 10px 0;
-            font-size: 2rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .page-header p {
-            margin: 0;
-            color: #94a3b8;
-            font-size: 1rem;
-        }
-        .form-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.95rem;
-        }
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        th {
-            background: #f8fafc;
-            font-weight: 800;
-            color: #475569;
-            text-transform: uppercase;
-            font-size: 0.85rem;
-        }
-        .btn-adjust {
-            background: #e2e8f0;
-            color: #1e293b;
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 1.2rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
-        }
-        .btn-adjust:hover { background: #cbd5e1; }
-        .btn-adjust.minus { color: #b91c1c; }
-        .btn-adjust.plus { color: #15803d; }
-        .qty-display {
-            display: inline-block;
-            width: 50px;
-            text-align: center;
-            font-weight: 800;
-            font-size: 1.1rem;
-        }
-        .low-stock {
-            color: #b91c1c;
-            background: #fee2e2;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 800;
-            margin-left: 10px;
-        }
-    </style>
 </head>
 <body class="modern-theme" style="background-color: #f8fafc;">
     
@@ -110,8 +30,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
             </a>
         </nav>
         <div>
-            <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; margin-right: 15px;">👤 <?= $user_display ?> (<?= $user_role ?>)</span>
-            <a href="../../orders/core/logout.php" style="text-decoration: none; background: #fee2e2; color: #991b1b; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; border: 1px solid #fca5a5;">Sign Out</a>
+            <a href="settings.php" class="btn-settings">⚙️ Settings</a>
         </div>
     </div>
 
@@ -122,29 +41,37 @@ $user_role = htmlspecialchars($_SESSION['role']);
             <p>Manage and track stock levels for RAM, SSDs, batteries, and tools.</p>
         </div>
 
-        <!-- Add New Part Form -->
-        <div class="form-card">
-            <form id="addPartForm" style="display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;">
-                <div style="flex: 2; min-width: 180px;">
-                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Part / Tool Name</label>
-                    <input type="text" name="part_name" placeholder="e.g. 1TB NVMe SSD" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
-                </div>
-                <div style="flex: 1; min-width: 130px;">
-                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Category</label>
-                    <input type="text" name="category" placeholder="e.g. Storage" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
-                </div>
-                <div style="flex: 0 0 90px;">
-                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Qty</label>
-                    <input type="number" name="quantity" value="0" min="0" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
-                </div>
-                <div style="flex: 0 0 90px;">
-                    <label style="display: block; font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 6px;">Low Alert</label>
-                    <input type="number" name="low_stock_threshold" value="5" min="0" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
-                </div>
-                <button type="submit" style="background: #4f46e5; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; white-space: nowrap;">+ Add Part</button>
-            </form>
-            <div id="addPartMessage" style="margin-top: 10px; font-weight: bold; text-align: center; font-size: 0.9rem;"></div>
-        </div>
+        <!-- Add New Part Form (collapsible details) -->
+        <details class="form-card" style="padding: 0; overflow: hidden; margin-bottom: 30px; border: 1px solid #cbd5e1; border-radius: 16px;">
+            <summary style="padding: 20px 24px; cursor: pointer; list-style: none; font-weight: 800; font-size: 1.25rem; color: #1e293b; display: flex; justify-content: space-between; align-items: center; user-select: none; background: #f8fafc;">
+                <span>➕ Add New Part / Tool</span>
+                <span class="toggle-icon" style="font-size: 1rem; color: #64748b; transition: transform 0.2s;">▼</span>
+            </summary>
+            <div style="padding: 24px; border-top: 1px solid #cbd5e1;">
+                <form id="addPartForm" style="display: flex !important; flex-direction: row !important; align-items: flex-end !important; gap: 16px !important; flex-wrap: wrap !important; width: 100% !important;">
+                    <div style="flex: 2; min-width: 200px; display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Part / Tool Name</label>
+                        <input type="text" name="part_name" placeholder="e.g. 1TB NVMe SSD" required style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                    </div>
+                    <div style="flex: 1.5; min-width: 150px; display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Category</label>
+                        <input type="text" name="category" placeholder="e.g. Storage" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                    </div>
+                    <div style="flex: 1; min-width: 90px; display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Qty</label>
+                        <input type="number" name="quantity" value="0" min="0" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                    </div>
+                    <div style="flex: 1; min-width: 90px; display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 0.8rem; font-weight: 700; color: #475569; text-transform: uppercase;">Low Alert</label>
+                        <input type="number" name="low_stock_threshold" value="5" min="0" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; box-sizing: border-box;">
+                    </div>
+                    <div style="flex: 0 0 auto;">
+                        <button type="submit" style="background: #4f46e5; color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: 800; font-size: 0.95rem; cursor: pointer; white-space: nowrap; height: 42px; display: flex; align-items: center; justify-content: center;">+ Add Part</button>
+                    </div>
+                </form>
+                <div id="addPartMessage" style="margin-top: 15px; font-weight: bold; text-align: center; font-size: 0.9rem;"></div>
+            </div>
+        </details>
 
         <!-- Stock Table -->
         <div class="form-card" style="padding: 0; overflow: hidden;">

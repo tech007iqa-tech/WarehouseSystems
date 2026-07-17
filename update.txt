@@ -17,3 +17,9 @@ Perhaps this is an elegant solution; I need tailored realtime data so I can defi
 
 I mean, I need a reliable solution; I make too many mistakes while attempting to price things accordingly at expected prices.
 
+
+=========
+
+
+Update the 404 page and implement it thoughout the whole entire system, once marketing is on ver 1.0. It currently lives inside the labels directory.
+

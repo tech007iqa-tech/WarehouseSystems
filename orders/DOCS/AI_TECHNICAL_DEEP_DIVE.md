@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive 7/11/2026 11:56 PM
+# 🧠 AI Technical Deep Dive 7/17/2026 1:35 PM
 
 This document details the database schemas, query abstractions, concurrency controls, document generation formulas, and security patterns implemented in the **IQA Warehouse Systems**.
 
@@ -38,6 +38,9 @@ The system contains five SQLite databases situated in the `/db/` directory.
   - `model` (TEXT, NOT NULL)
   - `series` (TEXT, NOT NULL): Project/Series identifier.
   - `cpu` (TEXT)
+  - `ram` (TEXT): Memory specification (e.g. 8GB).
+  - `storage` (TEXT): Storage specification (e.g. 256GB).
+  - `battery` (TEXT): Battery status (e.g. Yes/No).
   - `description` (TEXT, NOT NULL): Quality/spec details.
   - `quantity` (INTEGER, NOT NULL)
   - `unit_price` (REAL, DEFAULT `0.00`)

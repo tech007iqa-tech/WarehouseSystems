@@ -1,4 +1,4 @@
-# 🗺️ Global System Sitemap 7/11/2026 11:56 PM
+# 🗺️ Global System Sitemap 7/17/2026 1:35 PM
 
 This map outlines the tri-module structure of the IQA Warehouse Systems.
 

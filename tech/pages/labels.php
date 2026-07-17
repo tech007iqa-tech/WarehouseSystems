@@ -15,62 +15,8 @@ $user_role = htmlspecialchars($_SESSION['role']);
     <link rel="stylesheet" href="../../orders/assets/styles/components.css">
     <link rel="stylesheet" href="../../orders/assets/styles/style.css">
     <link rel="stylesheet" href="../assets/styles/dashboard.css">
+    <link rel="stylesheet" href="../assets/styles/labels.css">
     <link rel="icon" type="image/png" href="../../orders/assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
-    <style>
-        .form-card {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-        }
-        .log-table-container {
-            overflow-x: auto;
-            background: white;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.85rem;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        th {
-            background: #f8fafc;
-            font-weight: 700;
-            color: #475569;
-            text-transform: uppercase;
-        }
-        .btn-print {
-            background: #1e293b;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 6px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 0.8rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .btn-print:hover { background: #334155; }
-        .search-bar {
-            width: 100%;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            font-size: 1rem;
-            margin-bottom: 20px;
-            box-sizing: border-box;
-        }
-    </style>
 </head>
 <body class="modern-theme">
     
@@ -85,8 +31,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
             </a>
         </nav>
         <div>
-            <span style="font-size: 0.9rem; color: #64748b; font-weight: 600; margin-right: 15px;">👤 <?= $user_display ?> (<?= $user_role ?>)</span>
-            <a href="../../orders/core/logout.php" style="text-decoration: none; background: #fee2e2; color: #991b1b; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; border: 1px solid #fca5a5;">Sign Out</a>
+            <a href="settings.php" class="btn-settings">⚙️ Settings</a>
         </div>
     </div>
 

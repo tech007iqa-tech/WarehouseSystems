@@ -21,6 +21,9 @@ function getCheckoutState() {
  * @property {string} model
  * @property {string} series
  * @property {string} cpu
+ * @property {string} ram
+ * @property {string} storage
+ * @property {string} battery
  * @property {string} description
  * @property {number} quantity
  * @property {number} unit_price
@@ -95,7 +98,7 @@ function downloadCSV() {
     csv += `"Order #","${ord}",,,,,,,\n\n`;
 
     // Column Headers
-    csv += `"Type","Brand","Model","Series","CPU / Gen","Description","Price","QTY","Total"\n`;
+    csv += `"Type","Brand","Model","Series","CPU / Gen","Description","Notes","Battery","Price","QTY","Total"\n`;
 
     let totalQty = 0;
     let grandTotal = 0;
@@ -124,10 +127,27 @@ function downloadCSV() {
         const livePrice = priceIn ? parseFloat(priceIn.value) || 0 : 0;
         const rowTotal = liveQty * livePrice;
 
+        // Pull specific item fields directly from JS state where possible, 
+        // falling back to DOM scraping for backwards compatibility
+        const itemData = state.rawItems ? state.rawItems[rowCount] : null;
+        const ram = itemData && itemData.ram ? itemData.ram : '';
+        const storage = itemData && itemData.storage ? itemData.storage : '';
+        const battery = itemData && itemData.battery ? itemData.battery : '';
+
+        // Format description based on battery status
+        const isBatteryNo = (battery.toLowerCase() === 'no' || battery.toLowerCase() === 'missing' || battery.toLowerCase() === 'dead');
+        const descVal = isBatteryNo ? 'Parts' : 'Untested';
+
+        // Format notes
+        let notesVal = '';
+        if (ram || storage) {
+            notesVal = `${ram}/${storage}`;
+        }
+        
         // Default type to Laptop
         const type = "Laptop";
 
-        csv += `${sanitize(type)},${sanitize(brand)},${sanitize(model)},${sanitize(series)},${sanitize(cpu)},${sanitize(desc)},${sanitize(livePrice)},${sanitize(liveQty)},${sanitize(rowTotal.toFixed(2))}\n`;
+        csv += `${sanitize(type)},${sanitize(brand)},${sanitize(model)},${sanitize(series)},${sanitize(cpu)},${sanitize(descVal)},${sanitize(notesVal)},${sanitize(battery)},${sanitize(livePrice)},${sanitize(liveQty)},${sanitize(rowTotal.toFixed(2))}\n`;
 
         totalQty += liveQty;
         grandTotal += rowTotal;
@@ -137,10 +157,10 @@ function downloadCSV() {
     // Removed 42-row padding per user request
 
     // Alignment Fix:
-    // "Total QTY" label in Col 7, Value in Col 8
-    // "Total Amount" label in Col 8, Value in Col 9
-    csv += `\n,,,,,,${sanitize("Total QTY")},${sanitize(totalQty)},\n`;
-    csv += `,,,,,,,${sanitize("Total Amount")},${sanitize("$" + grandTotal.toFixed(2))}\n`;
+    // "Total QTY" label in Col 9, Value in Col 10
+    // "Total Amount" label in Col 10, Value in Col 11
+    csv += `\n,,,,,,,,${sanitize("Total QTY")},${sanitize(totalQty)},\n`;
+    csv += `,,,,,,,,,${sanitize("Total Amount")},${sanitize("$" + grandTotal.toFixed(2))}\n`;
 
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -273,6 +293,9 @@ function openEditModal(index) {
         'modal-model': item.model,
         'modal-series': item.series,
         'modal-cpu': item.cpu,
+        'modal-ram': item.ram,
+        'modal-storage': item.storage,
+        'modal-battery': item.battery,
         'modal-desc': item.description,
         'modal-qty': item.quantity,
         'modal-price': parseFloat(item.unit_price || 0).toFixed(2)
@@ -319,6 +342,9 @@ async function saveItemChanges() {
     formData.append('model', getVal('modal-model'));
     formData.append('series', getVal('modal-series'));
     formData.append('cpu', getVal('modal-cpu'));
+    formData.append('ram', getVal('modal-ram'));
+    formData.append('storage', getVal('modal-storage'));
+    formData.append('battery', getVal('modal-battery'));
     formData.append('description', getVal('modal-desc'));
     formData.append('quantity', getVal('modal-qty'));
     formData.append('unit_price', parsePrice(getVal('modal-price')));
@@ -346,6 +372,9 @@ async function saveItemChanges() {
             const model = getVal('modal-model');
             const series = getVal('modal-series');
             const cpu = getVal('modal-cpu');
+            const ram = getVal('modal-ram');
+            const storage = getVal('modal-storage');
+            const battery = getVal('modal-battery');
             const desc = getVal('modal-desc');
             const qty = getVal('modal-qty');
             const price = parseFloat(getVal('modal-price')) || 0;
@@ -354,7 +383,7 @@ async function saveItemChanges() {
             const state = getCheckoutState();
             if (state.rawItems && state.rawItems[idx]) {
                 Object.assign(state.rawItems[idx], {
-                    brand, model, series, cpu, description: desc,
+                    brand, model, series, cpu, ram, storage, battery, description: desc,
                     quantity: parseFloat(qty), unit_price: price
                 });
             }

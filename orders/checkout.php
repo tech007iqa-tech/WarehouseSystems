@@ -70,10 +70,12 @@ try {
         if (isset($_POST['action']) && $_POST['action'] === 'save_single_item') {
             $stmt = $conn_items->prepare("UPDATE items SET
                 brand = ?, model = ?, series = ?, cpu = ?, description = ?,
+                ram = ?, storage = ?, battery = ?,
                 quantity = ?, unit_price = ?
                 WHERE id = ? AND customer_id = ?");
             $stmt->execute([
                 $_POST['brand'], $_POST['model'], $_POST['series'], $_POST['cpu'], $_POST['description'],
+                $_POST['ram'] ?? '', $_POST['storage'] ?? '', $_POST['battery'] ?? '',
                 (float)$_POST['quantity'], (float)$_POST['unit_price'], (int)$_POST['item_id'], $customer_id
             ]);
             echo json_encode(['status' => 'success']);
@@ -327,6 +329,22 @@ try {
                 <div class="form-group" style="grid-column: span 2;">
                     <label for="modal-cpu">CPU / Gen</label>
                     <input type="text" id="modal-cpu">
+                </div>
+                <div class="form-group">
+                    <label for="modal-ram">RAM</label>
+                    <input type="text" id="modal-ram" placeholder="e.g. 8GB">
+                </div>
+                <div class="form-group">
+                    <label for="modal-storage">Storage</label>
+                    <input type="text" id="modal-storage" placeholder="e.g. 256GB">
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label for="modal-battery">Battery Status</label>
+                    <select id="modal-battery" style="width: 100%; height: 48px; border-radius: 12px; border: 1px solid var(--border-color); padding: 0 15px; font-weight: 600;">
+                        <option value="">Unknown / Untested</option>
+                        <option value="Yes">Yes / Good</option>
+                        <option value="No">No / Missing / Dead</option>
+                    </select>
                 </div>
                 <div class="form-group" style="grid-column: span 2;">
                     <label for="modal-desc">Condition / Comments</label>

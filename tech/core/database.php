@@ -58,9 +58,38 @@ class Database {
             storage TEXT,
             battery TEXT,
             bios_state TEXT,
+            os TEXT,
             notes TEXT,
             ready_for_warehouse INTEGER DEFAULT 0,
+            edited INTEGER DEFAULT 0,
+            delete_requested INTEGER DEFAULT 0,
+            status_change_requested TEXT DEFAULT '',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )");
+
+        // Migration: add columns if older DB
+        $cols = $conn->query("PRAGMA table_info(logs)")->fetchAll(PDO::FETCH_ASSOC);
+        $col_names = array_column($cols, 'name');
+
+        if (!in_array('edited', $col_names)) {
+            $conn->exec("ALTER TABLE logs ADD COLUMN edited INTEGER DEFAULT 0");
+        }
+        if (!in_array('delete_requested', $col_names)) {
+            $conn->exec("ALTER TABLE logs ADD COLUMN delete_requested INTEGER DEFAULT 0");
+        }
+        if (!in_array('status_change_requested', $col_names)) {
+            $conn->exec("ALTER TABLE logs ADD COLUMN status_change_requested TEXT DEFAULT ''");
+        }
+        if (!in_array('os', $col_names)) {
+            $conn->exec("ALTER TABLE logs ADD COLUMN os TEXT");
+        }
+
+        // daily_status_changes table to track Good-to-Bad limit of 5 per day per tech
+        $conn->exec("CREATE TABLE IF NOT EXISTS daily_status_changes (
+            tech_id TEXT NOT NULL,
+            change_date DATE DEFAULT (date('now', 'localtime')),
+            change_count INTEGER DEFAULT 0,
+            PRIMARY KEY (tech_id, change_date)
         )");
 
         // Parts Inventory Table

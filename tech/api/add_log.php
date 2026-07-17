@@ -10,7 +10,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $qty = (int)($_POST['qty'] ?? 1);
     
     // Sanitize basic text fields
-    $fields = ['make', 'model', 'series', 'cpu', 'gpu', 'ram', 'storage', 'battery', 'bios_state', 'notes'];
+    $fields = ['make', 'model', 'series', 'cpu', 'gpu', 'ram', 'storage', 'battery', 'bios_state', 'os', 'notes'];
     $data = [];
     foreach ($fields as $f) {
         $data[$f] = trim($_POST[$f] ?? '');
@@ -23,13 +23,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     
     try {
         $conn = Database::tech();
-        $stmt = $conn->prepare("INSERT INTO logs (tech_id, status, qty, make, model, series, cpu, gpu, ram, storage, battery, bios_state, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO logs (tech_id, status, qty, make, model, series, cpu, gpu, ram, storage, battery, bios_state, os, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         
         $params = [
             $tech_id, $status, $qty, 
             $data['make'], $data['model'], $data['series'], 
             $data['cpu'], $data['gpu'], $data['ram'], $data['storage'], 
-            $data['battery'], $data['bios_state'], $data['notes']
+            $data['battery'], $data['bios_state'], $data['os'], $data['notes']
         ];
         
         $stmt->execute($params);

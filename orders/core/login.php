@@ -481,7 +481,9 @@ try {
 
     <div class="login-card">
         <div class="login-logo">
-            <img src="../assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png" alt="IQA Logo">
+            <a href="../../index.php">
+                <img src="../assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png" alt="IQA Logo">
+            </a>
         </div>
 
         <div class="login-header">
