@@ -13,10 +13,12 @@
     transition: all 0.3s ease;
 }
 
-.stat-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+@media (hover: hover) {
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
 }
 
 .stat-header {
@@ -49,9 +51,11 @@
     transition: all 0.3s ease;
 }
 
-.opportunity-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.15);
+@media (hover: hover) {
+    .opportunity-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.15);
+    }
 }
 
 .opp-icon {
@@ -93,9 +97,11 @@
     transition: all 0.2s ease;
 }
 
-.action-hub-btn:hover {
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateX(5px);
+@media (hover: hover) {
+    .action-hub-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateX(5px);
+    }
 }
 
 /* Global Badges */

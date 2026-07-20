@@ -20,51 +20,66 @@
 
     <div class="background-blob"></div>
 
-    <header class="portal-header">
-        <h1>Warehouse Systems </h1>
-        <h2>By</h2>
-        <h3>IQA Metal</h3>
-        <p>Intelligent inventory management & rapid label logistics.</p>
-    </header>
+    <main class="portal-main">
+        <div class="module-grid">
+            <!-- TECH MODULE -->
+            <a href="tech/index.php" class="module-card">
+                <div class="icon-box">🔧</div>
+                <h2>Technician Dashboard</h2>
+                <p>Hardware testing, computer logs, and parts inventory management.</p>
+                <div class="badge badge-labels">Module Active</div>
+            </a>
 
-    <main class="module-grid">
-        <!-- TECH MODULE -->
-        <a href="tech/index.php" class="module-card">
-            <div class="icon-box">🔧</div>
-            <h2>Technician Dashboard</h2>
-            <p>Hardware testing, computer logs, and parts inventory management.</p>
-            <div class="badge badge-labels">Module Active</div>
-        </a>
+            <!-- ORDERS MODULE -->
+            <a href="orders/index.php" class="module-card">
+                <div class="icon-box">📊</div>
+                <h2>Order Manager</h2>
+                <p>Comprehensive CRM, batch fulfillment, and customer registry with advanced warehouse location
+                    tracking.
+                </p>
+                <div class="badge badge-orders">Module Active</div>
+            </a>
 
-        <!-- ORDERS MODULE -->
-        <a href="orders/index.php" class="module-card">
-            <div class="icon-box">📊</div>
-            <h2>Order Manager</h2>
-            <p>Comprehensive CRM, batch fulfillment, and customer registry with advanced warehouse location tracking.
+            <!-- MARKETING MODULE -->
+            <a href="marketing/index.php" class="module-card">
+                <div class="icon-box">📣</div>
+                <h2>Marketing Hub</h2>
+                <p>Lead generation, campaign tracking, and outreach automation for B2B expansion.</p>
+                <div class="badge badge-marketing">Module Initialized</div>
+            </a>
+
+
+            <a href="https://docs.google.com/spreadsheets/d/13X8PYZFg4NdXMYhveHBj4_sqNkGzpo2wmSgZ8aLcz3M/edit?usp=sharing"
+                class="module-card">
+                <div class="icon-box">🔗</div>
+                <h2>Links</h2>
+                <p>Sheets file</p>
+                <div class="badge badge-marketing">Active</div>
+            </a>
+        </div>
+
+        <header class="portal-header">
+            <h1>Warehouse Systems</h1>
+            <p class="tagline">Intelligent inventory management &amp; rapid label logistics.</p>
+            <p class="description">
+                Welcome to your all-in-one workspace hub! Tailored specifically for the used laptop market, this portal
+                is here to keep operations smooth, fast, and users synchronized. [Operators, Front Desk, Technicians and
+                Admins]
             </p>
-            <div class="badge badge-orders">Module Active</div>
-        </a>
-
-        <!-- MARKETING MODULE -->
-        <a href="marketing/index.php" class="module-card">
-            <div class="icon-box">📣</div>
-            <h2>Marketing Hub</h2>
-            <p>Lead generation, campaign tracking, and outreach automation for B2B expansion.</p>
-            <div class="badge badge-marketing">Module Initialized</div>
-        </a>
-
-
-        <a href="https://docs.google.com/spreadsheets/d/13X8PYZFg4NdXMYhveHBj4_sqNkGzpo2wmSgZ8aLcz3M/edit?usp=sharing"
-            class="module-card">
-            <div class="icon-box">🔗</div>
-            <h2>Links</h2>
-            <p>Sheets file</p>
-            <div class="badge badge-marketing">Active</div>
-        </a>
+            <p class="description">
+                Whether you're operating the <strong>Tech Center</strong> for precise hardware diagnostics, test yield
+                auditing, and live parts inventory tracking; leveraging the <strong>Orders Module</strong> for
+                AI-powered intake digitization, physical warehouse logistics, and real-time CRM synchronization; or
+                driving growth in the <strong>Marketing Hub</strong> via automated lead generation, campaign tracking,
+                and performance analytics—this integrated ecosystem unifies every aspect of our workflow.
+            </p>
+        </header>
     </main>
 
     <footer class="footer-note">
-        IQA Metal Inventory System &copy; 2026 | Powered by AI-Optimized Structural Surgery
+        <a href="https://iqametal.com" style="color: white; text-decoration: none;" target="_blank">IQA Metal inc</a>.
+        Inventory System &copy; <?php echo date('Y'); ?> | Powered by AI-Optimized Structural Surgery by: <a
+            href="https://github.com/omar27522" style="color: white; text-decoration: none;">Tenes</a>
     </footer>
 
     <!-- Global Notifications Engine -->

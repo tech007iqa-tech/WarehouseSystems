@@ -4,6 +4,12 @@ require_once 'core/database.php';
 
 // Handle live pricing matrix updates via AJAX
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_GET['action']) && $_GET['action'] === 'update_pricing_matrix') {
+    ob_clean(); // Clear any HTML outputted before this point
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (isset($_SESSION['role']) && $_SESSION['role'] !== 'Admin') {
+        echo json_encode(['success' => false, 'error' => 'Unauthorized: Only Admins can modify the Pricing Matrix.']);
+        exit();
+    }
     header('Content-Type: application/json');
     $input = json_decode(file_get_contents('php://input'), true);
     $category = $input['category'] ?? '';
@@ -2475,4 +2481,16 @@ function updateMatrixCell(category, cpu_gen, grade, price) {
         }
     });
 }
+
+// If the user is not an Admin, disable the matrix inputs
+<?php if (isset($user_role) && $user_role !== 'Admin'): ?>
+document.addEventListener('DOMContentLoaded', () => {
+    const matrixInputs = document.querySelectorAll('.matrix-cell-input');
+    matrixInputs.forEach(input => {
+        input.disabled = true;
+        input.style.opacity = '0.7';
+        input.style.cursor = 'not-allowed';
+    });
+});
+<?php endif; ?>
 </script>
