@@ -7,10 +7,13 @@ class NormalizerWorkOrder
     /**
      * Deduce the Brand based on Model or Series name.
      */
-    public static function deduceBrand(string $model, string $series): string
+    public static function deduceBrand(string $model, string $series, string $aiBrand = ''): string
     {
         $text = strtolower($model . ' ' . $series);
         if (strpos($text, 'elitebook') !== false || strpos($text, 'probook') !== false || strpos($text, 'pavilion') !== false || strpos($text, 'zbook') !== false || strpos($text, 'hp') !== false) {
+            return 'HP';
+        }
+        if (strtolower(trim($model)) === 'laptop') {
             return 'HP';
         }
         if (strpos($text, 'latitude') !== false || strpos($text, 'inspiron') !== false || strpos($text, 'precision') !== false || strpos($text, 'xps') !== false || strpos($text, 'dell') !== false || strpos($text, 'latitue') !== false) {
@@ -22,12 +25,37 @@ class NormalizerWorkOrder
         if (strpos($text, 'macbook') !== false || strpos($text, 'apple') !== false || strpos($text, 'ipad') !== false) {
             return 'Apple';
         }
+        if (preg_match('/\ba\d{4}\b/i', $text)) {
+            return 'Apple';
+        }
+        if (strpos($text, 'acer') !== false || strpos($text, 'aspire') !== false || strpos($text, 'nitro') !== false || strpos($text, 'travelmate') !== false) {
+            return 'Acer';
+        }
+        if (strpos($text, 'asus') !== false || strpos($text, 'rog') !== false || preg_match('/\bfx\b/i', $text)) {
+            return 'Asus';
+        }
+        if (strpos($text, 'msi') !== false) {
+            return 'MSI';
+        }
+        if (strpos($text, 'toshiba') !== false || strpos($text, 'satellite') !== false || strpos($text, 'tecra') !== false || strpos($text, 'portege') !== false) {
+            return 'Toshiba';
+        }
         if (strpos($text, 'toughbook') !== false || strpos($text, 'panasonic') !== false) {
             return 'Panasonic';
         }
         if (strpos($text, 'getac') !== false) {
             return 'Getac';
         }
+        
+        // Use AI brand if it explicitly deduced something, otherwise Generic
+        if (!empty($aiBrand)) {
+            $lowerAi = strtolower($aiBrand);
+            if (in_array($lowerAi, ['hp', 'dell', 'lenovo', 'apple', 'panasonic', 'getac'])) {
+                return ucfirst($lowerAi) === 'Hp' ? 'HP' : ucfirst($lowerAi);
+            }
+            return ucfirst($lowerAi);
+        }
+
         return 'Generic';
     }
 
@@ -383,6 +411,7 @@ class NormalizerWorkOrder
             $normalizedKeys[strtolower(str_replace('_', '', $k))] = $v;
         }
 
+        $rawBrand = trim($normalizedKeys['brand'] ?? '');
         $model = trim($normalizedKeys['model'] ?? '');
         $series = trim($normalizedKeys['series'] ?? '');
         $cpuGen = trim($normalizedKeys['cpugen'] ?? '');
@@ -391,7 +420,7 @@ class NormalizerWorkOrder
         $note = trim($normalizedKeys['note'] ?? '');
 
         // 1. Deduce Brand
-        $brand = self::deduceBrand($model, $series);
+        $brand = self::deduceBrand($model, $series, $rawBrand);
 
         // 2. Clean Spelling of Model
         $modelLower = strtolower($model);

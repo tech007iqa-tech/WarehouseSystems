@@ -75,13 +75,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'extract') {
             "Correct brand/model spelling: e.g. 'Latitue' -> 'Latitude', 'Pavillion' -> 'Pavilion', 'Zbook' -> 'ZBook'.",
             "Extract 'Model' (e.g. EliteBook, Latitude, Laptop) and 'Series' (e.g. 840 G6, E5440, Fd15).",
             "Extract CPU generation in 'CPU' field (e.g. i5-8th, i7-8th, i3-11th, AMD Ryzen 5 13th, or 4th).",
-            "Extract RAM and Storage specs (e.g., 8gb, 16gb, 8/512, 16/256, 8/) into the 'Note' field exactly as written."
+            "Extract RAM and Storage specs (e.g., 8gb, 16gb, 8/512, 16/256, 8/) into the 'Note' field exactly as written.",
+            "If the Model is 'Laptop', the Brand should be 'HP'.",
+            "If the Model starts with 'A' followed by four numbers (e.g. A1466, A1502), the Brand should be 'Apple'.",
+            "If the Model is the same as the name of the Brand, just duplicate it for both Model and Brand.",
+            "Detect and identify the Description as strictly one of these three options: 'Untested', 'Parts', or 'Tested'.",
+            "Deduce Asus, Acer, MSI, or Toshiba brands based on their model names (e.g. Aspire, Nitro, Travelmate for Acer; ROG, FX for Asus; Satellite, Tecra for Toshiba)."
         ],
         'schema_rules' => [
             "Model" => "string, broad product line or brand name (e.g. EliteBook, Latitude, ProBook, Laptop, ZBook, Pavilion)",
             "Series" => "string, specific series or model identifier (e.g. 840 G6, E5440, Fd15, 14U G6, X360)",
             "CPU_Gen" => "string, processor type and generation (e.g. i5-8th, i7-8th, i3-11th, i5-13th, AMD Ryzen 5 13th, 4th)",
-            "Description" => "string, general notes from description column (e.g. Untested, Parts)",
+            "Description" => "string, strictly one of: 'Untested', 'Parts', or 'Tested'",
             "QTY" => "integer, quantity of units",
             "Note" => "string, notes or specifications including RAM and Storage (e.g. 8gb, 8/, 8/512, 16/256, 16/128, etc.)"
         ]

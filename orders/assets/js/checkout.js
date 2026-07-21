@@ -98,7 +98,7 @@ function downloadCSV() {
     csv += `"Order #","${ord}",,,,,,,\n\n`;
 
     // Column Headers
-    csv += `"Type","Brand","Model","Series","CPU / Gen","Description","Notes","Battery","Price","QTY","Total"\n`;
+    csv += `"Type","Brand","Model","Series","CPU / Gen","Description","Price","QTY","Total","Notes","Battery"\n`;
 
     let totalQty = 0;
     let grandTotal = 0;
@@ -147,7 +147,7 @@ function downloadCSV() {
         // Default type to Laptop
         const type = "Laptop";
 
-        csv += `${sanitize(type)},${sanitize(brand)},${sanitize(model)},${sanitize(series)},${sanitize(cpu)},${sanitize(descVal)},${sanitize(notesVal)},${sanitize(battery)},${sanitize(livePrice)},${sanitize(liveQty)},${sanitize(rowTotal.toFixed(2))}\n`;
+        csv += `${sanitize(type)},${sanitize(brand)},${sanitize(model)},${sanitize(series)},${sanitize(cpu)},${sanitize(descVal)},${sanitize(livePrice)},${sanitize(liveQty)},${sanitize(rowTotal.toFixed(2))},${sanitize(notesVal)},${sanitize(battery)}\n`;
 
         totalQty += liveQty;
         grandTotal += rowTotal;
@@ -157,10 +157,10 @@ function downloadCSV() {
     // Removed 42-row padding per user request
 
     // Alignment Fix:
-    // "Total QTY" label in Col 9, Value in Col 10
-    // "Total Amount" label in Col 10, Value in Col 11
-    csv += `\n,,,,,,,,${sanitize("Total QTY")},${sanitize(totalQty)},\n`;
-    csv += `,,,,,,,,,${sanitize("Total Amount")},${sanitize("$" + grandTotal.toFixed(2))}\n`;
+    // "Total QTY" label in Col 7, Value in Col 8
+    // "Total Amount" label in Col 8, Value in Col 9
+    csv += `\n,,,,,,${sanitize("Total QTY")},${sanitize(totalQty)},,,\n`;
+    csv += `,,,,,,,${sanitize("Total Amount")},${sanitize("$" + grandTotal.toFixed(2))},,\n`;
 
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
