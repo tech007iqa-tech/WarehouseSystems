@@ -18,7 +18,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
     <link rel="icon" type="image/png" href="../../orders/assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
 </head>
 <body class="modern-theme" style="background-color: #f8fafc;">
-    
+
     <div class="breadcrumb-container" role="banner" style="max-width: 1000px; margin: 20px auto; width: 95%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">
             <a href="../index.php" class="crumb">
@@ -35,7 +35,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
     </div>
 
     <main class="container" style="max-width: 1000px; margin: 0 auto; width: 95%;">
-        
+
         <div class="page-header">
             <h1><span>📦</span> Parts Inventory</h1>
             <p>Manage and track stock levels for RAM, SSDs, batteries, and tools.</p>
@@ -105,16 +105,16 @@ $user_role = htmlspecialchars($_SESSION['role']);
             const msg = document.getElementById('addPartMessage');
             msg.textContent = 'Adding...';
             msg.style.color = '#475569';
-            
+
             const formData = new FormData(e.target);
-            
+
             try {
                 const response = await fetch('../api/add_part.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     msg.textContent = '✅ Part added successfully!';
                     msg.style.color = '#15803d';
@@ -136,18 +136,18 @@ $user_role = htmlspecialchars($_SESSION['role']);
             try {
                 const response = await fetch('../api/get_inventory.php');
                 const result = await response.json();
-                
+
                 if (result.success) {
                     if (result.data.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #64748b;">No parts found.</td></tr>';
                         return;
                     }
-                    
+
                     let html = '';
                     result.data.forEach(part => {
                         const isLowStock = parseInt(part.quantity) <= parseInt(part.low_stock_threshold);
                         const lowStockBadge = isLowStock ? '<span class="low-stock">⚠️ LOW STOCK</span>' : '';
-                        
+
                         html += `
                             <tr>
                                 <td>
@@ -180,13 +180,13 @@ $user_role = htmlspecialchars($_SESSION['role']);
                 const formData = new FormData();
                 formData.append('id', id);
                 formData.append('adjustment', adjustment);
-                
+
                 const response = await fetch('../api/update_part.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     fetchInventory();
                 } else {
@@ -199,17 +199,17 @@ $user_role = htmlspecialchars($_SESSION['role']);
 
         async function deletePart(id, name) {
             if (!confirm('Are you sure you want to remove "' + name + '" from the inventory?')) return;
-            
+
             try {
                 const formData = new FormData();
                 formData.append('id', id);
-                
+
                 const response = await fetch('../api/delete_part.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     fetchInventory();
                 } else {

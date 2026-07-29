@@ -98,7 +98,7 @@ function downloadCSV() {
     csv += `"Order #","${ord}",,,,,,,\n\n`;
 
     // Column Headers
-    csv += `"Type","Brand","Model","Series","CPU / Gen","Description","Price","QTY","Total","Notes","Battery"\n`;
+    csv += `"Type","Brand","Model","Series","CPU / Gen","Description","Notes","Battery","Price","QTY","Total"\n`;
 
     let totalQty = 0;
     let grandTotal = 0;
@@ -127,7 +127,7 @@ function downloadCSV() {
         const livePrice = priceIn ? parseFloat(priceIn.value) || 0 : 0;
         const rowTotal = liveQty * livePrice;
 
-        // Pull specific item fields directly from JS state where possible, 
+        // Pull specific item fields directly from JS state where possible,
         // falling back to DOM scraping for backwards compatibility
         const itemData = state.rawItems ? state.rawItems[rowCount] : null;
         const ram = itemData && itemData.ram ? itemData.ram : '';
@@ -143,11 +143,11 @@ function downloadCSV() {
         if (ram || storage) {
             notesVal = `${ram}/${storage}`;
         }
-        
+
         // Default type to Laptop
         const type = "Laptop";
 
-        csv += `${sanitize(type)},${sanitize(brand)},${sanitize(model)},${sanitize(series)},${sanitize(cpu)},${sanitize(descVal)},${sanitize(livePrice)},${sanitize(liveQty)},${sanitize(rowTotal.toFixed(2))},${sanitize(notesVal)},${sanitize(battery)}\n`;
+        csv += `${sanitize(type)},${sanitize(brand)},${sanitize(model)},${sanitize(series)},${sanitize(cpu)},${sanitize(descVal)},${sanitize(notesVal)},${sanitize(battery)},${sanitize(livePrice)},${sanitize(liveQty)},${sanitize(rowTotal.toFixed(2))}\n`;
 
         totalQty += liveQty;
         grandTotal += rowTotal;
@@ -157,10 +157,10 @@ function downloadCSV() {
     // Removed 42-row padding per user request
 
     // Alignment Fix:
-    // "Total QTY" label in Col 7, Value in Col 8
-    // "Total Amount" label in Col 8, Value in Col 9
-    csv += `\n,,,,,,${sanitize("Total QTY")},${sanitize(totalQty)},,,\n`;
-    csv += `,,,,,,,${sanitize("Total Amount")},${sanitize("$" + grandTotal.toFixed(2))},,\n`;
+    // "Total QTY" label in Col 9, Value in Col 10
+    // "Total Amount" label in Col 10, Value in Col 11
+    csv += `\n,,,,,,,,${sanitize("Total QTY")},${sanitize(totalQty)},\n`;
+    csv += `,,,,,,,,,${sanitize("Total Amount")},${sanitize("$" + grandTotal.toFixed(2))}\n`;
 
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);

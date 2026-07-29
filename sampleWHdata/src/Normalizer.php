@@ -150,7 +150,7 @@ class Normalizer
                 if (strcasecmp($word, 'THINKPAD') === 0) { $word = 'ThinkPad'; continue; }
                 if (strcasecmp($word, 'YOGA') === 0) { $word = 'Yoga'; continue; }
                 if (strcasecmp($word, 'PRODESK') === 0) { $word = 'ProDesk'; continue; }
-                
+
                 if (preg_match('/[a-zA-Z]/', $word)) {
                     $word = ucfirst(strtolower($word));
                 }

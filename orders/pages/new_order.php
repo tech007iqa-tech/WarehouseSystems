@@ -846,13 +846,13 @@ foreach ($items as $item)
 
                 <!-- Split Stage (Viewer + Editor) -->
                 <div id="workorder-stage" style="display: none; display: flex; gap: 20px; margin-bottom: 20px; align-items: stretch; min-height: 400px; height: 50vh;">
-                    
+
                     <!-- Left: Viewer -->
                     <div style="flex: 1.1; border: 1px solid #e2e8f0; border-radius: 12px; background: #09090b; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                         <div id="workorder-viewer-container" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transform-origin: center; transition: transform 0.2s;">
                             <!-- Populated dynamically -->
                         </div>
-                        
+
                         <!-- Floating controls -->
                         <div style="position: absolute; bottom: 15px; right: 15px; display: flex; gap: 8px; z-index: 10;">
                             <button type="button" onclick="woViewer.rotate(-90)" style="width: 36px; height: 36px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(9,9,11,0.75); color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; outline: none; transition: background-color 0.2s;">

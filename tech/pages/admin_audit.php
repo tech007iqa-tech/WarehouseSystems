@@ -34,7 +34,7 @@ try {
     <link rel="icon" type="image/png" href="../../orders/assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
 </head>
 <body class="modern-theme" style="background-color: #f8fafc;">
-    
+
     <div class="breadcrumb-container" role="banner" style="max-width: 1200px; margin: 20px auto; width: 95%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">
             <a href="../index.php" class="crumb">
@@ -51,7 +51,7 @@ try {
     </div>
 
     <main class="container" style="max-width: 1200px; margin: 0 auto; width: 95%;">
-        
+
         <div class="page-header">
             <h1><span>👥</span> Admin Audit Logs</h1>
             <p>Monitor technician output, filter by custom date ranges, and authorize change requests.</p>
@@ -124,7 +124,7 @@ try {
                     <label>End Date</label>
                     <input type="date" id="end_date" onchange="fetchAuditLogs()">
                 </div>
-                
+
                 <button onclick="resetFilters()" style="padding: 8px 16px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569; font-weight: 700; cursor: pointer;">Reset Date</button>
             </div>
         </div>
@@ -146,7 +146,7 @@ try {
             <form id="editForm" style="padding: 24px; margin-bottom: 0;">
                 <input type="hidden" name="id" id="edit-id">
                 <input type="hidden" name="action" value="admin_edit">
-                
+
                 <div class="form-grid">
                     <div class="form-group">
                         <label>QTY</label>
@@ -197,9 +197,9 @@ try {
                         <input type="text" class="form-control" name="notes" id="edit-notes">
                     </div>
                 </div>
-                
+
                 <div id="editFormMessage" style="font-weight: bold; text-align: center; font-size: 0.9rem; margin-bottom: 15px;"></div>
-                
+
                 <div style="display: flex; justify-content: flex-end; gap: 12px;">
                     <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 700; cursor: pointer;">Cancel</button>
                     <button type="submit" class="btn-submit" style="padding: 10px 30px;">Save Changes</button>
@@ -226,11 +226,11 @@ try {
 
         function setStatusFilter(status) {
             currentStatus = status;
-            
+
             document.getElementById('pill-all').classList.remove('active');
             document.getElementById('pill-good').classList.remove('active');
             document.getElementById('pill-bad').classList.remove('active');
-            
+
             if (status === '') {
                 document.getElementById('pill-all').classList.add('active');
             } else if (status === 'Good') {
@@ -238,7 +238,7 @@ try {
             } else {
                 document.getElementById('pill-bad').classList.add('active');
             }
-            
+
             fetchAuditLogs();
         }
 
@@ -253,22 +253,22 @@ try {
             const container = document.getElementById('auditContainer');
             const start = document.getElementById('start_date').value;
             const end = document.getElementById('end_date').value;
-            
+
             let url = `../api/get_logs.php?status=${currentStatus}`;
             if (start && end) {
                 url += `&start_date=${start}&end_date=${end}`;
             }
-            
+
             try {
                 const response = await fetch(url);
                 const result = await response.json();
-                
+
                 if (result.success) {
                     if (result.data.length === 0) {
                         container.innerHTML = '<div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 40px; text-align: center; color: #64748b; font-weight: 600;">No logs found for the selected range.</div>';
                         return;
                     }
-                    
+
                     // Group logs by tech_id
                     let grouped = {};
                     result.data.forEach(log => {
@@ -277,19 +277,19 @@ try {
                         }
                         grouped[log.tech_id].push(log);
                     });
-                    
+
                     let html = '';
                     for (const tech in grouped) {
                         const logs = grouped[tech];
                         const goodCount = logs.filter(l => l.status === 'Good').reduce((sum, l) => sum + parseInt(l.qty), 0);
                         const badCount = logs.filter(l => l.status === 'Bad').reduce((sum, l) => sum + parseInt(l.qty), 0);
-                        
+
                         html += `
                             <div class="tech-section-card">
                                 <div class="tech-section-header">
                                     <h2>👤 Technician: ${tech}</h2>
                                     <div style="font-size: 0.85rem; font-weight: 700; color: #64748b;">
-                                        Total Good: <span style="color:#15803d">${goodCount}</span> | 
+                                        Total Good: <span style="color:#15803d">${goodCount}</span> |
                                         Total Bad: <span style="color:#b91c1c">${badCount}</span>
                                     </div>
                                 </div>
@@ -307,7 +307,7 @@ try {
                                         </thead>
                                         <tbody>
                         `;
-                        
+
                         logs.forEach(log => {
                             const badgeClass = log.status === 'Good' ? 'good' : 'bad';
                             const rowStyle = log.status === 'Good' ? 'background: #f0fdf4;' : 'background: #fef2f2;';
@@ -316,7 +316,7 @@ try {
                             const timeStr = dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                             const editedBadge = parseInt(log.edited) === 1 ? `<span class="badge" style="background: #fef9c3; color: #854d0e; font-size: 0.7rem; padding: 2px 4px; margin-left: 5px;">Edited</span>` : '';
                             const rejectedBadge = parseInt(log.delete_requested) === 2 ? `<span class="badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-size: 0.7rem; padding: 2px 4px; margin-left: 5px;">Delete Rejected</span>` : '';
-                            
+
                             // Check request state to label row nicely if pending
                             let statusText = '';
                             if (parseInt(log.delete_requested) === 1) {
@@ -365,7 +365,7 @@ try {
                                 </tr>
                             `;
                         });
-                        
+
                         html += `
                                         </tbody>
                                     </table>
@@ -387,13 +387,13 @@ try {
                 const formData = new FormData();
                 formData.append('id', id);
                 formData.append('action', action);
-                
+
                 const response = await fetch('../api/admin_actions.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     alert(result.message);
                     window.location.reload(); // Reload to refresh both pending requests PHP block and logs list
@@ -411,7 +411,7 @@ try {
                 const formData = new FormData();
                 formData.append('id', id);
                 formData.append('action', 'admin_toggle_status');
-                
+
                 const response = await fetch('../api/admin_actions.php', {
                     method: 'POST',
                     body: formData
@@ -433,7 +433,7 @@ try {
                 const formData = new FormData();
                 formData.append('id', id);
                 formData.append('action', 'admin_delete');
-                
+
                 const response = await fetch('../api/admin_actions.php', {
                     method: 'POST',
                     body: formData
@@ -456,13 +456,13 @@ try {
                 formData.append('qty', 1);
                 formData.append('print_a', 1);
                 formData.append('print_b', 1);
-                
+
                 const response = await fetch('../api/print_label.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     window.location.href = result.file_path;
                 } else {
@@ -488,7 +488,7 @@ try {
             document.getElementById('edit-bios_state').value = log.bios_state || '';
             document.getElementById('edit-os').value = log.os || '';
             document.getElementById('edit-notes').value = log.notes || '';
-            
+
             document.getElementById('editFormMessage').textContent = '';
             document.getElementById('editModal').style.display = 'flex';
         }
@@ -502,7 +502,7 @@ try {
             const msg = document.getElementById('editFormMessage');
             msg.textContent = 'Saving...';
             msg.style.color = '#475569';
-            
+
             const formData = new FormData(e.target);
             try {
                 const response = await fetch('../api/admin_actions.php', {
@@ -510,7 +510,7 @@ try {
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     msg.textContent = '✅ Log updated successfully!';
                     msg.style.color = '#15803d';

@@ -297,8 +297,8 @@ async function submitWorkOrderImport() {
         items.push({
             brand: brand,
             model: model,
-            series: series || '-',
-            cpu: cpu || '-',
+            series: series || 'N/A',
+            cpu: cpu,
             description: desc,
             quantity: qty,
             unit_price: price

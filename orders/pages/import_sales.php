@@ -50,23 +50,23 @@ function parseXlsxData($filePath) {
     $random = bin2hex(random_bytes(4));
     $tempDir = __DIR__ . '/../../temp_import_' . $random;
     $zipFile = __DIR__ . '/../../temp_import_' . $random . '.zip';
-    
+
     // Copy to .zip and extract using PowerShell
     if (!copy($filePath, $zipFile)) {
         return ['error' => "Failed to copy file to temp zip."];
     }
-    
+
     $cmd = "powershell -Command \"Expand-Archive -Path '" . str_replace('/', '\\', $zipFile) . "' -DestinationPath '" . str_replace('/', '\\', $tempDir) . "' -Force\"";
     shell_exec($cmd);
-    
+
     if (file_exists($zipFile)) {
         unlink($zipFile);
     }
-    
+
     if (!is_dir($tempDir)) {
         return ['error' => "PowerShell extraction failed."];
     }
-    
+
     // 1. Read sheet relationships and metadata
     $workbookPath = $tempDir . '/xl/workbook.xml';
     $relsPath = $tempDir . '/xl/_rels/workbook.xml.rels';
@@ -74,7 +74,7 @@ function parseXlsxData($filePath) {
         deleteImportTempDir($tempDir);
         return ['error' => "Excel file is missing workbook schemas."];
     }
-    
+
     // Read sheets definitions
     $workbookXml = file_get_contents($workbookPath);
     $wb = new SimpleXMLElement($workbookXml);
@@ -95,7 +95,7 @@ function parseXlsxData($filePath) {
             'target' => ''
         ];
     }
-    
+
     // Read relationships to get sheet XML paths
     $relsXml = file_get_contents($relsPath);
     $rels = new SimpleXMLElement($relsXml);
@@ -106,7 +106,7 @@ function parseXlsxData($filePath) {
             $sheetsMap[$id]['target'] = $target;
         }
     }
-    
+
     // 2. Read shared strings
     $sharedStrings = [];
     $stringsPath = $tempDir . '/xl/sharedStrings.xml';
@@ -127,7 +127,7 @@ function parseXlsxData($filePath) {
             }
         }
     }
-    
+
     // 3. Parse each sheet
     $parsedSheets = [];
     foreach ($sheetsMap as $sh) {
@@ -135,11 +135,11 @@ function parseXlsxData($filePath) {
         if (!file_exists($sheetFile)) {
             continue;
         }
-        
+
         $sheetXml = file_get_contents($sheetFile);
         $xml = new SimpleXMLElement($sheetXml);
         $rows = [];
-        
+
         foreach ($xml->sheetData->row as $row) {
             $rowIndex = (int)$row['r'];
             $rowData = [];
@@ -148,7 +148,7 @@ function parseXlsxData($filePath) {
                 preg_match('/^[A-Z]+/', $cellRef, $matches);
                 if (empty($matches)) continue;
                 $col = $matches[0];
-                
+
                 $val = '';
                 if (isset($c->v)) {
                     $val = (string)$c->v;
@@ -160,17 +160,17 @@ function parseXlsxData($filePath) {
             }
             $rows[$rowIndex] = $rowData;
         }
-        
+
         // Extract metadata from this sheet
         $customerName = trim($rows[3]['B'] ?? '');
         $excelDateVal = trim($rows[4]['B'] ?? '');
         $orderNoVal = trim($rows[5]['B'] ?? '');
-        
+
         // 1. Dynamically locate the header row (between row 6 and 10) by checking for keywords
         $headerRowIndex = 8; // default
         $maxHeaderMatches = 0;
         $headerKeywords = ['type', 'brand', 'model', 'cpu', 'status', 'price', 'qty', 'total', 'summary', 'note', 'check again'];
-        
+
         for ($r = 6; $r <= 10; $r++) {
             if (!isset($rows[$r])) continue;
             $matches = 0;
@@ -200,7 +200,7 @@ function parseXlsxData($filePath) {
             'summary' => null,
             'notes' => null
         ];
-        
+
         foreach ($headerRow as $colLetter => $cellValue) {
             $cleanedVal = trim(strtolower($cellValue));
             if ($cleanedVal === 'type' || $cleanedVal === 'sector' || $cleanedVal === 'category') {
@@ -243,14 +243,14 @@ function parseXlsxData($filePath) {
                 $sampleRows[] = $rows[$i];
             }
         }
-        
+
         $allCols = [];
         foreach ($sampleRows as $sRow) {
             foreach ($sRow as $col => $val) {
                 $allCols[$col][] = trim($val);
             }
         }
-        
+
         // Validate Price column has numeric data, otherwise search other columns
         $priceCol = $colMapping['price'];
         $priceHasData = false;
@@ -262,7 +262,7 @@ function parseXlsxData($filePath) {
                 }
             }
         }
-        
+
         if (!$priceCol || !$priceHasData) {
             foreach ($allCols as $col => $vals) {
                 $decimalCount = 0;
@@ -291,7 +291,7 @@ function parseXlsxData($filePath) {
                 }
             }
         }
-        
+
         if (!$qtyCol || !$qtyHasData) {
             foreach ($allCols as $col => $vals) {
                 if ($col === $colMapping['price']) continue;
@@ -329,12 +329,12 @@ function parseXlsxData($filePath) {
             $qty = trim($row[$colMapping['qty']] ?? '');
             $summary = trim($row[$colMapping['summary']] ?? '');
             $notes = trim($row[$colMapping['notes']] ?? '');
-            
+
             // Skip empty rows
             if ($type === '' && $brand === '' && $model === '') {
                 continue;
             }
-            
+
             // Skip header rows or total/summary rows that might be left in the sheet
             $brandLower = strtolower($brand);
             $typeLower = strtolower($type);
@@ -344,7 +344,7 @@ function parseXlsxData($filePath) {
                 strpos($brandLower, 'total') !== false || strpos($typeLower, 'total') !== false) {
                 continue;
             }
-            
+
             $items[] = [
                 'type' => $type,
                 'brand' => $brand ?: 'Generic',
@@ -358,18 +358,18 @@ function parseXlsxData($filePath) {
             ];
             $itemCount++;
         }
-        
+
         // Skip sheet if it's completely empty / not a sales sheet
         if (empty($customerName) && empty($excelDateVal) && empty($orderNoVal) && $itemCount === 0) {
             continue;
         }
-        
+
         // Validate fields strictly
         $errors = [];
         if (empty($customerName) || $customerName === 'Name') {
             $errors[] = "Missing Customer/Company Name (Cell B3)";
         }
-        
+
         $orderDate = null;
         if (empty($excelDateVal) || $excelDateVal === 'Date') {
             $errors[] = "Missing Order Date (Cell B4)";
@@ -382,15 +382,15 @@ function parseXlsxData($filePath) {
                 $errors[] = "Invalid Order Date (Cell B4: dates before year 2000 are not allowed)";
             }
         }
-        
+
         if (empty($orderNoVal) || $orderNoVal === 'Order #') {
             $errors[] = "Missing Order Number (Cell B5)";
         }
-        
+
         if ($itemCount === 0) {
             $errors[] = "No valid inventory items found starting on Row 11";
         }
-        
+
         $parsedSheets[] = [
             'sheet_name' => $sh['name'],
             'customer' => $customerName ?: 'Unknown',
@@ -401,7 +401,7 @@ function parseXlsxData($filePath) {
             'errors' => $errors
         ];
     }
-    
+
     deleteImportTempDir($tempDir);
     return $parsedSheets;
 }
@@ -459,7 +459,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['action']) && 
                 break;
             }
         }
-        
+
         if (!$foundFile) {
             $error = "Specified file not found.";
         } else {
@@ -473,23 +473,23 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['action']) && 
                     }
                 }
             }
-            
+
             if (!$sheetMeta) {
                 $error = "Specified tab/sheet not found.";
             } else {
                 $conn_c = Database::customers();
                 $conn_o = Database::orders();
-                
+
                 $conn_c->beginTransaction();
                 $conn_o->beginTransaction();
-                
+
                 try {
                     // 1. Resolve customer ID (check by company name)
                     $company = $sheetMeta['customer'];
                     $stmt = $conn_c->prepare("SELECT customer_id FROM customers WHERE company_name = ?");
                     $stmt->execute([$company]);
                     $customer_id = $stmt->fetchColumn();
-                    
+
                     if (!$customer_id) {
                         // Create customer
                         $customer_id = 'CUST-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
@@ -497,30 +497,30 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['action']) && 
                         $stmt_ins->execute([$customer_id, $company, $sheetMeta['date']]);
                         Audit::log('CREATE_CUSTOMER', $customer_id, "Auto-created during Excel tab import of " . $foundFile['name'], 'crm');
                     }
-                    
+
                     // 2. Resolve order ID
                     $order_no = $sheetMeta['order_no'] ?: strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
                     $order_id = 'ORD-' . $order_no;
-                    
+
                     // Delete existing order details if we are re-importing (to prevent item duplication)
                     $stmt_del_items = $conn_o->prepare("DELETE FROM items WHERE order_id = ?");
                     $stmt_del_items->execute([$order_id]);
                     $stmt_del_ord = $conn_o->prepare("DELETE FROM orders WHERE order_id = ?");
                     $stmt_del_ord->execute([$order_id]);
-                    
+
                     // Insert order
                     $stmt_ord = $conn_o->prepare("INSERT INTO orders (order_id, customer_id, status, created_at, updated_at) VALUES (?, ?, 'finalized', ?, ?)");
                     $stmt_ord->execute([$order_id, $customer_id, $sheetMeta['date'], $sheetMeta['date']]);
-                    
+
                     // Insert items
                     $stmt_item = $conn_o->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    
+
                     foreach ($sheetMeta['items'] as $item) {
                         $desc = $item['summary'] ?: ($item['type'] . " " . $item['brand'] . " " . $item['model'] . " " . $item['cpu'] . " " . $item['status']);
                         if ($item['notes']) {
                             $desc .= " (" . $item['notes'] . ")";
                         }
-                        
+
                         $stmt_item->execute([
                             $order_id,
                             $customer_id,
@@ -534,16 +534,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['action']) && 
                             $sheetMeta['date']
                         ]);
                     }
-                    
+
                     $conn_c->commit();
                     $conn_o->commit();
-                    
+
                     Audit::log('IMPORT_SALES_ORDER', $order_id, "Successfully imported tab '{$targetSheet}' with {$sheetMeta['item_count']} items from " . $foundFile['name'], 'orders');
-                    
+
                     $_SESSION['import_success_msg'] = "Successfully imported order <strong>$order_id</strong> for <strong>$company</strong> from tab <strong>$targetSheet</strong>!";
                     header("Location: index.php?view=import_sales");
                     exit();
-                    
+
                 } catch (Exception $e) {
                     $conn_c->rollBack();
                     $conn_o->rollBack();
@@ -569,51 +569,51 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['action']) && 
 
         $conn_c = Database::customers();
         $conn_o = Database::orders();
-        
+
         $importedCount = 0;
         $errorsList = [];
-        
+
         foreach ($xlsxFiles as $file) {
             if (!is_array($file['sheets'])) continue;
-            
+
             foreach ($file['sheets'] as $sheetMeta) {
                 // Skip sheets with errors
                 if (!empty($sheetMeta['errors'])) continue;
-                
+
                 $order_id = 'ORD-' . $sheetMeta['order_no'];
                 // Skip already imported orders
                 if (in_array($order_id, $existingOrders)) continue;
-                
+
                 $conn_c->beginTransaction();
                 $conn_o->beginTransaction();
-                
+
                 try {
                     // Resolve Customer
                     $company = $sheetMeta['customer'];
                     $stmt = $conn_c->prepare("SELECT customer_id FROM customers WHERE company_name = ?");
                     $stmt->execute([$company]);
                     $customer_id = $stmt->fetchColumn();
-                    
+
                     if (!$customer_id) {
                         $customer_id = 'CUST-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
                         $stmt_ins = $conn_c->prepare("INSERT INTO customers (customer_id, company_name, created_at) VALUES (?, ?, ?)");
                         $stmt_ins->execute([$customer_id, $company, $sheetMeta['date']]);
                         Audit::log('CREATE_CUSTOMER', $customer_id, "Auto-created during bulk Excel auto-import of " . $file['name'], 'crm');
                     }
-                    
+
                     // Insert Order
                     $stmt_ord = $conn_o->prepare("INSERT INTO orders (order_id, customer_id, status, created_at, updated_at) VALUES (?, ?, 'finalized', ?, ?)");
                     $stmt_ord->execute([$order_id, $customer_id, $sheetMeta['date'], $sheetMeta['date']]);
-                    
+
                     // Insert items
                     $stmt_item = $conn_o->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    
+
                     foreach ($sheetMeta['items'] as $item) {
                         $desc = $item['summary'] ?: ($item['type'] . " " . $item['brand'] . " " . $item['model'] . " " . $item['cpu'] . " " . $item['status']);
                         if ($item['notes']) {
                             $desc .= " (" . $item['notes'] . ")";
                         }
-                        
+
                         $stmt_item->execute([
                             $order_id,
                             $customer_id,
@@ -627,13 +627,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['action']) && 
                             $sheetMeta['date']
                         ]);
                     }
-                    
+
                     $conn_c->commit();
                     $conn_o->commit();
-                    
+
                     Audit::log('IMPORT_SALES_ORDER', $order_id, "Auto-imported tab '{$sheetMeta['sheet_name']}' from " . $file['name'], 'orders');
                     $importedCount++;
-                    
+
                 } catch (Exception $e) {
                     $conn_c->rollBack();
                     $conn_o->rollBack();
@@ -641,7 +641,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && isset($_POST['action']) && 
                 }
             }
         }
-        
+
         if ($importedCount > 0) {
             $_SESSION['import_success_msg'] = "Successfully auto-imported <strong>$importedCount</strong> new B2B sales orders!";
             if (!empty($errorsList)) {
@@ -708,7 +708,7 @@ unset($_SESSION['import_success_msg']);
         <h3 style="font-weight: 900; font-size: 1.25rem; color: var(--text-main); margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
             📁 Available B2B Sales Sheets in Root Directory
         </h3>
-        
+
         <?php if (empty($xlsxFiles)): ?>
             <div style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">
                 No matching B2B Sales Excel spreadsheets found in the root directory.
@@ -729,7 +729,7 @@ unset($_SESSION['import_success_msg']);
                 <tbody>
                     <?php foreach ($xlsxFiles as $file): ?>
                         <?php if (is_array($file['sheets'])): ?>
-                             <?php foreach ($file['sheets'] as $meta): 
+                             <?php foreach ($file['sheets'] as $meta):
                                 $hasErrors = !empty($meta['errors']);
                                 $order_id = $meta['order_no'] ? 'ORD-' . $meta['order_no'] : 'N/A';
                                 $isImported = !$hasErrors && in_array($order_id, $existingOrders);
@@ -772,7 +772,7 @@ unset($_SESSION['import_success_msg']);
                                                 <input type="hidden" name="filename" value="<?= htmlspecialchars($file['name']) ?>">
                                                 <input type="hidden" name="sheet_name" value="<?= htmlspecialchars($meta['sheet_name']) ?>">
                                                 <?= UI::csrf_field() ?>
-                                                
+
                                                 <?php if ($isImported): ?>
                                                     <button type="submit" class="btn-main" style="background: #ecfdf5; color: #047857; font-weight: 800; border: 1px solid #a7f3d0; box-shadow: none;">
                                                         🔄 Re-Import

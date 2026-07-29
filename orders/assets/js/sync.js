@@ -87,7 +87,7 @@ window.AppSync = window.AppSync || {
         try {
             const response = await fetch(reg.url, { signal });
             if (!response.ok) throw new Error(`HTTP error ${response.status}`);
-            
+
             const responseText = await response.text();
             let data = {};
             try {
@@ -141,7 +141,7 @@ window.AppSync = window.AppSync || {
                 const existingRow = oldRowMap.get(rowId);
 
                 if (existingRow) {
-                    const isChanged = (existingRow.innerHTML !== newRow.innerHTML) || 
+                    const isChanged = (existingRow.innerHTML !== newRow.innerHTML) ||
                                       (existingRow.className !== newRow.className);
 
                     if (isChanged) {
@@ -177,7 +177,7 @@ window.AppSync = window.AppSync || {
                     }
                 } else {
                     newRow.classList.add('row-pulse-highlight');
-                    
+
                     if (index >= container.children.length) {
                         container.appendChild(newRow);
                     } else {

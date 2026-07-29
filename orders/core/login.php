@@ -889,7 +889,7 @@ try {
     function startQRScanner() {
         const readerDiv = document.getElementById('reader');
         const stopBtn = document.getElementById('btn_stop_scanner');
-        
+
         readerDiv.style.display = 'block';
         stopBtn.style.display = 'block';
 

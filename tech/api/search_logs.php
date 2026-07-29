@@ -8,7 +8,7 @@ $query = trim($_GET['q'] ?? '');
 
 try {
     $conn = Database::tech();
-    
+
     if (strlen($query) < 1) {
         // Return last 100 logs if no query
         $stmt = $conn->prepare("SELECT * FROM logs ORDER BY created_at DESC LIMIT 100");
@@ -19,9 +19,9 @@ try {
         $searchTerm = '%' . $query . '%';
         $stmt->execute([$searchTerm, $searchTerm, $searchTerm]);
     }
-    
+
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     echo json_encode(['success' => true, 'data' => $results]);
 } catch (PDOException $e) {
     echo json_encode(['success' => false, 'error' => 'Database error: ' . $e->getMessage()]);

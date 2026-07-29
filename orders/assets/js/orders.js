@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             url: window.location.pathname + window.location.search + (window.location.search ? '&ajax=1' : '?ajax=1'),
             onUpdate: () => {
                 filterOrders();
-                
+
                 // Keep selected IDs up-to-date with what actually exists in DOM now
                 const currentIds = new Set(Array.from(document.querySelectorAll('#orders-list .row-select')).map(cb => cb.closest('tr').dataset.id));
                 for (let id of selectedOrderIds) {
@@ -249,15 +249,15 @@ if (OrderDOM.tbody) {
         if (e.target.classList.contains('row-select')) {
             const currentCb = e.target;
             const checkboxes = Array.from(OrderDOM.tbody.querySelectorAll('.row-select')).filter(cb => cb.closest('tr').style.display !== 'none');
-            
+
             if (e.shiftKey && lastOrderChecked && lastOrderChecked !== currentCb) {
                 let start = checkboxes.indexOf(currentCb);
                 let end = checkboxes.indexOf(lastOrderChecked);
-                
+
                 if (start > -1 && end > -1) {
                     const range = checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
                     const isChecked = currentCb.checked;
-                    
+
                     range.forEach(cb => {
                         cb.checked = isChecked;
                         const tr = cb.closest('tr');
@@ -283,7 +283,7 @@ if (OrderDOM.tbody) {
                     if (OrderDOM.selectAll) OrderDOM.selectAll.checked = false;
                 }
             }
-            
+
             lastOrderChecked = currentCb;
             updateOrderBulkBar();
         }

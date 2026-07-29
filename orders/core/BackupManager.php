@@ -105,7 +105,7 @@ class BackupManager {
                 $finalArchivePath = $archivePath;
                 $counter = 1;
                 $pathInfo = pathinfo($archivePath);
-                
+
                 while (file_exists($archiveDriver->getFullPath($finalArchivePath))) {
                     $finalArchivePath = $pathInfo['filename'] . ' (' . $counter . ').' . $pathInfo['extension'];
                     $counter++;
@@ -148,8 +148,8 @@ class BackupManager {
 
                 // 5. Insert or Update DB record
                 $stmt = $this->db->prepare("
-                    INSERT INTO location_photos 
-                    (location_code, original_filename, archive_driver, archive_path, optimized_path, thumbnail_path, uploaded_by, category, sector) 
+                    INSERT INTO location_photos
+                    (location_code, original_filename, archive_driver, archive_path, optimized_path, thumbnail_path, uploaded_by, category, sector)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ");
                 $stmt->execute([

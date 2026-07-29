@@ -255,11 +255,11 @@
         align-items: stretch;
         gap: 12px;
     }
-    
+
     .trends-header > div {
         width: 100%;
     }
-    
+
     #trends-filter {
         width: 100%;
     }
@@ -272,7 +272,7 @@
         width: 100%;
         scrollbar-width: none;
     }
-    
+
     .tab-nav::-webkit-scrollbar {
         display: none;
     }
@@ -287,7 +287,7 @@
         -webkit-overflow-scrolling: touch;
         gap: 12px;
     }
-    
+
     .bar-container {
         min-width: 45px;
     }
@@ -297,7 +297,7 @@
     .trends-grid {
         grid-template-columns: 1fr !important;
     }
-    
+
     #widget-board {
         grid-template-columns: 1fr !important;
     }
@@ -316,11 +316,106 @@
 }
 
 /* Flatten cards inside the tab content to prevent double-nesting and allow tables to start further left */
-.tab-content .trend-card {
-    background: transparent !important;
-    border: none !important;
+/* Tested Market Component & Input Styling Fixes */
+.trends-table input,
+.trends-table input:not(:placeholder-shown),
+.matrix-cell-input,
+.matrix-cell-input:not(:placeholder-shown) {
+    background-image: none !important;
+    animation: none !important;
+    padding-right: 8px !important;
+    border-color: var(--border-color, #e2e8f0);
+    background-color: var(--bg-surface-2, #f8fafc);
     box-shadow: none !important;
-    padding: 0 !important;
 }
+
+.matrix-cell-input.input-price {
+    padding-left: 22px !important;
+    padding-right: 8px !important;
+}
+
+.matrix-cell-input.input-st {
+    padding-left: 8px !important;
+    padding-right: 22px !important;
+}
+
+.matrix-cell-input {
+    width: 100%;
+    height: 36px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-surface-2, #f8fafc);
+    color: var(--text-main, #0f172a);
+    font-weight: 700;
+    font-size: 0.88rem;
+    transition: all 0.15s ease-in-out;
+}
+
+.matrix-cell-input.inline-text {
+    border-color: transparent;
+    background: transparent;
+}
+
+.matrix-cell-input.inline-text:hover,
+.matrix-cell-input.inline-text:focus {
+    border-color: var(--border-color, #cbd5e1);
+    background: var(--bg-surface-2, #f8fafc);
+}
+
+.matrix-cell-input:focus {
+    outline: none;
+    border-color: #3b82f6 !important;
+    background-color: var(--bg-surface, #ffffff) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+.tested-cat-pill-nav .tab-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Modern Table Aesthetics for Tested Market */
+.trends-table-container {
+    border-radius: 12px;
+    border: 1px solid var(--border-color, #e2e8f0);
+    overflow-x: auto;
+    background: var(--bg-surface, #ffffff);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.trends-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.88rem;
+}
+
+.trends-table th {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.6px;
+    padding: 12px 14px;
+    border-bottom: 2px solid #334155;
+    white-space: nowrap;
+}
+
+.trends-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color, #f1f5f9);
+    vertical-align: middle;
+}
+
+.trends-table tbody tr:hover {
+    background-color: rgba(59, 130, 246, 0.04);
+}
+
+.trends-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
 
 

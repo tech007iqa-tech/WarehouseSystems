@@ -19,7 +19,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
     <link rel="icon" type="image/png" href="../../orders/assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
 </head>
 <body class="modern-theme">
-    
+
     <div class="breadcrumb-container" role="banner" style="max-width: 1200px; margin: 20px auto; width: 95%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">
             <a href="../index.php" class="crumb">
@@ -36,7 +36,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
     </div>
 
     <main class="container" style="max-width: 1200px; margin: 0 auto; width: 95%;">
-        
+
         <div class="page-header">
             <h1><span>🏷️</span> Hardware Labels</h1>
             <p>Search tested hardware and print professional .odt thermal labels.</p>
@@ -76,7 +76,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
                 // Actually, let's just make search_logs.php return recent 100 if query is empty.
                 const response = await fetch('../api/search_logs.php?q=');
                 const result = await response.json();
-                
+
                 if (result.success) {
                     allLogs = result.data;
                     renderLogs(allLogs);
@@ -92,7 +92,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No logs found.</td></tr>';
                 return;
             }
-            
+
             let html = '';
             logsToRender.forEach(log => {
                 html += `
@@ -135,13 +135,13 @@ $user_role = htmlspecialchars($_SESSION['role']);
                 formData.append('qty', 1);
                 formData.append('print_a', 1);
                 formData.append('print_b', 1);
-                
+
                 const response = await fetch('../api/print_label.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     // Trigger download/open
                     window.location.href = result.file_path;

@@ -53,7 +53,7 @@ try {
     $storage  = $specs['storage'] ?? '';
     $gpu      = $specs['gpu'] ?? '';
     $os_version = $specs['windows'] ?? '';
-    
+
     // Normalize battery to 1 or 0
     $battery_val = $specs['battery'] ?? '';
     $battery = null;

@@ -108,11 +108,11 @@ body {
 
 /* Utility classes for index.php Dashboard UI */
 .stats-widget {
-    background: rgba(255,255,255,0.1); 
-    padding: 15px 25px; 
-    border-radius: 12px; 
-    display: flex; 
-    gap: 25px; 
+    background: rgba(255,255,255,0.1);
+    padding: 15px 25px;
+    border-radius: 12px;
+    display: flex;
+    gap: 25px;
     border: 1px solid rgba(255,255,255,0.2);
 }
 .stat-item { text-align: center; }
@@ -126,14 +126,14 @@ body {
 .indicator-bad { background: #f87171; }
 
 .alert-box {
-    background: #fef2f2; 
-    border: 1px solid #fecaca; 
-    border-left: 4px solid #ef4444; 
-    padding: 15px 20px; 
-    border-radius: 8px; 
-    margin-bottom: 30px; 
-    display: flex; 
-    align-items: flex-start; 
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-left: 4px solid #ef4444;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+    display: flex;
+    align-items: flex-start;
     gap: 15px;
 }
 .alert-icon { font-size: 1.5rem; }

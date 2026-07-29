@@ -461,15 +461,15 @@ DOM.tbody.addEventListener('click', (e) => {
     if (e.target.classList.contains('row-select')) {
         const currentCb = e.target;
         const checkboxes = Array.from(DOM.tbody.querySelectorAll('.row-select')).filter(cb => cb.closest('tr').style.display !== 'none');
-        
+
         if (e.shiftKey && lastLabelsChecked && lastLabelsChecked !== currentCb) {
             let start = checkboxes.indexOf(currentCb);
             let end = checkboxes.indexOf(lastLabelsChecked);
-            
+
             if (start > -1 && end > -1) {
                 const range = checkboxes.slice(Math.min(start, end), Math.max(start, end) + 1);
                 const isChecked = currentCb.checked;
-                
+
                 range.forEach(cb => {
                     cb.checked = isChecked;
                     const tr = cb.closest('tr');
@@ -495,7 +495,7 @@ DOM.tbody.addEventListener('click', (e) => {
                 DOM.selectAll.checked = false;
             }
         }
-        
+
         lastLabelsChecked = currentCb;
         updateBulkBar();
     }

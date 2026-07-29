@@ -87,7 +87,7 @@ try {
             echo json_encode(['error' => 'Unauthorized']);
             exit();
         }
-        
+
         $path = $_GET['path'] ?? '';
         if (empty($path)) {
             $drives = [];
@@ -103,7 +103,7 @@ try {
             echo json_encode(['current' => '', 'drives' => $drives, 'dirs' => []]);
             exit();
         }
-        
+
         $path = str_replace('\\', '/', $path);
         $path = preg_replace('#/+#', '/', $path);
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' && preg_match('#^[A-Z]:#i', $path)) {
@@ -111,13 +111,13 @@ try {
                 $path = substr($path, 0, 2) . '/' . substr($path, 2);
             }
         }
-        
+
         $real = @realpath($path);
         if ($real) {
             $path = str_replace('\\', '/', $real);
         }
         $path = rtrim($path, '/') . '/';
-        
+
         $dirs = [];
         try {
             if (@is_dir($path)) {
@@ -133,7 +133,7 @@ try {
                 }
             }
         } catch (Exception $e) {}
-        
+
         $parent = dirname($path);
         $parent = str_replace('\\', '/', $parent);
         if ($parent === $path || $parent === '.' || $parent === '/' || preg_match('#^[A-Z]:/$#i', $path)) {
@@ -141,7 +141,7 @@ try {
         } else {
             $parent = rtrim($parent, '/') . '/';
         }
-        
+
         echo json_encode([
             'current' => $path,
             'parent' => $parent,
@@ -362,7 +362,7 @@ try {
                 $tarPath = $backupDir . '/photos_backup_' . date('Y-m-d') . '.tar';
                 $conn_w = Database::warehouse();
                 $backupManager = new BackupManager($conn_w);
-                
+
                 if ($backupManager->export($tarPath)) {
                     if (ob_get_level() > 0) ob_clean();
                     header('Content-Description: File Transfer');
@@ -478,7 +478,7 @@ try {
                 Go to Importer
             </a>
         </div>
-        
+
         <!-- Collapsible Formatting Guide -->
         <div style="margin-top: 20px; border-top: 1px dashed #e2e8f0; padding-top: 15px;">
             <button type="button" onclick="const gd = document.getElementById('import-guide-details'); gd.style.display = gd.style.display === 'none' ? 'block' : 'none';" style="background: none; border: none; color: var(--accent-color); font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 0;">
@@ -1485,7 +1485,7 @@ try {
             $stmt->execute(['archive_photos_path']);
             $currentArchivePath = $stmt->fetchColumn();
         } catch (Exception $e) {}
-        
+
         if (empty($currentArchivePath)) {
             $currentArchivePath = dirname(__DIR__) . '/assets/location_photos/archive/';
         }
@@ -1499,7 +1499,7 @@ try {
         <form method="POST" style="margin-bottom: 30px;">
             <?= UI::csrf_field() ?>
             <input type="hidden" name="action" value="update_archive_path">
-            
+
             <div class="form-group" style="margin-bottom: 15px;">
                 <label for="archive_photos_path" style="display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:#64748b;">Raw Photo Archive Directory</label>
                 <div style="display: flex; gap: 10px;">
@@ -1509,7 +1509,7 @@ try {
                 </div>
                 <small style="font-size: 0.75rem; color: var(--text-dim); display: block; margin-top: 6px;">Specify a physical path to save raw photos (e.g. a spinning drive like <code>D:/warehouse_archive_photos/</code>).</small>
             </div>
-            
+
             <button type="submit" class="btn-main" style="width: 100%; padding: 14px; border-radius: 12px; background: var(--accent-color); color: white; border: none; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
                 💾 Save Storage Path
             </button>
@@ -1537,7 +1537,7 @@ try {
             <form method="POST" enctype="multipart/form-data">
                 <?= UI::csrf_field() ?>
                 <input type="hidden" name="action" value="import_photos_backup">
-                
+
                 <div class="form-group" style="margin-bottom: 15px;">
                     <input type="file" name="backup_tar" accept=".tar" required
                         style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-body); color: var(--text-main);">
@@ -1695,15 +1695,15 @@ try {
                 <h3 style="margin: 0; font-size: 1.25rem;">📂 Select Archive Directory</h3>
                 <button type="button" onclick="closeDirPicker()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-dim);">×</button>
             </div>
-            
+
             <div style="margin-bottom: 15px; font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); word-break: break-all; flex-shrink: 0;">
                 Current Path: <span id="dir-picker-current-path" style="color: var(--text-main); font-family: monospace;">-</span>
             </div>
-            
+
             <div id="dir-picker-list" style="overflow-y: auto; flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; background: var(--bg-body); min-height: 250px;">
                 <!-- Populated by JS -->
             </div>
-            
+
             <div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-shrink: 0;">
                 <button type="button" onclick="selectCurrentDir()" class="btn-action" style="flex: 2; padding: 10px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Select Current Folder</button>
                 <button type="button" onclick="closeDirPicker()" class="btn-action" style="flex: 1; padding: 10px; background: var(--text-dim); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
@@ -1713,17 +1713,17 @@ try {
 
     <script>
     let pickerCurrentPath = '';
-    
+
     function openDirPicker() {
         document.getElementById('dir-picker-modal').style.display = 'flex';
         const startPath = document.getElementById('archive_photos_path').value || '';
         loadDir(startPath);
     }
-    
+
     function closeDirPicker() {
         document.getElementById('dir-picker-modal').style.display = 'none';
     }
-    
+
     async function loadDir(path) {
         try {
             const response = await fetch(`index.php?view=settings&action=list_dirs&path=${encodeURIComponent(path)}`);
@@ -1732,13 +1732,13 @@ try {
                 loadDir('');
                 return;
             }
-            
+
             pickerCurrentPath = data.current;
             document.getElementById('dir-picker-current-path').textContent = pickerCurrentPath || 'System Drives';
-            
+
             const listContainer = document.getElementById('dir-picker-list');
             listContainer.innerHTML = '';
-            
+
             if (pickerCurrentPath && data.parent !== undefined) {
                 const item = document.createElement('div');
                 item.style.padding = '8px 12px';
@@ -1749,7 +1749,7 @@ try {
                 item.onclick = () => loadDir(data.parent);
                 listContainer.appendChild(item);
             }
-            
+
             if (data.drives && data.drives.length > 0) {
                 data.drives.forEach(drive => {
                     const item = document.createElement('div');
@@ -1761,7 +1761,7 @@ try {
                     listContainer.appendChild(item);
                 });
             }
-            
+
             if (data.dirs && data.dirs.length > 0) {
                 data.dirs.forEach(dir => {
                     const item = document.createElement('div');
@@ -1786,12 +1786,12 @@ try {
                 item.textContent = 'No subfolders found.';
                 listContainer.appendChild(item);
             }
-            
+
         } catch (err) {
             console.error(err);
         }
     }
-    
+
     function selectCurrentDir() {
         if (pickerCurrentPath) {
             document.getElementById('archive_photos_path').value = pickerCurrentPath;

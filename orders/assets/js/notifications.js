@@ -25,13 +25,13 @@ const IQA_Notify = {
 
         const toast = document.createElement('div');
         toast.className = `iqa-toast iqa-toast-${type}`;
-        
+
         const colors = {
             success: { bg: 'rgba(140, 198, 63, 0.95)', border: '#8cc63f', icon: '✅' },
             error: { bg: 'rgba(239, 68, 68, 0.95)', border: '#ef4444', icon: '❌' },
             warning: { bg: 'rgba(245, 158, 11, 0.95)', border: '#f59e0b', icon: '⚠️' }
         };
-        
+
         const style = colors[type] || colors.success;
 
         toast.style.cssText = `
@@ -77,15 +77,15 @@ const IQA_Notify = {
             }, 400);
         }, 4000);
     },
-    
+
     success(message) {
         this.show(message, 'success');
     },
-    
+
     error(message) {
         this.show(message, 'error');
     },
-    
+
     warning(message) {
         this.show(message, 'warning');
     }

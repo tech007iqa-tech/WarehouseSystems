@@ -26,7 +26,7 @@ def consolidate_csv(input_path, output_path):
         stripped = line.strip()
         if not stripped:
             continue
-        
+
         # Check for header
         if not header:
             if line.startswith("Type,"):
@@ -50,7 +50,7 @@ def consolidate_csv(input_path, output_path):
     for r in data_rows:
         while len(r) < 11:
             r.append('')
-            
+
         brand = r[1].strip()
         # Normalize brand names
         brand_lower = brand.lower()
@@ -82,7 +82,7 @@ def consolidate_csv(input_path, output_path):
         desc = r[5].lower()
         summary = r[9].lower()
         text_to_search = desc + " " + summary
-        
+
         if "untested" in text_to_search:
             condition = "Untested"
         elif "parts" in text_to_search:
@@ -158,7 +158,7 @@ def consolidate_csv(input_path, output_path):
             f"Laptop {brand} {model} {condition}", # Summary
             ""                        # Note
         ]
-        
+
         consolidated_blocks[condition].append(new_row)
 
     # Sort each block alphabetically by Brand, then Model
@@ -219,5 +219,5 @@ if __name__ == '__main__':
             base, ext = os.path.splitext(input_file)
             output_file = f"{base}_consolidated{ext}"
         consolidate_csv(input_file, output_file)
-        
+
     input("\nPress Enter to exit...")

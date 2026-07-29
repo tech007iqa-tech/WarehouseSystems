@@ -19,10 +19,10 @@ try {
         LEFT JOIN c.customers ON o.customer_id = c.customers.customer_id
         WHERE o.order_id = ?
     ", [$order_id]);
-    
+
     $order = $stmt->fetch(PDO::FETCH_ASSOC);
     $items = [];
-    
+
     if ($order) {
         $db = Database::orders();
         $stmt_items = $db->prepare("SELECT * FROM items WHERE order_id = ? ORDER BY id ASC");

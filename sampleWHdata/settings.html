@@ -116,7 +116,7 @@
         <!-- Structured prompt: Role & Schema -->
         <div class="panel">
             <h2>System Prompt Tuning</h2>
-            
+
             <div class="settings-section">
                 <div class="form-group">
                     <span class="form-label">AI Persona / Role</span>
@@ -247,7 +247,7 @@
 
         function initUI() {
             document.getElementById('prompt-role').value = promptSettings.role;
-            
+
             // Build Schema UI
             const schemaContainer = document.getElementById('schema-rules-container');
             schemaContainer.innerHTML = '';
@@ -276,7 +276,7 @@
         function renderTranslations() {
             const grid = document.getElementById('dict-grid');
             grid.innerHTML = '';
-            
+
             const keys = Object.keys(promptSettings.translations);
             if (keys.length === 0) {
                 grid.innerHTML = '<p style="color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px;">No custom translations added yet.</p>';
@@ -325,7 +325,7 @@
         function renderFormattingRules() {
             const list = document.getElementById('rules-list');
             list.innerHTML = '';
-            
+
             if (promptSettings.formatting_rules.length === 0) {
                 list.innerHTML = '<p style="color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px;">No custom formatting rules defined.</p>';
                 return;
@@ -444,12 +444,12 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
-            
+
             let icon = type === 'success' ? '✓' : (type === 'info' ? 'ℹ' : '⚠');
             toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
-            
+
             container.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.style.animation = 'toastSlideOut 0.3s ease-in forwards';
                 setTimeout(() => toast.remove(), 300);

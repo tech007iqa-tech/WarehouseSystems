@@ -24,12 +24,12 @@ const Viewer = {
     resetViewer() {
         const stage = document.getElementById('viewer-stage');
         if (!stage) return;
-        
+
         const existingImgs = stage.querySelectorAll('img');
         existingImgs.forEach(img => img.remove());
         const existingPs = stage.querySelectorAll('p');
         existingPs.forEach(p => p.remove());
-        
+
         const p = document.createElement('p');
         p.style.color = 'var(--text-dim)';
         p.style.fontSize = '0.9rem';
@@ -50,7 +50,7 @@ const Viewer = {
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                
+
                 let width = img.width;
                 let height = img.height;
                 const maxDimension = 2000;
@@ -63,30 +63,30 @@ const Viewer = {
                         height = maxDimension;
                     }
                 }
-                
+
                 canvas.width = width;
                 canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
-                
+
                 try {
                     const imageData = ctx.getImageData(0, 0, width, height);
                     const data = imageData.data;
-                    
+
                     let min = 255;
                     let max = 0;
                     const len = data.length;
                     const brightnessValues = new Uint8Array(len / 4);
-                    
+
                     for (let i = 0; i < len; i += 4) {
                         const v = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
                         brightnessValues[i / 4] = v;
                         if (v < min) min = v;
                         if (v > max) max = v;
                     }
-                    
+
                     const range = max - min || 1;
                     const threshold = min + range * 0.45;
-                    
+
                     for (let i = 0; i < len; i += 4) {
                         const v = brightnessValues[i / 4];
                         const newVal = v < threshold ? 0 : 255;
@@ -94,7 +94,7 @@ const Viewer = {
                         data[i + 1] = newVal;
                         data[i + 2] = newVal;
                     }
-                    
+
                     ctx.putImageData(imageData, 0, 0);
                 } catch (e) {
                     console.error("Canvas pixel manipulation failed, using raw canvas:", e);

@@ -876,7 +876,7 @@ try {
     function startQRScanner() {
         const readerDiv = document.getElementById('reader');
         const stopBtn = document.getElementById('btn_stop_scanner');
-        
+
         readerDiv.style.display = 'block';
         stopBtn.style.display = 'block';
 
@@ -898,7 +898,7 @@ try {
             if (scannedText.length === 64) {
                 document.getElementById('ppp_display_key').value = scannedText;
                 stopQRScanner();
-                applyManualKey(); 
+                applyManualKey();
             } else {
                 alert("Scanned text is not a valid 64-hex sequence key! Code: " + scannedText);
             }

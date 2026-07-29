@@ -11,7 +11,7 @@ The `tech` module connects primarily to the master databases shared across the s
 
 ### 🎨 Design System
 - **Global UI Toolkit**: The module does *not* redefine core CSS components. It imports `../orders/assets/styles/components.css` and `../orders/assets/styles/style.css`.
-- **Dashboard specifics**: Small custom dashboard elements (like the Daily Impact Summary widget and search bar) are handled in `assets/styles/dashboard.css`. 
+- **Dashboard specifics**: Small custom dashboard elements (like the Daily Impact Summary widget and search bar) are handled in `assets/styles/dashboard.css`.
 - Always stick to the established structural guidelines (rounded corners, soft shadows, vibrant badges) defined in the Orders Design System to ensure brand consistency.
 
 ### 🔐 Authentication & Roles
@@ -21,7 +21,7 @@ The `tech` module connects primarily to the master databases shared across the s
   - *Admins* see global statistics (all testing combined) and have access to `admin_audit.php` instead of the standard hardware logs module.
 
 ### 🔍 Global Search API
-- The dashboard search bar uses vanilla JavaScript `fetch()` to call `api/search_logs.php`. 
+- The dashboard search bar uses vanilla JavaScript `fetch()` to call `api/search_logs.php`.
 - Ensure any modifications to the backend search endpoints maintain a strict JSON response signature (`{"success": true, "data": [...]}`) since the frontend relies on it for virtual UI rendering.
 
 ### 💡 Development Tips

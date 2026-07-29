@@ -19,7 +19,7 @@ class Database {
             try {
                 $conn = new PDO("sqlite:" . $db_path);
                 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                
+
                 // Concurrency optimizations
                 $conn->exec("PRAGMA journal_mode = WAL;");
                 $conn->exec("PRAGMA busy_timeout = 5000;");
@@ -102,7 +102,7 @@ class Database {
             notes TEXT,
             last_updated DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
-        
+
         // Seed default parts if table is empty
         $stmt = $conn->query("SELECT COUNT(*) FROM parts_inventory");
         if ($stmt->fetchColumn() == 0) {

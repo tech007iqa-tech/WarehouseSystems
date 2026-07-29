@@ -47,7 +47,7 @@ if (!in_array($field, $allowed_fields)) {
 
 try {
     $conn = Database::orders();
-    
+
     // Sanitize value depending on field type
     if ($field === 'quantity') {
         $value = (float)Security::sanitize_float($value);

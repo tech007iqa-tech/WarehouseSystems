@@ -92,7 +92,7 @@ if (brandSelect && modelDatalist && seriesDatalist) {
         // Reset inputs and clear options
         if (modelInput) modelInput.value = '';
         if (seriesInput) seriesInput.value = '';
-        
+
         modelDatalist.innerHTML = '';
         seriesDatalist.innerHTML = '';
 

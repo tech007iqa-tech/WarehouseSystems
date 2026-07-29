@@ -19,7 +19,7 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
 $user_role = $_SESSION['role'] ?? '';
 $has_access = false;
 
-// Admins and Technicians have access. 
+// Admins and Technicians have access.
 if ($user_role === 'Admin' || strpos($user_role, 'Technician') !== false) {
     $has_access = true;
 }

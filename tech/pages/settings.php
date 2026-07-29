@@ -239,7 +239,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
                     <p class="subtitle">Your offline, ultra-secure one-time passcode system.
                         <span class="linked-text-info" style="color: #4f46e5; text-decoration: underline; font-weight: bold; cursor: pointer;">Show Info</span>.
                     </p>
-                    
+
                     <!-- PPP Information Dialog -->
                     <div class="info-dialog" style="max-width: 500px; width: 90%;">
                         <button type="button" class="btn-close-dialog" aria-label="Close dialog">&times;</button>
@@ -293,7 +293,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
                             </div>
                         </div>
                     </div>
-                    
+
                     <div id="qr-wrapper-settings" style="display: <?= empty($seq_key) ? 'none' : 'flex' ?>; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 10px; border-radius: 12px; border: 1px solid #cbd5e1;">
                         <img id="ppp_qr_img" src="<?= !empty($seq_key) ? 'https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=' . urlencode($seq_key) : 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7' ?>" alt="PPP QR Code" style="width: 110px; height: 110px; border-radius: 8px; display: block;">
                         <span style="font-size: 0.6rem; color: #64748b; font-weight: 800; margin-top: 4px; text-transform: uppercase;">Sequence QR Code</span>
@@ -421,7 +421,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
         const isBypassed = document.getElementById('bypass_ppp_checkbox').checked;
         const pppCard = document.getElementById('ppp-card');
         const newPassInput = document.getElementById('new_password');
-        
+
         if (isBypassed) {
             pppCard.style.opacity = '0.5';
             pppCard.style.pointerEvents = 'none';
@@ -501,7 +501,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
         }
 
         fetchGridPreview(activeSeqKey);
-        
+
         // Close dialog
         if (window.dialogEngine) {
             window.dialogEngine.closeAnyOpenDialogs();

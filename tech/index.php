@@ -19,10 +19,10 @@ try {
         $stmt->execute();
     }
     $daily_stats = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-    
+
     $good_count = (int)($daily_stats['Good'] ?? 0);
     $bad_count = (int)($daily_stats['Bad'] ?? 0);
-    
+
     // Fetch Low Stock Alerts
     $stmt = $conn->prepare("SELECT part_name, quantity FROM parts_inventory WHERE quantity <= low_stock_threshold ORDER BY quantity ASC");
     $stmt->execute();
@@ -44,7 +44,7 @@ $total_tested = $good_count + $bad_count;
     <link rel="icon" type="image/png" href="../orders/assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
 </head>
 <body class="modern-theme">
-    
+
     <div class="breadcrumb-container" role="banner" style="max-width: 1200px; margin: 20px auto; width: 95%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">
             <a href="index.php" class="crumb active">
@@ -57,13 +57,13 @@ $total_tested = $good_count + $bad_count;
     </div>
 
     <main class="container">
-        
+
         <div class="tech-dashboard-header">
             <div>
                 <h1><span>🛠️</span> Technician Control Center</h1>
                 <p>Hardware testing, logs, and inventory management.</p>
             </div>
-            
+
             <!-- Daily Impact Summary Widget -->
             <div class="stats-widget">
                 <div class="stat-item">
@@ -83,7 +83,7 @@ $total_tested = $good_count + $bad_count;
                 </div>
             </div>
         </div>
-        
+
         <?php if (!empty($low_stock_parts)): ?>
         <div class="alert-box">
             <span class="alert-icon">⚠️</span>
@@ -92,7 +92,7 @@ $total_tested = $good_count + $bad_count;
                 <p class="alert-desc">
                     The following items are running critically low and need to be reordered:
                     <strong>
-                        <?php 
+                        <?php
                             $alerts = array_map(function($p) { return $p['part_name'] . ' (' . $p['quantity'] . ' left)'; }, $low_stock_parts);
                             echo implode(', ', $alerts);
                         ?>
@@ -133,7 +133,7 @@ $total_tested = $good_count + $bad_count;
                 <p>Manage RAM, SSDs, tools, and view critical low-stock alerts before they run out.</p>
                 <div class="badge badge-active">Module Active</div>
             </a>
-            
+
             <a href="pages/labels.php" class="module-card">
                 <div class="icon-box">🏷️</div>
                 <h2>Label Generation</h2>
@@ -149,16 +149,16 @@ $total_tested = $good_count + $bad_count;
         document.getElementById('globalSearch').addEventListener('input', async (e) => {
             const q = e.target.value.trim();
             const resultsDiv = document.getElementById('searchResults');
-            
+
             if (q.length < 2) {
                 resultsDiv.style.display = 'none';
                 return;
             }
-            
+
             try {
                 const response = await fetch('api/search_logs.php?q=' + encodeURIComponent(q));
                 const data = await response.json();
-                
+
                 if (data.success && data.data.length > 0) {
                     let html = '<ul style="list-style: none; margin: 0; padding: 0;">';
                     data.data.forEach(log => {

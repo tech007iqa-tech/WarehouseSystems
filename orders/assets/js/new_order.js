@@ -76,7 +76,7 @@ function initSpreadsheetEvents() {
     listContainer.addEventListener('click', (e) => {
         const btn = e.target.closest('.btn-add-row-indicator');
         const cloneBtn = e.target.closest('.btn-clone-row');
-        
+
         if (btn) {
             e.preventDefault();
             const templateRow = listContainer.querySelector('.new-blank-row');
@@ -92,7 +92,7 @@ function initSpreadsheetEvents() {
                     newBtn.style.opacity = '0.3';
                 }
                 templateRow.parentNode.appendChild(newRow);
-                
+
                 // Focus the first input of the new row
                 const firstInput = newRow.querySelector('.cell-input');
                 if (firstInput) firstInput.focus();

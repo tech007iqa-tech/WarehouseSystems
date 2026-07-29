@@ -1386,7 +1386,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     async function bulkUpdateDefaultCpu(event, targetCpu) {
         event.preventDefault();
         event.stopPropagation();
-        
+
         const menu = document.getElementById('cpu-bulk-menu');
         if (menu) menu.style.display = 'none';
 
@@ -1422,7 +1422,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                                 const originalTd = row.cells[1];
                                 const isAccepted = res.status === 'Accept';
                                 row.style.backgroundColor = isAccepted ? 'rgba(236, 253, 245, 0.4)' : 'rgba(254, 242, 242, 0.6)';
-                                
+
                                 if (isAccepted) {
                                     statusTd.innerHTML = '<span style="color: #059669; background: #d1fae5; padding: 4px 8px; border-radius: 8px; font-size: 0.75rem;">Accept</span>';
                                 } else {

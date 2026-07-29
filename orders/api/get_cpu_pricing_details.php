@@ -77,7 +77,7 @@ function isCategoryMatch($itemCategory, $requestedCategory) {
     if (strtolower($itemCategory) === strtolower($requestedCategory)) {
         return true;
     }
-    
+
     // Handle 8th Gen+ i5 / i7 matches
     if ($requestedCategory === '8th Gen+ i5') {
         return preg_match('/^(8th|9th|10th|11th|12th|13th|14th) Gen i5$/i', $itemCategory);
@@ -85,13 +85,13 @@ function isCategoryMatch($itemCategory, $requestedCategory) {
     if ($requestedCategory === '8th Gen+ i7') {
         return preg_match('/^(8th|9th|10th|11th|12th|13th|14th) Gen i7$/i', $itemCategory);
     }
-    
+
     return false;
 }
 
 try {
     $db = Database::orders();
-    
+
     // Check if table is empty or doesn't exist to decide on mock data
     $table_exists = false;
     try {
@@ -111,10 +111,10 @@ try {
             FROM items
             JOIN orders ON items.order_id = orders.order_id
             LEFT JOIN c.customers ON items.customer_id = c.customers.customer_id
-            WHERE items.cpu IS NOT NULL $date_condition
+            WHERE items.cpu IS NOT NULL AND items.unit_price >= 15.00 $date_condition
             ORDER BY orders.created_at DESC
         ";
-        
+
         $stmt = Database::queryIntegrated('orders', ['c' => 'customers'], $sql);
         $all_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -186,10 +186,10 @@ try {
                 'total_revenue' => 0
             ];
         }
-        
+
         $qty = intval($item['quantity']);
         $price = floatval($item['unit_price']);
-        
+
         $models_map[$key]['total_qty'] += $qty;
         $models_map[$key]['min_price'] = min($models_map[$key]['min_price'], $price);
         $models_map[$key]['max_price'] = max($models_map[$key]['max_price'], $price);
@@ -227,12 +227,12 @@ try {
             'customer_id' => $item['customer_id'] ?? ''
         ];
     }
-    
+
     // Sort recent sales by created_at desc
     usort($recent_sales, function($a, $b) {
         return strcmp($b['created_at'], $a['created_at']);
     });
-    
+
     $recent_sales = array_slice($recent_sales, 0, 15);
 
     echo json_encode([

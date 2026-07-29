@@ -30,10 +30,10 @@ function get_db_mtime($files) {
         $wal_path = $db_path . '-wal';
         clearstatcache(true, $db_path);
         clearstatcache(true, $wal_path);
-        
+
         $t1 = file_exists($db_path) ? filemtime($db_path) : 0;
         $t2 = file_exists($wal_path) ? filemtime($wal_path) : 0;
-        
+
         $max_mtime = max($max_mtime, $t1, $t2);
     }
     return $max_mtime;
@@ -51,14 +51,14 @@ $start_time = time();
 // Keep the stream open for 25 seconds (then recycle the connection to avoid memory limits)
 while (time() - $start_time < 25) {
     $current_mtime = get_db_mtime($db_files);
-    
+
     if ($current_mtime !== $last_mtime) {
         echo "event: database-change\n";
         echo "data: " . json_encode(['mtime' => $current_mtime]) . "\n\n";
         flush();
         $last_mtime = $current_mtime;
     }
-    
+
     // Check every 500ms (fast response time, extremely low CPU load)
     usleep(500000);
 }

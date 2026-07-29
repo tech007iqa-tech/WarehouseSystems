@@ -115,6 +115,27 @@ class Schema {
             'settings' => "CREATE TABLE IF NOT EXISTS settings (
                 key TEXT PRIMARY KEY,
                 value TEXT
+            )",
+            'tested_market_categories' => "CREATE TABLE IF NOT EXISTS tested_market_categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                display_order INTEGER DEFAULT 0,
+                layout_type TEXT DEFAULT 'laptop',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )",
+            'tested_market_rules' => "CREATE TABLE IF NOT EXISTS tested_market_rules (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                category_id INTEGER NOT NULL,
+                brand_series TEXT DEFAULT '',
+                model_number TEXT DEFAULT '',
+                is_2in1 INTEGER DEFAULT 0,
+                cpu TEXT DEFAULT '',
+                price REAL DEFAULT 0.00,
+                sale_through REAL DEFAULT 0.00,
+                sold_count INTEGER DEFAULT 0,
+                effective_date TEXT DEFAULT '',
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (category_id) REFERENCES tested_market_categories(id) ON DELETE CASCADE
             )"
         ],
         'users' => [
@@ -472,6 +493,42 @@ class Schema {
                     $stmt->execute(['Storage', $spec, 'Untested', $sp[1]]);
                     $stmt->execute(['Storage', $spec, 'Tested', $sp[2]]);
                     $stmt->execute(['Storage', $spec, 'C Grade', $sp[3]]);
+                }
+            }
+        }
+        if ($db_name === 'warehouse' && $table === 'tested_market_categories') {
+            // Ensure child table tested_market_rules exists prior to seeding rules
+            if (isset(self::$blueprints['warehouse']['tested_market_rules'])) {
+                $conn->exec(self::$blueprints['warehouse']['tested_market_rules']);
+            }
+            $count = $conn->query("SELECT COUNT(*) FROM tested_market_categories")->fetchColumn();
+            if ($count == 0) {
+                $seed_file = __DIR__ . '/tested_market_seed.json';
+                if (file_exists($seed_file)) {
+                    $seed_data = json_decode(file_get_contents($seed_file), true);
+                    if (is_array($seed_data)) {
+                        $stmt_cat = $conn->prepare("INSERT INTO tested_market_categories (name, display_order, layout_type) VALUES (?, ?, ?)");
+                        $stmt_rule = $conn->prepare("INSERT INTO tested_market_rules (category_id, brand_series, model_number, is_2in1, cpu, price, sale_through, sold_count, effective_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                        foreach ($seed_data as $cat) {
+                            $stmt_cat->execute([$cat['name'], $cat['display_order'], $cat['layout_type']]);
+                            $cat_id = $conn->lastInsertId();
+                            if (!empty($cat['rules']) && is_array($cat['rules'])) {
+                                foreach ($cat['rules'] as $rule) {
+                                    $stmt_rule->execute([
+                                        $cat_id,
+                                        $rule['brand_series'] ?? '',
+                                        $rule['model_number'] ?? '',
+                                        $rule['is_2in1'] ?? 0,
+                                        $rule['cpu'] ?? '',
+                                        $rule['price'] ?? 0.00,
+                                        $rule['sale_through'] ?? 0.00,
+                                        $rule['sold_count'] ?? 0,
+                                        $rule['effective_date'] ?? ''
+                                    ]);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

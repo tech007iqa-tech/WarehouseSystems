@@ -1085,7 +1085,7 @@ if (UI::is_ajax()) {
 
         <!-- Sector Navigation -->
         <div class="sector-nav">
-            <?php foreach ($sectors as $s): 
+            <?php foreach ($sectors as $s):
                 $sector_url = "index.php?view=warehouse&sector=" . urlencode($s['name']) . "&loc=" . urlencode($selected_loc);
                 if (!empty($active_zone_name)) {
                     $sector_url .= "&zone=" . urlencode($active_zone_name);

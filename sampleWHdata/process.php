@@ -74,7 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $config = $configHandler->loadConfig();
         $apiKey = $config['gemini_api_key'] ?? '';
         $promptSettings = $config['prompt_settings'] ?? [];
-        
+
         // Build prompt dynamically from settings
         $prompt = OcrEngine::buildPrompt($promptSettings);
 

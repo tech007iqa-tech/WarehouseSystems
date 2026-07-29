@@ -276,20 +276,20 @@ try {
 
         <?= UI::stat_card("Active Batches", $active_batches_count) ?>
         <?= UI::stat_card("Callbacks", $pending_callbacks_count, $pending_callbacks_count > 0 ? 'text-danger' : '') ?>
-        
+
         <div class="multi-link-container" style="display: contents;">
             <?= UI::stat_card("Zone Alerts", $warehouse_audit_count, 'clickable-card linked-text-info ' . ($warehouse_audit_count > 5 ? 'text-warning' : ''), 'zone-alerts-card') ?>
-            
+
             <!-- Zone Alerts Information Dialog -->
             <div class="info-dialog" id="dialog_zone_alerts" style="max-width: 500px; width: 90%; text-align: left; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">
                 <button type="button" class="btn-close-dialog" aria-label="Close dialog">&times;</button>
                 <div style="font-family: system-ui, -apple-system, sans-serif; color: #1e293b;">
                     <h2 style="font-size: 1.25rem; font-weight: 800; margin-top: 0; margin-bottom: 12px; color: #1e293b; display: flex; align-items: center; gap: 8px;">⚠️ Warehouse Zone Alerts</h2>
-                    
+
                     <p style="font-size: 0.9rem; color: #475569; margin-bottom: 16px; line-height: 1.5;">
                         This statistic shows the total number of warehouse locations (storage shelves or bins) currently flagged with a status of <strong>Audit</strong> or <strong>Idle</strong>.
                     </p>
-                    
+
                     <h3 style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin-bottom: 8px;">📋 Action Required</h3>
                     <p style="font-size: 0.85rem; color: #475569; margin-bottom: 12px; line-height: 1.5;">
                         As the account coordinator responsible for managing leads and presenting inventory to potential customers, maintaining high data integrity is critical. Stock level accuracy directly impacts customer trust and sales cycles:

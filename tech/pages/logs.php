@@ -19,7 +19,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
     <link rel="icon" type="image/png" href="../../orders/assets/icon/smart-home-sensor-wifi-black-outline-25276_1024.png">
 </head>
 <body class="modern-theme" style="background-color: #f8fafc;">
-    
+
     <div class="breadcrumb-container" role="banner" style="max-width: 1200px; margin: 20px auto; width: 95%; display: flex; justify-content: space-between; align-items: center;">
         <nav class="breadcrumbs">
             <a href="../index.php" class="crumb">
@@ -36,7 +36,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
     </div>
 
     <main class="container" style="max-width: 1200px; margin: 0 auto; width: 95%;">
-        
+
         <div class="page-header">
             <h1><span>📋</span> Hardware Logs</h1>
             <p>Log your daily hardware tests. Select Good or Bad to classify the unit.</p>
@@ -124,7 +124,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
                     <button id="tab-good" onclick="setActiveTab('Good')" style="padding: 10px 20px; border-radius: 8px; border: 1px solid #cbd5e1; background: #22c55e; color: white; font-weight: 800; cursor: pointer; transition: all 0.2s;">✅ Good Laptops</button>
                     <button id="tab-bad" onclick="setActiveTab('Bad')" style="padding: 10px 20px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 800; cursor: pointer; transition: all 0.2s;">❌ Bad Laptops</button>
                 </div>
-                
+
                 <!-- Date Filters -->
                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 5px;">
@@ -138,7 +138,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
                     <button onclick="clearDateFilter()" style="padding: 6px 12px; border-radius: 6px; border: 1px solid #cbd5e1; background: white; color: #475569; font-size: 0.85rem; font-weight: 700; cursor: pointer;">Reset</button>
                 </div>
             </div>
-            
+
             <div class="log-table-container">
                 <table>
                     <thead>
@@ -169,7 +169,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
             <form id="editForm" style="padding: 24px; margin-bottom: 0;">
                 <input type="hidden" name="id" id="edit-id">
                 <input type="hidden" name="action" value="edit">
-                
+
                 <div class="form-grid">
                     <div class="form-group">
                         <label>QTY</label>
@@ -220,9 +220,9 @@ $user_role = htmlspecialchars($_SESSION['role']);
                         <input type="text" class="form-control" name="notes" id="edit-notes">
                     </div>
                 </div>
-                
+
                 <div id="editFormMessage" style="font-weight: bold; text-align: center; font-size: 0.9rem; margin-bottom: 15px;"></div>
-                
+
                 <div style="display: flex; justify-content: flex-end; gap: 12px;">
                     <button type="button" onclick="closeEditModal()" style="padding: 10px 20px; border-radius: 8px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 700; cursor: pointer;">Cancel</button>
                     <button type="submit" class="btn-submit" style="padding: 10px 30px;">Save Changes</button>
@@ -238,7 +238,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
             document.getElementById('status').value = status;
             const btns = document.querySelectorAll('.status-toggle .status-btn');
             btns.forEach(btn => btn.classList.remove('active'));
-            
+
             if (status === 'Good') {
                 btns[0].classList.add('active');
             } else {
@@ -261,10 +261,10 @@ $user_role = htmlspecialchars($_SESSION['role']);
 
         function setActiveTab(status) {
             currentStatus = status;
-            
+
             const btnGood = document.getElementById('tab-good');
             const btnBad = document.getElementById('tab-bad');
-            
+
             if (status === 'Good') {
                 btnGood.style.background = '#22c55e';
                 btnGood.style.color = 'white';
@@ -276,7 +276,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
                 btnBad.style.background = '#ef4444';
                 btnBad.style.color = 'white';
             }
-            
+
             fetchLogs();
         }
 
@@ -296,23 +296,23 @@ $user_role = htmlspecialchars($_SESSION['role']);
             const msg = document.getElementById('formMessage');
             msg.textContent = 'Saving...';
             msg.style.color = '#475569';
-            
+
             const formData = new FormData(e.target);
-            
+
             try {
                 const response = await fetch('../api/add_log.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     msg.textContent = '✅ Log saved successfully!';
                     msg.style.color = '#15803d';
                     e.target.reset();
                     setStatus(document.getElementById('status').value);
                     fetchLogs();
-                    
+
                     setTimeout(() => { msg.textContent = ''; }, 3000);
                 } else {
                     msg.textContent = '❌ Error: ' + result.error;
@@ -328,41 +328,41 @@ $user_role = htmlspecialchars($_SESSION['role']);
             const tbody = document.getElementById('logsTableBody');
             const start = document.getElementById('start_date').value;
             const end = document.getElementById('end_date').value;
-            
+
             let url = `../api/get_logs.php?status=${currentStatus}`;
             if (start && end) {
                 url += `&start_date=${start}&end_date=${end}`;
             }
-            
+
             try {
                 const response = await fetch(url);
                 const result = await response.json();
-                
+
                 if (result.success) {
                     if (result.data.length === 0) {
                         tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No ${currentStatus.toLowerCase()} laptop logs found for this date range.</td></tr>`;
                         return;
                     }
-                    
+
                     let html = '';
                     result.data.forEach(log => {
                         const badgeClass = log.status === 'Good' ? 'good' : 'bad';
                         const rowStyle = log.status === 'Good' ? 'background: #f0fdf4;' : 'background: #fef2f2;';
-                        
+
                         // Parse date and time
                         const dt = new Date(log.created_at);
                         const dateStr = dt.toLocaleDateString();
                         const timeStr = dt.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        
+
                         // Control buttons
                         let controlHtml = '';
                         if (parseInt(log.delete_requested) === 1) {
                             controlHtml = `<span style="color: #ef4444; font-size: 0.75rem; font-weight: bold;">🗑️ Pending Delete</span>`;
                         } else {
                             // If status change is pending
-                            let statusText = log.status_change_requested !== '' ? 
+                            let statusText = log.status_change_requested !== '' ?
                                 `<span style="color: #f97316; font-size: 0.75rem; font-weight: bold; display: block; margin-bottom: 4px;">⏳ Pending Status -> ${log.status_change_requested}</span>` : '';
-                            
+
                             controlHtml = `
                                 ${statusText}
                                 <div style="display: flex; gap: 4px; justify-content: flex-end; align-items: center;">
@@ -373,13 +373,13 @@ $user_role = htmlspecialchars($_SESSION['role']);
                                 </div>
                             `;
                         }
-                        
+
                         // Edited indicator
                         const editedBadge = parseInt(log.edited) === 1 ? `<span class="badge" style="background: #fef9c3; color: #854d0e; font-size: 0.7rem; padding: 2px 4px; margin-left: 5px;">Edited</span>` : '';
-                        
+
                         // Delete Rejected indicator
                         const rejectedBadge = parseInt(log.delete_requested) === 2 ? `<span class="badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-size: 0.7rem; padding: 2px 4px; margin-left: 5px;">Delete Rejected</span>` : '';
-                        
+
                         html += `
                             <tr style="${rowStyle}">
                                 <td><span class="badge ${badgeClass}">${log.status}</span></td>
@@ -425,13 +425,13 @@ $user_role = htmlspecialchars($_SESSION['role']);
                 const formData = new FormData();
                 formData.append('action', 'toggle_status');
                 formData.append('id', id);
-                
+
                 const response = await fetch('../api/request_actions.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     alert(result.message);
                     fetchLogs();
@@ -449,13 +449,13 @@ $user_role = htmlspecialchars($_SESSION['role']);
                 const formData = new FormData();
                 formData.append('action', 'request_delete');
                 formData.append('id', id);
-                
+
                 const response = await fetch('../api/request_actions.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     alert(result.message);
                     fetchLogs();
@@ -474,13 +474,13 @@ $user_role = htmlspecialchars($_SESSION['role']);
                 formData.append('qty', 1);
                 formData.append('print_a', 1);
                 formData.append('print_b', 1);
-                
+
                 const response = await fetch('../api/print_label.php', {
                     method: 'POST',
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     window.location.href = result.file_path;
                 } else {
@@ -506,7 +506,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
             document.getElementById('edit-bios_state').value = log.bios_state || '';
             document.getElementById('edit-os').value = log.os || '';
             document.getElementById('edit-notes').value = log.notes || '';
-            
+
             document.getElementById('editFormMessage').textContent = '';
             document.getElementById('editModal').style.display = 'flex';
         }
@@ -520,7 +520,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
             const msg = document.getElementById('editFormMessage');
             msg.textContent = 'Saving...';
             msg.style.color = '#475569';
-            
+
             const formData = new FormData(e.target);
             try {
                 const response = await fetch('../api/request_actions.php', {
@@ -528,7 +528,7 @@ $user_role = htmlspecialchars($_SESSION['role']);
                     body: formData
                 });
                 const result = await response.json();
-                
+
                 if (result.success) {
                     msg.textContent = '✅ Log updated successfully!';
                     msg.style.color = '#15803d';

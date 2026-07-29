@@ -42,7 +42,7 @@ class DbHandler
             return true;
         }
 
-        $sql = "INSERT INTO committed_intakes (date, qty, item, serial, location, notes) 
+        $sql = "INSERT INTO committed_intakes (date, qty, item, serial, location, notes)
                 VALUES (:date, :qty, :item, :serial, :location, :notes)";
         $stmt = $this->pdo->prepare($sql);
 

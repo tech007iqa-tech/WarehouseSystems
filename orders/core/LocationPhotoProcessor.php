@@ -30,7 +30,7 @@ class LocationPhotoProcessor {
         // Generate unique base filename
         $safeName = preg_replace('/[^a-zA-Z0-9_\-]/', '_', pathinfo($originalName, PATHINFO_FILENAME));
         $uniqueId = uniqid();
-        
+
         $rawFilename = $locationCode . '_' . $safeName . '_' . $uniqueId . '.' . $ext;
         $optimizedFilename = $locationCode . '_' . $safeName . '_' . $uniqueId . '_opt.webp';
         $thumbnailFilename = $locationCode . '_' . $safeName . '_' . $uniqueId . '_thumb.webp';
@@ -68,7 +68,7 @@ class LocationPhotoProcessor {
 
         // 3. Save reference in SQLite DB
         $stmt = $this->db->prepare("
-            INSERT INTO location_photos (location_code, original_filename, archive_driver, archive_path, optimized_path, thumbnail_path, uploaded_by, category, sector) 
+            INSERT INTO location_photos (location_code, original_filename, archive_driver, archive_path, optimized_path, thumbnail_path, uploaded_by, category, sector)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt->execute([
@@ -129,7 +129,7 @@ class LocationPhotoProcessor {
         }
 
         $tmpImg = imagecreatetruecolor($newWidth, $newHeight);
-        
+
         // Preserve alpha channels
         imagealphablending($tmpImg, false);
         imagesavealpha($tmpImg, true);

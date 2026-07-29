@@ -42,7 +42,7 @@ class DialogEngine {
 
   _handleDialogTriggerClick(event) {
     const target = event.target;
-    
+
     // Image triggers
     const trigger = target.closest('.linked-text-img');
     if (trigger) {

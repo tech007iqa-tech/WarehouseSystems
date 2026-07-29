@@ -124,11 +124,11 @@
         function renderLocationBreadcrumbs() {
             const container = document.getElementById('location-filter-bar');
             if (!container) return;
-            
+
             // Extract unique shelves (letters/prefixes) and detailed locations
             const shelvesSet = new Set();
             const shelfToLocs = {};
-            
+
             currentData.forEach(row => {
                 if (row.location) {
                     const loc = row.location.trim().toUpperCase();
@@ -136,24 +136,24 @@
                     const match = loc.match(/^([A-Za-z]+)/);
                     const shelf = match ? match[1] : '??';
                     shelvesSet.add(shelf);
-                    
+
                     if (!shelfToLocs[shelf]) {
                         shelfToLocs[shelf] = new Set();
                     }
                     shelfToLocs[shelf].add(loc);
                 }
             });
-            
+
             const sortedShelves = Array.from(shelvesSet).sort();
             container.innerHTML = '';
-            
+
             // Breadcrumb 1: All Shelves
             const allBtn = document.createElement('button');
             allBtn.className = `btn-crumb ${selectedShelfFilter === 'ALL' ? 'active' : ''}`;
             allBtn.innerHTML = `🌍 All Shelves (${currentData.length})`;
             allBtn.onclick = () => selectShelf('ALL');
             container.appendChild(allBtn);
-            
+
             if (selectedShelfFilter === 'ALL') {
                 // Show list of Shelves
                 sortedShelves.forEach(shelf => {
@@ -161,24 +161,24 @@
                     sep.textContent = '›';
                     sep.style.cssText = 'color: var(--text-dim); margin: 0 4px; font-weight: bold; font-size: 1.1rem;';
                     container.appendChild(sep);
-                    
+
                     // Count items in this shelf
                     const count = currentData.filter(row => {
                         const loc = (row.location || '').trim().toUpperCase();
                         const match = loc.match(/^([A-Za-z]+)/);
                         return (match ? match[1] : '??') === shelf;
                     }).length;
-                    
+
                     const shelfBtn = document.createElement('button');
                     shelfBtn.className = 'btn-crumb';
-                    
+
                     let icon = '⚡';
                     if (shelf === 'A') icon = '⚡';
                     else if (shelf === 'B') icon = '🔥';
                     else if (shelf === 'C') icon = '📦';
                     else if (shelf === 'E') icon = '🏷️';
                     else if (shelf === '??') icon = '❓';
-                    
+
                     shelfBtn.innerHTML = `${icon} Shelf ${shelf} (${count})`;
                     shelfBtn.onclick = () => selectShelf(shelf);
                     container.appendChild(shelfBtn);
@@ -189,19 +189,19 @@
                 sep1.textContent = '›';
                 sep1.style.cssText = 'color: var(--text-dim); margin: 0 4px; font-weight: bold; font-size: 1.1rem;';
                 container.appendChild(sep1);
-                
+
                 const shelfBtn = document.createElement('button');
                 const shelfCount = currentData.filter(row => {
                     const loc = (row.location || '').trim().toUpperCase();
                     const match = loc.match(/^([A-Za-z]+)/);
                     return (match ? match[1] : '??') === selectedShelfFilter;
                 }).length;
-                
+
                 shelfBtn.className = `btn-crumb ${selectedLocDetailFilter === 'ALL' ? 'active' : ''}`;
                 shelfBtn.innerHTML = `🏢 Shelf ${selectedShelfFilter} (${shelfCount})`;
                 shelfBtn.onclick = () => selectLocDetail('ALL');
                 container.appendChild(shelfBtn);
-                
+
                 // Show sub-locations (e.g. E-1, E-2)
                 const detailedLocs = Array.from(shelfToLocs[selectedShelfFilter] || []).sort();
                 detailedLocs.forEach(loc => {
@@ -209,9 +209,9 @@
                     sep2.textContent = '›';
                     sep2.style.cssText = 'color: var(--text-dim); margin: 0 4px; font-weight: bold; font-size: 1.1rem;';
                     container.appendChild(sep2);
-                    
+
                     const count = currentData.filter(row => row.location && row.location.trim().toUpperCase() === loc).length;
-                    
+
                     const locBtn = document.createElement('button');
                     locBtn.className = `btn-crumb ${selectedLocDetailFilter === loc ? 'active' : ''}`;
                     locBtn.innerHTML = `📍 ${loc} (${count})`;
@@ -236,7 +236,7 @@
 
         function applyFilterAndSort() {
             const query = document.getElementById('search-input').value.toLowerCase().trim();
-            
+
             // Filter by active shelf & detailed location
             let filtered = currentData;
             if (selectedShelfFilter !== 'ALL') {
@@ -246,14 +246,14 @@
                     const shelf = match ? match[1] : '??';
                     return shelf === selectedShelfFilter;
                 });
-                
+
                 if (selectedLocDetailFilter !== 'ALL') {
                     filtered = filtered.filter(row => {
                         return (row.location || '').trim().toUpperCase() === selectedLocDetailFilter;
                     });
                 }
             }
-            
+
             if (query) {
                 filtered = filtered.filter(row => {
                     const date = (row.date || '').toLowerCase();
@@ -362,7 +362,7 @@
             // Get currently filtered and sorted dataset
             const query = document.getElementById('search-input').value.toLowerCase().trim();
             let filtered = [...currentData];
-            
+
             if (selectedShelfFilter !== 'ALL') {
                 filtered = filtered.filter(row => {
                     const loc = (row.location || '').trim().toUpperCase();
@@ -370,7 +370,7 @@
                     const shelf = match ? match[1] : '??';
                     return shelf === selectedShelfFilter;
                 });
-                
+
                 if (selectedLocDetailFilter !== 'ALL') {
                     filtered = filtered.filter(row => {
                         return (row.location || '').trim().toUpperCase() === selectedLocDetailFilter;
@@ -432,7 +432,7 @@
                     }
                     serial = '';
                 }
-                
+
                 csvContent += `${escapeCSV(row.date)},${escapeCSV(row.qty)},${escapeCSV(item)},${escapeCSV(serial)},${escapeCSV(row.location)},${escapeCSV(row.notes)}\n`;
             });
 
@@ -453,12 +453,12 @@
             if (!container) return;
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
-            
+
             let icon = type === 'success' ? '✓' : '⚠';
             toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
-            
+
             container.appendChild(toast);
-            
+
             setTimeout(() => {
                 toast.style.animation = 'toastSlideOut 0.3s ease-in forwards';
                 setTimeout(() => toast.remove(), 300);
