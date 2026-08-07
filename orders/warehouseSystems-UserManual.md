@@ -84,9 +84,11 @@ When a lead is ready to purchase, use the **One-Tap Conversion** button. This pr
 The ordering workflow is split into two phases: building the batch and finalizing the manifest.
 
 ### Phase 1: Batch Builder (`/prod/pages/new_order.php`)
-- **AJAX Intake**: Add items to an order batch in real-time. The sidebar tracks total units and order ID as you work.
+- **AJAX Intake**: Add items to an order batch in real-time. The sidebar tracks total units and order ID as you work. The main spreadsheet supports inline editing, including a dedicated **Notes** column for specifications.
 - **Interactive Chips**: Use pre-defined keyword chips (e.g., "Tested", "Working") to quickly fill in item descriptions.
 - **Repeat Last**: Quickly add the same item configuration again with a single click.
+- **Work Order AI Import**: Click "Import" and utilize the full-screen AI Batch Import Center. Upload a handwritten or printed manifest, and the AI will extract all details (including specs like RAM and Storage into the Notes column) and automatically estimate CPU values!
+- **Clipboard Bulk Import**: Easily map bulk text or spreadsheet pastes. If your spreadsheet contains a column named "note" or "notes", the importer will automatically route that data into the batch item notes.
 
 ### Phase 2: Checkout Manifest (`/prod/checkout.php`)
 - **Verification**: Review all items in the batch. You can edit unit prices, quantities, and descriptions inline.

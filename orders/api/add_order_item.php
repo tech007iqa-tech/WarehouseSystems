@@ -34,12 +34,13 @@ try {
     $series = $_POST['series'] ?? '';
     $cpu = $_POST['cpu'] ?? '';
     $desc = $_POST['description'] ?? '';
+    $notes = $_POST['notes'] ?? '';
     $qty = Security::sanitize_float($_POST['quantity']);
     $price = Security::sanitize_float($_POST['unit_price'] ?? 0.00);
 
-    $stmt = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, notes, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-    if ($stmt->execute([$order_id, $customer_id, $brand, $model, $series, $cpu, $desc, $qty, $price])) {
+    if ($stmt->execute([$order_id, $customer_id, $brand, $model, $series, $cpu, $desc, $notes, $qty, $price])) {
         $new_id = $conn->lastInsertId();
 
         // Update Session for "Repeat Last"
@@ -48,7 +49,8 @@ try {
             'model' => $model,
             'series' => $series,
             'cpu' => $cpu,
-            'description' => $desc
+            'description' => $desc,
+            'notes' => $notes
         ];
 
         // Fetch new total units
@@ -73,9 +75,10 @@ try {
                     </td>
                     <td style='text-align:center; font-weight:700;'>{$qty}</td>
                     <td style='text-align:right;'>\${$formatted_price}</td>
+                    <td style='text-align:left; color:#64748b;'>".htmlspecialchars($notes)."</td>
                     <td style='text-align:right;'>
                         <div class='action-buttons'>
-                            <button type='button' class='btn-edit' onclick='openEditModal(".json_encode(['id'=>$new_id, 'brand'=>$brand, 'model'=>$model, 'series'=>$series, 'cpu'=>$cpu, 'description'=>$desc, 'quantity'=>$qty, 'unit_price'=>$price]).")'>✎</button>
+                            <button type='button' class='btn-edit' onclick='openEditModal(".json_encode(['id'=>$new_id, 'brand'=>$brand, 'model'=>$model, 'series'=>$series, 'cpu'=>$cpu, 'description'=>$desc, 'notes'=>$notes, 'quantity'=>$qty, 'unit_price'=>$price]).")'>✎</button>
                             <form method='POST' style='display:inline;'>
                                 <input type='hidden' name='action' value='delete'>
                                 <input type='hidden' name='delete_id' value='{$new_id}'>

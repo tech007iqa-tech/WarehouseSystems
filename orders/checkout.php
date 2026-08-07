@@ -160,8 +160,14 @@ try {
             </a>
             <h1 style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 8px;">Final Batch Verification</h1>
             <p class="subtitle">Review quantities and pricing for this manifest before final submission.</p>
-            <div style="margin-top: 20px; max-width: 500px; margin-left: auto; margin-right: auto;">
-                <input type="text" id="manifest-search" aria-label="Search manifest items" onkeyup="filterManifest()" placeholder="Search items by Brand, Model, Serial, etc..." style="width: 100%; height: 48px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 16px; padding: 0 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="margin-top: 20px; max-width: 500px; margin-left: auto; margin-right: auto; display: flex; flex-direction: column; gap: 10px;">
+                <select id="checkout-sort" onchange="sortCheckout()" style="height: 48px; font-size: 0.9rem; padding: 0 15px; border-radius: 12px; border: 1px solid var(--border-color); outline: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-weight: 600;">
+                    <option value="default">Default Sort (Untested > Tested > Parts)</option>
+                    <option value="original">Original Import Order</option>
+                    <option value="qty_desc">Quantity (High-Low)</option>
+                    <option value="price_desc">Price (High-Low)</option>
+                </select>
+                <input type="text" id="manifest-search" aria-label="Search manifest items" onkeyup="filterManifest()" placeholder="Search items..." style="width: 100%; height: 48px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 16px; padding: 0 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             </div>
         </div>
 
@@ -199,7 +205,7 @@ try {
                         <th class="col-total" style="text-align: right; padding-right: 0;">Subtotal</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="checkout-list">
                     <?php
                     $total_items = 0;
                     $grand_total = 0;
@@ -216,7 +222,7 @@ try {
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
                                 <div class="copyable-text" style="flex: 1;">
                                     <div class="item-brand-model" style="font-weight: 700;"><span class="item-brand"><?= htmlspecialchars($item['brand']) ?></span> <span class="item-model"><?= htmlspecialchars($item['model']) ?></span></div>
-                                    <div class="item-metadata" style="font-size: 0.825rem; color: var(--text-secondary);"><?= htmlspecialchars($item['series'] ?? '') ?> | <span style="color: var(--accent-color); font-weight:800;"><?= htmlspecialchars($item['cpu'] ?? '') ?></span> | <?= htmlspecialchars($item['description'] ?? '') ?></div>
+                                    <div class="item-metadata" style="font-size: 0.825rem; color: var(--text-secondary);" data-desc="<?= htmlspecialchars($item['description'] ?? '') ?>"><?= htmlspecialchars($item['series'] ?? '') ?> | <span style="color: var(--accent-color); font-weight:800;"><?= htmlspecialchars($item['cpu'] ?? '') ?></span> | <?= htmlspecialchars($item['description'] ?? '') ?></div>
                                 </div>
                                 <button type="button" class="btn-copy no-print" onclick="event.stopPropagation(); copyEntry(this)" title="Copy Description" style="background: none; border: none; cursor: pointer; padding: 4px; font-size: 0.9rem; opacity: 0.4; transition: opacity 0.2s; flex-shrink: 0;">
                                     📋

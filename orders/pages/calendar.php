@@ -11,6 +11,7 @@ if ($user_role !== 'Admin' && $user_role !== 'Front Desk') {
 }
 
 // Date Handling
+date_default_timezone_set('America/Los_Angeles');
 $month = isset($_GET['month']) ? (int)$_GET['month'] : date('m');
 $year = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
 $current_view = isset($_GET['view_type']) ? $_GET['view_type'] : 'week';

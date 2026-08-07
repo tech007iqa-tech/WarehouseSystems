@@ -29,9 +29,10 @@ try {
             $series = $_POST['update_series'] ?? '';
             $cpu = trim(($_POST['edit_cpu_series'] ?? '') . ' ' . ($_POST['edit_cpu_gen'] ?? ''));
             $desc = $_POST['update_desc'] ?? '';
+            $notes = $_POST['update_notes'] ?? '';
 
-            $stmt = $conn->prepare("UPDATE items SET brand=?, model=?, series=?, cpu=?, description=?, quantity=?, unit_price=? WHERE id=?");
-            if ($stmt->execute([$brand, $model, $series, $cpu, $desc, (float) $qty, (float) $price, (int) $update_id])) {
+            $stmt = $conn->prepare("UPDATE items SET brand=?, model=?, series=?, cpu=?, description=?, notes=?, quantity=?, unit_price=? WHERE id=?");
+            if ($stmt->execute([$brand, $model, $series, $cpu, $desc, $notes, (float) $qty, (float) $price, (int) $update_id])) {
                 $_SESSION['notification_msg'] = "Item details updated. 💾";
                 $_SESSION['notification_type'] = "success";
             }
@@ -63,7 +64,14 @@ if ($current_customer) {
 }
 
 // Fetch current order items
-$stmt = $conn->prepare("SELECT * FROM items WHERE order_id = ? AND customer_id = ? ORDER BY id ASC");
+$stmt = $conn->prepare("SELECT * FROM items WHERE order_id = ? AND customer_id = ? ORDER BY 
+    CASE 
+        WHEN description LIKE '%Untested%' THEN 1 
+        WHEN description LIKE '%Tested%' AND description NOT LIKE '%Untested%' THEN 2 
+        WHEN description LIKE '%Parts%' THEN 3 
+        ELSE 4 
+    END ASC, 
+    id ASC");
 $stmt->execute([$current_order, $current_customer]);
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -116,9 +124,10 @@ foreach ($items as $item)
                 <div style="display:flex; gap:10px; align-items:center;">
                     <select id="summary-sort" onchange="sortSummary()"
                         style="height: 34px; font-size: 0.8rem; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
+                        <option value="default">Default Sort (Untested > Tested > Parts)</option>
+                        <option value="original">Original Import Order</option>
                         <option value="oldest">Older First</option>
                         <option value="newest">Newest Added</option>
-                        <option value="desc_asc">Description</option>
                         <option value="qty_desc">Quantity (High-Low)</option>
                         <option value="price_desc">Price (High-Low)</option>
                     </select>
@@ -148,6 +157,7 @@ foreach ($items as $item)
                             <th style="width: 18%;">Description</th>
                             <th style="width: 11%; text-align:center;">Qty</th>
                             <th style="width: 15%; text-align:right;">Price</th>
+                            <th style="width: 15%;">Notes</th>
                             <th style="width: 8%; text-align:right;"></th>
                         </tr>
                     </thead>
@@ -184,6 +194,10 @@ foreach ($items as $item)
                                 <td class="editable-cell numeric" data-field="unit_price" style="text-align:right;">
                                     <input type="number" step="0.01" class="cell-input text-right"
                                         value="<?= number_format($item['unit_price'], 2, '.', '') ?>">
+                                </td>
+                                <td class="editable-cell" data-field="notes">
+                                    <input type="text" class="cell-input"
+                                        value="<?= htmlspecialchars($item['notes'] ?? '') ?>" placeholder="...">
                                 </td>
                                 <td style="text-align:right;">
                                     <div class="action-buttons">
@@ -223,6 +237,9 @@ foreach ($items as $item)
                             </td>
                             <td class="editable-cell numeric" data-field="unit_price" style="text-align:right;">
                                 <input type="number" step="0.01" class="cell-input text-right" placeholder="Price">
+                            </td>
+                            <td class="editable-cell" data-field="notes">
+                                <input type="text" class="cell-input" placeholder="Notes...">
                             </td>
                             <td style="text-align:right;">
                                 <div class="action-buttons">
@@ -288,9 +305,15 @@ foreach ($items as $item)
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="edit-desc">Description</label>
-                <textarea name="update_desc" id="edit-desc"></textarea>
+            <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                    <label for="edit-desc">Description</label>
+                    <textarea name="update_desc" id="edit-desc"></textarea>
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="edit-notes">Notes</label>
+                    <textarea name="update_notes" id="edit-notes"></textarea>
+                </div>
             </div>
 
             <div class="form-row">
@@ -474,6 +497,7 @@ foreach ($items as $item)
         }
 
         document.getElementById('edit-desc').value = item.description;
+        document.getElementById('edit-notes').value = item.notes || '';
         document.getElementById('edit-qty').value = item.quantity;
         document.getElementById('edit-price').value = item.unit_price;
         document.getElementById('editModal').style.display = 'flex';
@@ -496,6 +520,14 @@ foreach ($items as $item)
         });
     }
 
+    function getDescRank(desc) {
+        const d = (desc || '').toLowerCase();
+        if (d.includes('untested')) return 1;
+        if (d.includes('tested')) return 2;
+        if (d.includes('parts')) return 3;
+        return 4;
+    }
+
     function sortSummary() {
         const sortBy = document.getElementById('summary-sort').value;
         const tbody = document.getElementById('summary-list');
@@ -505,23 +537,29 @@ foreach ($items as $item)
         const activeRows = rows.filter(row => !row.classList.contains('new-blank-row'));
 
         activeRows.sort((a, b) => {
+            if (sortBy === 'original') {
+                return parseInt(a.getAttribute('data-id')) - parseInt(b.getAttribute('data-id'));
+            }
+
+            // Primary Sort: Always group by Untested -> Tested -> Parts
+            const rankA = getDescRank(a.getAttribute('data-desc'));
+            const rankB = getDescRank(b.getAttribute('data-desc'));
+            
+            if (rankA !== rankB) {
+                return rankA - rankB;
+            }
+
+            // Secondary Sort: User selected sort
             if (sortBy === 'oldest') {
                 return parseInt(a.getAttribute('data-id')) - parseInt(b.getAttribute('data-id'));
             } else if (sortBy === 'newest') {
                 return parseInt(b.getAttribute('data-id')) - parseInt(a.getAttribute('data-id'));
-            } else if (sortBy === 'desc_asc') {
-                const descA = a.getAttribute('data-desc').toLowerCase();
-                const descB = b.getAttribute('data-desc').toLowerCase();
-                const cmp = descB.localeCompare(descA);
-                if (cmp !== 0) {
-                    return cmp;
-                }
-                // Secondary sort: lower prices first (ascending)
-                return parseFloat(a.getAttribute('data-price')) - parseFloat(b.getAttribute('data-price'));
             } else if (sortBy === 'qty_desc') {
                 return parseInt(b.getAttribute('data-qty')) - parseInt(a.getAttribute('data-qty'));
             } else if (sortBy === 'price_desc') {
                 return parseFloat(b.getAttribute('data-price')) - parseFloat(a.getAttribute('data-price'));
+            } else if (sortBy === 'default') {
+                return parseInt(a.getAttribute('data-id')) - parseInt(b.getAttribute('data-id'));
             }
             return 0;
         });
@@ -706,8 +744,8 @@ foreach ($items as $item)
 
 <!-- Import Modal -->
 <div id="import-modal" class="modal-overlay"
-    style="display: none; overflow-y: auto; align-items: flex-start; padding: 20px 10px;" onclick="closeImportModal()">
-    <div class="modal-card" onclick="event.stopPropagation()" style="max-width: 800px; width: 95%; margin: auto;">
+    style="display: none; overflow-y: auto; align-items: flex-start; padding: 0;" onclick="closeImportModal()">
+    <div class="modal-card" onclick="event.stopPropagation()" style="max-width: none; width: 100vw; min-height: 100vh; margin: 0; border-radius: 0;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2 style="font-weight: 900; margin: 0; font-size: 1.5rem; text-align: left;">📦 Batch Import Center</h2>
             <button class="btn-repeat" onclick="closeImportModal()"
@@ -886,6 +924,7 @@ foreach ($items as $item)
                                         <th style="padding: 10px;">Description</th>
                                         <th style="padding: 10px; width: 50px; text-align: center;">Qty</th>
                                         <th style="padding: 10px; width: 80px; text-align: right;">Price</th>
+                                        <th style="padding: 10px; width: 100px;">Notes</th>
                                     </tr>
                                 </thead>
                                 <tbody id="workorder-list">
@@ -1264,6 +1303,7 @@ foreach ($items as $item)
         let seriesIdx = -1;
         let cpuIdx = -1;
         let descIdx = -1;
+        let notesIdx = -1;
         let priceIdx = -1;
         let qtyIdx = -1;
         let hasHeader = false;
@@ -1288,6 +1328,9 @@ foreach ($items as $item)
                     'spec')) {
                     descIdx = idx;
                     hasHeader = true;
+                } else if (colLower.includes('note')) {
+                    notesIdx = idx;
+                    hasHeader = true;
                 } else if (colLower.includes('price') || colLower.includes('value') || colLower.includes('cost') ||
                     colLower.includes('unit_price')) {
                     priceIdx = idx;
@@ -1304,7 +1347,16 @@ foreach ($items as $item)
 
         if (!hasHeader && parsedRows.length > 0) {
             const colCount = parsedRows[0].length;
-            if (colCount >= 8) {
+            if (colCount >= 9) {
+                brandIdx = 1;
+                modelIdx = 2;
+                seriesIdx = 3;
+                cpuIdx = 4;
+                descIdx = 5;
+                notesIdx = 6;
+                priceIdx = 7;
+                qtyIdx = 8;
+            } else if (colCount === 8) {
                 brandIdx = 1;
                 modelIdx = 2;
                 seriesIdx = 3;
@@ -1357,6 +1409,7 @@ foreach ($items as $item)
             const series = seriesIdx !== -1 ? (cols[seriesIdx] || '').trim() : 'N/A';
             const cpu = cpuIdx !== -1 ? (cols[cpuIdx] || '').trim() : '';
             const description = descIdx !== -1 ? (cols[descIdx] || '').trim() : '';
+            const notes = notesIdx !== -1 ? (cols[notesIdx] || '').trim() : '';
 
             let price = 0;
             if (priceIdx !== -1 && cols[priceIdx]) {
@@ -1378,6 +1431,7 @@ foreach ($items as $item)
                 series: series || 'N/A',
                 cpu: cpu || '',
                 description: description || '',
+                notes: notes || '',
                 quantity: qty,
                 unit_price: price
             });
@@ -1389,6 +1443,7 @@ foreach ($items as $item)
             series: seriesIdx,
             cpu: cpuIdx,
             description: descIdx,
+            notes: notesIdx,
             price: priceIdx,
             qty: qtyIdx,
             hasHeader,

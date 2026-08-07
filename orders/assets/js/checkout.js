@@ -98,7 +98,7 @@ function downloadCSV() {
     csv += `"Order #","${ord}",,,,,,,\n\n`;
 
     // Column Headers
-    csv += `"Type","Brand","Model","Series","CPU / Gen","Description","Notes","Battery","Price","QTY","Total"\n`;
+    csv += `"Type","Brand","Model","Series","CPU / Gen","Description","Price","QTY","Total","Notes","Battery"\n`;
 
     let totalQty = 0;
     let grandTotal = 0;
@@ -127,27 +127,31 @@ function downloadCSV() {
         const livePrice = priceIn ? parseFloat(priceIn.value) || 0 : 0;
         const rowTotal = liveQty * livePrice;
 
-        // Pull specific item fields directly from JS state where possible,
-        // falling back to DOM scraping for backwards compatibility
-        const itemData = state.rawItems ? state.rawItems[rowCount] : null;
+        // Pull specific item fields directly from JS state using robust data-id matching
+        const itemId = row.getAttribute('data-id');
+        const itemData = state.rawItems ? state.rawItems.find(i => String(i.id) === String(itemId)) : null;
+        
         const ram = itemData && itemData.ram ? itemData.ram : '';
         const storage = itemData && itemData.storage ? itemData.storage : '';
         const battery = itemData && itemData.battery ? itemData.battery : '';
 
-        // Format description based on battery status
-        const isBatteryNo = (battery.toLowerCase() === 'no' || battery.toLowerCase() === 'missing' || battery.toLowerCase() === 'dead');
-        const descVal = isBatteryNo ? 'Parts' : 'Untested';
+        // Format description based on actual item data, fallback to battery if blank
+        let descVal = itemData && itemData.description ? itemData.description : desc;
+        if (!descVal || descVal.trim() === '') {
+            const isBatteryNo = (battery.toLowerCase() === 'no' || battery.toLowerCase() === 'missing' || battery.toLowerCase() === 'dead');
+            descVal = isBatteryNo ? 'Parts' : 'Untested';
+        }
 
         // Format notes
-        let notesVal = '';
-        if (ram || storage) {
+        let notesVal = itemData && itemData.notes ? itemData.notes : '';
+        if (!notesVal && (ram || storage)) {
             notesVal = `${ram}/${storage}`;
         }
 
         // Default type to Laptop
         const type = "Laptop";
 
-        csv += `${sanitize(type)},${sanitize(brand)},${sanitize(model)},${sanitize(series)},${sanitize(cpu)},${sanitize(descVal)},${sanitize(notesVal)},${sanitize(battery)},${sanitize(livePrice)},${sanitize(liveQty)},${sanitize(rowTotal.toFixed(2))}\n`;
+        csv += `${sanitize(type)},${sanitize(brand)},${sanitize(model)},${sanitize(series)},${sanitize(cpu)},${sanitize(descVal)},${sanitize(livePrice)},${sanitize(liveQty)},${sanitize(rowTotal.toFixed(2))},${sanitize(notesVal)},${sanitize(battery)}\n`;
 
         totalQty += liveQty;
         grandTotal += rowTotal;
@@ -157,10 +161,10 @@ function downloadCSV() {
     // Removed 42-row padding per user request
 
     // Alignment Fix:
-    // "Total QTY" label in Col 9, Value in Col 10
-    // "Total Amount" label in Col 10, Value in Col 11
-    csv += `\n,,,,,,,,${sanitize("Total QTY")},${sanitize(totalQty)},\n`;
-    csv += `,,,,,,,,,${sanitize("Total Amount")},${sanitize("$" + grandTotal.toFixed(2))}\n`;
+    // "Total QTY" label in Col 7, Value in Col 8
+    // "Total Amount" label in Col 8, Value in Col 9
+    csv += `\n,,,,,,${sanitize("Total QTY")},${sanitize(totalQty)},,,\n`;
+    csv += `,,,,,,,${sanitize("Total Amount")},${sanitize("$" + grandTotal.toFixed(2))},,\n`;
 
     const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -220,6 +224,11 @@ window.addEventListener('load', () => {
     if (window.location.hash.includes('modal-brand')) {
         const firstRow = document.querySelector('.item-row');
         if (firstRow) openEditModal(0);
+    }
+    
+    // Automatically apply the selected sort on page load
+    if (typeof sortCheckout === 'function') {
+        sortCheckout();
     }
 });
 
@@ -473,4 +482,57 @@ function filterManifest() {
         const text = rows[i].innerText.toLowerCase();
         rows[i].style.display = text.includes(filter) ? "" : "none";
     }
+}
+
+/**
+ * Sort checkout table rows interactively
+ */
+function getDescRank(desc) {
+    const d = (desc || '').toLowerCase();
+    if (d.includes('untested')) return 1;
+    if (d.includes('tested')) return 2;
+    if (d.includes('parts')) return 3;
+    return 4;
+}
+
+function sortCheckout() {
+    const sortBy = document.getElementById('checkout-sort').value;
+    const tbody = document.getElementById('checkout-list');
+    if (!tbody) return;
+    
+    // Select all valid item rows (exclude total rows, etc.)
+    const rows = Array.from(tbody.querySelectorAll('.item-row'));
+
+    rows.sort((a, b) => {
+        if (sortBy === 'original') {
+            return parseInt(a.getAttribute('data-id')) - parseInt(b.getAttribute('data-id'));
+        }
+
+        // Primary Sort: Group by Untested -> Tested -> Parts
+        const metaA = a.querySelector('.item-metadata');
+        const metaB = b.querySelector('.item-metadata');
+        const rankA = getDescRank(metaA ? metaA.getAttribute('data-desc') : '');
+        const rankB = getDescRank(metaB ? metaB.getAttribute('data-desc') : '');
+        
+        if (rankA !== rankB) {
+            return rankA - rankB;
+        }
+
+        // Secondary Sort:
+        if (sortBy === 'qty_desc') {
+            const qtyA = a.querySelector('.qty-input') ? parseFloat(a.querySelector('.qty-input').value) : 0;
+            const qtyB = b.querySelector('.qty-input') ? parseFloat(b.querySelector('.qty-input').value) : 0;
+            return qtyB - qtyA;
+        } else if (sortBy === 'price_desc') {
+            const pA = a.querySelector('.price-input') ? parseFloat(a.querySelector('.price-input').value) : 0;
+            const pB = b.querySelector('.price-input') ? parseFloat(b.querySelector('.price-input').value) : 0;
+            return pB - pA;
+        } else if (sortBy === 'default') {
+            return parseInt(a.getAttribute('data-id')) - parseInt(b.getAttribute('data-id'));
+        }
+        return 0;
+    });
+
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
 }

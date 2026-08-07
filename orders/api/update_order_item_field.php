@@ -38,7 +38,7 @@ if ($item_id <= 0 || empty($field)) {
 }
 
 // Whitelist allowed fields to prevent SQL injection or editing key identifiers
-$allowed_fields = ['brand', 'model', 'series', 'cpu', 'description', 'quantity', 'unit_price'];
+$allowed_fields = ['brand', 'model', 'series', 'cpu', 'description', 'notes', 'quantity', 'unit_price'];
 if (!in_array($field, $allowed_fields)) {
     http_response_code(400);
     echo json_encode(['success' => false, 'error' => 'Invalid field update request.']);

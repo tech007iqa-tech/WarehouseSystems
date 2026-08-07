@@ -188,7 +188,7 @@ try {
 
     // 1. Fetch Sales Velocity (Top Brands/Models) + Inventory Check + Customer Names + Order IDs
     $velocity = Database::queryIntegrated('orders', ['w' => 'warehouse', 'c' => 'customers'], "
-        SELECT items.brand, items.model, items.series, items.cpu, items.description, SUM(items.quantity) as total_qty, ROUND(AVG(items.unit_price), 2) as avg_price,
+        SELECT items.brand, items.model, items.series, items.cpu, items.description, items.notes, SUM(items.quantity) as total_qty, ROUND(AVG(items.unit_price), 2) as avg_price,
                (SELECT SUM(quantity) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status = '') as in_stock,
                (SELECT GROUP_CONCAT(DISTINCT location_code) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status = '') as stock_locations,
                (SELECT SUM(quantity) FROM w.inventory WHERE brand = items.brand AND model = items.model AND status != '') as incoming_stock,
@@ -198,7 +198,7 @@ try {
         JOIN orders ON items.order_id = orders.order_id
         LEFT JOIN c.customers ON items.customer_id = c.customers.customer_id
         WHERE orders.status = 'paid' $date_condition
-        GROUP BY items.brand, items.model, items.series, items.cpu, items.description
+        GROUP BY items.brand, items.model, items.series, items.cpu, items.description, items.notes
         ORDER BY total_qty DESC
     ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -597,6 +597,7 @@ if ($is_using_mock_data) {
                                         ($item['series'] ?? '') . ' ' .
                                         ($item['cpu'] ?? '') . ' ' .
                                         ($item['description'] ?? '') . ' ' .
+                                        ($item['notes'] ?? '') . ' ' .
                                         $item['avg_price'] . ' ' .
                                         ($item['buyer_names'] ?? '') . ' ' .
                                         ($item['order_ids'] ?? '')
@@ -618,7 +619,7 @@ if ($is_using_mock_data) {
                                     rsort($unique_dates);
                                     $first_date = $unique_dates[0] ?? '';
                                 ?>
-                                <tr data-search="<?= htmlspecialchars($search_blob) ?>" data-instock="<?= $in_stock ?>">
+                                <tr data-search="<?= htmlspecialchars($search_blob) ?>" data-instock="<?= $in_stock ?>" data-brand="<?= htmlspecialchars($item['brand'] ?? '') ?>" data-model="<?= htmlspecialchars($item['model'] ?? '') ?>" data-series="<?= htmlspecialchars($item['series'] ?? '') ?>" data-cpu="<?= htmlspecialchars($item['cpu'] ?? '') ?>">
                                     <td>
                                         <span class="rank-cell" style="font-weight: 900; color: var(--accent-color);">#<?= $idx + 1 ?></span>
                                         <span class="buyer-cell" style="display: none; font-size: 0.8rem; font-weight: 700; color: var(--accent-color);"><?= htmlspecialchars($item['buyer_names'] ?: '—') ?></span>
@@ -630,6 +631,7 @@ if ($is_using_mock_data) {
                                             <?= htmlspecialchars($item['series'] ?? '') ?>
                                             <?= !empty($item['cpu']) ? ' • ' . htmlspecialchars($item['cpu']) : '' ?>
                                             <?= !empty($item['description']) ? ' • ' . htmlspecialchars($item['description']) : '' ?>
+                                            <?= !empty($item['notes']) ? ' • ' . htmlspecialchars($item['notes']) : '' ?>
                                         </div>
                                     </td>
                                     <td data-sort-val="<?= htmlspecialchars($first_date) ?>">
@@ -1987,6 +1989,19 @@ function bringModalToFront(modalEl) {
 }
 
 function openOrderPreviewModal(event, orderId) {
+    let highlightParams = null;
+    if (event && event.target) {
+        const tr = event.target.closest('tr');
+        if (tr) {
+            highlightParams = {
+                brand: tr.getAttribute('data-brand'),
+                model: tr.getAttribute('data-model'),
+                series: tr.getAttribute('data-series'),
+                cpu: tr.getAttribute('data-cpu')
+            };
+        }
+    }
+
     if (event) {
         event.preventDefault();
         event.stopPropagation();
@@ -2052,15 +2067,35 @@ function openOrderPreviewModal(event, orderId) {
 
                     const desc = [item.series, item.cpu].filter(v => v && v !== 'N/A').join(' / ') || item.description || '';
                     const tr = document.createElement('tr');
+                    
+                    let isHighlighted = false;
+                    if (highlightParams && highlightParams.brand) {
+                        const hBrand = highlightParams.brand || '';
+                        const hModel = highlightParams.model || '';
+                        const hSeries = highlightParams.series || '';
+                        const hCpu = highlightParams.cpu || '';
+                        const iBrand = item.brand || '';
+                        const iModel = item.model || '';
+                        const iSeries = item.series || '';
+                        const iCpu = item.cpu || '';
+                        
+                        if (hBrand === iBrand && hModel === iModel && hSeries === iSeries && hCpu === iCpu) {
+                            isHighlighted = true;
+                        }
+                    }
+
                     tr.style.borderBottom = '1px solid var(--border-color)';
+                    if (isHighlighted) {
+                        tr.style.backgroundColor = 'rgba(132, 204, 22, 0.15)';
+                    }
                     tr.innerHTML = `
-                        <td style="padding: 12px 0;">
+                        <td style="padding: 12px 10px; ${isHighlighted ? 'border-left: 4px solid var(--accent-color);' : ''}">
                             <div style="font-weight: 700; color: var(--text-main);">${localEscapeHTML(item.brand)} ${localEscapeHTML(item.model)}</div>
                             ${desc ? `<div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px;">${localEscapeHTML(desc)}</div>` : ''}
                         </td>
-                        <td style="padding: 12px 0; text-align: center; font-weight: 700; color: var(--text-main);">${qty}</td>
-                        <td style="padding: 12px 0; text-align: right; font-weight: 600; color: var(--text-secondary);">$${price.toFixed(2)}</td>
-                        <td style="padding: 12px 0; text-align: right; font-weight: 700; color: var(--text-main);">$${subtotal.toFixed(2)}</td>
+                        <td style="padding: 12px 10px; text-align: center; font-weight: 700; color: var(--text-main);">${qty}</td>
+                        <td style="padding: 12px 10px; text-align: right; font-weight: 600; color: var(--text-secondary);">$${price.toFixed(2)}</td>
+                        <td style="padding: 12px 10px; text-align: right; font-weight: 700; color: var(--text-main);">$${subtotal.toFixed(2)}</td>
                     `;
                     list.appendChild(tr);
                 });
@@ -2170,6 +2205,10 @@ function openCpuPricingModal(cpuCategory) {
                         year: 'numeric', month: 'short', day: 'numeric'
                     });
                     const tr = document.createElement('tr');
+                    tr.setAttribute('data-brand', sale.brand || '');
+                    tr.setAttribute('data-model', sale.model || '');
+                    tr.setAttribute('data-series', sale.series || '');
+                    tr.setAttribute('data-cpu', sale.cpu || '');
                     tr.style.borderBottom = '1px solid var(--border-color)';
                     tr.innerHTML = `
                         <td style="padding: 10px 5px; font-size: 0.8rem; white-space: nowrap;">${formattedDate}</td>

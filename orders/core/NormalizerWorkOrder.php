@@ -10,23 +10,38 @@ class NormalizerWorkOrder
     public static function deduceBrand(string $model, string $series): string
     {
         $text = strtolower($model . ' ' . $series);
-        if (strpos($text, 'elitebook') !== false || strpos($text, 'probook') !== false || strpos($text, 'pavilion') !== false || strpos($text, 'zbook') !== false || strpos($text, 'hp') !== false) {
+        if (strpos($text, 'elitebook') !== false || strpos($text, 'probook') !== false || strpos($text, 'pavilion') !== false || strpos($text, 'zbook') !== false || strpos($text, 'omen') !== false || strpos($text, 'victus') !== false || strpos($text, 'hp') !== false) {
             return 'HP';
         }
-        if (strpos($text, 'latitude') !== false || strpos($text, 'inspiron') !== false || strpos($text, 'precision') !== false || strpos($text, 'xps') !== false || strpos($text, 'dell') !== false || strpos($text, 'latitue') !== false) {
+        if (strpos($text, 'latitude') !== false || strpos($text, 'inspiron') !== false || strpos($text, 'precision') !== false || strpos($text, 'xps') !== false || strpos($text, 'alienware') !== false || strpos($text, 'dell') !== false || strpos($text, 'latitue') !== false) {
             return 'Dell';
         }
-        if (strpos($text, 'thinkpad') !== false || strpos($text, 'ideapad') !== false || strpos($text, 'yoga') !== false || strpos($text, 'lenovo') !== false) {
+        if (strpos($text, 'thinkpad') !== false || strpos($text, 'ideapad') !== false || strpos($text, 'yoga') !== false || strpos($text, 'legion') !== false || strpos($text, 'lenovo') !== false) {
             return 'Lenovo';
         }
         if (strpos($text, 'macbook') !== false || strpos($text, 'apple') !== false || strpos($text, 'ipad') !== false) {
             return 'Apple';
         }
-        if (strpos($text, 'toughbook') !== false || strpos($text, 'panasonic') !== false) {
+        if (strpos($text, 'toughbook') !== false || strpos($text, 'panasonic') !== false || strpos($text, 'cf-') !== false) {
             return 'Panasonic';
         }
         if (strpos($text, 'getac') !== false) {
             return 'Getac';
+        }
+        if (strpos($text, 'acer') !== false || strpos($text, 'predator') !== false || strpos($text, 'aspire') !== false || strpos($text, 'nitro') !== false) {
+            return 'Acer';
+        }
+        if (strpos($text, 'asus') !== false || strpos($text, 'tuf') !== false || strpos($text, 'rog') !== false || strpos($text, 'zephyrus') !== false || strpos($text, 'vivobook') !== false || strpos($text, 'zenbook') !== false) {
+            return 'Asus';
+        }
+        if (strpos($text, 'msi') !== false || strpos($text, 'stealth') !== false || strpos($text, 'katana') !== false || strpos($text, 'gf65') !== false || strpos($text, 'thin') !== false) {
+            return 'MSI';
+        }
+        if (strpos($text, 'razer') !== false || strpos($text, 'blade') !== false) {
+            return 'Razer';
+        }
+        if (strpos($text, 'microsoft') !== false || strpos($text, 'surface') !== false) {
+            return 'Microsoft';
         }
         return 'Generic';
     }
@@ -292,13 +307,13 @@ class NormalizerWorkOrder
 
                 if ($category === 'Regular') {
                     $genKey = self::mapCpuToPricingGen($cpuGen);
-                    $basePrice = $mock_prices[$genKey] ?? ($is_parts ? 50.00 : 60.00);
+                    $basePrice = $mock_prices[$genKey] ?? 0.00;
                 } elseif ($category === 'Apple') {
                     $basePrice = $is_parts ? 60.00 : 100.00;
                 } elseif ($category === 'Chromebook') {
                     $basePrice = 30.00;
                 } else {
-                    $basePrice = $is_parts ? 50.00 : 60.00;
+                    $basePrice = 0.00;
                 }
             }
 
@@ -446,6 +461,7 @@ class NormalizerWorkOrder
             'series' => $series,
             'cpu' => $cpuGen,
             'description' => $finalDesc,
+            'notes' => $cleanNote,
             'quantity' => $qty,
             'unit_price' => round($suggestedPrice, 2),
             'is_suggested_price' => true

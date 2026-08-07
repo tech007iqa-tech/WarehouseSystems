@@ -108,6 +108,7 @@ function initSpreadsheetEvents() {
                 const series = sourceRow.querySelector('[data-field="series"] .cell-input')?.value || '';
                 const cpu = sourceRow.querySelector('[data-field="cpu"] .cell-input')?.value || '';
                 const desc = sourceRow.querySelector('[data-field="description"] .cell-input')?.value || '';
+                const notes = sourceRow.querySelector('[data-field="notes"] .cell-input')?.value || '';
                 const qty = sourceRow.querySelector('[data-field="quantity"] .cell-input')?.value || '';
                 const price = sourceRow.querySelector('[data-field="unit_price"] .cell-input')?.value || '';
 
@@ -120,6 +121,7 @@ function initSpreadsheetEvents() {
                 newRow.querySelector('[data-field="series"] .cell-input').value = series;
                 newRow.querySelector('[data-field="cpu"] .cell-input').value = cpu;
                 newRow.querySelector('[data-field="description"] .cell-input').value = desc;
+                newRow.querySelector('[data-field="notes"] .cell-input').value = notes;
                 newRow.querySelector('[data-field="quantity"] .cell-input').value = '0';
                 newRow.querySelector('[data-field="unit_price"] .cell-input').value = price;
 
@@ -231,6 +233,7 @@ async function createNewRowFromBlank(row) {
     const series = row.querySelector('[data-field="series"] .cell-input').value.trim();
     const cpu = row.querySelector('[data-field="cpu"] .cell-input').value.trim();
     const desc = row.querySelector('[data-field="description"] .cell-input').value.trim();
+    const notes = row.querySelector('[data-field="notes"] .cell-input').value.trim();
     const qty = parseFloat(row.querySelector('[data-field="quantity"] .cell-input').value) || 1;
     const price = parseFloat(row.querySelector('[data-field="unit_price"] .cell-input').value) || 0.00;
 
@@ -247,6 +250,7 @@ async function createNewRowFromBlank(row) {
     formData.set('series', series);
     formData.set('cpu', cpu);
     formData.set('description', desc);
+    formData.set('notes', notes);
     formData.set('quantity', qty);
     formData.set('unit_price', price);
 

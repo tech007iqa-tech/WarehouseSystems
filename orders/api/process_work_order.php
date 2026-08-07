@@ -71,15 +71,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'extract') {
             "latitude" => "Latitude"
         ],
         'formatting_rules' => [
-            "Deduce 'Brand' (HP, Lenovo, Dell, Apple, etc.) based on 'Model' or 'Series'.",
+            "Deduce 'Brand' (HP, Lenovo, Dell, Apple, Asus, Acer, MSI, Razer, Panasonic, etc.) based on 'Model' or 'Series'.",
             "Correct brand/model spelling: e.g. 'Latitue' -> 'Latitude', 'Pavillion' -> 'Pavilion', 'Zbook' -> 'ZBook'.",
-            "Extract 'Model' (e.g. EliteBook, Latitude, Laptop) and 'Series' (e.g. 840 G6, E5440, Fd15).",
+            "Extract 'Model' (e.g. EliteBook, Latitude, Laptop, Legion, Alienware, Predator, TUF, Omen, Yoga, GF65) and 'Series' (e.g. 840 G6, E5440, F505DU, Y7000P).",
             "Extract CPU generation in 'CPU' field (e.g. i5-8th, i7-8th, i3-11th, AMD Ryzen 5 13th, or 4th).",
             "Extract RAM and Storage specs (e.g., 8gb, 16gb, 8/512, 16/256, 8/) into the 'Note' field exactly as written."
         ],
         'schema_rules' => [
-            "Model" => "string, broad product line or brand name (e.g. EliteBook, Latitude, ProBook, Laptop, ZBook, Pavilion)",
-            "Series" => "string, specific series or model identifier (e.g. 840 G6, E5440, Fd15, 14U G6, X360)",
+            "Model" => "string, broad product line or brand name (e.g. EliteBook, Latitude, ProBook, Laptop, ZBook, Pavilion, Legion, Alienware, Predator, TUF, Omen, Yoga, IdeaPad, GF65, Blade)",
+            "Series" => "string, specific series or model identifier (e.g. 840 G6, E5440, Fd15, 14U G6, X360, Y7000P, F505DU, C740)",
             "CPU_Gen" => "string, processor type and generation (e.g. i5-8th, i7-8th, i3-11th, i5-13th, AMD Ryzen 5 13th, 4th)",
             "Description" => "string, general notes from description column (e.g. Untested, Parts)",
             "QTY" => "integer, quantity of units",

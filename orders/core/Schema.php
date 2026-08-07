@@ -46,6 +46,7 @@ class Schema {
                 storage TEXT DEFAULT '',
                 battery TEXT DEFAULT '',
                 description TEXT NOT NULL,
+                notes TEXT DEFAULT '',
                 quantity INTEGER NOT NULL,
                 unit_price REAL DEFAULT 0.00,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -567,7 +568,8 @@ class Schema {
             $migrations = [
                 'ram' => "ALTER TABLE items ADD COLUMN ram TEXT DEFAULT ''",
                 'storage' => "ALTER TABLE items ADD COLUMN storage TEXT DEFAULT ''",
-                'battery' => "ALTER TABLE items ADD COLUMN battery TEXT DEFAULT ''"
+                'battery' => "ALTER TABLE items ADD COLUMN battery TEXT DEFAULT ''",
+                'notes' => "ALTER TABLE items ADD COLUMN notes TEXT DEFAULT ''"
             ];
             foreach ($migrations as $col => $sql) {
                 if (!in_array($col, $cols)) {

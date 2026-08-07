@@ -64,6 +64,10 @@ Welcome! This document provides the architectural and styling patterns for the *
 - **Endpoint**: `prod/api/get_vocabulary.php`.
 - **JS Caching**: `prod/assets/js/vocabulary.js` caches autocomplete terms (brands, models, CPUs) in browser `sessionStorage`. This prevents laggy AJAX completions during fast intake sessions.
 
+### 7. Timezone Configuration
+- **Requirement**: The application must enforce the Pacific timezone (`America/Los_Angeles`) to ensure `date()` and `time()` correctly align with the warehouse's physical location, preventing calendar day shifts (e.g., Thursday showing as Friday in UTC after hours).
+- **Implementation**: Ensure `date_default_timezone_set('America/Los_Angeles');` is explicitly set in date-dependent views like `calendar.php`.
+
 ---
 
 ## 🎨 UI/UX Design System Guidelines

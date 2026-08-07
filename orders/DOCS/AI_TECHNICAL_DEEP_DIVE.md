@@ -42,6 +42,7 @@ The system contains five SQLite databases situated in the `/db/` directory.
   - `storage` (TEXT): Storage specification (e.g. 256GB).
   - `battery` (TEXT): Battery status (e.g. Yes/No).
   - `description` (TEXT, NOT NULL): Quality/spec details.
+  - `notes` (TEXT): Freeform notes and specs parsed from AI or Bulk Import.
   - `quantity` (INTEGER, NOT NULL)
   - `unit_price` (REAL, DEFAULT `0.00`)
   - `created_at` (DATETIME)

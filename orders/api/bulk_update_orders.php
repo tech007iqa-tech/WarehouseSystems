@@ -41,7 +41,7 @@ try {
             }
 
             // 2. Insert Items
-            $stmt_i = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt_i = $conn->prepare("INSERT INTO items (order_id, customer_id, brand, model, series, cpu, description, notes, quantity, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
             if (isset($input['items']) && is_array($input['items'])) {
                 foreach ($input['items'] as $item) {
@@ -50,6 +50,7 @@ try {
                     $series = trim($item['series'] ?? 'N/A');
                     $cpu = trim($item['cpu'] ?? '');
                     $description = trim($item['description'] ?? '');
+                    $notes = trim($item['notes'] ?? '');
                     $qty = (int)($item['quantity'] ?? 1);
                     $price = (float)($item['unit_price'] ?? 0);
 
@@ -63,6 +64,7 @@ try {
                         $series,
                         $cpu,
                         $description,
+                        $notes,
                         $qty,
                         $price
                     ]);
@@ -82,12 +84,13 @@ try {
                     $series = trim($cols[3] ?? 'N/A');
                     $cpu = trim($cols[4] ?? '');
                     $description = trim($cols[5] ?? '');
+                    $notes = trim($cols[6] ?? '');
 
                     // Sanitize Price: Remove $ and , then convert to float
-                    $raw_price = trim($cols[6] ?? '0');
+                    $raw_price = trim($cols[7] ?? '0');
                     $price = (float)preg_replace('/[^-0-9.]/', '', $raw_price);
 
-                    $qty = (int)($cols[7] ?? 1);
+                    $qty = (int)($cols[8] ?? 1);
 
                     if (empty($brand) && empty($model)) continue;
 
@@ -99,6 +102,7 @@ try {
                         $series,
                         $cpu,
                         $description,
+                        $notes,
                         $qty,
                         $price
                     ]);

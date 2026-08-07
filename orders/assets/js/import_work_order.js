@@ -243,6 +243,9 @@ function renderWorkOrderGrid(rows) {
                     <input type="number" step="0.01" class="wo-cell-price" value="${parseFloat(row.unit_price || 0.00).toFixed(2)}" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 20px 4px 6px; font-size: 0.75rem; text-align: right; ${priceStyle}" oninput="woGrid.handlePriceChange(this)">
                     ${suggestedBadge}
                 </td>
+                <td style="padding: 8px 5px;">
+                    <input type="text" class="wo-cell-notes" value="${escapeHTML(row.notes)}" style="width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 6px; font-size: 0.75rem;">
+                </td>
             </tr>
         `;
     }).join('');
@@ -287,6 +290,7 @@ async function submitWorkOrderImport() {
         const series = tr.querySelector('.wo-cell-series').value.trim();
         const cpu = tr.querySelector('.wo-cell-cpu').value.trim();
         const desc = tr.querySelector('.wo-cell-desc').value.trim();
+        const notes = tr.querySelector('.wo-cell-notes').value.trim();
         const qty = parseInt(tr.querySelector('.wo-cell-qty').value) || 1;
         const price = parseFloat(tr.querySelector('.wo-cell-price').value) || 0.00;
 
@@ -300,6 +304,7 @@ async function submitWorkOrderImport() {
             series: series || 'N/A',
             cpu: cpu,
             description: desc,
+            notes: notes,
             quantity: qty,
             unit_price: price
         });
