@@ -539,6 +539,10 @@
     transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.loc-item-wrapper:hover .btn-rename-zone {
+    opacity: 1 !important;
+}
+
 .loc-grid.sorting .no-results-row td {
     padding: 100px 0 !important;
     text-align: center;

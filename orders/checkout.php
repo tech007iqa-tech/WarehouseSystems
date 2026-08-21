@@ -237,7 +237,7 @@ try {
                             <span class="print-only">$<?= number_format($price, 2) ?></span>
                             <div class="no-print price-input-wrapper" style="display: flex; align-items: center; justify-content: flex-end; gap: 4px;">
                                 <span style="font-weight: 700;">$</span>
-                                <input type="number" name="unit_prices[<?= $item['id'] ?>]" aria-label="Unit Price" value="<?= number_format($price, 2, '.', '') ?>" step="0.01" min="0" class="price-input" oninput="recalculateTotals()" style="width: 90px; text-align: right; height: 38px; padding: 0 10px; border: 1px solid var(--border-color); border-radius: 8px; font-weight: 700;">
+                                <input type="number" name="unit_prices[<?= $item['id'] ?>]" aria-label="Unit Price" value="<?= number_format($price, 2, '.', '') ?>" step="0.01" class="price-input" oninput="recalculateTotals()" style="width: 95px; text-align: right; height: 38px; padding: 0 10px; border: 1px solid var(--border-color); border-radius: 8px; font-weight: 700;">
                             </div>
                         </td>
                         <td class="col-total" style="text-align: right; font-weight: 700; color: var(--text-main); padding-right: 0;">
@@ -362,7 +362,7 @@ try {
                 </div>
                 <div class="form-group">
                     <label for="modal-price">Unit Price ($)</label>
-                    <input type="number" id="modal-price">
+                    <input type="number" id="modal-price" step="0.01">
                 </div>
             </div>
 

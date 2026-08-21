@@ -269,8 +269,10 @@ $page_content = ob_get_clean();
     <?php if ($active_key === 'new_order'): ?>
         <script src="assets/js/new_order.js?v=<?= filemtime('assets/js/new_order.js') ?>" defer></script>
         <script src="assets/js/import_work_order.js?v=<?= filemtime('assets/js/import_work_order.js') ?>" defer></script>
-    <?php elseif ($active_key === 'warehouse' || $active_key === 'import_warehouse'): ?>
+    <?php elseif ($active_key === 'warehouse'): ?>
         <script src="assets/js/warehouse.js?v=<?= filemtime('assets/js/warehouse.js') ?>" defer></script>
+    <?php elseif ($active_key === 'import_warehouse'): ?>
+        <script src="assets/js/import_warehouse.js?v=<?= filemtime('assets/js/import_warehouse.js') ?>" defer></script>
     <?php elseif ($active_key === 'default' || $active_key === 'register'): ?>
         <script src="assets/js/customer_registry.js?v=<?= filemtime('assets/js/customer_registry.js') ?>" defer></script>
         <script src="assets/js/pipeline.js?v=<?= filemtime('assets/js/pipeline.js') ?>" defer></script>
@@ -280,6 +282,10 @@ $page_content = ob_get_clean();
         <script src="assets/js/orders.js?v=<?= filemtime('assets/js/orders.js') ?>" defer></script>
     <?php elseif ($active_key === 'inbound'): ?>
         <script src="assets/js/inbound.js?v=<?= filemtime('assets/js/inbound.js') ?>" defer></script>
+    <?php elseif ($active_key === 'trends'): ?>
+        <script src="assets/js/trends.js?v=<?= filemtime('assets/js/trends.js') ?>" defer></script>
+    <?php elseif ($active_key === 'settings'): ?>
+        <script src="assets/js/settings.js?v=<?= filemtime('assets/js/settings.js') ?>" defer></script>
     <?php endif; ?>
     <!-- Global Dialog Engine -->
     <script src="assets/js/dialogEngine.js?v=<?= filemtime('assets/js/dialogEngine.js') ?>"></script>

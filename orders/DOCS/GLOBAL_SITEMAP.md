@@ -37,17 +37,24 @@ Stored in the workspace root, one level above the public web root (`/prod/`).
 - `login.php` / `logout.php`: Standard account access endpoints.
 
 ### View Fragments (`/prod/pages/`)
-These files are buffered and rendered dynamically within `prod/index.php`.
+These files are buffered and rendered dynamically within `prod/index.php`. Many large views are broken down into clean partial templates inside `/prod/pages/partials/`.
 - `calendar.php`: Interactive monthly/weekly event schedulers.
-- `customer_registry.php`: Main administration panel for viewing registered billing clients.
-- `import_warehouse.php`: Form handling bulk paste copy/paste operations from external Excel spreadsheets.
+- `customer_registry.php`: Main administration panel for viewing registered billing clients and launching Clipboard Batch Imports.
+- `import_warehouse.php`: Form handling bulk copy/paste intake from external spreadsheets (modularized with `partials/import_warehouse/`).
 - `leads.php`: CRM prospects management, outreach pipelines, and quick logging.
 - `new_customer.php`: Form to register a new B2B client company.
-- `new_order.php`: Interactive order B2B batch builder panel.
+- `new_order.php`: Interactive order B2B batch builder panel (modularized with `partials/new_order/`).
 - `orders.php`: Overview log of current and finalized orders.
-- `settings.php`: Administrative control panel (includes db schema diagnostics, log viewer, and backup manager).
-- `trends.php`: BI trends analyzer charting CPU types, buying velocity, and price indexes.
-- `warehouse.php`: Main storage registration portal and zone map.
+- `settings.php`: Administrative control panel (modularized with `partials/settings/` for schema diagnostics, log viewer, and backup manager).
+- `trends.php`: BI trends analyzer charting CPU types, buying velocity, and price indexes (modularized with `partials/trends_*.php`).
+- `warehouse.php`: Main storage registration portal and zone map (modularized with `partials/warehouse/`).
+
+#### Partial View Subdirectories (`/prod/pages/partials/`)
+- `warehouse/`: Modular components for warehouse dashboard, sector cards, zone grids, photo galleries, and intake forms.
+- `new_order/`: Modals, spreadsheet tables, actions, and clipboard/warehouse import modals.
+- `settings/`: System diagnostic panels, database manager, and audit log viewer.
+- `import_warehouse/`: Multi-step spreadsheet intake fragments and validation tables.
+- `trends_*.php`: Dedicated tabs for CPU dominance, customer analytics, pricing velocity, and historical order manifests.
 
 ### AJAX Endpoints (`/prod/api/`)
 - `calendar/`
@@ -55,8 +62,9 @@ These files are buffered and rendered dynamically within `prod/index.php`.
   - `delete.php`: Deletes scheduling events.
 - `add_order_item.php`: Appends a single line item to an active batch order.
 - `bulk_update_inventory.php`: Batch relocates or reprices inventory lines.
-- `bulk_update_orders.php`: Bulk marks orders as completed or active.
+- `bulk_update_orders.php`: Bulk marks orders as completed or active, or handles JSON bulk imports.
 - `consolidate_inventory.php`: Automates deduplication and quantity merging for identical warehouse items.
+- `consolidate_order.php`: Deduplicates identical items within a customer order batch.
 - `generate_backup.php`: Generates a zip export containing all SQLite databases.
 - `generate_warehouse_label.php`: Generates and exports a 2"x1" Flat XML ODT thermal label for a specific inventory ID.
 - `get_cpu_pricing_details.php`: API endpoint returning price metrics and recent transactions for CPU families.
@@ -68,12 +76,17 @@ These files are buffered and rendered dynamically within `prod/index.php`.
 - `search_customers.php`: Retrieves auto-complete lists of billing customers.
 - `sync_stream.php`: Server-Sent Events (SSE) database file modification stream.
 - `transfer_order.php`: Re-allocates order batches between client profiles.
+- `update_order_item_field.php`: In-place editable cell updater for batch spreadsheets.
 - `update_order_status.php`: Changes a single order status.
 
 ### Static Assets (`/prod/assets/`)
 - `exports/`
   - `labels/`: Stores generated Flat ODT labels ready for local retrieval.
 - `icon/`: System icons and branding.
-- `js/`: Modular javascript loaders matching the views (e.g. `checkout.js`, `warehouse.js`, `customer_registry.js`, `sync.js` [AppSync Engine]).
-- `styles/`: View-specific styling sheets (e.g. `style.css`, `components.css`, `dialogs.css`, `warehouse.css`, `leads.css`).
+- `js/`: Modular javascript loaders matching the views:
+  - `checkout.js`: Checkout manifest verification, dynamic recalculation, negative discount math, and CSV export.
+  - `customer_registry.js`: Customer management and Smart Clipboard Batch Importer with multi-keyword header detection.
+  - `sync.js`: AppSync real-time engine.
+  - Modular script subdirectories: `warehouse/`, `new_order/`, `trends/`, `settings/`, `import_warehouse/`.
+- `styles/`: View-specific styling sheets (e.g. `style.css`, `components.css`, `dialogs.css`, `warehouse.css`, `leads.css`, `checkout.css`).
 - `ts/`: TypeScript source definitions.

@@ -1,6 +1,24 @@
 /**
- * System — Batch Builder Spreadsheet Logic
+ * System — Batch Builder Spreadsheet Logic & Master Coordinator
  */
+
+// 1. Synchronously load all new_order sub-modules in order
+(function loadNewOrderModules() {
+    const modules = [
+        'assets/js/new_order/new_order_modals.js',
+        'assets/js/new_order/new_order_import_clipboard.js',
+        'assets/js/new_order/new_order_import_warehouse.js'
+    ];
+
+    modules.forEach(src => {
+        if (!document.querySelector(`script[src*="${src}"]`)) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = false;
+            document.head.appendChild(script);
+        }
+    });
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
     initSpreadsheetEvents();
@@ -66,7 +84,6 @@ function initSpreadsheetEvents() {
             focusCell(allRows, rowIndex - 1, colIndex);
         } else if (e.key === 'Enter') {
             e.preventDefault();
-            // Enter behaves like Excel: save and move to cell below
             input.blur();
             focusCell(allRows, rowIndex + 1, colIndex);
         }
@@ -82,7 +99,6 @@ function initSpreadsheetEvents() {
             const templateRow = listContainer.querySelector('.new-blank-row');
             if (templateRow) {
                 const newRow = templateRow.cloneNode(true);
-                // Clear all inputs in the cloned row
                 newRow.querySelectorAll('.cell-input').forEach(input => {
                     input.value = '';
                 });
@@ -93,7 +109,6 @@ function initSpreadsheetEvents() {
                 }
                 templateRow.parentNode.appendChild(newRow);
 
-                // Focus the first input of the new row
                 const firstInput = newRow.querySelector('.cell-input');
                 if (firstInput) firstInput.focus();
             }
@@ -102,20 +117,15 @@ function initSpreadsheetEvents() {
             const sourceRow = cloneBtn.closest('tr');
             const templateRow = listContainer.querySelector('.new-blank-row');
             if (sourceRow && templateRow) {
-                // Fetch values from the selected row
                 const brand = sourceRow.querySelector('[data-field="brand"] .cell-input')?.value || '';
                 const model = sourceRow.querySelector('[data-field="model"] .cell-input')?.value || '';
                 const series = sourceRow.querySelector('[data-field="series"] .cell-input')?.value || '';
                 const cpu = sourceRow.querySelector('[data-field="cpu"] .cell-input')?.value || '';
                 const desc = sourceRow.querySelector('[data-field="description"] .cell-input')?.value || '';
                 const notes = sourceRow.querySelector('[data-field="notes"] .cell-input')?.value || '';
-                const qty = sourceRow.querySelector('[data-field="quantity"] .cell-input')?.value || '';
                 const price = sourceRow.querySelector('[data-field="unit_price"] .cell-input')?.value || '';
 
-                // Clone the blank template row
                 const newRow = templateRow.cloneNode(true);
-
-                // Populate with copied data
                 newRow.querySelector('[data-field="brand"] .cell-input').value = brand;
                 newRow.querySelector('[data-field="model"] .cell-input').value = model;
                 newRow.querySelector('[data-field="series"] .cell-input').value = series;
@@ -125,10 +135,8 @@ function initSpreadsheetEvents() {
                 newRow.querySelector('[data-field="quantity"] .cell-input').value = '0';
                 newRow.querySelector('[data-field="unit_price"] .cell-input').value = price;
 
-                // Append new row at the bottom
                 templateRow.parentNode.appendChild(newRow);
 
-                // Focus QTY input of the new row and select it for quick editing
                 const qtyInput = newRow.querySelector('[data-field="quantity"] .cell-input');
                 if (qtyInput) {
                     qtyInput.focus();
@@ -147,7 +155,6 @@ function focusCell(rows, rowIndex, colIndex) {
             const targetInput = targetCell.querySelector('.cell-input');
             if (targetInput) {
                 targetInput.focus();
-                // Select text inside
                 if (typeof targetInput.select === 'function') {
                     targetInput.select();
                 }
@@ -166,9 +173,7 @@ async function handleCellSave(input) {
     const field = cell.getAttribute('data-field');
     const val = input.value.trim();
 
-    // Skip save if empty and it's a new row
     if (rowId === 'new') {
-        // If we filled Brand or Model, we should auto-create the row
         const brandVal = row.querySelector('[data-field="brand"] .cell-input').value.trim();
         const modelVal = row.querySelector('[data-field="model"] .cell-input').value.trim();
 
@@ -178,7 +183,6 @@ async function handleCellSave(input) {
         return;
     }
 
-    // Read csrf and metadata
     const metadata = document.getElementById('batch-metadata');
     if (!metadata) return;
     const csrfToken = metadata.getAttribute('data-csrf');
@@ -199,14 +203,12 @@ async function handleCellSave(input) {
 
         const result = await response.json();
         if (result.success) {
-            // Update Totals
             const counter = document.getElementById('sidebar-total-qty');
             if (counter && result.new_total !== undefined) {
                 counter.textContent = result.new_total;
                 counter.classList.add('pulse');
                 setTimeout(() => counter.classList.remove('pulse'), 500);
             }
-            // Add visual save indicator to cell
             cell.style.backgroundColor = 'rgba(140, 198, 63, 0.15)';
             setTimeout(() => {
                 cell.style.backgroundColor = '';
@@ -237,7 +239,6 @@ async function createNewRowFromBlank(row) {
     const qty = parseFloat(row.querySelector('[data-field="quantity"] .cell-input').value) || 1;
     const price = parseFloat(row.querySelector('[data-field="unit_price"] .cell-input').value) || 0.00;
 
-    // Loading indicator
     const btnIndicator = row.querySelector('.btn-add-row-indicator');
     if (btnIndicator) btnIndicator.textContent = '⏳';
 
@@ -266,7 +267,6 @@ async function createNewRowFromBlank(row) {
                 window.IQA_Notify.success('Row successfully added ✨');
             }
 
-            // Capture currently focused field if any
             const activeEl = document.activeElement;
             if (activeEl && activeEl.classList.contains('cell-input')) {
                 const cell = activeEl.closest('td');
@@ -279,7 +279,6 @@ async function createNewRowFromBlank(row) {
                 }
             }
 
-            // Reload page to re-render clean spreadsheet inputs
             window.location.reload();
         }
     } catch (err) {
@@ -306,6 +305,58 @@ function filterSummary() {
     });
 }
 
+function getDescRank(desc) {
+    const d = (desc || '').toLowerCase();
+    if (d.includes('untested')) return 1;
+    if (d.includes('tested')) return 2;
+    if (d.includes('parts')) return 3;
+    return 4;
+}
+
+function sortSummary() {
+    const sortSelect = document.getElementById('summary-sort');
+    if (!sortSelect) return;
+    const sortBy = sortSelect.value;
+    const tbody = document.getElementById('summary-list');
+    if (!tbody) return;
+    const rows = Array.from(tbody.querySelectorAll('.summary-row'));
+
+    const blankRow = rows.find(row => row.classList.contains('new-blank-row'));
+    const activeRows = rows.filter(row => !row.classList.contains('new-blank-row'));
+
+    activeRows.sort((a, b) => {
+        if (sortBy === 'original') {
+            return parseInt(a.getAttribute('data-id'), 10) - parseInt(b.getAttribute('data-id'), 10);
+        }
+
+        const rankA = getDescRank(a.getAttribute('data-desc'));
+        const rankB = getDescRank(b.getAttribute('data-desc'));
+
+        if (rankA !== rankB) {
+            return rankA - rankB;
+        }
+
+        if (sortBy === 'oldest') {
+            return parseInt(a.getAttribute('data-id'), 10) - parseInt(b.getAttribute('data-id'), 10);
+        } else if (sortBy === 'newest') {
+            return parseInt(b.getAttribute('data-id'), 10) - parseInt(a.getAttribute('data-id'), 10);
+        } else if (sortBy === 'qty_desc') {
+            return parseInt(b.getAttribute('data-qty'), 10) - parseInt(a.getAttribute('data-qty'), 10);
+        } else if (sortBy === 'price_desc') {
+            return parseFloat(b.getAttribute('data-price')) - parseFloat(a.getAttribute('data-price'));
+        } else if (sortBy === 'default') {
+            return parseInt(a.getAttribute('data-id'), 10) - parseInt(b.getAttribute('data-id'), 10);
+        }
+        return 0;
+    });
+
+    activeRows.forEach(row => tbody.appendChild(row));
+
+    if (blankRow) {
+        tbody.appendChild(blankRow);
+    }
+}
+
 async function consolidateOrderRows() {
     if (!confirm("Are you sure you want to consolidate rows with identical values in this order? Duplicate items will be merged and their quantities added together.")) {
         return;
@@ -319,9 +370,11 @@ async function consolidateOrderRows() {
     const csrfToken = meta.getAttribute('data-csrf');
 
     const btn = document.getElementById('btn-consolidate-spreadsheet');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '⏳ Merging...';
-    btn.disabled = true;
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = '⏳ Merging...';
+        btn.disabled = true;
+    }
 
     try {
         const response = await fetch('api/consolidate_order.php', {
@@ -343,7 +396,6 @@ async function consolidateOrderRows() {
             } else {
                 alert(result.message || 'Rows consolidated successfully');
             }
-            // Reload the page to reflect changes
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
@@ -353,13 +405,17 @@ async function consolidateOrderRows() {
             } else {
                 alert('Failed to consolidate: ' + (result.error || 'Unknown error'));
             }
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            if (btn) {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
     } catch (e) {
         console.error(e);
         alert("Network error during consolidation.");
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+        if (btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     }
 }

@@ -130,7 +130,7 @@ function downloadCSV() {
         // Pull specific item fields directly from JS state using robust data-id matching
         const itemId = row.getAttribute('data-id');
         const itemData = state.rawItems ? state.rawItems.find(i => String(i.id) === String(itemId)) : null;
-        
+
         const ram = itemData && itemData.ram ? itemData.ram : '';
         const storage = itemData && itemData.storage ? itemData.storage : '';
         const battery = itemData && itemData.battery ? itemData.battery : '';
@@ -225,7 +225,7 @@ window.addEventListener('load', () => {
         const firstRow = document.querySelector('.item-row');
         if (firstRow) openEditModal(0);
     }
-    
+
     // Automatically apply the selected sort on page load
     if (typeof sortCheckout === 'function') {
         sortCheckout();
@@ -499,7 +499,7 @@ function sortCheckout() {
     const sortBy = document.getElementById('checkout-sort').value;
     const tbody = document.getElementById('checkout-list');
     if (!tbody) return;
-    
+
     // Select all valid item rows (exclude total rows, etc.)
     const rows = Array.from(tbody.querySelectorAll('.item-row'));
 
@@ -513,7 +513,7 @@ function sortCheckout() {
         const metaB = b.querySelector('.item-metadata');
         const rankA = getDescRank(metaA ? metaA.getAttribute('data-desc') : '');
         const rankB = getDescRank(metaB ? metaB.getAttribute('data-desc') : '');
-        
+
         if (rankA !== rankB) {
             return rankA - rankB;
         }

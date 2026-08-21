@@ -68,6 +68,21 @@ Welcome! This document provides the architectural and styling patterns for the *
 - **Requirement**: The application must enforce the Pacific timezone (`America/Los_Angeles`) to ensure `date()` and `time()` correctly align with the warehouse's physical location, preventing calendar day shifts (e.g., Thursday showing as Friday in UTC after hours).
 - **Implementation**: Ensure `date_default_timezone_set('America/Los_Angeles');` is explicitly set in date-dependent views like `calendar.php`.
 
+### 8. Modular View Partials & Component Architecture
+- **Pattern**: Large monolithic views are broken into clean sub-components under `pages/partials/<view_name>/` and modular script assets in `assets/js/<view_name>/`.
+- **Inclusion**: The parent view acts as the orchestrator, loading dependencies, verifying security, setting up page layout, and including partials via `require_once __DIR__ . '/partials/...'`.
+
+### 9. Smart Clipboard Batch Import & Header Parsing
+- **Location**: `customer_registry.js` (`parsePastedText`) and `new_order/new_order_import_clipboard.js`.
+- **Heuristic**: Auto-detects delimiters (tab vs comma vs semicolon).
+- **Header Detection Rule**: To prevent data rows containing keywords (e.g. `"D Series"` or `"Untested"`) from being falsely flagged as header rows, header detection requires **at least 2 matching header column keywords** (or exact match for single-column pastes) before declaring the first row as headers.
+- **Scroll Container**: In modals with dynamic tables, `overflow-anchor: none` and explicit `scrollTop = 0` resets are used to prevent browser scroll anchoring from clipping preview tables.
+
+### 10. Negative Pricing & Line-Item Discounts
+- **Checkout & Batch Pricing**: Unit prices support negative values (e.g. `-$63.45` or `-15%`) to allow line-item discounts, promotional credits, and trade-in deductions without triggering HTML5 form constraints or database sanitize errors.
+- **Sanitizer**: `Security::sanitize_float()` preserves leading negative signs (`[^-0-9.]`).
+- **Recalculation**: Subtotals and grand totals dynamically compute `qty * unit_price`, adjusting order totals accordingly.
+
 ---
 
 ## 🎨 UI/UX Design System Guidelines

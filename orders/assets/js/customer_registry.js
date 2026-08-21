@@ -555,16 +555,32 @@ function parsePastedText(text) {
 
     if (parsedRows.length > 0) {
         const firstRow = parsedRows[0];
+        let matchCount = 0;
+        let tBrandIdx = -1, tModelIdx = -1, tSeriesIdx = -1, tCpuIdx = -1, tDescIdx = -1, tPriceIdx = -1, tQtyIdx = -1;
+
         firstRow.forEach((col, idx) => {
             const colLower = col.toLowerCase().trim();
-            if (colLower.includes('brand')) { brandIdx = idx; hasHeader = true; }
-            else if (colLower.includes('model')) { modelIdx = idx; hasHeader = true; }
-            else if (colLower.includes('series')) { seriesIdx = idx; hasHeader = true; }
-            else if (colLower.includes('cpu') || colLower.includes('processor')) { cpuIdx = idx; hasHeader = true; }
-            else if (colLower.includes('desc') || colLower.includes('description') || colLower.includes('spec')) { descIdx = idx; hasHeader = true; }
-            else if (colLower.includes('price') || colLower.includes('value') || colLower.includes('cost') || colLower.includes('unit_price')) { priceIdx = idx; hasHeader = true; }
-            else if (colLower.includes('qty') || colLower.includes('quantity') || colLower.includes('count') || colLower.includes('units')) { qtyIdx = idx; hasHeader = true; }
+            if (colLower === 'brand' || colLower.includes('brand name')) { tBrandIdx = idx; matchCount++; }
+            else if (colLower === 'model' || colLower.includes('model name')) { tModelIdx = idx; matchCount++; }
+            else if (colLower === 'series' || colLower.includes('product series')) { tSeriesIdx = idx; matchCount++; }
+            else if (colLower === 'cpu' || colLower.includes('processor')) { tCpuIdx = idx; matchCount++; }
+            else if (colLower.includes('desc') || colLower.includes('description') || colLower.includes('spec')) { tDescIdx = idx; matchCount++; }
+            else if (colLower.includes('price') || colLower.includes('value') || colLower.includes('cost') || colLower.includes('unit_price')) { tPriceIdx = idx; matchCount++; }
+            else if (colLower === 'qty' || colLower.includes('quantity') || colLower.includes('count') || colLower.includes('units')) { tQtyIdx = idx; matchCount++; }
         });
+
+        // Require at least 2 column matches to consider it a true header row, 
+        // preventing false positives like "D Series" in a data row.
+        if (matchCount >= 2 || (matchCount === 1 && firstRow.length === 1)) {
+            hasHeader = true;
+            brandIdx = tBrandIdx;
+            modelIdx = tModelIdx;
+            seriesIdx = tSeriesIdx;
+            cpuIdx = tCpuIdx;
+            descIdx = tDescIdx;
+            priceIdx = tPriceIdx;
+            qtyIdx = tQtyIdx;
+        }
     }
 
     const dataRows = hasHeader ? parsedRows.slice(1) : parsedRows;
@@ -707,16 +723,17 @@ document.getElementById('import-paste-area')?.addEventListener('input', function
         `;
     }
 
-    let html = `<thead><tr style="background:#f1f5f9; text-align:left; position:sticky; top:0; z-index:1; box-shadow:0 1px 0 #e2e8f0;"><th style="padding:8px 10px; width:20%;">Brand</th><th style="padding:8px 10px; width:30%;">Model</th><th style="padding:8px 10px; width:25%;">Specs</th><th style="padding:8px 10px; width:10%;">Qty</th><th style="padding:8px 10px; width:15%;">Price</th></tr></thead><tbody>`;
+    let html = `<thead><tr style="background:#f1f5f9; text-align:left;"><th style="padding:8px 10px; width:20%; border-bottom:2px solid #e2e8f0;">Brand</th><th style="padding:8px 10px; width:30%; border-bottom:2px solid #e2e8f0;">Model</th><th style="padding:8px 10px; width:25%; border-bottom:2px solid #e2e8f0;">Specs</th><th style="padding:8px 10px; width:10%; border-bottom:2px solid #e2e8f0;">Qty</th><th style="padding:8px 10px; width:15%; border-bottom:2px solid #e2e8f0;">Price</th></tr></thead><tbody>`;
 
-    items.slice(0, 50).forEach(item => {
+    items.slice(0, 50).forEach((item, index) => {
         const specs = [item.series, item.cpu].filter(v => v && v !== 'N/A').join(' / ') || item.description || '—';
+        const ptop = index === 0 ? '16px' : '6px'; // slight extra top padding on first row to survive scroll clipping
         html += `<tr>
-            <td style="padding:6px 10px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(item.brand)}</td>
-            <td style="padding:6px 10px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(item.model)}</td>
-            <td style="padding:6px 10px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#64748b;" title="${escapeHTML(specs)}">${escapeHTML(specs)}</td>
-            <td style="padding:6px 10px; border-top:1px solid #eee;">${item.quantity}</td>
-            <td style="padding:6px 10px; border-top:1px solid #eee; font-weight:700; color:var(--accent-color);">$${item.unit_price.toFixed(2)}</td>
+            <td style="padding:${ptop} 10px 6px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(item.brand)}</td>
+            <td style="padding:${ptop} 10px 6px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHTML(item.model)}</td>
+            <td style="padding:${ptop} 10px 6px; border-top:1px solid #eee; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#64748b;" title="${escapeHTML(specs)}">${escapeHTML(specs)}</td>
+            <td style="padding:${ptop} 10px 6px; border-top:1px solid #eee;">${item.quantity}</td>
+            <td style="padding:${ptop} 10px 6px; border-top:1px solid #eee; font-weight:700; color:var(--accent-color);">$${item.unit_price.toFixed(2)}</td>
         </tr>`;
     });
 
@@ -725,6 +742,13 @@ document.getElementById('import-paste-area')?.addEventListener('input', function
     }
     html += '</tbody>';
     table.innerHTML = html;
+    // Belt-and-suspenders scroll reset: rAF + setTimeout to cover all Chrome timing scenarios
+    const resetScroll = () => {
+        const scroller = document.getElementById('import-preview-scroll');
+        if (scroller) scroller.scrollTop = 0;
+    };
+    requestAnimationFrame(resetScroll);
+    setTimeout(resetScroll, 50);
 });
 
 async function processImport() {

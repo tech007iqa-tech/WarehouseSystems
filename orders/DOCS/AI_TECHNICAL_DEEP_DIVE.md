@@ -44,7 +44,7 @@ The system contains five SQLite databases situated in the `/db/` directory.
   - `description` (TEXT, NOT NULL): Quality/spec details.
   - `notes` (TEXT): Freeform notes and specs parsed from AI or Bulk Import.
   - `quantity` (INTEGER, NOT NULL)
-  - `unit_price` (REAL, DEFAULT `0.00`)
+  - `unit_price` (REAL, DEFAULT `0.00`): Supports positive amounts as well as negative values for promotional discounts, line-item credits, and trade-in deductions.
   - `created_at` (DATETIME)
 
 ### 3. `warehouse.db`
