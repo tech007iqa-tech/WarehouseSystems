@@ -1283,6 +1283,53 @@
     color: var(--text-main);
 }
 
+/* Drag and Drop Row Reordering Styles */
+.drag-handle-cell {
+    width: 34px;
+    min-width: 34px;
+    max-width: 34px;
+    padding: 0 !important;
+    text-align: center;
+    vertical-align: middle;
+    user-select: none;
+}
+
+.row-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 28px;
+    font-size: 1.1rem;
+    color: #94a3b8;
+    cursor: grab;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.row-drag-handle:hover {
+    color: var(--accent-color, #3b82f6);
+    background: rgba(59, 130, 246, 0.12);
+}
+
+.row-drag-handle:active {
+    cursor: grabbing;
+}
+
+.inventory-card.dragging-row {
+    opacity: 0.45;
+    background: rgba(59, 130, 246, 0.08) !important;
+}
+
+.inventory-card.drag-over-top {
+    border-top: 2px solid var(--accent-color, #3b82f6) !important;
+}
+
+.inventory-card.drag-over-bottom {
+    border-bottom: 2px solid var(--accent-color, #3b82f6) !important;
+}
+
 /* Master Overview Specs & Condition Badges styling */
 .master-specs-wrapper {
     display: flex;

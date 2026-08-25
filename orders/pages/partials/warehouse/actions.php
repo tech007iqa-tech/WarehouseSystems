@@ -159,10 +159,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $name = trim($_POST['status_name']);
         $color = $_POST['status_color'] ?? '#64748b';
         if (!empty($name)) {
-            $stmt = $conn_wh->prepare("INSERT OR IGNORE INTO location_statuses (name, color) VALUES (?, ?)");
+            $stmt = $conn_wh->prepare("INSERT OR IGNORE INTO location_statuses (name, color, is_default) VALUES (?, ?, 0)");
             $stmt->execute([$name, $color]);
         }
         header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=status_added");
+        exit();
+    }
+
+    if ($_POST['action'] === 'edit_location_status' && isset($_POST['status_id'])) {
+        $id = (int)$_POST['status_id'];
+        $name = trim($_POST['status_name'] ?? '');
+        $color = $_POST['status_color'] ?? '#64748b';
+        if ($id > 0 && !empty($name)) {
+            $stmt_old = $conn_wh->prepare("SELECT name FROM location_statuses WHERE id = ?");
+            $stmt_old->execute([$id]);
+            $old_name = $stmt_old->fetchColumn();
+
+            $conn_wh->beginTransaction();
+            $stmt = $conn_wh->prepare("UPDATE location_statuses SET name = ?, color = ? WHERE id = ?");
+            $stmt->execute([$name, $color, $id]);
+
+            if ($old_name && $old_name !== $name) {
+                $conn_wh->prepare("UPDATE locations SET status = ? WHERE status = ?")->execute([$name, $old_name]);
+            }
+            $conn_wh->commit();
+        }
+        header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=status_updated");
+        exit();
+    }
+
+    if ($_POST['action'] === 'delete_location_status' && isset($_POST['status_id'])) {
+        $id = (int)$_POST['status_id'];
+        $stmt_cur = $conn_wh->prepare("SELECT * FROM location_statuses WHERE id = ?");
+        $stmt_cur->execute([$id]);
+        $cur = $stmt_cur->fetch(PDO::FETCH_ASSOC);
+
+        $defaults = ['working', 'audit', 'shipping', 'in-review', 'warehoused', 'idle'];
+        if ($cur && (int)$cur['is_default'] !== 1 && !in_array(strtolower($cur['name']), $defaults)) {
+            $conn_wh->beginTransaction();
+            $conn_wh->prepare("UPDATE locations SET status = 'Idle' WHERE status = ?")->execute([$cur['name']]);
+            $conn_wh->prepare("DELETE FROM location_statuses WHERE id = ?")->execute([$id]);
+            $conn_wh->commit();
+        }
+        header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=status_deleted");
         exit();
     }
 

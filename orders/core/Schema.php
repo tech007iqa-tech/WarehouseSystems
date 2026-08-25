@@ -72,6 +72,7 @@ class Schema {
                 status TEXT DEFAULT '',
                 last_updated_by TEXT,
                 price REAL DEFAULT 0.00,
+                sort_order INTEGER DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                 updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )",
@@ -83,8 +84,10 @@ class Schema {
             )",
             'location_statuses' => "CREATE TABLE IF NOT EXISTS location_statuses (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT UNIQUE,
-                color TEXT
+                name TEXT NOT NULL,
+                color TEXT DEFAULT '#64748b',
+                is_default INTEGER DEFAULT 0,
+                location_code TEXT DEFAULT NULL
             )",
             'working_zones' => "CREATE TABLE IF NOT EXISTS working_zones (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -272,14 +275,17 @@ class Schema {
             $count = $conn->query("SELECT COUNT(*) FROM location_statuses")->fetchColumn();
             if ($count == 0) {
                 $statuses = [
-                    ['Working', '#10b981'],
-                    ['Audit', '#f59e0b'],
-                    ['Shipping', '#3b82f6'],
-                    ['In-Review', '#8b5cf6'],
-                    ['Warehoused', '#6366f1'],
-                    ['Idle', '#64748b']
+                    ['Working', '#10b981', 1],
+                    ['Audit', '#f59e0b', 1],
+                    ['Shipping', '#3b82f6', 1],
+                    ['In-Review', '#8b5cf6', 1],
+                    ['Warehoused', '#6366f1', 1],
+                    ['Idle', '#64748b', 1]
                 ];
-                $stmt = $conn->prepare("INSERT INTO location_statuses (name, color) VALUES (?, ?)");
+                $stmt = $conn->prepare("INSERT INTO location_statuses (name, color, is_default) VALUES (?, ?, ?)");
+                foreach ($statuses as $s) {
+                    $stmt->execute($s);
+                }
             }
         }
         if ($db_name === 'warehouse' && $table === 'working_zones') {
@@ -588,9 +594,14 @@ class Schema {
             $conn->exec("UPDATE inventory SET status = '' WHERE status = 'stocked'");
 
             $cols = $conn->query("PRAGMA table_info(inventory)")->fetchAll(PDO::FETCH_ASSOC);
-            if (!in_array('price', array_column($cols, 'name'))) {
+            $col_names = array_column($cols, 'name');
+            if (!in_array('price', $col_names)) {
                 $conn->exec("ALTER TABLE inventory ADD COLUMN price REAL DEFAULT 0");
             }
+            if (!in_array('sort_order', $col_names)) {
+                $conn->exec("ALTER TABLE inventory ADD COLUMN sort_order INTEGER DEFAULT 0");
+            }
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_inv_sort_order ON inventory(sort_order)");
         }
 
         if ($db_name === 'warehouse' && $table === 'locations') {
@@ -598,6 +609,36 @@ class Schema {
             if (!in_array('working_zone_name', array_column($cols, 'name'))) {
                 $conn->exec("ALTER TABLE locations ADD COLUMN working_zone_name TEXT DEFAULT NULL");
             }
+        }
+
+        if ($db_name === 'warehouse' && $table === 'location_statuses') {
+            $table_sql = $conn->query("SELECT sql FROM sqlite_master WHERE type='table' AND name='location_statuses'")->fetchColumn();
+            if ($table_sql && (stripos($table_sql, 'name TEXT PRIMARY KEY') !== false || stripos($table_sql, 'name TEXT UNIQUE') !== false)) {
+                $conn->exec("CREATE TABLE location_statuses_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    color TEXT DEFAULT '#64748b',
+                    is_default INTEGER DEFAULT 0,
+                    location_code TEXT DEFAULT NULL
+                )");
+                $conn->exec("INSERT INTO location_statuses_new (id, name, color, is_default, location_code) 
+                    SELECT rowid, name, color, COALESCE(is_default, 0), location_code FROM location_statuses");
+                $conn->exec("DROP TABLE location_statuses");
+                $conn->exec("ALTER TABLE location_statuses_new RENAME TO location_statuses");
+            }
+
+            $cols = $conn->query("PRAGMA table_info(location_statuses)")->fetchAll(PDO::FETCH_ASSOC);
+            $col_names = array_column($cols, 'name');
+            if (!in_array('is_default', $col_names)) {
+                $conn->exec("ALTER TABLE location_statuses ADD COLUMN is_default INTEGER DEFAULT 0");
+            }
+            if (!in_array('location_code', $col_names)) {
+                $conn->exec("ALTER TABLE location_statuses ADD COLUMN location_code TEXT DEFAULT NULL");
+            }
+            // Ensure canonical defaults are marked with is_default = 1 and location_code = NULL
+            $defaults = ['Working', 'Audit', 'Shipping', 'In-Review', 'Warehoused', 'Idle'];
+            $in_clause = "'" . implode("','", $defaults) . "'";
+            $conn->exec("UPDATE location_statuses SET is_default = 1, location_code = NULL WHERE name IN ($in_clause)");
         }
 
         // --- Audit & User Indexes ---

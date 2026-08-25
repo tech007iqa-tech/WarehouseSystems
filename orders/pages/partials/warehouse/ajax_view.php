@@ -9,121 +9,209 @@ if (UI::is_ajax()) {
         ob_clean();
     }
     ob_start();
-    if (empty($items)): ?>
-        <tr>
-            <td colspan="10" style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">
-                No items found in this sector.
-            </td>
-        </tr>
-    <?php else: ?>
-        <tr id="wh-no-results" class="no-results-row" style="display: none;">
-            <td colspan="12">
-                <div class="no-results-wrapper" style="display: flex; justify-content: center; width: 100%;">
-                    <div class="no-results-container">
-                        <div class="no-results-icon">🕵️‍♂️</div>
-                        <div style="font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em;">No matches found</div>
+    if ($is_spreadsheet): ?>
+        <?php foreach ($items as $item):
+            $specs = json_decode($item['specs_json'], true) ?: [];
+            ?>
+            <tr class="inventory-card summary-row" data-id="<?= $item['id'] ?>"
+                data-brand="<?= htmlspecialchars($item['brand']) ?>"
+                data-model="<?= htmlspecialchars($item['model']) ?>"
+                data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
+                data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
+                data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
+                <td class="drag-handle-cell">
+                    <div class="row-drag-handle" draggable="true" title="Drag to reorder">⠿</div>
+                </td>
+                <td class="editable-cell" data-field="brand">
+                    <input type="text" class="cell-input" value="<?= htmlspecialchars($item['brand']) ?>" list="brand-options" placeholder="...">
+                </td>
+                <td class="editable-cell" data-field="model">
+                    <input type="text" class="cell-input" value="<?= htmlspecialchars($item['model']) ?>" placeholder="...">
+                </td>
+
+                <?php if ($selected_sector === 'Laptops'): ?>
+                    <td class="editable-cell" data-field="series">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="cpu">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu'] ?? '') ?>" list="cpu-options-list" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="gen">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['gen'] ?? '') ?>" list="gen-options-list" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="ram">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['ram'] ?? '') ?>" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="storage">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['storage'] ?? '') ?>" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="battery">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['battery'] ?? '') ?>" list="battery-options-list" placeholder="...">
+                    </td>
+                <?php elseif ($selected_sector === 'Gaming'): ?>
+                    <td class="editable-cell" data-field="gaming_category">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['category'] ?? '') ?>" list="gaming-cat-list" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="series">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="cpu">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu'] ?? '') ?>" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="gpu">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['gpu'] ?? '') ?>" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="ram">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['ram'] ?? '') ?>" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="storage">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['storage'] ?? '') ?>" placeholder="...">
+                    </td>
+                <?php elseif ($selected_sector === 'Desktops'): ?>
+                    <td class="editable-cell" data-field="cpu_gen">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu_gen'] ?? '') ?>" list="cpu-gen-options-list" placeholder="...">
+                    </td>
+                <?php else: // Electronics/Other ?>
+                    <td class="editable-cell" data-field="type">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['type'] ?? '') ?>" placeholder="...">
+                    </td>
+                    <td class="editable-cell" data-field="voltage">
+                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['voltage'] ?? '') ?>" placeholder="...">
+                    </td>
+                <?php endif; ?>
+
+                <td class="editable-cell" data-field="condition">
+                    <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['condition'] ?? 'Used') ?>" list="condition-options-list" placeholder="...">
+                </td>
+                <td class="editable-cell" data-field="notes">
+                    <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['notes'] ?? '') ?>" placeholder="...">
+                </td>
+                <td class="editable-cell numeric" data-field="price">
+                    <input type="number" step="any" class="cell-input text-right" value="<?= htmlspecialchars($item['price'] ?? '0.00') ?>">
+                </td>
+                <td class="editable-cell numeric" data-field="quantity">
+                    <input type="number" step="1" class="cell-input text-center font-bold" value="<?= (int)$item['quantity'] ?>">
+                </td>
+                <td style="text-align:right;">
+                    <div class="action-buttons">
+                        <button type="button" class="btn-clone-row" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px;" title="Clone Row">➕</button>
+                        <button type="button" class="btn-label"
+                            onclick="downloadWarehouseLabel(<?= (int) $item['id'] ?>, this)"
+                            title="Generate & Download Label" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">🏷️</button>
+                        <form method="POST" style="display:inline;" onsubmit="return confirm('Remove this item?');">
+                            <input type="hidden" name="action" value="delete_inventory">
+                            <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+                            <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
+                            <input type="hidden" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>">
+                            <?= UI::csrf_field() ?>
+                            <button type="submit" class="btn-delete" title="Delete Row">🗑</button>
+                        </form>
                     </div>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+
+        <!-- Permanent blank row at the bottom in spreadsheet AJAX response -->
+        <tr class="summary-row new-blank-row" data-id="new">
+            <td class="drag-handle-cell"></td>
+            <td class="editable-cell" data-field="brand">
+                <input type="text" class="cell-input" list="brand-options" placeholder="Brand...">
+            </td>
+            <td class="editable-cell" data-field="model">
+                <input type="text" class="cell-input" placeholder="Model...">
+            </td>
+
+            <?php if ($selected_sector === 'Laptops'): ?>
+                <td class="editable-cell" data-field="series">
+                    <input type="text" class="cell-input" placeholder="Series...">
+                </td>
+                <td class="editable-cell" data-field="cpu">
+                    <input type="text" class="cell-input" list="cpu-options-list" placeholder="CPU...">
+                </td>
+                <td class="editable-cell" data-field="gen">
+                    <input type="text" class="cell-input" list="gen-options-list" placeholder="Gen...">
+                </td>
+                <td class="editable-cell" data-field="ram">
+                    <input type="text" class="cell-input" placeholder="RAM...">
+                </td>
+                <td class="editable-cell" data-field="storage">
+                    <input type="text" class="cell-input" placeholder="Storage...">
+                </td>
+                <td class="editable-cell" data-field="battery">
+                    <input type="text" class="cell-input" list="battery-options-list" placeholder="Battery...">
+                </td>
+            <?php elseif ($selected_sector === 'Gaming'): ?>
+                <td class="editable-cell" data-field="gaming_category">
+                    <input type="text" class="cell-input" list="gaming-cat-list" placeholder="Category...">
+                </td>
+                <td class="editable-cell" data-field="series">
+                    <input type="text" class="cell-input" placeholder="Series...">
+                </td>
+                <td class="editable-cell" data-field="cpu">
+                    <input type="text" class="cell-input" placeholder="CPU...">
+                </td>
+                <td class="editable-cell" data-field="gpu">
+                    <input type="text" class="cell-input" placeholder="GPU...">
+                </td>
+                <td class="editable-cell" data-field="ram">
+                    <input type="text" class="cell-input" placeholder="RAM...">
+                </td>
+                <td class="editable-cell" data-field="storage">
+                    <input type="text" class="cell-input" placeholder="Storage...">
+                </td>
+            <?php elseif ($selected_sector === 'Desktops'): ?>
+                <td class="editable-cell" data-field="cpu_gen">
+                    <input type="text" class="cell-input" list="cpu-gen-options-list" placeholder="CPU/Gen...">
+                </td>
+            <?php else: ?>
+                <td class="editable-cell" data-field="type">
+                    <input type="text" class="cell-input" placeholder="Type...">
+                </td>
+                <td class="editable-cell" data-field="voltage">
+                    <input type="text" class="cell-input" placeholder="Specs...">
+                </td>
+            <?php endif; ?>
+
+            <td class="editable-cell" data-field="condition">
+                <input type="text" class="cell-input" list="condition-options-list" placeholder="Condition...">
+            </td>
+            <td class="editable-cell" data-field="notes">
+                <input type="text" class="cell-input" placeholder="Notes...">
+            </td>
+            <td class="editable-cell numeric" data-field="price">
+                <input type="number" step="any" class="cell-input text-right" placeholder="Price...">
+            </td>
+            <td class="editable-cell numeric" data-field="quantity">
+                <input type="number" step="1" class="cell-input text-center font-bold" placeholder="Qty...">
+            </td>
+            <td style="text-align:right;">
+                <div class="action-buttons">
+                    <button type="button" class="btn-add-row-indicator" style="background: none; border: none; font-size: 1.1rem; opacity: 0.7; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7" title="Add Item (Click or press Enter)">➕</button>
                 </div>
             </td>
         </tr>
+    <?php else: // Standard Table View ?>
+        <?php if (empty($items)): ?>
+            <tr>
+                <td colspan="10" style="padding: 60px; text-align: center; color: #94a3b8; font-weight: 600;">
+                    No items found in this sector.
+                </td>
+            </tr>
+        <?php else: ?>
+            <tr id="wh-no-results" class="no-results-row" style="display: none;">
+                <td colspan="12">
+                    <div class="no-results-wrapper" style="display: flex; justify-content: center; width: 100%;">
+                        <div class="no-results-container">
+                            <div class="no-results-icon">🕵️‍♂️</div>
+                            <div style="font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em;">No matches found</div>
+                        </div>
+                    </div>
+                </td>
+            </tr>
         <?php foreach ($items as $item):
             $specs = json_decode($item['specs_json'], true) ?: [];
 
-            if ($is_spreadsheet): ?>
-                <tr class="inventory-card summary-row" data-id="<?= $item['id'] ?>"
-                    data-brand="<?= htmlspecialchars($item['brand']) ?>"
-                    data-model="<?= htmlspecialchars($item['model']) ?>"
-                    data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
-                    data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
-                    data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
-                    <td class="editable-cell" data-field="brand">
-                        <input type="text" class="cell-input" value="<?= htmlspecialchars($item['brand']) ?>" list="brand-options" placeholder="...">
-                    </td>
-                    <td class="editable-cell" data-field="model">
-                        <input type="text" class="cell-input" value="<?= htmlspecialchars($item['model']) ?>" placeholder="...">
-                    </td>
 
-                    <?php if ($selected_sector === 'Laptops'): ?>
-                        <td class="editable-cell" data-field="series">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="cpu">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu'] ?? '') ?>" list="cpu-options-list" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="gen">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['gen'] ?? '') ?>" list="gen-options-list" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="ram">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['ram'] ?? '') ?>" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="storage">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['storage'] ?? '') ?>" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="battery">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['battery'] ?? '') ?>" list="battery-options-list" placeholder="...">
-                        </td>
-                    <?php elseif ($selected_sector === 'Gaming'): ?>
-                        <td class="editable-cell" data-field="gaming_category">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['category'] ?? '') ?>" list="gaming-cat-list" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="series">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="cpu">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu'] ?? '') ?>" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="gpu">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['gpu'] ?? '') ?>" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="ram">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['ram'] ?? '') ?>" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="storage">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['storage'] ?? '') ?>" placeholder="...">
-                        </td>
-                    <?php elseif ($selected_sector === 'Desktops'): ?>
-                        <td class="editable-cell" data-field="cpu_gen">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu_gen'] ?? '') ?>" list="cpu-gen-options-list" placeholder="...">
-                        </td>
-                    <?php else: // Electronics/Other ?>
-                        <td class="editable-cell" data-field="type">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['type'] ?? '') ?>" placeholder="...">
-                        </td>
-                        <td class="editable-cell" data-field="voltage">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['voltage'] ?? '') ?>" placeholder="...">
-                        </td>
-                    <?php endif; ?>
-
-                    <td class="editable-cell" data-field="condition">
-                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['condition'] ?? 'Used') ?>" list="condition-options-list" placeholder="...">
-                    </td>
-                    <td class="editable-cell" data-field="notes">
-                        <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['notes'] ?? '') ?>" placeholder="...">
-                    </td>
-                    <td class="editable-cell numeric" data-field="price">
-                        <input type="number" step="any" class="cell-input text-right" value="<?= htmlspecialchars($item['price'] ?? '0.00') ?>">
-                    </td>
-                    <td class="editable-cell numeric" data-field="quantity">
-                        <input type="number" step="1" class="cell-input text-center font-bold" value="<?= (int)$item['quantity'] ?>">
-                    </td>
-                    <td style="text-align:right;">
-                        <div class="action-buttons">
-                            <button type="button" class="btn-clone-row" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px;" title="Clone Row">➕</button>
-                            <button type="button" class="btn-label"
-                                onclick="downloadWarehouseLabel(<?= (int) $item['id'] ?>, this)"
-                                title="Generate & Download Label" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">🏷️</button>
-                            <form method="POST" style="display:inline;" onsubmit="return confirm('Remove this item?');">
-                                <input type="hidden" name="action" value="delete_inventory">
-                                <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
-                                <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
-                                <input type="hidden" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>">
-                                <?= UI::csrf_field() ?>
-                                <button type="submit" class="btn-delete" title="Delete Row">🗑</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            <?php else:
                 $created_date = '';
                 $created_date_only = '';
                 $created_time_only = '';
@@ -294,87 +382,7 @@ if (UI::is_ajax()) {
                         </div>
                     </td>
                 </tr>
-            <?php endif; ?>
-        <?php endforeach; ?>
-        <?php if ($is_spreadsheet): ?>
-            <!-- Permanent blank row at the bottom in spreadsheet AJAX response -->
-            <tr class="summary-row new-blank-row" data-id="new">
-                <td class="editable-cell" data-field="brand">
-                    <input type="text" class="cell-input" list="brand-options" placeholder="Brand...">
-                </td>
-                <td class="editable-cell" data-field="model">
-                    <input type="text" class="cell-input" placeholder="Model...">
-                </td>
-
-                <?php if ($selected_sector === 'Laptops'): ?>
-                    <td class="editable-cell" data-field="series">
-                        <input type="text" class="cell-input" placeholder="Series...">
-                    </td>
-                    <td class="editable-cell" data-field="cpu">
-                        <input type="text" class="cell-input" list="cpu-options-list" placeholder="CPU...">
-                    </td>
-                    <td class="editable-cell" data-field="gen">
-                        <input type="text" class="cell-input" list="gen-options-list" placeholder="Gen...">
-                    </td>
-                    <td class="editable-cell" data-field="ram">
-                        <input type="text" class="cell-input" placeholder="RAM...">
-                    </td>
-                    <td class="editable-cell" data-field="storage">
-                        <input type="text" class="cell-input" placeholder="Storage...">
-                    </td>
-                    <td class="editable-cell" data-field="battery">
-                        <input type="text" class="cell-input" list="battery-options-list" placeholder="Battery...">
-                    </td>
-                <?php elseif ($selected_sector === 'Gaming'): ?>
-                    <td class="editable-cell" data-field="gaming_category">
-                        <input type="text" class="cell-input" list="gaming-cat-list" placeholder="Category...">
-                    </td>
-                    <td class="editable-cell" data-field="series">
-                        <input type="text" class="cell-input" placeholder="Series...">
-                    </td>
-                    <td class="editable-cell" data-field="cpu">
-                        <input type="text" class="cell-input" placeholder="CPU...">
-                    </td>
-                    <td class="editable-cell" data-field="gpu">
-                        <input type="text" class="cell-input" placeholder="GPU...">
-                    </td>
-                    <td class="editable-cell" data-field="ram">
-                        <input type="text" class="cell-input" placeholder="RAM...">
-                    </td>
-                    <td class="editable-cell" data-field="storage">
-                        <input type="text" class="cell-input" placeholder="Storage...">
-                    </td>
-                <?php elseif ($selected_sector === 'Desktops'): ?>
-                    <td class="editable-cell" data-field="cpu_gen">
-                        <input type="text" class="cell-input" list="cpu-gen-options-list" placeholder="CPU/Gen...">
-                    </td>
-                <?php else: ?>
-                    <td class="editable-cell" data-field="type">
-                        <input type="text" class="cell-input" placeholder="Type...">
-                    </td>
-                    <td class="editable-cell" data-field="voltage">
-                        <input type="text" class="cell-input" placeholder="Specs...">
-                    </td>
-                <?php endif; ?>
-
-                <td class="editable-cell" data-field="condition">
-                    <input type="text" class="cell-input" list="condition-options-list" placeholder="Condition...">
-                </td>
-                <td class="editable-cell" data-field="notes">
-                    <input type="text" class="cell-input" placeholder="Notes...">
-                </td>
-                <td class="editable-cell numeric" data-field="price">
-                    <input type="number" step="any" class="cell-input text-right" placeholder="Price...">
-                </td>
-                <td class="editable-cell numeric" data-field="quantity">
-                    <input type="number" step="1" class="cell-input text-center font-bold" placeholder="Qty...">
-                </td>
-                <td style="text-align:right;">
-                    <div class="action-buttons">
-                        <button type="button" class="btn-add-row-indicator" style="background: none; border: none; font-size: 1rem; opacity: 0.3;">➕</button>
-                    </div>
-                </td>
-            </tr>
+            <?php endforeach; ?>
         <?php endif; ?>
     <?php endif;
     $table_html = ob_get_clean();

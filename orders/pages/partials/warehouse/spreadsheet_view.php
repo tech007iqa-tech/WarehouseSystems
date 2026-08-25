@@ -100,6 +100,7 @@
             <thead>
                 <?php if ($selected_sector === 'Laptops'): ?>
                 <tr>
+                    <th class="drag-handle-cell" style="width: 34px;"></th>
                     <th style="width: 10%;">Brand</th>
                     <th style="width: 10%;">Model</th>
                     <th style="width: 10%;">Series</th>
@@ -116,6 +117,7 @@
                 </tr>
                 <?php elseif ($selected_sector === 'Gaming'): ?>
                 <tr>
+                    <th class="drag-handle-cell" style="width: 34px;"></th>
                     <th style="width: 10%;">Brand</th>
                     <th style="width: 10%;">Model</th>
                     <th style="width: 10%;">Category</th>
@@ -132,6 +134,7 @@
                 </tr>
                 <?php elseif ($selected_sector === 'Desktops'): ?>
                 <tr>
+                    <th class="drag-handle-cell" style="width: 34px;"></th>
                     <th style="width: 12%;">Brand</th>
                     <th style="width: 15%;">Model</th>
                     <th style="width: 18%;">CPU/Gen/Brand</th>
@@ -143,6 +146,7 @@
                 </tr>
                 <?php else: ?>
                 <tr>
+                    <th class="drag-handle-cell" style="width: 34px;"></th>
                     <th style="width: 12%;">Brand</th>
                     <th style="width: 15%;">Model</th>
                     <th style="width: 15%;">Device Type</th>
@@ -165,6 +169,9 @@
                         data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
                         data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
                         data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
+                        <td class="drag-handle-cell">
+                            <div class="row-drag-handle" draggable="true" title="Drag to reorder">⠿</div>
+                        </td>
                         <td class="editable-cell" data-field="brand">
                             <input type="text" class="cell-input" value="<?= htmlspecialchars($item['brand']) ?>" list="brand-options" placeholder="...">
                         </td>
@@ -256,6 +263,7 @@
 
                 <!-- Permanent blank row at the bottom -->
                 <tr class="summary-row new-blank-row" data-id="new">
+                    <td class="drag-handle-cell"></td>
                     <td class="editable-cell" data-field="brand">
                         <input type="text" class="cell-input" list="brand-options" placeholder="Brand...">
                     </td>
@@ -328,7 +336,7 @@
                     </td>
                     <td style="text-align:right;">
                         <div class="action-buttons">
-                            <button type="button" class="btn-add-row-indicator" style="background: none; border: none; font-size: 1rem; opacity: 0.3;">➕</button>
+                            <button type="button" class="btn-add-row-indicator" style="background: none; border: none; font-size: 1.1rem; opacity: 0.7; cursor: pointer; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7" title="Add Item (Click or press Enter)">➕</button>
                         </div>
                     </td>
                 </tr>
@@ -336,10 +344,10 @@
             <tfoot style="border-top: 2px solid #e2e8f0; background: #f8fafc;">
                 <tr>
                     <?php
-                    $total_cols_sp = 9;
-                    if ($selected_sector === 'Laptops') $total_cols_sp = 13;
-                    elseif ($selected_sector === 'Gaming') $total_cols_sp = 13;
-                    elseif ($selected_sector === 'Desktops') $total_cols_sp = 8;
+                    $total_cols_sp = 10;
+                    if ($selected_sector === 'Laptops') $total_cols_sp = 14;
+                    elseif ($selected_sector === 'Gaming') $total_cols_sp = 14;
+                    elseif ($selected_sector === 'Desktops') $total_cols_sp = 9;
                     ?>
                     <td colspan="<?= $total_cols_sp - 3 ?>" style="padding: 15px;">
                         <div class="search-container footer-search" style="max-width: 300px; margin: 0;">

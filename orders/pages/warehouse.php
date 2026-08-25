@@ -36,7 +36,17 @@ $stmt_locs = $conn_wh->query("
 ");
 $existing_locs = $stmt_locs->fetchAll(PDO::FETCH_ASSOC);
 
-$all_statuses = $conn_wh->query("SELECT * FROM location_statuses ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+if (!empty($selected_loc) && $selected_loc !== 'GLOBAL') {
+    $stmt_st = $conn_wh->prepare("SELECT rowid AS id, name, color, is_default, location_code FROM location_statuses 
+        WHERE location_code IS NULL OR location_code = '' OR location_code = 'GLOBAL' OR location_code = ? 
+        ORDER BY is_default DESC, (location_code IS NULL OR location_code = '' OR location_code = 'GLOBAL') DESC, name ASC");
+    $stmt_st->execute([$selected_loc]);
+    $all_statuses = $stmt_st->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $all_statuses = $conn_wh->query("SELECT rowid AS id, name, color, is_default, location_code FROM location_statuses 
+        WHERE location_code IS NULL OR location_code = '' OR location_code = 'GLOBAL' 
+        ORDER BY is_default DESC, name ASC")->fetchAll(PDO::FETCH_ASSOC);
+}
 $sectors = $conn_wh->query("SELECT * FROM sectors")->fetchAll(PDO::FETCH_ASSOC);
 
 // 3. Fetch Inventory Items
@@ -67,10 +77,10 @@ if ($selected_loc) {
         $stmt_check->execute([$selected_loc]);
 
         if ($selected_sector === 'Master') {
-            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE location_code = ? ORDER BY id DESC");
+            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE location_code = ? ORDER BY sort_order ASC, id DESC");
             $stmt_i->execute([$selected_loc]);
         } else {
-            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? AND location_code = ? ORDER BY id DESC");
+            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? AND location_code = ? ORDER BY sort_order ASC, id DESC");
             $stmt_i->execute([$selected_sector, $selected_loc]);
         }
         $items = $stmt_i->fetchAll(PDO::FETCH_ASSOC);

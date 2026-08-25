@@ -54,6 +54,7 @@ Welcome! This document provides the architectural and styling patterns for the *
 - **Location**: `prod/core/Schema.php`.
 - **Trigger**: Run automatically during `Database::getConnection()`.
 - **Migration Policy**: New columns, indexes, or updates are added globally within `Schema::runMigrations()`. They are written idempotently so they run safely on every boot. Do not write `CREATE TABLE` or `ALTER TABLE` statements inside view pages or endpoints.
+- **Location Statuses**: The `location_statuses` table uses `id INTEGER PRIMARY KEY AUTOINCREMENT` and non-unique `name TEXT NOT NULL` so different locations or global scopes can safely share the same status names.
 
 ### 5. Audit Logging with Resilient Fallback
 - **Helper**: Use `Audit::log($action, $target_id, $details, $module)` for sensitive alterations (deletions, checkouts, updates).

@@ -39,15 +39,140 @@ function initWarehouseSpreadsheetEvents() {
             focusWarehouseCell(allRows, rowIndex - 1, colIndex);
         } else if (e.key === 'Enter') {
             e.preventDefault();
+            const rowId = row.getAttribute('data-id');
+            if (rowId === 'new') {
+                const brandVal = row.querySelector('[data-field="brand"] .cell-input')?.value.trim() || '';
+                const modelVal = row.querySelector('[data-field="model"] .cell-input')?.value.trim() || '';
+                if (brandVal && modelVal) {
+                    createWarehouseRowFromBlank(row);
+                    return;
+                }
+            }
             input.blur();
             focusWarehouseCell(allRows, rowIndex + 1, colIndex);
         }
     });
 
-    // Handle click on ➕ indicator to clone/copy row data
+    // Drag-and-Drop Row Reordering
+    let draggedRow = null;
+
+    listContainer.addEventListener('dragstart', (e) => {
+        const handle = e.target.closest('.row-drag-handle');
+        if (!handle) {
+            e.preventDefault();
+            return;
+        }
+        const row = handle.closest('.inventory-card');
+        if (!row || row.getAttribute('data-id') === 'new') {
+            e.preventDefault();
+            return;
+        }
+
+        draggedRow = row;
+        row.classList.add('dragging-row');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', row.getAttribute('data-id') || '');
+    });
+
+    listContainer.addEventListener('dragover', (e) => {
+        if (!draggedRow) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+
+        const targetRow = e.target.closest('.inventory-card');
+        if (!targetRow || targetRow === draggedRow || targetRow.getAttribute('data-id') === 'new') return;
+
+        const bounding = targetRow.getBoundingClientRect();
+        const offset = e.clientY - bounding.top;
+        const isAfter = offset > bounding.height / 2;
+
+        listContainer.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el => {
+            el.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+
+        if (isAfter) {
+            targetRow.classList.add('drag-over-bottom');
+        } else {
+            targetRow.classList.add('drag-over-top');
+        }
+    });
+
+    listContainer.addEventListener('dragleave', (e) => {
+        const targetRow = e.target.closest('.inventory-card');
+        if (targetRow && !targetRow.contains(e.relatedTarget)) {
+            targetRow.classList.remove('drag-over-top', 'drag-over-bottom');
+        }
+    });
+
+    listContainer.addEventListener('drop', async (e) => {
+        if (!draggedRow) return;
+        e.preventDefault();
+
+        const targetRow = e.target.closest('.inventory-card');
+        listContainer.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el => {
+            el.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+
+        if (targetRow && targetRow !== draggedRow && targetRow.getAttribute('data-id') !== 'new') {
+            const bounding = targetRow.getBoundingClientRect();
+            const offset = e.clientY - bounding.top;
+            const isAfter = offset > bounding.height / 2;
+
+            if (isAfter) {
+                targetRow.after(draggedRow);
+            } else {
+                targetRow.before(draggedRow);
+            }
+
+            await saveWarehouseRowOrder();
+        }
+    });
+
+    listContainer.addEventListener('dragend', () => {
+        if (draggedRow) {
+            draggedRow.classList.remove('dragging-row');
+            draggedRow = null;
+        }
+        listContainer.querySelectorAll('.drag-over-top, .drag-over-bottom').forEach(el => {
+            el.classList.remove('drag-over-top', 'drag-over-bottom');
+        });
+    });
+
+    // Handle click on ➕ indicator to add new row or clone/copy row data
     listContainer.addEventListener('click', (e) => {
+        const addBtn = e.target.closest('.btn-add-row-indicator');
         const cloneBtn = e.target.closest('.btn-clone-row');
-        if (cloneBtn) {
+
+        if (addBtn) {
+            e.preventDefault();
+            const row = addBtn.closest('tr');
+            if (row) {
+                const brandInput = row.querySelector('[data-field="brand"] .cell-input');
+                const modelInput = row.querySelector('[data-field="model"] .cell-input');
+                const brandVal = brandInput?.value.trim() || '';
+                const modelVal = modelInput?.value.trim() || '';
+
+                if (!brandVal) {
+                    if (brandInput) brandInput.focus();
+                    if (window.IQA_Notify) {
+                        window.IQA_Notify.error('Please enter a Brand to add inventory.');
+                    } else {
+                        alert('Please enter a Brand to add inventory.');
+                    }
+                    return;
+                }
+                if (!modelVal) {
+                    if (modelInput) modelInput.focus();
+                    if (window.IQA_Notify) {
+                        window.IQA_Notify.error('Please enter a Model to add inventory.');
+                    } else {
+                        alert('Please enter a Model to add inventory.');
+                    }
+                    return;
+                }
+                createWarehouseRowFromBlank(row);
+            }
+        } else if (cloneBtn) {
             e.preventDefault();
             const sourceRow = cloneBtn.closest('tr');
             const templateRow = listContainer.querySelector('.new-blank-row');
@@ -362,3 +487,48 @@ async function consolidateWarehouseRows() {
         }
     }
 }
+
+/**
+ * Persists the reordered row IDs to the database.
+ */
+async function saveWarehouseRowOrder() {
+    const listContainer = document.getElementById('inventory-list');
+    const metadata = document.getElementById('warehouse-metadata');
+    if (!listContainer || !metadata) return;
+
+    const sector = metadata.getAttribute('data-sector');
+    const locationCode = metadata.getAttribute('data-location-code');
+    const csrfToken = metadata.getAttribute('data-csrf');
+
+    const rows = Array.from(listContainer.querySelectorAll('.inventory-card'));
+    const order = rows.map(r => r.getAttribute('data-id')).filter(id => id && id !== 'new');
+
+    if (order.length === 0) return;
+
+    try {
+        const response = await fetch('api/reorder_inventory.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                csrf_token: csrfToken,
+                sector: sector,
+                location_code: locationCode,
+                order: order
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            if (window.IQA_Notify) {
+                window.IQA_Notify.success('Row order saved ✨');
+            }
+        } else {
+            console.error('Failed to save row order:', result.error);
+        }
+    } catch (err) {
+        console.error('Error saving row order:', err);
+    }
+}
+
