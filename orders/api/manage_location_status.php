@@ -16,8 +16,9 @@ $conn_wh = Database::warehouse();
 $CANONICAL_DEFAULTS = ['working', 'audit', 'shipping', 'in-review', 'warehoused', 'idle'];
 
 function getStatusPayload($conn_wh, $loc = null) {
-    $globals = $conn_wh->query("SELECT rowid AS id, name, color, is_default, location_code FROM location_statuses 
+    $globals = $conn_wh->query("SELECT MIN(rowid) AS id, name, color, is_default, location_code FROM location_statuses 
         WHERE location_code IS NULL OR location_code = '' OR location_code = 'GLOBAL' 
+        GROUP BY name
         ORDER BY is_default DESC, name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($globals as &$g) {
@@ -35,11 +36,45 @@ function getStatusPayload($conn_wh, $loc = null) {
         }
     }
 
+    // Fetch distinct custom statuses created across other shelves
+    $other_custom = [];
+    $stmt_oth = $conn_wh->query("
+        SELECT MIN(rowid) AS id, name, color, 0 AS is_default, GROUP_CONCAT(location_code, ', ') AS location_codes
+        FROM location_statuses
+        WHERE location_code IS NOT NULL AND location_code != '' AND location_code != 'GLOBAL'
+        GROUP BY name
+        ORDER BY name ASC
+    ");
+    $other_custom = $stmt_oth->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($other_custom as &$oc) {
+        $oc['is_global'] = false;
+    }
+
+    // Build deduplicated combined list for general management view
+    $all_distinct = [];
+    $seen = [];
+    if ($custom_status) {
+        $all_distinct[] = $custom_status;
+        $seen[strtolower($custom_status['name'])] = true;
+    }
+    foreach ($globals as $g) {
+        if (!isset($seen[strtolower($g['name'])])) {
+            $all_distinct[] = $g;
+            $seen[strtolower($g['name'])] = true;
+        }
+    }
+    foreach ($other_custom as $oc) {
+        if (!isset($seen[strtolower($oc['name'])])) {
+            $all_distinct[] = $oc;
+            $seen[strtolower($oc['name'])] = true;
+        }
+    }
+
     return [
         'global_statuses' => $globals,
         'custom_status' => $custom_status,
-        // Combined list for general management view
-        'statuses' => $custom_status ? array_merge($globals, [$custom_status]) : $globals
+        'other_custom_statuses' => $other_custom,
+        'statuses' => $all_distinct
     ];
 }
 

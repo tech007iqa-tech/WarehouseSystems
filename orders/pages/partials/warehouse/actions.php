@@ -53,6 +53,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $msg = "zone_updated";
                 }
 
+                // Sync custom status color and shelf association
+                $target_loc = $new_loc;
+                $stmt_color = $conn_wh->prepare("SELECT color FROM location_statuses WHERE name = ? ORDER BY (location_code = ?) DESC, is_default DESC LIMIT 1");
+                $stmt_color->execute([$new_status, $target_loc]);
+                $matched_color = $stmt_color->fetchColumn() ?: '#3b82f6';
+
+                $stmt_is_def = $conn_wh->prepare("SELECT is_default FROM location_statuses WHERE name = ? AND (location_code IS NULL OR location_code = '' OR location_code = 'GLOBAL')");
+                $stmt_is_def->execute([$new_status]);
+                $is_def = (int)$stmt_is_def->fetchColumn();
+
+                $stmt_cur_cs = $conn_wh->prepare("SELECT rowid FROM location_statuses WHERE location_code = ?");
+                $stmt_cur_cs->execute([$target_loc]);
+                $cur_cs_id = $stmt_cur_cs->fetchColumn();
+
+                if (!$is_def) {
+                    if ($cur_cs_id) {
+                        $conn_wh->prepare("UPDATE location_statuses SET name = ?, color = ? WHERE rowid = ?")->execute([$new_status, $matched_color, $cur_cs_id]);
+                    } else {
+                        $conn_wh->prepare("INSERT INTO location_statuses (name, color, is_default, location_code) VALUES (?, ?, 0, ?)")->execute([$new_status, $matched_color, $target_loc]);
+                    }
+                }
+
                 $conn_wh->commit();
                 header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=" . $msg);
                 exit();

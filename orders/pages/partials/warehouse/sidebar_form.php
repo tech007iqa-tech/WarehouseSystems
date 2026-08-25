@@ -23,16 +23,19 @@
             ?>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <a href="<?= htmlspecialchars($parent_zone_link) ?>" title="Back to current zone" style="text-decoration: none; font-size: 1.1rem; vertical-align: middle;">🔙</a>
-                    <h3 id="wh-form-title" style="font-weight: 800; margin: 0; display: inline-block; vertical-align: middle;">📥 Register Stock</h3>
+                    <a href="<?= htmlspecialchars($parent_zone_link) ?>" title="Back to current zone"
+                        style="text-decoration: none; font-size: 1.1rem; vertical-align: middle;">🔙</a>
+                    <h3 id="wh-form-title"
+                        style="font-weight: 800; margin: 0; display: inline-block; vertical-align: middle;">📥 Register
+                        Stock</h3>
                 </div>
                 <div id="session-counter"
                     style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 16px; border-radius: 14px; font-size: 0.75rem; font-weight: 700; color: #15803d; display: none; line-height: 1.4; min-width: 180px;">
                     <div>✨ <span id="session-count-val" style="font-weight: 900;">0</span> Added this session</div>
                     <div id="session-last-item-info"
                         style="font-size: 0.68rem; color: #166534; margin-top: 4px; border-top: 1px dashed #bbf7d0; padding-top: 4px; font-weight: 600; display: none;">
-                        Last: <strong id="session-last-model-series"></strong> (Qty: <span
-                            id="session-last-qty"></span>) @ <span id="session-last-time"></span>
+                        Last: <strong id="session-last-model-series"></strong> (Qty: <span id="session-last-qty"></span>) @
+                        <span id="session-last-time"></span>
                     </div>
                 </div>
             </div>
@@ -59,15 +62,13 @@
                 <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;">
                     <div class="form-group" style="flex: 1 1 130px; min-width: 130px;">
                         <label for="wh-brand">Brand</label>
-                        <input type="text" name="brand" list="brand-options" id="wh-brand" placeholder="Dell"
-                            required
+                        <input type="text" name="brand" list="brand-options" id="wh-brand" placeholder="Dell" required
                             style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
                         <datalist id="brand-options"></datalist>
                     </div>
                     <div class="form-group" style="flex: 1 1 130px; min-width: 130px;">
                         <label for="wh-model">Model</label>
-                        <input type="text" name="model" list="model-options" id="wh-model" placeholder="Latitude"
-                            required
+                        <input type="text" name="model" list="model-options" id="wh-model" placeholder="Latitude" required
                             style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px;">
                         <datalist id="model-options"></datalist>
                     </div>
@@ -95,6 +96,8 @@
                                     <option value="i5" style="background-color: #e0f2fe; color: #0369a1;">i5</option>
                                     <option value="i7" style="background-color: #e0f2fe; color: #0369a1;">i7</option>
                                     <option value="i9" style="background-color: #e0f2fe; color: #0369a1;">i9</option>
+                                    <option value="AMD" style="background-color: #e0f2fe; color: #0369a1;">AMD
+                                    </option>
                                     <option value="Ryzen 3" style="background-color: #fee2e2; color: #b91c1c;">Ryzen 3
                                     </option>
                                     <option value="Ryzen 5" style="background-color: #fee2e2; color: #b91c1c;">Ryzen 5
@@ -214,12 +217,10 @@
                         <!-- Specific Specs for everything else -->
                         <div class="form-group" style="margin-bottom: 10px;">
                             <label for="wh-series" id="wh-gaming-spec-label">Specs / Series</label>
-                            <input type="text" name="series" list="series-options" id="wh-series"
-                                placeholder="Series / Edition"
+                            <input type="text" name="series" list="series-options" id="wh-series" placeholder="Series / Edition"
                                 style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
                             <datalist id="series-options"></datalist>
-                            <div id="wh-gaming-extra-specs"
-                                style="display: flex; flex-wrap: wrap; gap: 10px; margin-top:5px;">
+                            <div id="wh-gaming-extra-specs" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top:5px;">
                                 <div class="form-group" style="flex: 1 1 200px;">
                                     <input type="text" name="ram" id="wh-ram" placeholder="RAM / Color"
                                         style="width:100%; height:38px; border-radius:8px; border:1px solid #ddd; padding: 0 10px;">
@@ -291,8 +292,8 @@
                         <label for="wh-price">Price</label>
                         <div style="position:relative; display:flex; align-items:center;">
                             <span style="position:absolute; left:12px; font-weight:800; color:#64748b;">$</span>
-                            <input type="number" step="1" id="wh-price" name="price" value=".97" placeholder="150"
-                                min="0" required
+                            <input type="number" step="1" id="wh-price" name="price" value=".97" placeholder="150" min="0"
+                                required
                                 style="width:100%; height:42px; border-radius:10px; border:1px solid #ddd; padding: 0 12px 0 25px; font-weight: 800;">
                         </div>
                     </div>
@@ -324,7 +325,8 @@
         style="background:#f8fafc; border:2px dashed #cbd5e1; border-radius:20px; padding:40px; text-align:center; color:#64748b;">
         <div style="font-size:2rem; margin-bottom:15px;">🚫</div>
         <h3 style="font-weight:800;">Registration Locked</h3>
-        <p>You are in <b>Global View</b>. To add or edit specific stock, please select a specific <b>Working Zone</b> from the gate.</p>
+        <p>You are in <b>Global View</b>. To add or edit specific stock, please select a specific <b>Working Zone</b> from
+            the gate.</p>
         <a href="index.php?view=warehouse&sector=<?= urlencode($selected_sector) ?>"
             style="display:inline-block; margin-top:20px; color:var(--text-main); font-weight:800;">Back to Gate</a>
     </aside>

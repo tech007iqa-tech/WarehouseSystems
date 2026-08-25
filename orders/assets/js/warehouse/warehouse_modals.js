@@ -68,6 +68,7 @@ let currentModalLocation = '';
 let currentModalStatus = '';
 let cachedGlobalStatuses = [];
 let cachedCustomStatus = null;
+let cachedOtherStatuses = [];
 
 async function openRenameModal(locData) {
     const loc = locData.location_code;
@@ -151,6 +152,7 @@ async function loadLocationStatusData(loc, currentStatus) {
         if (data.success) {
             cachedGlobalStatuses = data.global_statuses || [];
             cachedCustomStatus = data.custom_status || null;
+            cachedOtherStatuses = data.other_custom_statuses || [];
 
             syncRenameModalStatusUI(loc, currentStatus);
             renderStatusManagementList(data.statuses || []);
@@ -201,6 +203,25 @@ function syncRenameModalStatusUI(loc, selectedStatus) {
             globalGroup.appendChild(opt);
         });
         select.appendChild(globalGroup);
+    }
+
+    // Add Other Shelf Statuses optgroup
+    const otherFiltered = cachedOtherStatuses.filter(s => !cachedCustomStatus || s.name.toLowerCase() !== cachedCustomStatus.name.toLowerCase());
+    if (otherFiltered.length > 0) {
+        const otherGroup = document.createElement('optgroup');
+        otherGroup.label = 'Shelf / Custom Statuses';
+        otherGroup.id = 'optgroup-other-statuses';
+
+        otherFiltered.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.name;
+            opt.textContent = `📍 ${s.name}`;
+            opt.setAttribute('data-id', s.id);
+            opt.setAttribute('data-color', s.color || '#3b82f6');
+            opt.setAttribute('data-custom', '1');
+            otherGroup.appendChild(opt);
+        });
+        select.appendChild(otherGroup);
     }
 
     // Set select value

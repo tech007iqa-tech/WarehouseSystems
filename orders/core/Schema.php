@@ -639,6 +639,18 @@ class Schema {
             $defaults = ['Working', 'Audit', 'Shipping', 'In-Review', 'Warehoused', 'Idle'];
             $in_clause = "'" . implode("','", $defaults) . "'";
             $conn->exec("UPDATE location_statuses SET is_default = 1, location_code = NULL WHERE name IN ($in_clause)");
+
+            // Self-heal duplicate custom statuses per location_code
+            $conn->exec("
+                DELETE FROM location_statuses 
+                WHERE location_code IS NOT NULL AND location_code != '' AND location_code != 'GLOBAL'
+                AND id NOT IN (
+                    SELECT MAX(id) 
+                    FROM location_statuses 
+                    WHERE location_code IS NOT NULL AND location_code != '' AND location_code != 'GLOBAL'
+                    GROUP BY location_code
+                )
+            ");
         }
 
         // --- Audit & User Indexes ---
