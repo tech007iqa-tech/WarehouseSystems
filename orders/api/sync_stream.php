@@ -8,13 +8,23 @@
 // Prevent script execution timeouts (limit connection length to 25 seconds)
 set_time_limit(30);
 
-// Disable output buffering so messages are sent instantly
-if (ob_get_level() > 0) ob_end_clean();
+// Disable output compression and all buffering for instant SSE delivery
+@ini_set('zlib.output_compression', 0);
+@ini_set('implicit_flush', 1);
+while (ob_get_level() > 0) {
+    @ob_end_clean();
+}
+ob_implicit_flush(1);
+
+if (function_exists('apache_setenv')) {
+    @apache_setenv('no-gzip', '1');
+}
 
 header('Content-Type: text/event-stream');
-header('Cache-Control: no-cache');
+header('Cache-Control: no-cache, no-transform');
 header('Connection: keep-alive');
-header('X-Accel-Buffering: no'); // Disable buffering on proxy servers like nginx
+header('X-Accel-Buffering: no');
+header('Content-Encoding: none');
 
 // Absolute paths to database files
 $db_files = [

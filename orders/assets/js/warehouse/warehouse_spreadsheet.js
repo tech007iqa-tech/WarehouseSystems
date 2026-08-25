@@ -298,6 +298,10 @@ async function handleWarehouseCellSave(input) {
             if (typeof filterWarehouse === 'function') {
                 filterWarehouse();
             }
+
+            if (window.AppSync && typeof window.AppSync.triggerChange === 'function') {
+                window.AppSync.triggerChange();
+            }
         } else {
             console.error('Save failed:', result.error);
         }
