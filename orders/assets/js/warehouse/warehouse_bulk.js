@@ -414,3 +414,12 @@ async function downloadWarehouseLabel(itemId, btn) {
         btn.innerHTML = originalText;
     }
 }
+
+// Explicit global exposure for inline HTML event handlers
+window.downloadWarehouseCSV = downloadWarehouseCSV;
+window.downloadWarehouseLabel = downloadWarehouseLabel;
+window.syncSearch = syncSearch;
+window.filterWarehouse = filterWarehouse;
+window.initWarehouseBulkActions = initWarehouseBulkActions;
+window.updateBulkBar = updateBulkBar;
+

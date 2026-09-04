@@ -510,3 +510,19 @@ function incrementSessionCounter() {
         }
     }
 }
+
+// Explicit global exposure for inline HTML event handlers
+window.fillLastEnteredData = fillLastEnteredData;
+window.initCpuGenChips = initCpuGenChips;
+window.syncCpuGenChips = syncCpuGenChips;
+window.initWarehouseDatalists = initWarehouseDatalists;
+window.highlightExistingMatches = highlightExistingMatches;
+window.toggleGamingFields = toggleGamingFields;
+window.toggleBiosState = toggleBiosState;
+window.initGhostSuffixes = initGhostSuffixes;
+window.updateSelectColors = updateSelectColors;
+window.editWarehouseItem = editWarehouseItem;
+window.resetWarehouseForm = resetWarehouseForm;
+window.initSessionCounter = initSessionCounter;
+window.incrementSessionCounter = incrementSessionCounter;
+

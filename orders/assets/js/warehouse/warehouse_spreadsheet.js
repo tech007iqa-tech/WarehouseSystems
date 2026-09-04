@@ -536,3 +536,13 @@ async function saveWarehouseRowOrder() {
     }
 }
 
+// Explicit global exposure for inline HTML event handlers
+window.initWarehouseSpreadsheetEvents = initWarehouseSpreadsheetEvents;
+window.focusWarehouseCell = focusWarehouseCell;
+window.handleWarehouseCellSave = handleWarehouseCellSave;
+window.createWarehouseRowFromBlank = createWarehouseRowFromBlank;
+window.restoreWarehouseCursorFocus = restoreWarehouseCursorFocus;
+window.consolidateWarehouseRows = consolidateWarehouseRows;
+window.saveWarehouseRowOrder = saveWarehouseRowOrder;
+
+

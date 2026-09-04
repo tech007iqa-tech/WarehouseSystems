@@ -480,7 +480,8 @@ async function saveStatusRowEdit(id) {
             }
             cachedGlobalStatuses = result.global_statuses || cachedGlobalStatuses;
             cachedCustomStatus = result.custom_status || cachedCustomStatus;
-            syncRenameModalStatusUI(currentModalLocation, select.value);
+            const selectEl = document.getElementById('rename-status');
+            syncRenameModalStatusUI(currentModalLocation, selectEl ? selectEl.value : '');
             renderStatusManagementList(result.statuses || []);
         } else {
             alert(result.error || 'Failed to update status.');
@@ -635,3 +636,25 @@ function initStickyTableHeaders() {
         }
     });
 }
+
+// Explicit global exposure for inline HTML event handlers
+window.openRenameWorkingZoneModal = openRenameWorkingZoneModal;
+window.closeRenameWorkingZoneModal = closeRenameWorkingZoneModal;
+window.submitRenameWorkingZoneAjax = submitRenameWorkingZoneAjax;
+window.openRenameModal = openRenameModal;
+window.closeRenameModal = closeRenameModal;
+window.submitRenameZoneAjax = submitRenameZoneAjax;
+window.loadLocationStatusData = loadLocationStatusData;
+window.syncRenameModalStatusUI = syncRenameModalStatusUI;
+window.toggleCustomStatusForm = toggleCustomStatusForm;
+window.saveCustomLocationStatus = saveCustomLocationStatus;
+window.toggleManageStatuses = toggleManageStatuses;
+window.renderStatusManagementList = renderStatusManagementList;
+window.startEditStatusRow = startEditStatusRow;
+window.cancelStatusRowEdit = cancelStatusRowEdit;
+window.saveStatusRowEdit = saveStatusRowEdit;
+window.promoteStatusToGlobal = promoteStatusToGlobal;
+window.deleteCustomStatus = deleteCustomStatus;
+window.initPhotoHoverPreviews = initPhotoHoverPreviews;
+window.initStickyTableHeaders = initStickyTableHeaders;
+

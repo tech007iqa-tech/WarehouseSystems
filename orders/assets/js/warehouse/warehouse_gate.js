@@ -97,3 +97,8 @@ function sortGateLocations() {
         grid.classList.remove('sorting');
     }, 300);
 }
+
+// Explicit global exposure for inline HTML event handlers
+window.filterGateLocations = filterGateLocations;
+window.sortGateLocations = sortGateLocations;
+
