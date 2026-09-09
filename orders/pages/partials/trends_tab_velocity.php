@@ -32,11 +32,11 @@
                             <th onclick="sortTable('table-velocity', 1, 'str')">Brand</th>
                             <th onclick="sortTable('table-velocity', 2, 'str')">Model</th>
                             <th onclick="sortTable('table-velocity', 3, 'str')">Details</th>
-                            <th onclick="sortTable('table-velocity', 4, 'num')">Avg Price</th>
-                            <th onclick="sortTable('table-velocity', 5, 'date')">
+                            <th onclick="sortTable('table-velocity', 4, 'date')">
                                 <span class="stock-header">Latest Sold</span>
                                 <span class="order-header" style="display: none;">Customer Order</span>
                             </th>
+                            <th onclick="sortTable('table-velocity', 5, 'num')">Avg Price</th>
                             <th onclick="sortTable('table-velocity', 6, 'num')" class="sort-desc">Units Sold</th>
                         </tr>
                     </thead>
@@ -86,7 +86,6 @@
                                         <?= !empty($item['notes']) ? ' • ' . htmlspecialchars($item['notes']) : '' ?>
                                     </div>
                                 </td>
-                                <td data-sort-val="<?= $item['avg_price'] ?>">$<?= number_format($item['avg_price'], 2) ?></td>
                                 <td data-sort-val="<?= htmlspecialchars($first_date) ?>">
                                     <div class="stock-cell">
                                         <?php
@@ -127,16 +126,17 @@
                                                         }
                                                         $display_date = ' <span style="font-size: 0.7rem; color: var(--text-secondary); font-family: var(--font-main);">(' . htmlspecialchars($display_date) . ')</span>';
                                                     }
-                                                    $rendered[] = '<div style="margin-bottom: 4px; white-space: nowrap;"><a href="#" onclick="openOrderPreviewModal(event, \'' . htmlspecialchars($o_id) . '\')" class="order-preview-link"><code>' . htmlspecialchars($o_id) . '</code></a>' . $display_date . '</div>';
+                                                    $rendered[] = '<span><a href="#" onclick="openOrderPreviewModal(event, \'' . htmlspecialchars($o_id) . '\')" class="order-preview-link"><code>' . htmlspecialchars($o_id) . '</code></a>' . $display_date . '</span>';
                                                 }
                                             }
-                                            echo implode('', $rendered);
+                                            echo implode(', ', $rendered);
                                         } else {
                                             echo '—';
                                         }
                                         ?>
                                     </div>
                                 </td>
+                                <td data-sort-val="<?= $item['avg_price'] ?>">$<?= number_format($item['avg_price'], 2) ?></td>
                                 <td data-sort-val="<?= $item['total_qty'] ?>"><span class="qty-chip" style="box-shadow: none; font-size: 0.75rem; padding: 4px 10px;"><?= $item['total_qty'] ?></span></td>
                             </tr>
                         <?php endforeach; ?>

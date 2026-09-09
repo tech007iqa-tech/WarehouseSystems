@@ -12,27 +12,23 @@ function getTrendsState() {
 }
 
 // 1. Synchronously load all trends sub-modules in order
-const modules = [
-    'assets/js/trends/trends_nav.js',
-    'assets/js/trends/trends_charts.js',
-    'assets/js/trends/trends_widgets.js',
-    'assets/js/trends/trends_modals.js'
-];
+(function loadTrendsModules() {
+    const modules = [
+        'assets/js/trends/trends_nav.js',
+        'assets/js/trends/trends_charts.js',
+        'assets/js/trends/trends_widgets.js',
+        'assets/js/trends/trends_modals.js'
+    ];
 
-const loadModules = Promise.all(modules.map(src => {
-    return new Promise(resolve => {
-        if (document.querySelector(`script[src*="${src}"]`)) {
-            resolve();
-            return;
+    modules.forEach(src => {
+        if (!document.querySelector(`script[src*="${src}"]`)) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = false;
+            document.head.appendChild(script);
         }
-        const script = document.createElement('script');
-        script.src = src;
-        script.async = false;
-        script.onload = resolve;
-        script.onerror = resolve;
-        document.head.appendChild(script);
     });
-}));
+})();
 
 // 2. Initialize trends dashboard on DOMContentLoaded
 function initTrendsApp() {
@@ -76,10 +72,8 @@ function initTrendsApp() {
     }
 }
 
-loadModules.then(() => {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initTrendsApp);
-    } else {
-        initTrendsApp();
-    }
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTrendsApp);
+} else {
+    initTrendsApp();
+}

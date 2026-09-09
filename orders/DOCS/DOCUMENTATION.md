@@ -1,5 +1,5 @@
 # 🏬 IQA System Documentation
-*Last Updated: 7/11/2026 11:56 PM*
+*Last Updated: 9/5/2026 10:52 PM*
 Please refer to the updated documentation files:
 - For a high-level system overview, active modules, and installation instructions, read: [README.md](README.md).
 - For a file-by-file directory map of the application, read: [GLOBAL_SITEMAP.md](GLOBAL_SITEMAP.md).

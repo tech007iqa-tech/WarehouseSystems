@@ -255,7 +255,7 @@ function sortTable(tableId, colIndex, type) {
                     valA = rankA ? rankA.textContent.trim().replace('#', '') : '';
                     valB = rankB ? rankB.textContent.trim().replace('#', '') : '';
                 }
-            } else if (colIndex === 5) {
+            } else if (colIndex === 4) {
                 if (isSearchActive) {
                     currentType = 'str';
                     const orderA = cellA.querySelector('.order-cell');
@@ -294,11 +294,3 @@ function sortTable(tableId, colIndex, type) {
 
     rows.forEach(row => tbody.appendChild(row));
 }
-
-// Explicit global exposure for inline HTML event handlers
-window.switchTrendsTab = switchTrendsTab;
-window.filterActiveTable = filterActiveTable;
-window.handleSearch = handleSearch;
-window.clearSearchInput = clearSearchInput;
-window.sortTable = sortTable;
-

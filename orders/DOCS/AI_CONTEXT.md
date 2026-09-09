@@ -1,4 +1,4 @@
-# 🤖 AI Agent Context & Guidelines 7/17/2026 1:35 PM
+# 🤖 AI Agent Context & Guidelines 9/5/2026 10:52 PM
 
 Welcome! This document provides the architectural and styling patterns for the **IQA Warehouse Systems** codebase. By adhering to these guidelines, you will write cleaner, more maintainable code and avoid redundant investigations that waste tokens.
 
@@ -54,7 +54,6 @@ Welcome! This document provides the architectural and styling patterns for the *
 - **Location**: `prod/core/Schema.php`.
 - **Trigger**: Run automatically during `Database::getConnection()`.
 - **Migration Policy**: New columns, indexes, or updates are added globally within `Schema::runMigrations()`. They are written idempotently so they run safely on every boot. Do not write `CREATE TABLE` or `ALTER TABLE` statements inside view pages or endpoints.
-- **Location Statuses**: The `location_statuses` table uses `id INTEGER PRIMARY KEY AUTOINCREMENT` and non-unique `name TEXT NOT NULL` so different locations or global scopes can safely share the same status names.
 
 ### 5. Audit Logging with Resilient Fallback
 - **Helper**: Use `Audit::log($action, $target_id, $details, $module)` for sensitive alterations (deletions, checkouts, updates).
@@ -68,21 +67,6 @@ Welcome! This document provides the architectural and styling patterns for the *
 ### 7. Timezone Configuration
 - **Requirement**: The application must enforce the Pacific timezone (`America/Los_Angeles`) to ensure `date()` and `time()` correctly align with the warehouse's physical location, preventing calendar day shifts (e.g., Thursday showing as Friday in UTC after hours).
 - **Implementation**: Ensure `date_default_timezone_set('America/Los_Angeles');` is explicitly set in date-dependent views like `calendar.php`.
-
-### 8. Modular View Partials & Component Architecture
-- **Pattern**: Large monolithic views are broken into clean sub-components under `pages/partials/<view_name>/` and modular script assets in `assets/js/<view_name>/`.
-- **Inclusion**: The parent view acts as the orchestrator, loading dependencies, verifying security, setting up page layout, and including partials via `require_once __DIR__ . '/partials/...'`.
-
-### 9. Smart Clipboard Batch Import & Header Parsing
-- **Location**: `customer_registry.js` (`parsePastedText`) and `new_order/new_order_import_clipboard.js`.
-- **Heuristic**: Auto-detects delimiters (tab vs comma vs semicolon).
-- **Header Detection Rule**: To prevent data rows containing keywords (e.g. `"D Series"` or `"Untested"`) from being falsely flagged as header rows, header detection requires **at least 2 matching header column keywords** (or exact match for single-column pastes) before declaring the first row as headers.
-- **Scroll Container**: In modals with dynamic tables, `overflow-anchor: none` and explicit `scrollTop = 0` resets are used to prevent browser scroll anchoring from clipping preview tables.
-
-### 10. Negative Pricing & Line-Item Discounts
-- **Checkout & Batch Pricing**: Unit prices support negative values (e.g. `-$63.45` or `-15%`) to allow line-item discounts, promotional credits, and trade-in deductions without triggering HTML5 form constraints or database sanitize errors.
-- **Sanitizer**: `Security::sanitize_float()` preserves leading negative signs (`[^-0-9.]`).
-- **Recalculation**: Subtotals and grand totals dynamically compute `qty * unit_price`, adjusting order totals accordingly.
 
 ---
 

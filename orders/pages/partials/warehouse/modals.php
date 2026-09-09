@@ -9,7 +9,7 @@
     style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:1000; align-items:center; justify-content:center;"
     onclick="if(event.target===this) closeRenameModal()">
     <div
-        style="background:white; border-radius:24px; width:95%; max-width:480px; max-height:90vh; overflow-y:auto; padding:35px; box-shadow:var(--shadow-lg); position:relative;">
+        style="background:white; border-radius:24px; width:95%; max-width:450px; padding:35px; box-shadow:var(--shadow-lg); position:relative;">
         <form method="POST" id="delete-zone-form"
             onsubmit="return confirm('CRITICAL ACTION: This will PERMANENTLY DELETE ALL ITEMS in this zone. This cannot be undone. Proceed?');">
             <?= UI::csrf_field() ?>
@@ -34,64 +34,39 @@
                     style="width:100%; height:46px; border-radius:12px; border:1px solid #ddd; padding:0 15px; font-weight:800; font-size:1rem;">
             </div>
 
-            <div class="form-group" style="margin-bottom:20px;">
+            <div class="form-group" style="margin-bottom:30px;">
                 <label for="rename-status"
                     style="display:block; font-size:0.7rem; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:#94a3b8;">Location Status</label>
                 <select name="location_status" id="rename-status"
                     style="width:100%; height:46px; border-radius:12px; border:1px solid #ddd; padding:0 15px; font-weight:700; cursor:pointer; background:#f8fafc;">
-                    <optgroup label="Global Statuses" id="optgroup-global-statuses">
-                        <?php foreach ($all_statuses as $status): ?>
-                            <?php if (!empty($status['is_default']) || empty($status['location_code']) || $status['location_code'] === 'GLOBAL'): ?>
-                                <option value="<?= htmlspecialchars($status['name']) ?>" data-id="<?= (int)($status['id'] ?? 0) ?>" data-color="<?= htmlspecialchars($status['color'] ?? '#64748b') ?>" data-default="<?= !empty($status['is_default']) ? '1' : '0' ?>">
-                                    <?= htmlspecialchars($status['name']) ?>
-                                </option>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </optgroup>
+                    <?php foreach ($all_statuses as $status): ?>
+                        <option value="<?= htmlspecialchars($status['name']) ?>">
+                            <?= htmlspecialchars($status['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
-                <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
-                    <a href="javascript:void(0)" onclick="toggleManageStatuses()" id="btn-toggle-manage-statuses"
-                        style="font-size:0.75rem; color:#475569; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
-                        <span>⚙️ Manage Statuses</span>
-                    </a>
-                    <a href="javascript:void(0)" onclick="toggleCustomStatusForm()" id="btn-toggle-add-status"
-                        style="font-size:0.75rem; color:var(--accent-color); font-weight:800; text-decoration:none;">+ Add New Status Type</a>
+                <div style="margin-top:10px; text-align:right;">
+                    <a href="javascript:void(0)" onclick="toggleManageStatuses()"
+                        style="font-size:0.7rem; color:var(--accent-color); font-weight:800; text-decoration:none;">+ Add New Status Type</a>
                 </div>
             </div>
 
-            <!-- Custom Location Status Form (Add or Edit) -->
-            <div id="add-status-block"
-                style="display:none; background:#f8fafc; padding:16px; border-radius:14px; margin-bottom:20px; border:1px dashed #cbd5e1;">
-                <div id="custom-status-form-title" style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:#64748b; margin-bottom:2px;">
-                    Create Location Status</div>
-                <div style="font-size:0.7rem; color:#94a3b8; margin-bottom:10px;" id="add-status-scope-hint">
-                    Status will be created for this location (<span id="add-status-loc-name"></span>).
-                </div>
-                <div style="display:flex; gap:8px; align-items:center;">
-                    <input type="text" id="new-status-name" placeholder="Status Name..."
-                        style="flex:2; height:38px; border-radius:8px; border:1px solid #cbd5e1; padding:0 10px; font-size:0.85rem; font-weight:600;">
-                    <input type="color" id="new-status-color" value="#3b82f6" title="Choose Status Color"
-                        style="width:38px; height:38px; border:none; padding:0; background:none; cursor:pointer; border-radius:6px;">
-                    <button type="button" id="btn-save-custom-status" onclick="saveCustomLocationStatus()"
-                        style="flex:1; height:38px; background:var(--accent-color); color:white; border:none; border-radius:8px; font-weight:800; font-size:0.75rem; cursor:pointer;">Save</button>
-                    <button type="button" onclick="toggleCustomStatusForm(false)"
-                        style="height:38px; background:#e2e8f0; color:#475569; border:none; border-radius:8px; padding:0 10px; font-weight:800; font-size:0.75rem; cursor:pointer;">✕</button>
-                </div>
-            </div>
-
-            <!-- Manage / Edit / Delete Statuses List -->
             <div id="manage-statuses-block"
-                style="display:none; background:#f8fafc; padding:16px; border-radius:14px; margin-bottom:20px; border:1px solid #e2e8f0;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:#64748b;">Configured Status Types</span>
-                    <span style="font-size:0.65rem; color:#94a3b8;">Defaults cannot be deleted</span>
-                </div>
-                <div id="status-items-container" style="max-height:190px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; padding-right:4px;">
-                    <!-- Dynamically populated via JS -->
+                style="display:none; background:#f1f5f9; padding:20px; border-radius:16px; margin-bottom:25px; border:1px dashed #cbd5e1;">
+                <div
+                    style="font-size:0.7rem; font-weight:900; text-transform:uppercase; color:#64748b; margin-bottom:10px;">
+                    Create New Status</div>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="new-status-name" placeholder="Status Name"
+                        style="flex:2; height:38px; border-radius:8px; border:1px solid #cbd5e1; padding:0 10px; font-size:0.85rem;">
+                    <input type="color" id="new-status-color" value="#64748b"
+                        style="flex:0.5; height:38px; border:none; padding:0; background:none; cursor:pointer;">
+                    <button type="button" onclick="addNewStatusType()"
+                        style="flex:1; background:var(--accent-color); color:white; border:none; border-radius:8px; font-weight:800; font-size:0.75rem; cursor:pointer;">Apply</button>
                 </div>
             </div>
 
-            <div style="display:flex; gap:12px; margin-top:20px;">
+            <div style="display:flex; gap:12px;">
                 <button type="button" onclick="closeRenameModal()"
                     style="flex:1; height:48px; border-radius:14px; border:1px solid #ddd; background:none; font-weight:800; cursor:pointer; color:#64748b;">Cancel</button>
                 <button type="submit"
@@ -300,3 +275,7 @@
         </form>
     </div>
 </div>
+
+<!-- Warehouse Inventory Control Modal -->
+<?php include __DIR__ . '/inventory_modal.php'; ?>
+

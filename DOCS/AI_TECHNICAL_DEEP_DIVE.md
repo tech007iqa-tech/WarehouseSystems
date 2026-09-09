@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive & Handover 7/17/2026 1:35 PM
+# 🧠 AI Technical Deep Dive & Handover 9/5/2026 10:52 PM
 
 This document serves as a "shortcut" for AI agents to understand the underlying logic of the IQA Warehouse Systems without reading every single file.
 
@@ -40,6 +40,17 @@ Every module has a `schema_guard.php` or `Schema::runMigrations()` setup.
 ### 4. iOS / Warehouse Optimization
 *   **Touch Targets**: Buttons are strictly `48px` minimum height.
 *   **Colors**: High-contrast light themes for operational modules; vibrant Teal/Lime for Marketing.
+
+## ⚠️ Recent Critical Fixes & Features (September 2026)
+*   **Warehouse Stock Spreadsheet & Multi-Header Sorting (`/marketing/?page=model_templates`)**:
+    *   **Live Database Integration**: Embedded live records from `db/warehouse.db` (`inventory` table, 1,211 items) into an interactive spreadsheet view using text box cells (`<input type="text" class="cell-input">`) with Excel-style keyboard navigation (<kbd>↑</kbd>, <kbd>↓</kbd>, <kbd>Enter</kbd>).
+    *   **Column Sequencing**: Structured column layout with **QTY** placed immediately adjacent to **Sector** (`Sector` ➔ `Qty` ➔ `Location` ➔ `Brand` ➔ `Model` ➔ `CPU/Series` ➔ `RAM` ➔ `Storage` ➔ `Condition` ➔ `Notes` ➔ `Price` ➔ `Action`).
+    *   **Interactive Multi-Header Sorting**: Implemented bidirectional sorting across all 11 headers (numeric for QTY & Price, natural alphanumeric `localeCompare` for text columns, visual indicators `▲`/`▼`/`⇅`).
+    *   **Flexible Search & Rows View Persistence**: Multi-term space-separated search matching tokens in any order. Searching automatically changes the Rows view to `All`; clearing or deleting the search text retains the Rows view default to `All`, displaying all 1,211 items.
+    *   **One-Click Template Prefill**: `⚡ Prefill` action button on each row auto-populates Model Name, Category, Base Specs, and Marketing Copy in the top creation form with smooth scrolling and attention flash animation.
+    *   **CSV Export**: Instant client-side export of filtered and sorted warehouse stock to `.csv`.
+*   **Docs Module & Card Layout Fixes (`/marketing/?page=docs`)**: Fixed `.docs-sidebar` structure and card hierarchy in `marketing/modules/docs/index.php` for seamless side-by-side reading and maximized technical document navigation.
+*   **Marketing JS & UI Alignment**: Resolved identifier collision errors (`notify` declaration in `app.js`) and aligned cards, buttons, badges, and filters with the master Aqua Teal (`#007268`) design standard.
 
 ## ⚠️ Recent Critical Fixes & Features (July 2026)
 *   **Location & Zone Photography (Photos for Zone)**: Added physical shelf/location photo upload functionality to the Warehouse module. Photos are organized by layer category (Layer 1 Bottom to Layer 5 Top, or Row/Overall View) and sector. Features include a floating hover zoom preview for photo thumbnails, and an aggregated gallery view ("View Zone Photos") for parent storage zones.

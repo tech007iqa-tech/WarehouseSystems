@@ -9,15 +9,325 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         die("Security Error: CSRF Token Invalid.");
     }
 
+    $is_ajax = (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest') || (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false);
+
     if ($_POST['action'] === 'delete_inventory' && isset($_POST['item_id'])) {
+        $item_id = (int)$_POST['item_id'];
+        $stmt_sel = $conn_wh->prepare("SELECT * FROM inventory WHERE id = ?");
+        $stmt_sel->execute([$item_id]);
+        $item = $stmt_sel->fetch(PDO::FETCH_ASSOC);
+
+        if ($item) {
+            $stmt_sold = $conn_wh->prepare("
+                INSERT INTO sold_items (location_code, sector, brand, model, specs_json, quantity, sold_price, sold_by, reason) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $reason = $_POST['reason'] ?? 'Depletion / Shelf Removal';
+            $stmt_sold->execute([
+                $item['location_code'],
+                $item['sector'],
+                $item['brand'],
+                $item['model'],
+                $item['specs_json'],
+                (int)$item['quantity'],
+                (float)($item['price'] ?? 0.00),
+                $current_user,
+                $reason
+            ]);
+        }
+
         $stmt = $conn_wh->prepare("DELETE FROM inventory WHERE id=?");
-        $stmt->execute([$_POST['item_id']]);
+        $stmt->execute([$item_id]);
+
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'deleted_id' => $item_id, 'recorded_sold' => true]);
+            exit();
+        }
 
         $sector = $_GET['sector'] ?? $_POST['sector'] ?? 'Laptops';
         $loc = $_GET['loc'] ?? $_POST['location_code'] ?? '';
         header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=deleted#wh-form-title");
         exit();
     }
+
+    if ($_POST['action'] === 'deplete_inventory_item' && isset($_POST['item_id'])) {
+        $item_id = (int)$_POST['item_id'];
+        $delta = (int)($_POST['delta'] ?? -1);
+
+        $stmt = $conn_wh->prepare("SELECT * FROM inventory WHERE id = ?");
+        $stmt->execute([$item_id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row) {
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Item not found.']);
+                exit();
+            }
+        } else {
+            $curr_qty = (int)$row['quantity'];
+            $new_qty = $curr_qty + $delta;
+
+            // If decremented, record the decremented quantity as sold
+            if ($delta < 0) {
+                $sold_qty = abs($delta);
+                $stmt_sold = $conn_wh->prepare("
+                    INSERT INTO sold_items (location_code, sector, brand, model, specs_json, quantity, sold_price, sold_by, reason) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Step Depletion')
+                ");
+                $stmt_sold->execute([
+                    $row['location_code'],
+                    $row['sector'],
+                    $row['brand'],
+                    $row['model'],
+                    $row['specs_json'],
+                    $sold_qty,
+                    (float)($row['price'] ?? 0.00),
+                    $current_user
+                ]);
+            }
+
+            if ($new_qty <= 0) {
+                $stmt_del = $conn_wh->prepare("DELETE FROM inventory WHERE id = ?");
+                $stmt_del->execute([$item_id]);
+                $deleted = true;
+            } else {
+                $stmt_up = $conn_wh->prepare("UPDATE inventory SET quantity = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+                $stmt_up->execute([$new_qty, $item_id]);
+                $deleted = false;
+            }
+
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'deleted' => $deleted, 'new_quantity' => max(0, $new_qty)]);
+                exit();
+            }
+        }
+    }
+
+    if ($_POST['action'] === 'purge_inventory_items' && isset($_POST['item_ids'])) {
+        $item_ids = json_decode($_POST['item_ids'], true);
+        if (is_array($item_ids) && !empty($item_ids)) {
+            $placeholders = implode(',', array_fill(0, count($item_ids), '?'));
+            
+            // Record as sold before deleting
+            $stmt_sel = $conn_wh->prepare("SELECT * FROM inventory WHERE id IN ($placeholders)");
+            $stmt_sel->execute(array_map('intval', $item_ids));
+            $items_to_purge = $stmt_sel->fetchAll(PDO::FETCH_ASSOC);
+
+            $stmt_sold = $conn_wh->prepare("
+                INSERT INTO sold_items (location_code, sector, brand, model, specs_json, quantity, sold_price, sold_by, reason) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Batch Purge')
+            ");
+            foreach ($items_to_purge as $it) {
+                $stmt_sold->execute([
+                    $it['location_code'],
+                    $it['sector'],
+                    $it['brand'],
+                    $it['model'],
+                    $it['specs_json'],
+                    (int)($it['quantity'] ?? 1),
+                    (float)($it['price'] ?? 0.00),
+                    $current_user
+                ]);
+            }
+
+            $stmt = $conn_wh->prepare("DELETE FROM inventory WHERE id IN ($placeholders)");
+            $stmt->execute(array_map('intval', $item_ids));
+        }
+
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => true, 'count' => is_array($item_ids) ? count($item_ids) : 0]);
+            exit();
+        }
+    }
+
+    if ($_POST['action'] === 'reconcile_location_sync' && isset($_POST['location_code'])) {
+        $loc = trim($_POST['location_code']);
+        $sector = $_POST['sector'] ?? 'Laptops';
+        $kept_ids_raw = $_POST['kept_item_ids'] ?? '[]';
+        $kept_ids = json_decode($kept_ids_raw, true) ?: [];
+
+        $conn_wh->beginTransaction();
+        try {
+            // Query all items currently on this location/sector
+            $sql_find = "SELECT * FROM inventory WHERE location_code = ? AND sector = ?";
+            $params = [$loc, $sector];
+            if (!empty($kept_ids)) {
+                $placeholders = implode(',', array_fill(0, count($kept_ids), '?'));
+                $sql_find .= " AND id NOT IN ($placeholders)";
+                $params = array_merge($params, array_map('intval', $kept_ids));
+            }
+            $stmt_missing = $conn_wh->prepare($sql_find);
+            $stmt_missing->execute($params);
+            $missing_items = $stmt_missing->fetchAll(PDO::FETCH_ASSOC);
+
+            $sold_count = 0;
+            $deleted_ids = [];
+            $stmt_sold = $conn_wh->prepare("
+                INSERT INTO sold_items (location_code, sector, brand, model, specs_json, quantity, sold_price, sold_by, reason)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Full Location Sync Audit')
+            ");
+
+            foreach ($missing_items as $item) {
+                $price = (float)($item['price'] ?? 0.00);
+                $qty = (int)($item['quantity'] ?? 1);
+                $stmt_sold->execute([
+                    $loc,
+                    $item['sector'] ?? $sector,
+                    $item['brand'],
+                    $item['model'],
+                    $item['specs_json'],
+                    $qty,
+                    $price,
+                    $current_user
+                ]);
+                $deleted_ids[] = (int)$item['id'];
+                $sold_count += $qty;
+            }
+
+            if (!empty($deleted_ids)) {
+                $del_ph = implode(',', array_fill(0, count($deleted_ids), '?'));
+                $stmt_del = $conn_wh->prepare("DELETE FROM inventory WHERE id IN ($del_ph)");
+                $stmt_del->execute($deleted_ids);
+            }
+
+            $conn_wh->commit();
+
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode([
+                    'success' => true,
+                    'sold_count' => $sold_count,
+                    'deleted_record_count' => count($deleted_ids),
+                    'deleted_ids' => $deleted_ids,
+                    'message' => "Location {$loc} synchronized: {$sold_count} missing unit(s) recorded as SOLD and removed from shelf."
+                ]);
+                exit();
+            }
+
+            header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=synced");
+            exit();
+        } catch (Exception $e) {
+            $conn_wh->rollBack();
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Sync error: ' . $e->getMessage()]);
+                exit();
+            }
+            die("Sync failed: " . $e->getMessage());
+        }
+    }
+
+    if ($_POST['action'] === 'quick_add_inventory') {
+        $brand = trim($_POST['brand'] ?? '');
+        $model = trim($_POST['model'] ?? '');
+        $loc = trim($_POST['location_code'] ?? '');
+        $qty = max(1, (int)($_POST['quantity'] ?? 1));
+        $price = (float)($_POST['price'] ?? 0.00);
+        $sector = $_POST['sector'] ?? 'Laptops';
+        $auto_consolidate = !empty($_POST['auto_consolidate']);
+
+        if (empty($brand) || empty($model)) {
+            if ($is_ajax) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Brand and Model are required.']);
+                exit();
+            }
+        }
+
+        // Dynamic Specs mapping based on sector
+        $specs = [];
+        if ($sector === 'Laptops') {
+            $specs = [
+                'cpu' => $_POST['cpu'] ?? '',
+                'gpu' => $_POST['gpu'] ?? '',
+                'ram' => $_POST['ram'] ?? '',
+                'storage' => $_POST['storage'] ?? '',
+                'battery' => $_POST['battery'] ?? '',
+                'series' => $_POST['series'] ?? '',
+                'gen' => $_POST['gen'] ?? '',
+                'condition' => $_POST['condition'] ?? 'Used',
+                'notes' => $_POST['notes'] ?? ''
+            ];
+        } elseif ($sector === 'Gaming') {
+            $specs = [
+                'category' => $_POST['gaming_category'] ?? 'Consoles',
+                'series' => $_POST['series'] ?? '',
+                'condition' => $_POST['condition'] ?? 'Used',
+                'notes' => $_POST['notes'] ?? '',
+                'ram' => $_POST['ram'] ?? '',
+                'storage' => $_POST['storage'] ?? '',
+                'cpu' => $_POST['cpu'] ?? '',
+                'gpu' => $_POST['gpu'] ?? ''
+            ];
+        } elseif ($sector === 'Desktops') {
+            $specs = [
+                'cpu_gen' => $_POST['cpu_gen'] ?? '',
+                'ram' => $_POST['ram'] ?? '',
+                'storage' => $_POST['storage'] ?? '',
+                'condition' => $_POST['condition'] ?? 'Used',
+                'notes' => $_POST['notes'] ?? ''
+            ];
+        } else {
+            $specs = ['condition' => $_POST['condition'] ?? 'Used', 'notes' => $_POST['notes'] ?? ''];
+        }
+
+        $specs_json = json_encode($specs);
+        $last_id = null;
+        $consolidated = false;
+
+        if ($auto_consolidate && !empty($loc)) {
+            // Check for identical item on the same location
+            $stmt_find = $conn_wh->prepare("
+                SELECT id, quantity, price FROM inventory 
+                WHERE sector = ? AND location_code = ? AND brand = ? AND model = ? AND specs_json = ? 
+                LIMIT 1
+            ");
+            $stmt_find->execute([$sector, $loc, $brand, $model, $specs_json]);
+            $existing = $stmt_find->fetch(PDO::FETCH_ASSOC);
+
+            if ($existing) {
+                $new_qty = (int)$existing['quantity'] + $qty;
+                $stmt_up = $conn_wh->prepare("
+                    UPDATE inventory 
+                    SET quantity = ?, last_updated_by = ?, updated_at = CURRENT_TIMESTAMP 
+                    WHERE id = ?
+                ");
+                $stmt_up->execute([$new_qty, $current_user, $existing['id']]);
+                $last_id = $existing['id'];
+                $consolidated = true;
+            }
+        }
+
+        if (!$consolidated) {
+            $stmt = $conn_wh->prepare("
+                INSERT INTO inventory (user_owner, sector, location_code, brand, model, specs_json, quantity, price) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ");
+            $stmt->execute([$current_user, $sector, $loc, $brand, $model, $specs_json, $qty, $price]);
+            $last_id = $conn_wh->lastInsertId();
+        }
+
+        if ($is_ajax) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => true,
+                'id' => $last_id,
+                'consolidated' => $consolidated,
+                'brand' => $brand,
+                'model' => $model,
+                'quantity' => $qty
+            ]);
+            exit();
+        }
+
+        header("Location: index.php?view=warehouse&sector=" . urlencode($sector) . "&loc=" . urlencode($loc) . "&msg=added&last_id=" . $last_id);
+        exit();
+    }
+
 
     if ($_POST['action'] === 'rename_zone' && isset($_POST['old_loc']) && isset($_POST['new_loc'])) {
         $old_loc = $_POST['old_loc'];
@@ -51,28 +361,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     $stmt_loc = $conn_wh->prepare("UPDATE locations SET location_code = ?, status = ?, updated_at = CURRENT_TIMESTAMP WHERE location_code = ?");
                     $stmt_loc->execute([$new_loc, $new_status, $old_loc]);
                     $msg = "zone_updated";
-                }
-
-                // Sync custom status color and shelf association
-                $target_loc = $new_loc;
-                $stmt_color = $conn_wh->prepare("SELECT color FROM location_statuses WHERE name = ? ORDER BY (location_code = ?) DESC, is_default DESC LIMIT 1");
-                $stmt_color->execute([$new_status, $target_loc]);
-                $matched_color = $stmt_color->fetchColumn() ?: '#3b82f6';
-
-                $stmt_is_def = $conn_wh->prepare("SELECT is_default FROM location_statuses WHERE name = ? AND (location_code IS NULL OR location_code = '' OR location_code = 'GLOBAL')");
-                $stmt_is_def->execute([$new_status]);
-                $is_def = (int)$stmt_is_def->fetchColumn();
-
-                $stmt_cur_cs = $conn_wh->prepare("SELECT rowid FROM location_statuses WHERE location_code = ?");
-                $stmt_cur_cs->execute([$target_loc]);
-                $cur_cs_id = $stmt_cur_cs->fetchColumn();
-
-                if (!$is_def) {
-                    if ($cur_cs_id) {
-                        $conn_wh->prepare("UPDATE location_statuses SET name = ?, color = ? WHERE rowid = ?")->execute([$new_status, $matched_color, $cur_cs_id]);
-                    } else {
-                        $conn_wh->prepare("INSERT INTO location_statuses (name, color, is_default, location_code) VALUES (?, ?, 0, ?)")->execute([$new_status, $matched_color, $target_loc]);
-                    }
                 }
 
                 $conn_wh->commit();
@@ -181,49 +469,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $name = trim($_POST['status_name']);
         $color = $_POST['status_color'] ?? '#64748b';
         if (!empty($name)) {
-            $stmt = $conn_wh->prepare("INSERT OR IGNORE INTO location_statuses (name, color, is_default) VALUES (?, ?, 0)");
+            $stmt = $conn_wh->prepare("INSERT OR IGNORE INTO location_statuses (name, color) VALUES (?, ?)");
             $stmt->execute([$name, $color]);
         }
         header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=status_added");
-        exit();
-    }
-
-    if ($_POST['action'] === 'edit_location_status' && isset($_POST['status_id'])) {
-        $id = (int)$_POST['status_id'];
-        $name = trim($_POST['status_name'] ?? '');
-        $color = $_POST['status_color'] ?? '#64748b';
-        if ($id > 0 && !empty($name)) {
-            $stmt_old = $conn_wh->prepare("SELECT name FROM location_statuses WHERE id = ?");
-            $stmt_old->execute([$id]);
-            $old_name = $stmt_old->fetchColumn();
-
-            $conn_wh->beginTransaction();
-            $stmt = $conn_wh->prepare("UPDATE location_statuses SET name = ?, color = ? WHERE id = ?");
-            $stmt->execute([$name, $color, $id]);
-
-            if ($old_name && $old_name !== $name) {
-                $conn_wh->prepare("UPDATE locations SET status = ? WHERE status = ?")->execute([$name, $old_name]);
-            }
-            $conn_wh->commit();
-        }
-        header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=status_updated");
-        exit();
-    }
-
-    if ($_POST['action'] === 'delete_location_status' && isset($_POST['status_id'])) {
-        $id = (int)$_POST['status_id'];
-        $stmt_cur = $conn_wh->prepare("SELECT * FROM location_statuses WHERE id = ?");
-        $stmt_cur->execute([$id]);
-        $cur = $stmt_cur->fetch(PDO::FETCH_ASSOC);
-
-        $defaults = ['working', 'audit', 'shipping', 'in-review', 'warehoused', 'idle'];
-        if ($cur && (int)$cur['is_default'] !== 1 && !in_array(strtolower($cur['name']), $defaults)) {
-            $conn_wh->beginTransaction();
-            $conn_wh->prepare("UPDATE locations SET status = 'Idle' WHERE status = ?")->execute([$cur['name']]);
-            $conn_wh->prepare("DELETE FROM location_statuses WHERE id = ?")->execute([$id]);
-            $conn_wh->commit();
-        }
-        header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=status_deleted");
         exit();
     }
 

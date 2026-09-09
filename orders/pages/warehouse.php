@@ -29,34 +29,14 @@ include __DIR__ . '/partials/warehouse/actions.php';
 $stmt_locs = $conn_wh->query("
     SELECT l.*,
         (SELECT COUNT(*) FROM inventory i WHERE i.location_code = l.location_code) as item_count,
-        COALESCE(
-            (SELECT ls.color FROM location_statuses ls 
-             WHERE ls.name = l.status AND ls.location_code = l.location_code 
-             LIMIT 1),
-            (SELECT ls.color FROM location_statuses ls 
-             WHERE ls.name = l.status AND (ls.location_code IS NULL OR ls.location_code = '' OR ls.location_code = 'GLOBAL') 
-             ORDER BY ls.is_default DESC LIMIT 1),
-            (SELECT ls.color FROM location_statuses ls 
-             WHERE ls.name = l.status 
-             LIMIT 1),
-            '#94a3b8'
-        ) as status_color
+        ls.color as status_color
     FROM locations l
+    LEFT JOIN location_statuses ls ON l.status = ls.name
     ORDER BY l.location_code ASC
 ");
 $existing_locs = $stmt_locs->fetchAll(PDO::FETCH_ASSOC);
 
-if (!empty($selected_loc) && $selected_loc !== 'GLOBAL') {
-    $stmt_st = $conn_wh->prepare("SELECT rowid AS id, name, color, is_default, location_code FROM location_statuses 
-        WHERE location_code IS NULL OR location_code = '' OR location_code = 'GLOBAL' OR location_code = ? 
-        ORDER BY is_default DESC, (location_code IS NULL OR location_code = '' OR location_code = 'GLOBAL') DESC, name ASC");
-    $stmt_st->execute([$selected_loc]);
-    $all_statuses = $stmt_st->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $all_statuses = $conn_wh->query("SELECT rowid AS id, name, color, is_default, location_code FROM location_statuses 
-        WHERE location_code IS NULL OR location_code = '' OR location_code = 'GLOBAL' 
-        ORDER BY is_default DESC, name ASC")->fetchAll(PDO::FETCH_ASSOC);
-}
+$all_statuses = $conn_wh->query("SELECT * FROM location_statuses ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 $sectors = $conn_wh->query("SELECT * FROM sectors")->fetchAll(PDO::FETCH_ASSOC);
 
 // 3. Fetch Inventory Items
@@ -87,10 +67,10 @@ if ($selected_loc) {
         $stmt_check->execute([$selected_loc]);
 
         if ($selected_sector === 'Master') {
-            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE location_code = ? ORDER BY sort_order ASC, id DESC");
+            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE location_code = ? ORDER BY id DESC");
             $stmt_i->execute([$selected_loc]);
         } else {
-            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? AND location_code = ? ORDER BY sort_order ASC, id DESC");
+            $stmt_i = $conn_wh->prepare("SELECT * FROM inventory WHERE sector = ? AND location_code = ? ORDER BY id DESC");
             $stmt_i->execute([$selected_sector, $selected_loc]);
         }
         $items = $stmt_i->fetchAll(PDO::FETCH_ASSOC);
@@ -120,23 +100,7 @@ include __DIR__ . '/partials/warehouse/ajax_view.php';
                 $active_l_color = '#94a3b8';
                 $active_l_status = 'Idle';
                 if ($selected_loc) {
-                    $active_l_stmt = $conn_wh->prepare("
-                        SELECT l.*, 
-                            COALESCE(
-                                (SELECT ls.color FROM location_statuses ls 
-                                 WHERE ls.name = l.status AND ls.location_code = l.location_code 
-                                 LIMIT 1),
-                                (SELECT ls.color FROM location_statuses ls 
-                                 WHERE ls.name = l.status AND (ls.location_code IS NULL OR ls.location_code = '' OR ls.location_code = 'GLOBAL') 
-                                 ORDER BY ls.is_default DESC LIMIT 1),
-                                (SELECT ls.color FROM location_statuses ls 
-                                 WHERE ls.name = l.status 
-                                 LIMIT 1),
-                                '#94a3b8'
-                            ) as color
-                        FROM locations l 
-                        WHERE l.location_code = ?
-                    ");
+                    $active_l_stmt = $conn_wh->prepare("SELECT l.*, ls.color FROM locations l LEFT JOIN location_statuses ls ON l.status = ls.name WHERE l.location_code = ?");
                     $active_l_stmt->execute([$selected_loc]);
                     $active_l = $active_l_stmt->fetch(PDO::FETCH_ASSOC);
                     if ($active_l) {

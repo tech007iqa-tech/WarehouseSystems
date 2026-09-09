@@ -70,12 +70,14 @@ class UI {
         if ($type === 'NEED_PHOTO') $icon = '📸';
         if ($type === 'NEED_TEMPLATE') $icon = '📝';
 
+        $desc_html = (strpos($desc, '<') !== false) ? $desc : nl2br(htmlspecialchars($desc, ENT_QUOTES, 'UTF-8'));
+
         return "
         <div class='opportunity-card opp-" . htmlspecialchars($type) . "'>
             <div class='opp-icon'>{$icon}</div>
             <div class='opp-content'>
                 <h3>" . htmlspecialchars($title) . "</h3>
-                <p>" . htmlspecialchars($desc) . "</p>
+                <p>{$desc_html}</p>
                 <a href='" . htmlspecialchars($link) . "' class='btn btn-small'>" . htmlspecialchars($btn_text) . "</a>
             </div>
         </div>";

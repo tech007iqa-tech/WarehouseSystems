@@ -1,4 +1,4 @@
-# 🧠 AI Technical Deep Dive 7/17/2026 1:35 PM
+# 🧠 AI Technical Deep Dive 9/5/2026 10:52 PM
 
 This document details the database schemas, query abstractions, concurrency controls, document generation formulas, and security patterns implemented in the **IQA Warehouse Systems**.
 
@@ -44,7 +44,7 @@ The system contains five SQLite databases situated in the `/db/` directory.
   - `description` (TEXT, NOT NULL): Quality/spec details.
   - `notes` (TEXT): Freeform notes and specs parsed from AI or Bulk Import.
   - `quantity` (INTEGER, NOT NULL)
-  - `unit_price` (REAL, DEFAULT `0.00`): Supports positive amounts as well as negative values for promotional discounts, line-item credits, and trade-in deductions.
+  - `unit_price` (REAL, DEFAULT `0.00`)
   - `created_at` (DATETIME)
 
 ### 3. `warehouse.db`
@@ -197,3 +197,23 @@ To enable printing on 2"×1" labels using standard thermal label printers, the s
 ## 🛡️ Audit Logger Resilience
 The audit manager `Audit::log()` commits operational logs to the `users.db` `audit_log` database.
 - **DB Conflict Fallback**: SQLite locks databases when writing from multiple concurrent client processes. If the SQLite database triggers a locking exception, `Audit::log()` catches the error, formats the log properties, and appends the details to a local log file: `/prod/logs/audit_fallback.log`.
+
+---
+
+## ⚠️ Recent Critical Fixes & Features (September 2026)
+*   **Warehouse Stock Spreadsheet & Multi-Header Sorting (`/marketing/?page=model_templates`)**:
+    *   **Live Database Integration**: Embedded live records from `db/warehouse.db` (`inventory` table, 1,211 items) into an interactive spreadsheet view using text box cells (`<input type="text" class="cell-input">`) with Excel-style keyboard navigation (<kbd>↑</kbd>, <kbd>↓</kbd>, <kbd>Enter</kbd>).
+    *   **Column Sequencing**: Structured column layout with **QTY** placed immediately adjacent to **Sector** (`Sector` ➔ `Qty` ➔ `Location` ➔ `Brand` ➔ `Model` ➔ `CPU/Series` ➔ `RAM` ➔ `Storage` ➔ `Condition` ➔ `Notes` ➔ `Price` ➔ `Action`).
+    *   **Interactive Multi-Header Sorting**: Implemented bidirectional sorting across all 11 headers (numeric for QTY & Price, natural alphanumeric `localeCompare` for text columns, visual indicators `▲`/`▼`/`⇅`).
+    *   **Flexible Search & Rows View Persistence**: Multi-term space-separated search matching tokens in any order. Searching automatically changes the Rows view to `All`; clearing or deleting the search text retains the Rows view default to `All`, displaying all 1,211 items.
+    *   **One-Click Template Prefill**: `⚡ Prefill` action button on each row auto-populates Model Name, Category, Base Specs, and Marketing Copy in the top creation form with smooth scrolling and attention flash animation.
+    *   **CSV Export**: Instant client-side export of filtered and sorted warehouse stock to `.csv`.
+*   **Docs Module & Card Layout Fixes (`/marketing/?page=docs`)**: Fixed `.docs-sidebar` structure and card hierarchy in `marketing/modules/docs/index.php` for seamless side-by-side reading and maximized technical document navigation.
+*   **Marketing JS & UI Alignment**: Resolved identifier collision errors (`notify` declaration in `app.js`) and aligned cards, buttons, badges, and filters with the master Aqua Teal (`#007268`) design standard.
+
+## ⚠️ Recent Critical Fixes & Features (July 2026)
+*   **Location & Zone Photography (Photos for Zone)**: Added physical shelf/location photo upload functionality to the Warehouse module. Photos are organized by layer category (Layer 1 Bottom to Layer 5 Top, or Row/Overall View) and sector. Features include a floating hover zoom preview for photo thumbnails, and an aggregated gallery view ("View Zone Photos") for parent storage zones.
+*   **Photo Storage & Backup Architecture**: Implemented `LocationPhotoProcessor`, `StorageManager` (with local SSD and spinning disk drivers), and `BackupManager` allowing admins to pick the archive path, and create/download or restore `.tar` backup archives containing both photo assets and database metadata.
+*   **Inventory Consolidation**: Added `api/consolidate_inventory.php` to automate the merging of identical inventory items within the same warehouse location.
+*   **Checkout & Warehouse CSV Standardization**: Added `ram`, `storage`, and `battery` columns directly to the `items` schema. Unified the frontend CSV exports for both Checkout and Warehouse modules so their layout and column sequencing ("Price", "QTY", "Total", plus auto-generated "Notes" and "Battery" descriptions) match perfectly.
+*   **Iframe Escaping**: Improved UX in the inbound module (`orders/index.php?view=inbound`) by ensuring navigation actions escape the iframe and target the parent window/tab.

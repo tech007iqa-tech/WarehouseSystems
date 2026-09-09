@@ -1,5 +1,5 @@
-# 📦 IQA Warehouse Systems 7/17/2026 1:35 PM
-*Last Updated: 7/11/2026 11:56 PM*
+# 📦 IQA Warehouse Systems 9/5/2026 10:52 PM
+*Last Updated: 9/5/2026 10:52 PM*
 
 Welcome to the **IQA Warehouse Systems** user manual. This guide provides comprehensive instructions on how to navigate and utilize the ecosystem for warehouse management, sales logistics, and customer relations.
 
@@ -88,14 +88,12 @@ The ordering workflow is split into two phases: building the batch and finalizin
 - **Interactive Chips**: Use pre-defined keyword chips (e.g., "Tested", "Working") to quickly fill in item descriptions.
 - **Repeat Last**: Quickly add the same item configuration again with a single click.
 - **Work Order AI Import**: Click "Import" and utilize the full-screen AI Batch Import Center. Upload a handwritten or printed manifest, and the AI will extract all details (including specs like RAM and Storage into the Notes column) and automatically estimate CPU values!
-- **Clipboard Bulk Import**: Easily map bulk text or spreadsheet pastes from the Customer Registry or Order Builder. Uses smart multi-keyword column detection that distinguishes data rows (such as "D Series") from true headers without data truncation.
+- **Clipboard Bulk Import**: Easily map bulk text or spreadsheet pastes. If your spreadsheet contains a column named "note" or "notes", the importer will automatically route that data into the batch item notes.
 
 ### Phase 2: Checkout Manifest (`/prod/checkout.php`)
-- **Verification**: Review all items in the batch. You can edit unit prices, quantities, and descriptions inline with real-time recalculations.
-- **Discounts & Credits**: Enter negative unit prices (e.g., `-$63.45` or `-15%`) on dedicated discount line items. The manifest automatically deducts the amount from the subtotal and grand total.
+- **Verification**: Review all items in the batch. You can edit unit prices, quantities, and descriptions inline.
 - **Backdating**: If necessary, you can adjust the order date to reflect when the transaction actually occurred.
 - **Transfer Order**: Move an entire order batch from one customer account to another if a mistake was made during intake.
-- **Export & Print**: One-click thermal manifest printing or B2B CSV export tailored for accounting and physical warehouse sign-off.
 
 ---
 

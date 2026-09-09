@@ -1,92 +1,97 @@
-# 🗺️ Global System Sitemap 7/17/2026 1:35 PM
+# 🗺️ Global System Sitemap - IQA Warehouse Systems 9/5/2026 10:52 PM
 
-This map outlines the tri-module structure of the IQA Warehouse Systems.
+This sitemap outlines the comprehensive multi-module ecosystem of the IQA Warehouse Systems.
+
+---
 
 ## 📍 Root `/WarehouseSystems-main/`
-- `index.php`: Premium Portal / Landing Page.
-- `DOCS/`: System-wide AI reviewer documentation.
-    - `AI_AGENT_INSTRUCTIONS.md`: Core behavioral guidelines.
-    - `AI_TECHNICAL_DEEP_DIVE.md`: Architectural shortcuts & token-saving map.
-    - `GLOBAL_SITEMAP.md`: This document.
-    - `CODE_REVIEW_CHECKLIST.md`: Quality control standards.
-- `labels/`: [Inventory & Label Module]
-- `orders/`: [Order & CRM Module]
-- `sampleWHdata/`: [Offline Intake Terminal Module]
+- `index.php`: Master Portal & Navigation Landing Page.
+- `core/`: Shared platform utilities:
+  - `UI.php`: Server-side UI component engine (`stat_card`, `badge`, `csrf_field`, `modal`, notifications).
+  - `Security.php`: Central CSRF token generation, validation, and session security.
+- `DOCS/`: System-wide architectural and AI reviewer documentation:
+  - `AI_AGENT_INSTRUCTIONS.md`: Core developer rules and system constraints.
+  - `AI_TECHNICAL_DEEP_DIVE.md`: Architectural shortcuts, DB sync patterns, and token-saving tips.
+  - `GLOBAL_SITEMAP.md`: This comprehensive ecosystem directory.
+  - `CODE_REVIEW_CHECKLIST.md`: Zero-trust code review quality checklist.
+- `sampleWHdata/`: Standalone offline intake and hardware auditing utility.
 
 ---
 
 ## 🏷️ Module: Labels (`/labels/`)
-*Focus: Individual unit intake and high-fidelity thermal printing.*
+*Focus: Individual unit intake, hardware spec editing, and high-fidelity thermal label printing.*
 
-- `index.php`: Dashboard (Stats & Quick Search).
+- `index.php`: Dashboard (Stats & Quick Inventory Search).
 - `labels.php`: Main Inventory Tracker.
-- `new_label.php`: Rapid Intake Form.
-- `hardware_view.php`: Technical Sheet Editor.
+- `new_label.php`: Rapid Unit Intake Form.
+- `hardware_view.php`: Technical Spec Editor & Hardware Details.
 - `api/`:
-    - `add_label.php`: Database insertion.
-    - `reprint_label.php`: Flat XML ODT generation.
-    - `open_windows_file.php`: Native shell launch helper.
-- `db/`: SQLite databases (`labels`, `audit`, `orders`, `rolodex`).
-- `templates/`: ODT master templates.
-- `exports/`: Storage for generated labels.
+  - `add_label.php`: Database insertion and validation.
+  - `reprint_label.php`: Flat XML (`.fodt`) generation (portable, zero ZipArchive dependency).
+  - `open_windows_file.php`: Native Windows file launcher helper.
+- `db/`: SQLite databases (`labels.sqlite`, `audit.sqlite`, `orders.sqlite`, `rolodex.sqlite`).
+- `templates/`: Flat XML LibreOffice master templates.
+- `exports/`: Destination directory for generated thermal print jobs.
 
 ---
 
-## 📊 Module: Orders (`/orders/`)
-*Focus: B2B relationship management and batch fulfillment.*
+## 📊 Module: Orders & CRM (`/orders/`)
+*Focus: B2B relationship management, warehouse locations, and batch order fulfillment.*
 
-- `index.php`: Application Router (all pages below are routed through here via `?view=` parameter).
+- `index.php`: Front router (routes views via `?view=` query parameter).
 - `pages/`:
-    - `warehouse.php`: Stock & location management with nested working zones.
-    - `inbound.php`: Embeds `sampleWHdata/audit.html` via seamless iframe for AI-powered intake (with parent-window navigation escaping).
-    - `customer_registry.php`: B2B account list.
-    - `leads.php`: CRM interaction hub with SSE real-time sync.
-    - `new_order.php`: Batch builder.
-    - `checkout.php`: B2B Manifest & Export.
-    - `trends.php`: Historical BI analytics with CPU pricing modals.
-    - `calendar.php`: Scheduler with lead conversion badging.
-    - `settings.php`: Administrative control panel (schema repair, backup, audit logs).
-    - `import_warehouse.php`: Warehouse batch import from intake CSV.
-- `download_archive.php`: Endpoint for fetching raw archived photographs.
+  - `warehouse.php`: Stock and multi-tier physical storage location management.
+  - `inbound.php`: Embedded AI intake terminal.
+  - `customer_registry.php`: Canonical B2B account roster.
+  - `leads.php`: CRM interaction hub with real-time SSE sync.
+  - `new_order.php`: Batch order and invoice builder.
+  - `checkout.php`: B2B manifest builder and standardized CSV export.
+  - `trends.php`: Historical BI analytics with CPU pricing modals.
+  - `calendar.php`: Outreach scheduler with lead conversion tracking.
+  - `settings.php`: Administrative control panel (schema repair, backups, audit logs).
+  - `import_warehouse.php`: Batch inventory CSV intake importer.
 - `core/`:
-    - `database.php`: Cross-DB PDO Singleton with self-healing Schema Guard.
-    - `auth.php`: Role-based security (Admin, Operator, Front Desk).
-    - `Schema.php`: All database table blueprints and migration rules.
-    - `UI.php`: Server-side UI helpers (notifications, theme init).
-    - `LocationPhotoProcessor.php`: Resizes, optimizes, generates thumbnails, and saves original raw photos to the archive.
-    - `Storage.php`: Storage Abstraction layer for Location Photos (SSD and Archive).
-    - `BackupManager.php`: Handles `.tar` package creation and restoration for photo assets and database metadata.
-- `api/`:
-    - `get_cpu_pricing_details.php`: Price metrics and recent transactions for CPU families.
-    - `get_order_details.php`: Item batch list and totals for a given order ID.
-    - `sync_stream.php`: SSE stream for real-time DB change notification.
-- `assets/`:
-    - `styles/`: Per-view CSS files (`style.css`, `warehouse.css`, `inbound.css`, `calendar.css`, etc.)
-    - `js/`: Per-view JS files (`warehouse.js`, `new_order.js`, `orders.js`, etc.)
-- `db/`: SQLite databases (`customers.db`, `orders.db`, `users.db`, `warehouse.db`, `calendar.db`).
+  - `database.php`: Cross-DB PDO singleton with self-healing schema migrations.
+  - `auth.php`: Role-based security (`Admin`, `Operator`, `Front Desk`).
+  - `Schema.php`: Database table blueprints and migration rules.
+  - `LocationPhotoProcessor.php`: Location and shelf photo optimization pipeline.
+  - `Storage.php`: Storage abstraction layer for SSD and spinning disk archives.
+  - `BackupManager.php`: Automated `.tar` archive creation and recovery.
 
 ---
 
-## 📥 Module: Inbound Intake Terminal (`/sampleWHdata/`)
-*Focus: Offline-capable, AI-powered handwritten intake sheet digitization.*
+## 📢 Module: Marketing Hub (`/marketing/`)
+*Focus: Inventory-driven ad generation, outbound campaigns, canonical hardware specs, and photo vaults.*
 
-- `audit.html`: Main intake terminal UI — drag-and-drop image upload, AI OCR mode, Manual Grid Overlay mode, image viewer controls, and audit table editor.
-- `history.html`: Committed intake log viewer — hierarchical shelf/bin location breadcrumb filter, sortable table, search, CSV export, and link to warehouse import.
-- `settings.html`: Configuration panel — Gemini API key, AI prompt settings (persona, field schema, abbreviation dictionary, normalization rules), compiled prompt preview, and **Database Management** (clear committed records).
-- `process.php`: Backend API router — handles `extract`, `save`, `get_committed`, `clear_committed`, `get_config`, `save_config` actions.
-- `config.json`: Persisted Gemini API key and all prompt settings.
-- `src/`:
-    - `OcrEngine.php`: Builds and sends Gemini Vision multipart API request.
-    - `Normalizer.php`: Applies abbreviation expansion and formatting rules to each row.
-    - `DbHandler.php`: PDO handler for `committed_intakes` table in `sample_data/intake.sqlite`.
-    - `Config.php`: Reads/writes `config.json`.
-- `assets/css/`:
-    - `audit.css`: Full dark glassmorphic theme for the terminal.
-    - `settings.css`: Settings page styles.
-- `assets/js/`:
-    - `api.js`: Fetch API wrapper for all process.php endpoints.
-    - `audit.js`: File upload, OCR orchestration, undo, commit, and reset logic.
-    - `grid.js`: Table row rendering, Manual Grid Overlay, CSV load/download.
-    - `viewer.js`: Image pan, zoom, and rotation controls.
-    - `dragdrop.js`: Drag-and-drop event handling.
-- `sample_data/intake.sqlite`: Auto-created SQLite database for committed intake records.
+- `index.php`: Modular front controller and strict `$allowed_modules` dispatcher.
+- `config.php`: Multi-database path configuration and RBAC authentication.
+- `includes/`:
+  - `db.php`: Database connection handles, self-healing migrations, and `log_marketing_audit()`.
+  - `header.php` / `footer.php`: Shared navigation, portal topbar, and notifications.
+  - `photo_processor.php`: Automated GD-based WebP image optimization and thumbnailing.
+- `modules/`:
+  - `dashboard/`: Executive KPI command center and smart inventory opportunities.
+  - `leads/`: Sales pipeline with bi-directional Master CRM (`customers.db`) sync.
+  - `model_templates/`: Canonical hardware catalog with photo coverage badge tracking.
+  - `ad_generator/`: Real-time multi-tone copy generator matched against `labels.sqlite` stock.
+  - `photo_bucket/`: Hardware photo repository with drag-and-drop uploads and WebP conversion.
+  - `campaigns/`: Multi-channel marketing initiatives and goal tracker.
+  - `manifest/`: Reusable `ManifestGenerator` service class.
+  - `reports/`: Funnel analytics, conversion velocity, and inventory marketing coverage.
+  - `docs/`: Built-in interactive documentation viewer and knowledge base.
+- `docs/`: Architectural blueprints, feature specifications, SOPs, and roadmap.
+
+---
+
+## 🛠️ Module: Technician Control Center (`/tech/`)
+*Focus: Hardware testing, test yields, device audit logs, and component inventory.*
+
+- `index.php`: Technician dashboard (daily test yields, Good vs. Bad unit metrics).
+- `pages/`:
+  - `logs.php`: Hardware testing logs and historical test lookup.
+  - `parts.php`: Parts inventory (RAM, Storage, Batteries) with automated low-stock alerts.
+  - `audit.php`: Administrator-only technician throughput audit ledger.
+- `api/`:
+  - `search_logs.php`: Fast serial, make, and model test history lookup.
+  - `log_test.php`: Hardware test submission endpoint.
+- `core/`: Shared database handles and auth guards.

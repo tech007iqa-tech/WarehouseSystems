@@ -5,68 +5,85 @@
  */
 
 // 1. Fetch template names first to use as a filter
-$templateModels = $marketingDb->query("SELECT model_name FROM model_templates")->fetchAll(PDO::FETCH_COLUMN);
+$templateModels = [];
+try {
+    $templateModels = $marketingDb->query("SELECT model_name FROM model_templates")->fetchAll(PDO::FETCH_COLUMN) ?: [];
+} catch (Throwable $e) {
+    error_log("Failed to fetch template models: " . $e->getMessage());
+}
 
 // 2. Fetch available models from Labels DB that MATCH templates
 $modelsInStock = [];
 if ($labelsDb && !empty($templateModels)) {
-    // We create a placeholder string (?,?,?) for the IN clause
-    $placeholders = implode(',', array_fill(0, count($templateModels), '?'));
-    $stmt = $labelsDb->prepare("
-        SELECT brand, model, COUNT(*) as qty
-        FROM items
-        WHERE status = 'In Warehouse'
-        AND model IN ($placeholders)
-        GROUP BY brand, model
-        ORDER BY qty DESC
-    ");
-    $stmt->execute($templateModels);
-    $modelsInStock = $stmt->fetchAll();
+    try {
+        $placeholders = implode(',', array_fill(0, count($templateModels), '?'));
+        $stmt = $labelsDb->prepare("
+            SELECT brand, model, COUNT(*) as qty
+            FROM items
+            WHERE status = 'In Warehouse'
+            AND model IN ($placeholders)
+            GROUP BY brand, model
+            ORDER BY qty DESC
+        ");
+        $stmt->execute($templateModels);
+        $modelsInStock = $stmt->fetchAll() ?: [];
+    } catch (Throwable $e) {
+        error_log("Failed to query stock in labels DB: " . $e->getMessage());
+    }
 }
 
-// 2. Handle Ad Generation Logic
-$selectedModel = $_GET['model'] ?? null;
-$tone = $_GET['tone'] ?? 'manifest'; // manifest, urgency, social
+// 3. Handle Ad Generation Logic
+$selectedModel = isset($_GET['model']) ? trim($_GET['model']) : null;
+$tone = isset($_GET['tone']) ? trim($_GET['tone']) : 'manifest'; // manifest, urgency, social
 $generatedAd = null;
 $matchingTemplate = null;
 
 if ($selectedModel) {
-    // Find template in Marketing DB
-    $stmt = $marketingDb->prepare("SELECT * FROM model_templates WHERE model_name = ?");
-    $stmt->execute([$selectedModel]);
-    $matchingTemplate = $stmt->fetch();
+    try {
+        // Find template in Marketing DB
+        $stmt = $marketingDb->prepare("SELECT * FROM model_templates WHERE model_name = ?");
+        $stmt->execute([$selectedModel]);
+        $matchingTemplate = $stmt->fetch();
 
-    if ($matchingTemplate) {
-        // Calculate QTY again for the specific ad
-        $qty = 0;
-        foreach($modelsInStock as $m) {
-            if ($m['model'] === $selectedModel) {
-                $qty = $m['qty'];
-                break;
+        if ($matchingTemplate) {
+            // Calculate QTY for the specific ad
+            $qty = 0;
+            foreach ($modelsInStock as $m) {
+                if ($m['model'] === $selectedModel) {
+                    $qty = (int)$m['qty'];
+                    break;
+                }
+            }
+
+            // TONE-BASED GENERATION
+            if ($tone === 'urgency') {
+                $generatedAd = "⚡ FLASH SALE: {$qty}x " . strtoupper($matchingTemplate['model_name']) . " ⚡\n\n";
+                $generatedAd .= "We need to clear space! " . $qty . " units ready for IMMEDIATE palletized shipping.\n\n";
+                $generatedAd .= "🔥 KEY SPECS:\n" . UI::format_specs_plain($matchingTemplate['base_specs']) . "\n\n";
+                $generatedAd .= "FIRST COME, FIRST SERVED. Reply now for special bulk pricing. 📉";
+            } elseif ($tone === 'social') {
+                $generatedAd = "✨ Looking for quality " . $matchingTemplate['category'] . "s in bulk? ✨\n\n";
+                $generatedAd .= "The " . $matchingTemplate['model_name'] . " is back in stock (" . $qty . " units available).\n\n";
+                $generatedAd .= $matchingTemplate['marketing_copy'] . "\n\n";
+                $generatedAd .= "#RefurbishedTech #IQA #BulkInventory #ITAD";
+            } else {
+                // Standard Manifest
+                $generatedAd = "🔥 INVENTORY ALERT: " . strtoupper($matchingTemplate['model_name']) . " 🔥\n\n";
+                $generatedAd .= "We have just processed a batch of " . $qty . " units, now ready for immediate fulfillment!\n\n";
+                $generatedAd .= "📍 SPECIFICATIONS:\n" . UI::format_specs_plain($matchingTemplate['base_specs']) . "\n\n";
+                $generatedAd .= "📝 OVERVIEW:\n" . $matchingTemplate['marketing_copy'] . "\n\n";
+                $generatedAd .= "DM for pricing and bulk manifest.";
+            }
+
+            // De-duplicate audit log per session view
+            $logKey = "ad_log_" . md5($selectedModel . $tone . $qty);
+            if (!isset($_SESSION[$logKey])) {
+                log_marketing_audit($marketingDb, 'AdGenerator', $selectedModel, 'GENERATED', "Generated $tone ad for $selectedModel (Qty: $qty)");
+                $_SESSION[$logKey] = true;
             }
         }
-
-        // TONE-BASED GENERATION
-        if ($tone === 'urgency') {
-            $generatedAd = "⚡ FLASH SALE: {$qty}x " . strtoupper($matchingTemplate['model_name']) . " ⚡\n\n";
-            $generatedAd .= "We need to clear space! " . $qty . " units ready for IMMEDIATE palletized shipping.\n\n";
-            $generatedAd .= "🔥 KEY SPECS:\n" . UI::format_specs_plain($matchingTemplate['base_specs']) . "\n\n";
-            $generatedAd .= "FIRST COME, FIRST SERVED. Reply now for special bulk pricing. 📉";
-        } elseif ($tone === 'social') {
-            $generatedAd = "✨ Looking for quality " . $matchingTemplate['category'] . "s in bulk? ✨\n\n";
-            $generatedAd .= "The " . $matchingTemplate['model_name'] . " is back in stock (" . $qty . " units available).\n\n";
-            $generatedAd .= $matchingTemplate['marketing_copy'] . "\n\n";
-            $generatedAd .= "#RefurbishedTech #IQA #BulkInventory #ITAD";
-        } else {
-            // Standard Manifest
-            $generatedAd = "🔥 INVENTORY ALERT: " . strtoupper($matchingTemplate['model_name']) . " 🔥\n\n";
-            $generatedAd .= "We have just processed a batch of " . $qty . " units, now ready for immediate fulfillment!\n\n";
-            $generatedAd .= "📍 SPECIFICATIONS:\n" . UI::format_specs_plain($matchingTemplate['base_specs']) . "\n\n";
-            $generatedAd .= "📝 OVERVIEW:\n" . $matchingTemplate['marketing_copy'] . "\n\n";
-            $generatedAd .= "DM for pricing and bulk manifest.";
-        }
-
-        log_marketing_audit($marketingDb, 'AdGenerator', $selectedModel, 'GENERATED', "Generated $tone ad for $selectedModel (Qty: $qty)");
+    } catch (Throwable $e) {
+        error_log("Error generating ad manifest: " . $e->getMessage());
     }
 }
 ?>
@@ -82,14 +99,14 @@ if ($selectedModel) {
         <h2>1. Select Stock from Warehouse</h2>
         <div class="stock-list">
             <?php if (empty($modelsInStock)): ?>
-                <p style="color: var(--text-dim);">No stock found in Labels database.</p>
+                <p style="color: var(--text-dim); padding: 1rem 0;">No matching warehouse inventory with templates found.</p>
             <?php else: ?>
                 <div class="stock-grid">
                     <?php foreach ($modelsInStock as $stock): ?>
-                        <a href="?page=ad_generator&model=<?php echo urlencode($stock['model']); ?>"
-                           class="stock-item <?php echo ($selectedModel === $stock['model']) ? 'active' : ''; ?>">
-                            <div class="stock-qty"><?php echo $stock['qty']; ?> Units</div>
-                            <div class="stock-name"><?php echo htmlspecialchars($stock['brand'] . ' ' . $stock['model']); ?></div>
+                        <a href="?page=ad_generator&model=<?= urlencode($stock['model']); ?>"
+                           class="stock-item <?= ($selectedModel === $stock['model']) ? 'active' : ''; ?>">
+                            <div class="stock-qty"><?= (int)$stock['qty']; ?> Units</div>
+                            <div class="stock-name"><?= h($stock['brand'] . ' ' . $stock['model']); ?></div>
                         </a>
                     <?php endforeach; ?>
                 </div>
@@ -99,75 +116,76 @@ if ($selectedModel) {
 
     <!-- AD PREVIEW -->
     <section class="card ad-preview-main">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h2>2. Generated Ad Manifest</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h2 style="margin: 0;">2. Generated Ad Manifest</h2>
             <?php if ($selectedModel): ?>
             <div class="tone-selector">
-                <a href="?page=ad_generator&model=<?php echo urlencode($selectedModel); ?>&tone=manifest" class="btn-small <?php echo $tone==='manifest'?'active':''; ?>">Standard</a>
-                <a href="?page=ad_generator&model=<?php echo urlencode($selectedModel); ?>&tone=urgency" class="btn-small <?php echo $tone==='urgency'?'active':''; ?>">Urgent</a>
-                <a href="?page=ad_generator&model=<?php echo urlencode($selectedModel); ?>&tone=social" class="btn-small <?php echo $tone==='social'?'active':''; ?>">Social</a>
+                <a href="?page=ad_generator&model=<?= urlencode($selectedModel); ?>&tone=manifest" class="btn-small <?= $tone==='manifest'?'active':''; ?>">Standard</a>
+                <a href="?page=ad_generator&model=<?= urlencode($selectedModel); ?>&tone=urgency" class="btn-small <?= $tone==='urgency'?'active':''; ?>">Urgent</a>
+                <a href="?page=ad_generator&model=<?= urlencode($selectedModel); ?>&tone=social" class="btn-small <?= $tone==='social'?'active':''; ?>">Social</a>
             </div>
             <?php endif; ?>
         </div>
 
         <?php if ($selectedModel && !$matchingTemplate): ?>
             <div class="alert alert-danger">
-                No marketing template found for <strong><?php echo htmlspecialchars($selectedModel); ?></strong>.
-                <a href="?page=model_templates&prefill_model=<?php echo urlencode($selectedModel); ?>" style="color: white; text-decoration: underline;">Create one here</a> to generate an ad.
+                No marketing template found for <strong><?= h($selectedModel); ?></strong>.
+                <a href="?page=model_templates&prefill_model=<?= urlencode($selectedModel); ?>" style="color: white; text-decoration: underline;">Create one here</a> to generate an ad.
             </div>
         <?php elseif ($generatedAd): ?>
             <div class="ad-generator-layout">
-                    <textarea id="adOutput" readonly><?php echo htmlspecialchars($generatedAd); ?></textarea>
+                <textarea id="adOutput" readonly><?= h($generatedAd); ?></textarea>
 
-                    <!-- PHOTO BANK INTEGRATION -->
-                    <div class="photo-preview-sidebar">
-                        <h4 style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 10px;">Bucket Assets</h4>
-                        <?php
+                <!-- PHOTO BANK INTEGRATION -->
+                <div class="photo-preview-sidebar">
+                    <h4 style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 10px;">Bucket Assets</h4>
+                    <?php
+                    $bucketPhotos = [];
+                    try {
                         $photoStmt = $marketingDb->prepare("SELECT * FROM photos WHERE model_name = ? ORDER BY created_at DESC LIMIT 3");
                         $photoStmt->execute([$selectedModel]);
-                        $bucketPhotos = $photoStmt->fetchAll();
+                        $bucketPhotos = $photoStmt->fetchAll() ?: [];
+                    } catch (Throwable $e) {
+                        error_log("Failed to fetch bucket photos for ad generator: " . $e->getMessage());
+                    }
 
-                        if (empty($bucketPhotos)):
-                            for($i=0; $i<3; $i++):
-                        ?>
-                            <div class="asset-thumb">
-                                <span>No Photo</span>
-                            </div>
-                        <?php
-                            endfor;
-                        else:
-                            foreach($bucketPhotos as $photo):
-                        ?>
-                            <div class="asset-thumb exists">
-                                <?php
-                                $previewImg = (!empty($photo['thumbnail_path']) && file_exists(__DIR__ . '/../../' . $photo['thumbnail_path']))
-                                              ? $photo['thumbnail_path']
-                                              : $photo['file_path'];
-                                ?>
-                                <img src="<?php echo $previewImg; ?>" alt="Stock Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
-                            </div>
-                        <?php
-                            endforeach;
-                            // Fill remaining slots if less than 3
-                            for($i=count($bucketPhotos); $i<3; $i++):
-                        ?>
-                             <div class="asset-thumb">
-                                <span>Empty Slot</span>
-                            </div>
-                        <?php
-                            endfor;
-                        endif;
-                        ?>
-                        <a href="?page=photo_bucket" style="font-size: 0.7rem; text-align: center; color: var(--accent-primary); text-decoration: none; font-weight: 700; margin-top: 5px;">Go to Bucket →</a>
-                    </div>
+                    if (empty($bucketPhotos)):
+                        for($i=0; $i<3; $i++):
+                    ?>
+                        <div class="asset-thumb">
+                            <span>No Photo</span>
+                        </div>
+                    <?php
+                        endfor;
+                    else:
+                        foreach($bucketPhotos as $photo):
+                            $previewImg = (!empty($photo['thumbnail_path']) && file_exists(__DIR__ . '/../../' . $photo['thumbnail_path']))
+                                          ? $photo['thumbnail_path']
+                                          : $photo['file_path'];
+                    ?>
+                        <div class="asset-thumb exists">
+                            <img src="<?= h($previewImg); ?>" alt="Stock Photo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+                        </div>
+                    <?php
+                        endforeach;
+                        for($i=count($bucketPhotos); $i<3; $i++):
+                    ?>
+                         <div class="asset-thumb">
+                            <span>Empty Slot</span>
+                        </div>
+                    <?php
+                        endfor;
+                    endif;
+                    ?>
+                    <a href="?page=photo_bucket" style="font-size: 0.7rem; text-align: center; color: var(--accent-primary); text-decoration: none; font-weight: 700; margin-top: 5px;">Go to Bucket →</a>
                 </div>
+            </div>
 
-                <div class="ad-actions" style="margin-top: 1.5rem;">
-                    <button onclick="copyAdToClipboard()" class="btn-action" style="width: 100%;">📋 Copy to Clipboard</button>
-                    <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem; text-align: center;">
-                        This ad is optimized for <?php echo strtoupper($tone); ?> outreach.
-                    </p>
-                </div>
+            <div class="ad-actions" style="margin-top: 1.5rem;">
+                <button type="button" onclick="copyAdToClipboard()" class="btn-action" style="width: 100%;">📋 Copy to Clipboard</button>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 1rem; text-align: center;">
+                    This ad is optimized for <?= h(strtoupper($tone)); ?> outreach.
+                </p>
             </div>
         <?php else: ?>
             <div style="text-align: center; padding: 4rem; color: var(--text-dim);">
@@ -181,19 +199,8 @@ if ($selectedModel) {
 <script>
 function copyAdToClipboard() {
     const copyText = document.getElementById("adOutput");
-    copyText.select();
-    copyText.setSelectionRange(0, 99999);
-    navigator.clipboard.writeText(copyText.value);
-
-    const btn = document.querySelector('.btn-action');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = "✅ Copied!";
-    btn.style.background = "var(--accent-blue)";
-
-    setTimeout(() => {
-        btn.innerHTML = originalText;
-        btn.style.background = "";
-    }, 2000);
+    if (!copyText) return;
+    copyToClipboard(copyText.value, 'Marketing Manifest');
 }
 </script>
 
@@ -215,11 +222,7 @@ function copyAdToClipboard() {
     color: var(--text-main);
     transition: all 0.2s;
 }
-.stock-item:hover {
-    border-color: var(--accent-primary);
-    background: var(--accent-tertiary);
-}
-.stock-item.active {
+.stock-item:hover, .stock-item.active {
     border-color: var(--accent-primary);
     background: var(--accent-tertiary);
 }
@@ -235,65 +238,42 @@ function copyAdToClipboard() {
     font-weight: 700;
     font-size: 0.9rem;
 }
-.ad-preview-container {
+.ad-generator-layout {
     display: flex;
-    flex-direction: column;
     gap: 1.5rem;
 }
 #adOutput {
-    width: 100%;
-    height: 400px;
+    flex: 1;
+    height: 380px;
     background: #f8fafc;
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1.5rem;
     color: var(--text-main);
-    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-    font-size: 0.9rem;
+    font-family: inherit;
+    font-size: 0.95rem;
     line-height: 1.6;
     resize: none;
-    outline: none;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
-}
-.tone-selector {
-    display: flex;
-    gap: 0.5rem;
-    background: #f1f5f9;
-    padding: 4px;
-    border-radius: 10px;
-}
-.tone-selector .btn-small {
-    padding: 6px 12px;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--text-dim);
-    border: none;
-}
-.tone-selector .btn-small.active {
-    background: white;
-    color: var(--accent-primary);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .photo-preview-sidebar {
+    width: 140px;
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 .asset-thumb {
-    height: 120px;
-    background: #f1f5f9;
-    border: 2px dashed #cbd5e1;
-    border-radius: 8px;
+    width: 140px;
+    height: 100px;
+    background: rgba(0,0,0,0.03);
+    border: 1px dashed var(--border-color);
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.65rem;
-    color: #94a3b8;
-    text-transform: uppercase;
-    font-weight: 800;
+    font-size: 0.75rem;
+    color: var(--text-dim);
 }
 .asset-thumb.exists {
-    border: 2px solid var(--accent-primary);
-    background: white;
+    border: 1px solid var(--border-color);
 }
 </style>

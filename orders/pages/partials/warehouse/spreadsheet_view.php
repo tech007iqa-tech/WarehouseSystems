@@ -5,9 +5,11 @@
  */
 ?>
 <!-- Metadata helper for JS -->
-<div id="warehouse-metadata" data-csrf="<?= htmlspecialchars(Security::getToken()) ?>"
-    data-sector="<?= htmlspecialchars($selected_sector) ?>" data-location-code="<?= htmlspecialchars($selected_loc) ?>"
-    style="display:none;"></div>
+<div id="warehouse-metadata"
+     data-csrf="<?= htmlspecialchars(Security::getToken()) ?>"
+     data-sector="<?= htmlspecialchars($selected_sector) ?>"
+     data-location-code="<?= htmlspecialchars($selected_loc) ?>"
+     style="display:none;"></div>
 
 <!-- Inventory List (Spreadsheet Mode) -->
 <section class="inventory-feed" style="width: 100%; max-width: none;">
@@ -21,22 +23,24 @@
             }
             ?>
             <div class="inventory-total-count">
-                Total Qty: <span class="count-value" id="sidebar-total-qty"><?= number_format($total_qty) ?>
-                    Units</span>
+                Total Qty: <span class="count-value" id="sidebar-total-qty"><?= number_format($total_qty) ?> Units</span>
             </div>
         </div>
         <div class="inventory-actions">
             <div class="search-container" style="flex: 1; max-width: 300px;">
                 <i class="search-icon">🔍</i>
-                <input type="text" id="wh-search" placeholder="Search items..." aria-label="Search warehouse inventory"
-                    onkeyup="syncSearch(this)" onkeydown="if(event.key==='Enter') event.preventDefault()"
-                    class="search-input">
+                <input type="text" id="wh-search" placeholder="Search items..."
+                    aria-label="Search warehouse inventory" onkeyup="syncSearch(this)"
+                    onkeydown="if(event.key==='Enter') event.preventDefault()" class="search-input">
             </div>
+            <button type="button" onclick="openInventoryModal('intake')" class="btn-inventory" title="Open Inventory Intake & Shelf Depletion Dialog">
+                ⚡ INVENTORY
+            </button>
             <button type="button" onclick="downloadWarehouseCSV()" class="btn-export">
                 📊 Export CSV
             </button>
-            <button type="button" onclick="window.location.href='index.php?view=import_warehouse'" class="btn-export"
-                style="background: #1e293b; color: white; border: none;">
+            <button type="button" onclick="window.location.href='index.php?view=import_warehouse'"
+                class="btn-export" style="background: #1e293b; color: white; border: none;">
                 📥 Import Bulk
             </button>
         </div>
@@ -45,58 +49,39 @@
     <div class="scroll-hint">↔️ Swipe horizontally to edit/view all columns</div>
 
     <!-- Collapsible Location Photo Gallery Widget -->
-    <div
-        style="margin-bottom: 1.5rem; margin-top: 0.5rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); overflow: hidden;">
+    <div style="margin-bottom: 1.5rem; margin-top: 0.5rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-card); overflow: hidden;">
         <details style="padding: 1rem; cursor: pointer;">
-            <summary
-                style="font-weight: 700; font-size: 0.95rem; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; list-style: none;">
-                <span>📸 Location Photos for <?= htmlspecialchars($selected_loc) ?>
-                    (<?= htmlspecialchars($selected_sector) ?>)</span>
-                <span class="photo-count"
-                    style="font-size: 0.85rem; background: var(--accent-color); color: white; padding: 2px 8px; border-radius: 12px;"><?= count($location_photos) ?>
-                    Photos</span>
+            <summary style="font-weight: 700; font-size: 0.95rem; color: var(--text-main); display: flex; justify-content: space-between; align-items: center; list-style: none;">
+                <span>📸 Location Photos for <?= htmlspecialchars($selected_loc) ?> (<?= htmlspecialchars($selected_sector) ?>)</span>
+                <span class="photo-count" style="font-size: 0.85rem; background: var(--accent-color); color: white; padding: 2px 8px; border-radius: 12px;"><?= count($location_photos) ?> Photos</span>
             </summary>
 
             <div style="margin-top: 1rem;">
                 <!-- Gallery Grid -->
-                <div class="photo-grid-horizontal"
-                    style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; align-items: center;">
+                <div class="photo-grid-horizontal" style="display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 0.5rem; align-items: center;">
                     <?php if (empty($location_photos)): ?>
-                        <div style="color: var(--text-dim); font-size: 0.85rem; padding: 1rem 0;">No photographs uploaded
-                            for this shelf yet.</div>
+                        <div style="color: var(--text-dim); font-size: 0.85rem; padding: 1rem 0;">No photographs uploaded for this shelf yet.</div>
                     <?php else: ?>
                         <?php foreach ($location_photos as $photo): ?>
-                            <div class="photo-card-mini"
-                                style="flex: 0 0 100px; text-align: center; border: 1px solid var(--border-color); border-radius: 8px; padding: 4px; background: var(--bg-body); position: relative;">
-                                <div class="img-preview-container"
-                                    style="position: relative; width: 100%; height: 75px; overflow: hidden; border-radius: 6px;">
-                                    <img src="<?= htmlspecialchars($photo['thumbnail_path']) ?>"
-                                        alt="<?= htmlspecialchars($photo['original_filename']) ?>"
-                                        style="width: 100%; height: 100%; object-fit: cover;">
-                                    <div class="hover-preview"
-                                        style="display: none; position: fixed; z-index: 2100; width: 450px; height: 350px; background: rgba(0,0,0,0.95); border: 2px solid var(--accent-color); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; pointer-events: none;">
-                                        <img src="<?= htmlspecialchars($photo['optimized_path']) ?>"
-                                            style="width: 100%; height: 100%; object-fit: contain;">
+                            <div class="photo-card-mini" style="flex: 0 0 100px; text-align: center; border: 1px solid var(--border-color); border-radius: 8px; padding: 4px; background: var(--bg-body); position: relative;">
+                                <div class="img-preview-container" style="position: relative; width: 100%; height: 75px; overflow: hidden; border-radius: 6px;">
+                                    <img src="<?= htmlspecialchars($photo['thumbnail_path']) ?>" alt="<?= htmlspecialchars($photo['original_filename']) ?>" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <div class="hover-preview" style="display: none; position: fixed; z-index: 2100; width: 450px; height: 350px; background: rgba(0,0,0,0.95); border: 2px solid var(--accent-color); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; pointer-events: none;">
+                                        <img src="<?= htmlspecialchars($photo['optimized_path']) ?>" style="width: 100%; height: 100%; object-fit: contain;">
                                     </div>
                                 </div>
-                                <div style="font-size: 0.7rem; font-weight: 700; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;"
-                                    title="<?= htmlspecialchars($photo['category']) ?>">
+                                <div style="font-size: 0.7rem; font-weight: 700; margin-top: 4px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="<?= htmlspecialchars($photo['category']) ?>">
                                     <?= htmlspecialchars($photo['category']) ?>
                                 </div>
                                 <div style="display: flex; justify-content: center; gap: 8px; margin-top: 4px;">
-                                    <a href="download_archive.php?id=<?= $photo['id'] ?>" class="btn-icon-tiny"
-                                        title="Download Raw Original" style="font-size: 0.75rem; text-decoration: none;">📥</a>
-                                    <form method="POST" style="display: inline;"
-                                        onsubmit="return confirm('Delete this photo?');">
+                                    <a href="download_archive.php?id=<?= $photo['id'] ?>" class="btn-icon-tiny" title="Download Raw Original" style="font-size: 0.75rem; text-decoration: none;">📥</a>
+                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Delete this photo?');">
                                         <?= UI::csrf_field() ?>
                                         <input type="hidden" name="action" value="delete_location_photo">
                                         <input type="hidden" name="photo_id" value="<?= $photo['id'] ?>">
-                                        <input type="hidden" name="location_code"
-                                            value="<?= htmlspecialchars($selected_loc) ?>">
+                                        <input type="hidden" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>">
                                         <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
-                                        <button type="submit"
-                                            style="background: none; border: none; padding: 0; cursor: pointer; font-size: 0.75rem;"
-                                            title="Delete Photo">🗑️</button>
+                                        <button type="submit" style="background: none; border: none; padding: 0; cursor: pointer; font-size: 0.75rem;" title="Delete Photo">🗑️</button>
                                     </form>
                                 </div>
                             </div>
@@ -104,8 +89,7 @@
                     <?php endif; ?>
 
                     <!-- Add Photo trigger -->
-                    <button type="button" onclick="document.getElementById('upload-photo-modal').style.display='flex'"
-                        style="flex: 0 0 100px; height: 110px; border: 2px dashed var(--border-color); border-radius: 8px; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-dim); transition: all 0.2s;">
+                    <button type="button" onclick="document.getElementById('upload-photo-modal').style.display='flex'" style="flex: 0 0 100px; height: 110px; border: 2px dashed var(--border-color); border-radius: 8px; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--text-dim); transition: all 0.2s;">
                         <span style="font-size: 1.5rem;">➕</span>
                         <span style="font-size: 0.75rem; font-weight: 600;">Add Photo</span>
                     </button>
@@ -118,64 +102,60 @@
         <table class="spreadsheet-table">
             <thead>
                 <?php if ($selected_sector === 'Laptops'): ?>
-                    <tr>
-                        <th class="drag-handle-cell" style="width: 34px;"></th>
-                        <th style="width: 10%;">Brand</th>
-                        <th style="width: 10%;">Model</th>
-                        <th style="width: 10%;">Series</th>
-                        <th style="width: 8%;">CPU</th>
-                        <th style="width: 8%;">Gen</th>
-                        <th style="width: 8%;">RAM</th>
-                        <th style="width: 10%;">Storage</th>
-                        <th style="width: 8%;">Battery</th>
-                        <th style="width: 10%;">Condition</th>
-                        <th style="width: 12%;">Notes</th>
-                        <th style="width: 8%;">Price</th>
-                        <th style="width: 6%;">Qty</th>
-                        <th style="width: 6%;"></th>
-                    </tr>
+                <tr>
+                    <th style="width: 10%;">Brand</th>
+                    <th style="width: 10%;">Model</th>
+                    <th style="width: 10%;">Series</th>
+                    <th style="width: 8%;">CPU</th>
+                    <th style="width: 8%;">Gen</th>
+                    <th style="width: 8%;">RAM</th>
+                    <th style="width: 10%;">Storage</th>
+                    <th style="width: 8%;">Battery</th>
+                    <th style="width: 10%;">Condition</th>
+                    <th style="width: 12%;">Notes</th>
+                    <th style="width: 8%;">Price</th>
+                    <th style="width: 6%;">Qty</th>
+                    <th style="width: 6%;"></th>
+                </tr>
                 <?php elseif ($selected_sector === 'Gaming'): ?>
-                    <tr>
-                        <th class="drag-handle-cell" style="width: 34px;"></th>
-                        <th style="width: 10%;">Brand</th>
-                        <th style="width: 10%;">Model</th>
-                        <th style="width: 10%;">Category</th>
-                        <th style="width: 10%;">Specs/Series</th>
-                        <th style="width: 8%;">CPU</th>
-                        <th style="width: 8%;">GPU</th>
-                        <th style="width: 8%;">RAM</th>
-                        <th style="width: 10%;">Storage</th>
-                        <th style="width: 10%;">Condition</th>
-                        <th style="width: 12%;">Notes</th>
-                        <th style="width: 8%;">Price</th>
-                        <th style="width: 6%;">Qty</th>
-                        <th style="width: 6%;"></th>
-                    </tr>
+                <tr>
+                    <th style="width: 10%;">Brand</th>
+                    <th style="width: 10%;">Model</th>
+                    <th style="width: 10%;">Category</th>
+                    <th style="width: 10%;">Specs/Series</th>
+                    <th style="width: 8%;">CPU</th>
+                    <th style="width: 8%;">GPU</th>
+                    <th style="width: 8%;">RAM</th>
+                    <th style="width: 10%;">Storage</th>
+                    <th style="width: 10%;">Condition</th>
+                    <th style="width: 12%;">Notes</th>
+                    <th style="width: 8%;">Price</th>
+                    <th style="width: 6%;">Qty</th>
+                    <th style="width: 6%;"></th>
+                </tr>
                 <?php elseif ($selected_sector === 'Desktops'): ?>
-                    <tr>
-                        <th class="drag-handle-cell" style="width: 34px;"></th>
-                        <th style="width: 12%;">Brand</th>
-                        <th style="width: 15%;">Model</th>
-                        <th style="width: 18%;">CPU/Gen/Brand</th>
-                        <th style="width: 12%;">Condition</th>
-                        <th style="width: 25%;">Notes</th>
-                        <th style="width: 10%;">Price</th>
-                        <th style="width: 8%;">Qty</th>
-                        <th style="width: 6%;"></th>
-                    </tr>
+                <tr>
+                    <th style="width: 12%;">Brand</th>
+                    <th style="width: 15%;">Model</th>
+                    <th style="width: 18%;">CPU/Gen/Brand</th>
+                    <th style="width: 12%;">Condition</th>
+                    <th style="width: 25%;">Notes</th>
+                    <th style="width: 10%;">Price</th>
+                    <th style="width: 8%;">Qty</th>
+                    <th style="width: 6%;"></th>
+                </tr>
                 <?php else: ?>
-                    <tr>
-                        <th class="drag-handle-cell" style="width: 34px;"></th>
-                        <th style="width: 12%;">Brand</th>
-                        <th style="width: 15%;">Model</th>
-                        <th style="width: 15%;">Device Type</th>
-                        <th style="width: 15%;">Voltage/Specs</th>
-                        <th style="width: 12%;">Condition</th>
-                        <th style="width: 20%;">Notes</th>
-                        <th style="width: 10%;">Price</th>
-                        <th style="width: 8%;">Qty</th>
-                        <th style="width: 6%;"></th>
-                    </tr>
+                <tr>
+                    <th style="width: 12%;">Brand</th>
+                    <th style="width: 15%;">Model</th>
+                    <th style="width: 15%;">Device Type</th>
+                    <th style="width: 15%;">Voltage/Specs</th>
+                    <th style="width: 12%;">Condition</th>
+                    <th style="width: 20%;">Notes</th>
+                    <th style="width: 10%;">Price</th>
+                    <th style="width: 8%;">Qty</th>
+                    <th style="width: 6%;"></th>
+                </tr>
                 <?php endif; ?>
             </thead>
             <tbody id="inventory-list">
@@ -188,117 +168,87 @@
                         data-price="<?= htmlspecialchars($item['price'] ?? '0.00') ?>"
                         data-specs='<?= htmlspecialchars($item['specs_json'], ENT_QUOTES) ?>'
                         data-search="<?= htmlspecialchars(strtolower($item['brand'] . ' ' . $item['model'] . ' ' . ($specs['cpu'] ?? '') . ' ' . ($specs['ram'] ?? '') . ' ' . ($specs['storage'] ?? '') . ' ' . ($specs['notes'] ?? ''))) ?>">
-                        <td class="drag-handle-cell">
-                            <div class="row-drag-handle" draggable="true" title="Drag to reorder">⠿</div>
-                        </td>
                         <td class="editable-cell" data-field="brand">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($item['brand']) ?>"
-                                list="brand-options" placeholder="...">
+                            <input type="text" class="cell-input" value="<?= htmlspecialchars($item['brand']) ?>" list="brand-options" placeholder="...">
                         </td>
                         <td class="editable-cell" data-field="model">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($item['model']) ?>"
-                                placeholder="...">
+                            <input type="text" class="cell-input" value="<?= htmlspecialchars($item['model']) ?>" placeholder="...">
                         </td>
 
                         <?php if ($selected_sector === 'Laptops'): ?>
                             <td class="editable-cell" data-field="series">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="cpu">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu'] ?? '') ?>"
-                                    list="cpu-options-list" placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu'] ?? '') ?>" list="cpu-options-list" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="gen">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['gen'] ?? '') ?>"
-                                    list="gen-options-list" placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['gen'] ?? '') ?>" list="gen-options-list" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="ram">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['ram'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['ram'] ?? '') ?>" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="storage">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['storage'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['storage'] ?? '') ?>" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="battery">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['battery'] ?? '') ?>"
-                                    list="battery-options-list" placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['battery'] ?? '') ?>" list="battery-options-list" placeholder="...">
                             </td>
                         <?php elseif ($selected_sector === 'Gaming'): ?>
                             <td class="editable-cell" data-field="gaming_category">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['category'] ?? '') ?>"
-                                    list="gaming-cat-list" placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['category'] ?? '') ?>" list="gaming-cat-list" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="series">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['series'] ?? '') ?>" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="cpu">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu'] ?? '') ?>" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="gpu">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['gpu'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['gpu'] ?? '') ?>" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="ram">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['ram'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['ram'] ?? '') ?>" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="storage">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['storage'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['storage'] ?? '') ?>" placeholder="...">
                             </td>
                         <?php elseif ($selected_sector === 'Desktops'): ?>
                             <td class="editable-cell" data-field="cpu_gen">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu_gen'] ?? '') ?>"
-                                    list="cpu-gen-options-list" placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['cpu_gen'] ?? '') ?>" list="cpu-gen-options-list" placeholder="...">
                             </td>
                         <?php else: // Electronics/Other ?>
                             <td class="editable-cell" data-field="type">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['type'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['type'] ?? '') ?>" placeholder="...">
                             </td>
                             <td class="editable-cell" data-field="voltage">
-                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['voltage'] ?? '') ?>"
-                                    placeholder="...">
+                                <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['voltage'] ?? '') ?>" placeholder="...">
                             </td>
                         <?php endif; ?>
 
                         <td class="editable-cell" data-field="condition">
-                            <input type="text" class="cell-input"
-                                value="<?= htmlspecialchars($specs['condition'] ?? 'Used') ?>" list="condition-options-list"
-                                placeholder="...">
+                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['condition'] ?? 'Used') ?>" list="condition-options-list" placeholder="...">
                         </td>
                         <td class="editable-cell" data-field="notes">
-                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['notes'] ?? '') ?>"
-                                placeholder="...">
+                            <input type="text" class="cell-input" value="<?= htmlspecialchars($specs['notes'] ?? '') ?>" placeholder="...">
                         </td>
                         <td class="editable-cell numeric" data-field="price">
-                            <input type="number" step="any" class="cell-input text-right"
-                                value="<?= htmlspecialchars($item['price'] ?? '0.00') ?>">
+                            <input type="number" step="any" class="cell-input text-right" value="<?= htmlspecialchars($item['price'] ?? '0.00') ?>">
                         </td>
                         <td class="editable-cell numeric" data-field="quantity">
-                            <input type="number" step="1" class="cell-input text-center font-bold"
-                                value="<?= (int) $item['quantity'] ?>">
+                            <input type="number" step="1" class="cell-input text-center font-bold" value="<?= (int)$item['quantity'] ?>">
                         </td>
                         <td style="text-align:right;">
                             <div class="action-buttons">
-                                <button type="button" class="btn-clone-row"
-                                    style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px;"
-                                    title="Clone Row">➕</button>
+                                <button type="button" class="btn-clone-row" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px;" title="Clone Row">➕</button>
                                 <button type="button" class="btn-label"
                                     onclick="downloadWarehouseLabel(<?= (int) $item['id'] ?>, this)"
-                                    title="Generate & Download Label"
-                                    style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px; transition: opacity 0.2s;"
-                                    onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">🏷️</button>
+                                    title="Generate & Download Label" style="background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; padding: 0 4px; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">🏷️</button>
                                 <form method="POST" style="display:inline;" onsubmit="return confirm('Remove this item?');">
                                     <input type="hidden" name="action" value="delete_inventory">
                                     <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
                                     <input type="hidden" name="sector" value="<?= htmlspecialchars($selected_sector) ?>">
-                                    <input type="hidden" name="location_code"
-                                        value="<?= htmlspecialchars($selected_loc) ?>">
+                                    <input type="hidden" name="location_code" value="<?= htmlspecialchars($selected_loc) ?>">
                                     <?= UI::csrf_field() ?>
                                     <button type="submit" class="btn-delete" title="Delete Row">🗑</button>
                                 </form>
@@ -309,7 +259,6 @@
 
                 <!-- Permanent blank row at the bottom -->
                 <tr class="summary-row new-blank-row" data-id="new">
-                    <td class="drag-handle-cell"></td>
                     <td class="editable-cell" data-field="brand">
                         <input type="text" class="cell-input" list="brand-options" placeholder="Brand...">
                     </td>
@@ -382,10 +331,7 @@
                     </td>
                     <td style="text-align:right;">
                         <div class="action-buttons">
-                            <button type="button" class="btn-add-row-indicator"
-                                style="background: none; border: none; font-size: 1.1rem; opacity: 0.7; cursor: pointer; transition: opacity 0.2s;"
-                                onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.7"
-                                title="Add Item (Click or press Enter)">➕</button>
+                            <button type="button" class="btn-add-row-indicator" style="background: none; border: none; font-size: 1rem; opacity: 0.3;">➕</button>
                         </div>
                     </td>
                 </tr>
@@ -393,37 +339,30 @@
             <tfoot style="border-top: 2px solid #e2e8f0; background: #f8fafc;">
                 <tr>
                     <?php
-                    $total_cols_sp = 10;
-                    if ($selected_sector === 'Laptops')
-                        $total_cols_sp = 14;
-                    elseif ($selected_sector === 'Gaming')
-                        $total_cols_sp = 14;
-                    elseif ($selected_sector === 'Desktops')
-                        $total_cols_sp = 9;
+                    $total_cols_sp = 9;
+                    if ($selected_sector === 'Laptops') $total_cols_sp = 13;
+                    elseif ($selected_sector === 'Gaming') $total_cols_sp = 13;
+                    elseif ($selected_sector === 'Desktops') $total_cols_sp = 8;
                     ?>
                     <td colspan="<?= $total_cols_sp - 3 ?>" style="padding: 15px;">
                         <div class="search-container footer-search" style="max-width: 300px; margin: 0;">
                             <i class="search-icon">🔍</i>
                             <input type="text" id="wh-search-footer" placeholder="Filter these results..."
-                                onkeyup="syncSearch(this)" onkeydown="if(event.key==='Enter') event.preventDefault()"
-                                class="search-input" style="height: 40px; font-size: 0.9rem; border-radius: 10px;">
+                                onkeyup="syncSearch(this)"
+                                onkeydown="if(event.key==='Enter') event.preventDefault()" class="search-input"
+                                style="height: 40px; font-size: 0.9rem; border-radius: 10px;">
                         </div>
                     </td>
                     <td style="text-align: right; padding: 15px; font-size: 1.1rem; color: #334155; font-weight: 800;">
                         Inventory Total:
                     </td>
                     <td style="padding: 15px; text-align: center;">
-                        <span class="qty-pill" id="table-total-qty"
-                            style="background: #1e293b; color: white; font-size: 1.1rem; padding: 6px 12px; display: inline-block;">
+                        <span class="qty-pill" id="table-total-qty" style="background: #1e293b; color: white; font-size: 1.1rem; padding: 6px 12px; display: inline-block;">
                             <?= number_format($total_qty) ?>
                         </span>
                     </td>
                     <td style="text-align: right; padding: 15px;">
-                        <button type="button" id="btn-consolidate-spreadsheet" class="btn-consolidate"
-                            onclick="consolidateWarehouseRows()"
-                            style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.75rem; color: #475569;"
-                            onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'"
-                            title="Consolidate duplicate rows">
+                        <button type="button" id="btn-consolidate-spreadsheet" class="btn-consolidate" onclick="consolidateWarehouseRows()" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.75rem; color: #475569;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'" title="Consolidate duplicate rows">
                             🔄 Consolidate
                         </button>
                     </td>
@@ -439,7 +378,6 @@
     <option value="i5"></option>
     <option value="i7"></option>
     <option value="i9"></option>
-    <option value="AMD"></option>
     <option value="Ryzen 3"></option>
     <option value="Ryzen 5"></option>
     <option value="Ryzen 7"></option>

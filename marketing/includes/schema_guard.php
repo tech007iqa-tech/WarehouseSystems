@@ -84,6 +84,12 @@ function marketing_schema_guard($pdo) {
         if (!in_array('status', $photo_cols)) {
             $pdo->exec("ALTER TABLE photos ADD COLUMN status TEXT DEFAULT 'Ready'");
         }
+        if (!in_array('source', $photo_cols)) {
+            $pdo->exec("ALTER TABLE photos ADD COLUMN source TEXT DEFAULT 'upload'");
+        }
+        if (!in_array('location_code', $photo_cols)) {
+            $pdo->exec("ALTER TABLE photos ADD COLUMN location_code TEXT");
+        }
 
         $stmt_info = $pdo->query("PRAGMA table_info(leads)");
         $col_names = array_column($stmt_info->fetchAll(PDO::FETCH_ASSOC), 'name');

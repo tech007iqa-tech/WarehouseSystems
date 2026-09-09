@@ -26,6 +26,9 @@
                     aria-label="Search warehouse inventory" onkeyup="syncSearch(this)"
                     onkeydown="if(event.key==='Enter') event.preventDefault()" class="search-input">
             </div>
+            <button type="button" onclick="openInventoryModal('intake')" class="btn-inventory" title="Open Inventory Intake & Shelf Depletion Dialog">
+                ⚡ INVENTORY
+            </button>
             <a href="#wh-main-form" class="btn-export"
                 style="background: var(--text-main); color: white; border: none;">NEW Item</a>
             <button type="button" onclick="downloadWarehouseCSV()" class="btn-export">

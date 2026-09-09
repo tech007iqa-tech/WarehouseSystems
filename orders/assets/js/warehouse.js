@@ -11,7 +11,26 @@ function getWarehouseState() {
     return __warehouseState;
 }
 
-// Sub-modules (warehouse_gate.js, warehouse_form.js, warehouse_spreadsheet.js, warehouse_bulk.js, warehouse_modals.js) are loaded via index.php with defer.
+// 1. Synchronously load all warehouse sub-modules in order
+(function loadWarehouseModules() {
+    const modules = [
+        'assets/js/warehouse/warehouse_gate.js',
+        'assets/js/warehouse/warehouse_form.js',
+        'assets/js/warehouse/warehouse_spreadsheet.js',
+        'assets/js/warehouse/warehouse_bulk.js',
+        'assets/js/warehouse/warehouse_modals.js',
+        'assets/js/warehouse/warehouse_inventory.js'
+    ];
+
+    modules.forEach(src => {
+        if (!document.querySelector(`script[src*="${src}"]`)) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = false;
+            document.head.appendChild(script);
+        }
+    });
+})();
 
 // 2. Initialize warehouse components on DOMContentLoaded
 function initWarehouseApp() {

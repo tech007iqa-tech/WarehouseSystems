@@ -8,3 +8,5 @@ db/
 orders/assets/exports
 orders/assets/location_photos
 tech/exports/
+.venv/
+.vscode/

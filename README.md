@@ -1,4 +1,4 @@
-# 📦 IQA Warehouse Systems 7/17/2026 1:35 PM
+# 📦 IQA Warehouse Systems 9/5/2026 10:52 PM
 
 [![Version](https://img.shields.io/badge/version-2.2.0-green.svg)](https://github.com/)
 [![Tech](https://img.shields.io/badge/Stack-Vanilla_PHP_|_SQLite_|_JS-blue.svg)](https://github.com/)
@@ -9,6 +9,14 @@ A premium, high-performance warehouse management ecosystem designed for speed, r
 ---
 
 ## 🚀 The Modules
+
+### 📢 Marketing Hub (`/marketing`)
+*Lead Generation, Model Templates & Multi-Channel Campaigns*
+- **Model Templates & Stock Spreadsheet**: Live interactive spreadsheet of warehouse stock (`db/warehouse.db`) with multi-header bidirectional sorting, flexible multi-term search, dynamic All-rows display, and one-click template prefill.
+- **Ad Generator**: Multi-channel marketing copy generator (OfferUp, Facebook Marketplace, Craigslist) with customizable presets.
+- **Lead Capture**: Seamless CRM integration capturing incoming inquiries directly into Master CRM (`customers.db`).
+- **Photo Bucket & Assets**: Centralized asset library organized by categories and model tags.
+- **Documentation Hub (`/marketing/?page=docs`)**: Integrated native Markdown knowledge base reader with responsive dual-pane layout.
 
 ### 🏷️ Inventory Labels (`/labels`)
 *Rapid Hardware Intake & ODT Generation*

@@ -1,81 +1,156 @@
 /**
  * Marketing Hub - Main Application Script
+ * Scoped in an IIFE to prevent global identifier redeclaration collisions.
  */
+(function () {
+    'use strict';
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('Marketing Hub Initialized');
-});
-
-/**
- * Utility: Copy text to clipboard with feedback
- */
-function copyToClipboard(text, description = 'Content') {
-    if (!text) return;
-
-    try {
-        navigator.clipboard.writeText(text).then(() => {
-            notify(`${description} copied to clipboard!`, 'success', '📋 Copied');
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Prevent double submit on forms
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                if (submitBtn && !submitBtn.hasAttribute('data-submitting') && !e.defaultPrevented) {
+                    submitBtn.setAttribute('data-submitting', 'true');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.style.opacity = '0.7';
+                    submitBtn.style.pointerEvents = 'none';
+                    setTimeout(() => {
+                        submitBtn.removeAttribute('data-submitting');
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.pointerEvents = 'auto';
+                    }, 4000);
+                }
+            });
         });
-    } catch (err) {
-        console.error('Failed to copy: ', err);
-        notify('Failed to copy to clipboard.', 'error');
+
+        // 2. Setup CSRF for all standard fetch requests
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (csrfToken) {
+            window.CSRF_TOKEN = csrfToken;
+        }
+    });
+
+    /**
+     * Utility: Copy text to clipboard with feedback
+     */
+    function copyToClipboard(text, description = 'Content') {
+        if (!text) return;
+
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                notify(`${description} copied to clipboard!`, 'success', '📋 Copied');
+            }).catch(err => {
+                fallbackCopy(text, description);
+            });
+        } else {
+            fallbackCopy(text, description);
+        }
     }
-}
-/**
- * Toast Notification System
- */
-const notify = (message, type = 'success', title = '') => {
-    let container = document.getElementById('toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'toast-container';
-        document.body.appendChild(container);
+
+    function fallbackCopy(text, description) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.opacity = "0";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            notify(`${description} copied to clipboard!`, 'success', '📋 Copied');
+        } catch (err) {
+            notify('Failed to copy to clipboard.', 'error');
+        }
+        document.body.removeChild(textArea);
     }
 
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
+    /**
+     * Toast Notification System - DOM XSS Safe
+     */
+    function notify(message, type = 'success', title = '') {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
+        }
 
-    const icons = {
-        success: '✅',
-        error: '❌',
-        warning: '⚠️',
-        info: 'ℹ️'
-    };
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
 
-    const defaultTitles = {
-        success: 'Success',
-        error: 'Error',
-        warning: 'Attention',
-        info: 'Update'
-    };
+        const icons = {
+            success: '✅',
+            error: '❌',
+            warning: '⚠️',
+            info: 'ℹ️'
+        };
 
-    toast.innerHTML = `
-        <div class="toast-icon">${icons[type]}</div>
-        <div class="toast-content">
-            <span class="toast-title">${title || defaultTitles[type]}</span>
-            <span class="toast-message">${message}</span>
-        </div>
-    `;
+        const defaultTitles = {
+            success: 'Success',
+            error: 'Error',
+            warning: 'Attention',
+            info: 'Update'
+        };
 
-    container.appendChild(toast);
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'toast-icon';
+        iconDiv.textContent = icons[type] || 'ℹ️';
 
-    // Auto remove
-    const timer = setTimeout(() => {
-        dismissToast(toast);
-    }, 4000);
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'toast-content';
 
-    toast.onclick = () => {
-        clearTimeout(timer);
-        dismissToast(toast);
-    };
-};
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'toast-title';
+        titleSpan.textContent = title || defaultTitles[type] || 'Notification';
 
-const dismissToast = (toast) => {
-    toast.classList.add('hide');
-    setTimeout(() => {
-        toast.remove();
-    }, 300);
-};
+        const msgSpan = document.createElement('span');
+        msgSpan.className = 'toast-message';
+        msgSpan.textContent = message;
 
-// Global access
-window.notify = notify;
+        contentDiv.appendChild(titleSpan);
+        contentDiv.appendChild(msgSpan);
+
+        toast.appendChild(iconDiv);
+        toast.appendChild(contentDiv);
+        container.appendChild(toast);
+
+        // Auto remove
+        const timer = setTimeout(() => {
+            dismissToast(toast);
+        }, 4500);
+
+        toast.onclick = () => {
+            clearTimeout(timer);
+            dismissToast(toast);
+        };
+    }
+
+    function dismissToast(toast) {
+        toast.classList.add('hide');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }
+
+    /**
+     * Helper to confirm destructive actions
+     */
+    function confirmAction(message, formOrCallback) {
+        if (confirm(message)) {
+            if (typeof formOrCallback === 'function') {
+                formOrCallback();
+            } else if (formOrCallback && formOrCallback.submit) {
+                formOrCallback.submit();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // Expose global helpers safely
+    window.notify = notify;
+    window.copyToClipboard = copyToClipboard;
+    window.confirmAction = confirmAction;
+
+})();

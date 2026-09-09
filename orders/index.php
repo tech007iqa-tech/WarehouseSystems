@@ -265,18 +265,11 @@ $page_content = ob_get_clean();
         <p style="text-align: center;" ><a href="#">&copy; <?= date('M Y') ?> System</a> | Managed Inventory & Order Fulfillments</p>
     </footer>
     <?php endif; ?>
+    <!-- Load view-specific JavaScript -->
     <?php if ($active_key === 'new_order'): ?>
-        <script src="assets/js/new_order/new_order_modals.js?v=<?= filemtime('assets/js/new_order/new_order_modals.js') ?>" defer></script>
-        <script src="assets/js/new_order/new_order_import_clipboard.js?v=<?= filemtime('assets/js/new_order/new_order_import_clipboard.js') ?>" defer></script>
-        <script src="assets/js/new_order/new_order_import_warehouse.js?v=<?= filemtime('assets/js/new_order/new_order_import_warehouse.js') ?>" defer></script>
         <script src="assets/js/new_order.js?v=<?= filemtime('assets/js/new_order.js') ?>" defer></script>
         <script src="assets/js/import_work_order.js?v=<?= filemtime('assets/js/import_work_order.js') ?>" defer></script>
     <?php elseif ($active_key === 'warehouse'): ?>
-        <script src="assets/js/warehouse/warehouse_gate.js?v=<?= filemtime('assets/js/warehouse/warehouse_gate.js') ?>" defer></script>
-        <script src="assets/js/warehouse/warehouse_form.js?v=<?= filemtime('assets/js/warehouse/warehouse_form.js') ?>" defer></script>
-        <script src="assets/js/warehouse/warehouse_spreadsheet.js?v=<?= filemtime('assets/js/warehouse/warehouse_spreadsheet.js') ?>" defer></script>
-        <script src="assets/js/warehouse/warehouse_bulk.js?v=<?= filemtime('assets/js/warehouse/warehouse_bulk.js') ?>" defer></script>
-        <script src="assets/js/warehouse/warehouse_modals.js?v=<?= filemtime('assets/js/warehouse/warehouse_modals.js') ?>" defer></script>
         <script src="assets/js/warehouse.js?v=<?= filemtime('assets/js/warehouse.js') ?>" defer></script>
     <?php elseif ($active_key === 'import_warehouse'): ?>
         <script src="assets/js/import_warehouse.js?v=<?= filemtime('assets/js/import_warehouse.js') ?>" defer></script>
@@ -290,10 +283,6 @@ $page_content = ob_get_clean();
     <?php elseif ($active_key === 'inbound'): ?>
         <script src="assets/js/inbound.js?v=<?= filemtime('assets/js/inbound.js') ?>" defer></script>
     <?php elseif ($active_key === 'trends'): ?>
-        <script src="assets/js/trends/trends_nav.js?v=<?= filemtime('assets/js/trends/trends_nav.js') ?>" defer></script>
-        <script src="assets/js/trends/trends_charts.js?v=<?= filemtime('assets/js/trends/trends_charts.js') ?>" defer></script>
-        <script src="assets/js/trends/trends_widgets.js?v=<?= filemtime('assets/js/trends/trends_widgets.js') ?>" defer></script>
-        <script src="assets/js/trends/trends_modals.js?v=<?= filemtime('assets/js/trends/trends_modals.js') ?>" defer></script>
         <script src="assets/js/trends.js?v=<?= filemtime('assets/js/trends.js') ?>" defer></script>
     <?php elseif ($active_key === 'settings'): ?>
         <script src="assets/js/settings.js?v=<?= filemtime('assets/js/settings.js') ?>" defer></script>
