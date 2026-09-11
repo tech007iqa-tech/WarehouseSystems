@@ -641,6 +641,44 @@
     min-height: 80px;
 }
 
+.btn-rename-zone {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    opacity: 0.7;
+    transition: all 0.2s ease;
+    z-index: 5;
+}
+
+.loc-item-wrapper:hover .btn-rename-zone,
+.btn-rename-zone:hover {
+    opacity: 1;
+    transform: scale(1.15);
+    background: #f8fafc;
+    border-color: var(--accent-color);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-danger-icon {
+    transition: all 0.2s ease;
+}
+
+.btn-danger-icon:hover {
+    background: #fecaca !important;
+    transform: scale(1.05);
+}
+
 /* Form Sidebar Refinements */
 .warehouse-sidebar .form-group label {
     font-size: 0.75rem;

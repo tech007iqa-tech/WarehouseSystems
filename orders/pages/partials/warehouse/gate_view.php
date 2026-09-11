@@ -74,8 +74,7 @@
                                 <div style="font-size:0.7rem; color:#94a3b8; font-weight:700;"><?= $wz_items ?> Items</div>
                             </a>
                             <button type="button" onclick='openRenameWorkingZoneModal(<?= json_encode($wz) ?>)'
-                                class="btn-rename-zone"
-                                style="position:absolute; bottom:5px; right:5px; background:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:0.7rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.1); opacity:0; transition:0.2s;">✏️</button>
+                                class="btn-rename-zone" title="Edit Working Zone">✏️</button>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -150,8 +149,7 @@
                                 <div style="font-size:0.7rem; color:#94a3b8; font-weight:700;"><?= $l_count ?> Items</div>
                             </a>
                             <button type="button" onclick='openRenameModal(<?= json_encode($loc) ?>)'
-                                class="btn-rename-zone"
-                                style="position:absolute; bottom:5px; right:5px; background:white; border:none; border-radius:50%; width:24px; height:24px; cursor:pointer; font-size:0.7rem; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 4px rgba(0,0,0,0.1); opacity:0; transition:0.2s;">✏️</button>
+                                class="btn-rename-zone" title="Edit Location & Status">✏️</button>
                         </div>
                     <?php endforeach; ?>
                 </div>

@@ -11,12 +11,15 @@
     <div
         style="background:white; border-radius:24px; width:95%; max-width:450px; padding:35px; box-shadow:var(--shadow-lg); position:relative;">
         <form method="POST" id="delete-zone-form"
-            onsubmit="return confirm('CRITICAL ACTION: This will PERMANENTLY DELETE ALL ITEMS in this zone. This cannot be undone. Proceed?');">
+            onsubmit="return confirm('CRITICAL ACTION: This will PERMANENTLY DELETE THIS LOCATION and ALL ITEMS in it. This cannot be undone. Proceed?');">
             <?= UI::csrf_field() ?>
             <input type="hidden" name="action" value="delete_zone">
             <input type="hidden" name="old_loc" id="delete-zone-loc">
-            <button type="submit" class="btn-hidden-delete" title="Hidden: Delete Zone"
-                style="position:absolute; top:20px; right:20px; background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.1; transition:opacity 0.3s, transform 0.2s; padding:5px;">🗑️</button>
+            <input type="hidden" name="active_zone" value="<?= htmlspecialchars($active_zone_name ?? '') ?>">
+            <button type="submit" class="btn-danger-icon" title="Delete Location"
+                style="position:absolute; top:20px; right:20px; background:#fee2e2; color:#ef4444; border:1px solid #fecaca; border-radius:10px; cursor:pointer; font-size:0.85rem; padding:6px 12px; font-weight:700; display:flex; align-items:center; gap:5px;">
+                🗑️ <span>Delete</span>
+            </button>
         </form>
 
         <h2 style="font-weight:900; margin-bottom:10px; font-size:1.25rem;">📦 Manage Working Zone</h2>
@@ -247,8 +250,10 @@
             <?= UI::csrf_field() ?>
             <input type="hidden" name="action" value="delete_working_zone">
             <input type="hidden" name="zone_name" id="delete-working-zone-name">
-            <button type="submit" class="btn-hidden-delete" title="Hidden: Delete Working Zone"
-                style="position:absolute; top:20px; right:20px; background:none; border:none; cursor:pointer; font-size:1.1rem; opacity:0.1; transition:opacity 0.3s, transform 0.2s; padding:5px;">🗑️</button>
+            <button type="submit" class="btn-danger-icon" title="Delete Working Zone"
+                style="position:absolute; top:20px; right:20px; background:#fee2e2; color:#ef4444; border:1px solid #fecaca; border-radius:10px; cursor:pointer; font-size:0.85rem; padding:6px 12px; font-weight:700; display:flex; align-items:center; gap:5px;">
+                🗑️ <span>Delete</span>
+            </button>
         </form>
 
         <h2 style="font-weight:900; margin-bottom:10px; font-size:1.25rem;">📁 Manage Working Zone</h2>

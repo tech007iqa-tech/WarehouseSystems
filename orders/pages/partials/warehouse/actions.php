@@ -364,7 +364,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 }
 
                 $conn_wh->commit();
-                header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=" . $msg);
+                $redir_zone = $_POST['active_zone'] ?? $_GET['zone'] ?? '';
+                $redirect_url = "index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=" . $msg;
+                if (!empty($redir_zone)) {
+                    $redirect_url .= "&zone=" . urlencode($redir_zone);
+                }
+                header("Location: " . $redirect_url);
                 exit();
             } catch (Exception $e) {
                 $conn_wh->rollBack();
@@ -489,7 +494,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $stmt_loc->execute([$old_loc]);
 
             $conn_wh->commit();
-            header("Location: index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=zone_deleted");
+            $redir_zone = $_POST['active_zone'] ?? $_GET['zone'] ?? '';
+            $redirect_url = "index.php?view=warehouse&sector=" . urlencode($selected_sector) . "&msg=zone_deleted";
+            if (!empty($redir_zone)) {
+                $redirect_url .= "&zone=" . urlencode($redir_zone);
+            }
+            header("Location: " . $redirect_url);
             exit();
         } catch (Exception $e) {
             $conn_wh->rollBack();
